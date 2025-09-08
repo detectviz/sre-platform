@@ -5,6 +5,7 @@ import { store, RootState } from './store/store';
 import MainLayout from './layouts/MainLayout';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import ResourcesPage from './pages/ResourcesPage';
 
 /**
  * 受保護的路由元件
@@ -32,6 +33,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/" element={<ProtectedRoute />}>
           {/* 儀表板路由，作為預設的子路由 */}
           <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="resources" element={<ResourcesPage />} />
           {/* 未來可以在此處加入更多受保護的路由 */}
         </Route>
 

@@ -4,6 +4,7 @@ import {
   PieChartOutlined,
   UserOutlined,
   BellOutlined,
+  HddOutlined,
 } from '@ant-design/icons';
 import { Avatar, Badge, Breadcrumb, Button, Layout, Menu, Space, theme } from 'antd';
 import { Link, Outlet } from 'react-router-dom';
@@ -17,7 +18,11 @@ const menuItems = [
     icon: <PieChartOutlined />,
     label: <Link to="/dashboard">總覽儀表板</Link>,
   },
-  // 可以在此處加入更多菜單項
+  {
+    key: '2',
+    icon: <HddOutlined />,
+    label: <Link to="/resources">資源管理</Link>,
+  },
 ];
 
 const MainLayout: React.FC = () => {
