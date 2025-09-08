@@ -1,8 +1,8 @@
 # SRE Platform Control Plane API Specification
 # Version: 1.0.0
-# Description: API specification for the SRE Platform Control Plane service. Includes fixes for G-01 to G-05.
+# Description: API specification for the SRE Platform Control Plane service.
 
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: SRE Platform - Control Plane API
   description: |
@@ -18,6 +18,142 @@ info:
 servers:
   - url: http://localhost:8081
     description: Control Plane Development Server
+
+x-error-codes:
+  RESOURCE_IN_USE:
+    http: 409
+    message: "資源正在使用中"
+    i18n_key: errors.resource_in_use
+  INVALID_METRIC:
+    http: 400
+    message: "無效的監控指標"
+    i18n_key: errors.invalid_metric
+  PERMISSION_DENIED:
+    http: 403
+    message: "權限不足"
+    i18n_key: errors.permission_denied
+  UNAUTHORIZED:
+    http: 401
+    message: "未登入或憑證失效"
+    i18n_key: errors.unauthorized
+  NOT_FOUND:
+    http: 404
+    message: "資源不存在"
+    i18n_key: errors.not_found
+  VALIDATION_ERROR:
+    http: 400
+    message: "參數驗證失敗"
+    i18n_key: errors.validation_error
+  INTERNAL_ERROR:
+    http: 500
+    message: "內部伺服器錯誤"
+    i18n_key: errors.internal_error
+
+x-resource-status-rules:
+  default:
+    critical: "cpu > 90 OR memory > 95"
+    warning: "cpu > 80 OR memory > 85"
+    healthy: "cpu <= 80 AND memory <= 85"
+  server:
+    critical: "cpu > 90 OR memory > 95 OR disk > 95"
+    warning: "cpu > 80 OR memory > 85 OR disk > 90"
+    healthy: "cpu <= 80 AND memory <= 85 AND disk <= 90"
+  database:
+    critical: "cpu > 85 OR memory > 90 OR replication_lag_s > 10 OR connections_pct > 95"
+    warning: "cpu > 75 OR memory > 85 OR replication_lag_s > 5 OR connections_pct > 90"
+    healthy: "cpu <= 75 AND memory <= 85 AND replication_lag_s <= 5 AND connections_pct <= 90"
+  network:
+    critical: "packet_loss_pct > 5 OR latency_ms > 200"
+    warning: "packet_loss_pct > 1 OR latency_ms > 100"
+    healthy: "packet_loss_pct <= 1 AND latency_ms <= 100"
+  application:
+    critical: "error_rate_pct > 5 OR p95_latency_ms > 1000"
+    warning: "error_rate_pct > 1 OR p95_latency_ms > 500"
+    healthy: "error_rate_pct <= 1 AND p95_latency_ms <= 500"
+  container:
+    critical: "cpu > 90 OR memory > 95 OR restarts_5m > 3"
+    warning: "cpu > 80 OR memory > 85 OR restarts_5m > 0"
+    healthy: "cpu <= 80 AND memory <= 85 AND restarts_5m == 0"
+x-incident-lifecycle:
+  states: [new, acknowledged, resolved]
+  transitions:
+    - from: new
+      to: acknowledged
+      roles: [team_member, team_manager, super_admin]
+    - from: acknowledged
+      to: resolved
+      roles: [team_member, team_manager, super_admin]
+  actions:
+    acknowledge:
+      endpoint: "/api/v1/incidents/{incidentId}/acknowledge"
+      method: POST
+    resolve:
+      endpoint: "/api/v1/incidents/{incidentId}/resolve"
+      method: POST
+
+x-permission-check:
+  description: "Back-end enforces x-roles on write endpoints; front-end handles UX gating and shows Forbidden on 403."
+  notes:
+    - "All endpoints require bearerAuth unless explicitly public"
+    - "Write operations annotated with x-roles"
+
+x-websocket:
+  notifications:
+    url: "/ws/notifications"
+    description: "WebSocket 替代 SSE，傳遞 alerts, incidents 等事件"
+    messages:
+      alert_fired:
+        payload_example:
+          id: "a_1"
+          severity: "P1"
+          resource_name: "web-01"
+          message: "CPU>90%"
+      incident_updated:
+        payload_schema: "#/components/schemas/Incident"
+      resource_status_changed:
+        payload_example:
+          resource_id: "r_1"
+          resource_name: "web-01"
+          old_status: "healthy"
+          new_status: "warning"
+          timestamp: "2025-09-08T00:10:00Z"
+      notification_received:
+        payload_example:
+          id: "n_1"
+          title: "新事件通知"
+          message: "web-01 CPU 使用率超過 90%"
+          type: "incident"
+          severity: "warning"
+          created_at: "2025-09-08T00:10:00Z"
+
+x-requirements:
+  internationalization:
+    enabled: true
+    supported_languages: [zh-TW, en]
+    default_language: zh-TW
+    i18n_keys_required: true
+  accessibility:
+    wcag_level: "AA"
+    features:
+      - keyboard_navigation
+      - screen_reader_support
+      - focus_indicators
+      - aria_labels
+  performance:
+    page_load_time_ms: 2000
+    api_response_time_ms: 500
+    features:
+      - pagination_required
+      - lazy_loading
+      - caching_strategy
+  responsive_design:
+    breakpoints:
+      - mobile: 768
+      - tablet: 1024
+      - desktop: 1440
+    features:
+      - fluid_layout
+      - adaptive_navigation
 
 tags:
   - name: Core
@@ -39,7 +175,7 @@ tags:
   - name: Teams
     description: 團隊管理
   - name: Notifications
-    description: 通知管道
+    description: "通知管道管理 (Notification Channels) - 管理Email、SMS、Webhook等通知傳送管道的設定"
   - name: Settings
     description: 系統設定
   - name: Audit
@@ -48,7 +184,7 @@ tags:
     description: "Endpoints for receiving callbacks from other services (like SRE Assistant)"
 
   - name: Notification Center
-    description: "使用者個人的通知中心 (Notification Center)"
+    description: "使用者通知中心 (User Notifications) - 管理使用者收到的通知訊息，包括檢視、標記已讀等"
 
   - name: Capacity Planning
     description: "容量規劃與預測"
@@ -64,6 +200,9 @@ tags:
 
   - name: Admin
     description: "平台管理員專用功能"
+
+  - name: Auth
+    description: "開發環境用的本地帳密登入端點（正式環境改用 OIDC 重導）"
 
 paths:
   # ============================================
@@ -128,6 +267,106 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MetricDefinitionList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  # ============================================
+  # Auth - 僅開發環境使用
+  # ============================================
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: 開發模式登入
+      description: 僅開發環境使用的本地帳密登入端點。正式環境請使用 OIDC。
+      operationId: devLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthLoginRequest"
+      responses:
+        "200":
+          description: 登入成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+              example:
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access"
+                refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh"
+                token_type: "Bearer"
+                expires_in: 3600
+                user:
+                  id: "u_123"
+                  username: "dev"
+                  email: "dev@example.com"
+                  name: "Dev User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: 刷新 Token（開發）
+      description: 使用 refresh_token 換取新的 access_token（僅開發環境）。
+      operationId: devRefreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenRefreshRequest"
+      responses:
+        "200":
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTokens"
+              example:
+                access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access"
+                refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh"
+                token_type: "Bearer"
+                expires_in: 3600
+                user:
+                  id: "u_123"
+                  username: "dev"
+                  email: "dev@example.com"
+                  name: "Dev User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: 登出（開發）
+      description: 登出並使 refresh_token 失效（僅開發環境）。
+      operationId: devLogout
+      responses:
+        "200":
+          description: 登出成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "Logged out"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/autocomplete:
     get:
@@ -141,10 +380,10 @@ paths:
         - name: type
           in: query
           required: true
-          description: "要搜尋的實體類型"
+          description: "要搜尋的實體類型（或 'all' 跨多類型）"
           schema:
             type: string
-            enum: [user, resource, script, team, channel]
+            enum: [user, resource, script, team, channel, all]
         - name: q
           in: query
           required: true
@@ -160,6 +399,17 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/AutocompleteResult"
+              example:
+                - id: "r_1"
+                  name: "web-01"
+                - id: "u_1"
+                  name: "alice"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/search:
     get:
@@ -185,6 +435,20 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SearchResultItem"
+              example:
+                - type: "resource"
+                  score: 0.92
+                  item:
+                    id: "r_1"
+                    name: "web-01"
+                    type: "server"
+                    status: "healthy"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/roles:
     get:
@@ -196,13 +460,93 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          description: "成功獲取角色列表"
+          description: 角色列表
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: "#/components/schemas/RoleDefinition"
+              example:
+                - name: "super_admin"
+                  display_name: "超級管理員"
+                  description: "擁有平台所有管理操作權限"
+                - name: "team_manager"
+                  display_name: "團隊管理者"
+                  description: "可管理團隊與資源群組"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+    post:
+      tags: [Roles]
+      summary: 創建自定義角色
+      description: 創建新的自定義角色（僅 super_admin 可操作）
+      operationId: createRole
+      security:
+        - bearerAuth: []
+      x-roles: [super_admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleCreateRequest"
+      responses:
+        "201":
+          description: 角色創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleDefinition"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/roles/{roleName}:
+    put:
+      tags: [Roles]
+      summary: 更新角色權限
+      description: 更新指定角色的權限設定（僅 super_admin 可操作）
+      operationId: updateRole
+      security:
+        - bearerAuth: []
+      x-roles: [super_admin]
+      parameters:
+        - name: roleName
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RoleUpdateRequest"
+      responses:
+        "200":
+          description: 角色更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleDefinition"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Dashboard - 儀表板與統計
@@ -222,6 +566,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/DashboardSummary"
+              example:
+                alerts:
+                  new: 5
+                  processing: 3
+                  resolved_today: 12
+                resources:
+                  total: 250
+                  healthy: 220
+                  warning: 20
+                  critical: 10
+                kpis:
+                  availability: 99.95
+                  mttr: 37
+                  incident_rate: 0.12
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/dashboard/trends:
     get:
@@ -246,6 +608,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrendData"
+              example:
+                period: "24h"
+                data_points:
+                  - timestamp: "2025-09-07T01:00:00Z"
+                    alerts: 2
+                    incidents: 1
+                    resources_healthy: 218
+                    resources_unhealthy: 32
+                  - timestamp: "2025-09-07T02:00:00Z"
+                    alerts: 1
+                    incidents: 0
+                    resources_healthy: 220
+                    resources_unhealthy: 30
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/dashboard/resource-distribution:
     get:
@@ -262,6 +641,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceDistribution"
+              example:
+                by_status:
+                  healthy: 220
+                  warning: 20
+                  critical: 10
+                  unknown: 0
+                by_type:
+                  server: 120
+                  database: 20
+                  application: 60
+                  network: 30
+                  container: 20
+                by_group:
+                  - group_id: "g_1"
+                    group_name: "Web"
+                    total: 50
+                    healthy: 45
+                    warning: 4
+                    critical: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Resources - 資源管理
@@ -277,6 +679,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           description: 資源狀態過濾
@@ -306,6 +710,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceList"
+              example:
+                items:
+                  - id: "r_1"
+                    name: "db-01"
+                    type: "database"
+                    status: "healthy"
+                    ip_address: "10.0.0.10"
+                  - id: "r_2"
+                    name: "web-02"
+                    type: "server"
+                    status: "warning"
+                    ip_address: "10.0.0.21"
+                pagination:
+                  page: 1
+                  page_size: 20
+                  total: 2
+                  total_pages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Resources]
@@ -314,6 +741,7 @@ paths:
       operationId: createResource
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -329,6 +757,14 @@ paths:
                 $ref: "#/components/schemas/Resource"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/resources/{resourceId}:
     get:
@@ -347,8 +783,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Resource"
+              example:
+                id: "r_1"
+                name: "web-01"
+                type: "server"
+                status: "healthy"
+                ip_address: "10.0.0.11"
+                group_id: "g_1"
+                group_name: "Web"
+                tags: ["prod", "frontend"]
+                owner: "u_1"
+                description: "Frontend web server"
+                created_at: "2025-09-07T12:00:00Z"
+                updated_at: "2025-09-08T01:00:00Z"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
   /api/v1/resources/{resourceId}/metrics:
     get:
       tags: [Resources]
@@ -379,6 +832,54 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TrendData"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/resources/{resourceId}/incidents:
+    get:
+      tags: [Resources]
+      summary: 獲取資源關聯事件列表
+      description: 獲取與指定資源相關的事件列表，支援分頁和過濾
+      operationId: getResourceIncidents
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdParam"
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [new, acknowledged, resolved]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [P1, P2, P3, P4]
+      responses:
+        "200":
+          description: 資源關聯事件列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncidentList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       tags: [Resources]
@@ -387,6 +888,7 @@ paths:
       operationId: updateResource
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - $ref: "#/components/parameters/ResourceIdParam"
       requestBody:
@@ -402,6 +904,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Resource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       tags: [Resources]
@@ -410,13 +920,20 @@ paths:
       operationId: deleteResource
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - $ref: "#/components/parameters/ResourceIdParam"
       responses:
         "204":
           description: 資源刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/resources/batch:
     post:
@@ -426,6 +943,7 @@ paths:
       operationId: batchOperateResources
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -439,6 +957,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BatchOperationResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/resources/scan:
     post:
@@ -448,6 +974,7 @@ paths:
       operationId: scanNetwork
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -461,6 +988,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ScanTaskResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/resources/scan/{taskId}:
     get:
@@ -484,6 +1019,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ScanResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Resource Groups - 資源群組管理
@@ -492,10 +1033,16 @@ paths:
     get:
       tags: [Resource Groups]
       summary: 獲取群組列表
-      description: 獲取所有資源群組
+      description: 獲取所有資源分組
       operationId: listResourceGroups
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
       responses:
         "200":
           description: 群組列表
@@ -503,14 +1050,32 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceGroupList"
+              example:
+                items:
+                  - id: "g_1"
+                    name: "Web"
+                    description: "Web tier"
+                    resource_count: 50
+                    status_summary:
+                      healthy: 45
+                      warning: 4
+                      critical: 1
+                total: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Resource Groups]
       summary: 創建群組
-      description: 創建新的資源群組
+      description: 創建新的資源分組
       operationId: createResourceGroup
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -524,6 +1089,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceGroup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/resource-groups/{groupId}:
     get:
@@ -546,8 +1119,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceGroup"
+              example:
+                id: "g_1"
+                name: "Web"
+                description: "Web tier"
+                resource_count: 50
+                status_summary:
+                  healthy: 45
+                  warning: 4
+                  critical: 1
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags: [Resource Groups]
       summary: 更新群組
@@ -555,6 +1141,7 @@ paths:
       operationId: updateResourceGroup
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: groupId
           in: path
@@ -574,14 +1161,25 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceGroup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       tags: [Resource Groups]
       summary: 刪除群組
-      description: 刪除資源群組
+      description: 刪除資源分組
       operationId: deleteResourceGroup
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: groupId
           in: path
@@ -591,6 +1189,14 @@ paths:
       responses:
         "204":
           description: 群組刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/resource-groups/{groupId}/members:
     post:
@@ -600,6 +1206,7 @@ paths:
       operationId: manageGroupMembers
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: groupId
           in: path
@@ -619,6 +1226,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceGroup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Incidents - 事件管理
@@ -634,6 +1251,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           schema:
@@ -666,6 +1285,29 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/IncidentList"
+              example:
+                items:
+                  - id: "i_1001"
+                    title: "CPU 高於 90%"
+                    severity: "warning"
+                    status: "new"
+                    affected_resources: ["r_2"]
+                    created_at: "2025-09-08T00:12:00Z"
+                  - id: "i_1000"
+                    title: "資料庫連線失敗"
+                    severity: "critical"
+                    status: "acknowledged"
+                    affected_resources: ["r_1"]
+                    created_at: "2025-09-07T23:50:00Z"
+                pagination:
+                  page: 1
+                  page_size: 20
+                  total: 2
+                  total_pages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Incidents]
@@ -687,6 +1329,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Incident"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/incidents/batch:
     post:
@@ -711,6 +1361,12 @@ paths:
                 $ref: "#/components/schemas/BatchOperationResult"
         "400":
           $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/incidents/{incidentId}:
     get:
@@ -733,6 +1389,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Incident"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       tags: [Incidents]
@@ -760,6 +1422,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Incident"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/incidents/{incidentId}/acknowledge:
     post:
@@ -794,6 +1468,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Incident"
+              example:
+                id: "i_1001"
+                title: "CPU 高於 90%"
+                severity: "warning"
+                status: "acknowledged"
+                acknowledged_by: "u_123"
+                acknowledged_at: "2025-09-08T00:30:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/incidents/{incidentId}/resolve:
     post:
@@ -831,6 +1522,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Incident"
+              example:
+                id: "i_1001"
+                title: "CPU 高於 90%"
+                severity: "warning"
+                status: "resolved"
+                resolved_by: "u_123"
+                resolution: "擴容後回復正常"
+                resolved_at: "2025-09-08T01:00:00Z"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/incidents/{incidentId}/assign:
     post:
@@ -861,6 +1570,23 @@ paths:
       responses:
         "200":
           description: 事件指派成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "Incident assigned"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/incidents/{incidentId}/comments:
     post:
@@ -891,6 +1617,23 @@ paths:
       responses:
         "201":
           description: 註記新增成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "Comment added"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/incidents/{incidentId}/correlated:
     get:
@@ -913,8 +1656,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/IncidentList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/incidents/generate-report:
     post:
@@ -949,6 +1696,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AIGeneratedReport"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Alert Rules - 告警規則
@@ -969,11 +1724,23 @@ paths:
           description: 是否啟用
       responses:
         "200":
-          description: 告警規則列表
+          description: 排程列表
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AlertRuleList"
+                $ref: "#/components/schemas/ScheduleList"
+              example:
+                items:
+                  - id: "sch_1"
+                    script_id: "s_1"
+                    cron_expression: "0 * * * *"
+                    enabled: true
+                    next_run: "2025-09-08T07:00:00Z"
+                total: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Alert Rules]
@@ -982,6 +1749,7 @@ paths:
       operationId: createAlertRule
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -995,6 +1763,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertRule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/alert-rules/{ruleId}:
     get:
@@ -1017,6 +1793,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertRule"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       tags: [Alert Rules]
@@ -1025,6 +1807,7 @@ paths:
       operationId: updateAlertRule
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: ruleId
           in: path
@@ -1044,6 +1827,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AlertRule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       tags: [Alert Rules]
@@ -1054,6 +1847,7 @@ paths:
       operationId: deleteAlertRule
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: ruleId
           in: path
@@ -1063,6 +1857,14 @@ paths:
       responses:
         "204":
           description: 規則刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/alert-rules/{ruleId}/test:
     post:
@@ -1094,6 +1896,14 @@ paths:
                     type: array
                     items:
                       type: string
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/alert-rules/{ruleId}/enable:
     post:
@@ -1112,6 +1922,21 @@ paths:
       responses:
         "200":
           description: 規則已啟用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "Rule enabled"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/alert-rules/{ruleId}/disable:
     post:
@@ -1130,16 +1955,35 @@ paths:
       responses:
         "200":
           description: 規則已停用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "Rule disabled"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/alerts:
     get:
       tags: [Incidents]
       summary: 獲取當前告警列表
-      description: 獲取所有活躍的告警
+      description: 獲取所有活躍的事件
       operationId: listAlerts
       security:
         - bearerAuth: []
       parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: severity
           in: query
           schema:
@@ -1201,6 +2045,74 @@ paths:
                     type: integer
                   resolved_count:
                     type: integer
+              example:
+                alerts:
+                  - id: "a_1001"
+                    name: "CPU usage high"
+                    severity: "P1"
+                    status: "firing"
+                    resource_name: "web-01"
+                    message: "CPU > 90% for 5m"
+                    fired_at: "2025-09-08T07:30:00Z"
+                    resolved_at: null
+                  - id: "a_0999"
+                    name: "DB connection failures"
+                    severity: "P2"
+                    status: "resolved"
+                    resource_name: "db-01"
+                    message: "5xx spikes"
+                    fired_at: "2025-09-08T06:00:00Z"
+                    resolved_at: "2025-09-08T06:05:00Z"
+                total: 2
+                firing_count: 1
+                resolved_count: 1
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/events:
+    get:
+      tags: [Notifications]
+      summary: SSE 事件流
+      description: 以 Server-Sent Events 提供即時更新（alerts、incidents 等）。建議前端自動重連並使用退避策略。
+      operationId: streamEvents
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: channels
+          in: query
+          required: false
+          description: 訂閱的事件頻道，逗號分隔（可用：alerts,incidents,automation,notifications）
+          schema:
+            type: string
+        - name: lastEventId
+          in: header
+          required: false
+          description: SSE 重連時用於從上次事件續傳
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 事件流（text/event-stream）
+          content:
+            text/event-stream:
+              schema:
+                type: string
+              example: |
+                event: ping
+                data: {"ts":"2025-09-08T07:28:00Z"}
+
+                event: alert_fired
+                data: {"id":"a_1","severity":"P1","resource_name":"web-01","message":"CPU>90%"}
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Automation - 自動化腳本
@@ -1214,6 +2126,10 @@ paths:
       security:
         - bearerAuth: []
       parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: category
           in: query
           schema:
@@ -1226,6 +2142,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ScriptList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Automation]
@@ -1234,6 +2154,7 @@ paths:
       operationId: createScript
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -1247,6 +2168,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Script"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/automation/scripts/{scriptId}:
     get:
@@ -1269,6 +2198,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Script"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       tags: [Automation]
@@ -1277,6 +2212,7 @@ paths:
       operationId: updateScript
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: scriptId
           in: path
@@ -1296,6 +2232,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Script"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       tags: [Automation]
@@ -1306,6 +2252,7 @@ paths:
       operationId: deleteScript
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: scriptId
           in: path
@@ -1315,6 +2262,14 @@ paths:
       responses:
         "204":
           description: 腳本刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/automation/scripts/{scriptId}/run:
     post:
@@ -1324,6 +2279,7 @@ paths:
       tags: [Automation]
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: scriptId
           in: path
@@ -1343,6 +2299,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ExecutionTaskResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/automation/execute:
     post:
@@ -1352,6 +2318,7 @@ paths:
       operationId: executeScript
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -1365,6 +2332,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ExecutionTaskResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/automation/executions:
     get:
@@ -1377,6 +2354,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: script_id
           in: query
           schema:
@@ -1393,6 +2372,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ExecutionList"
+              example:
+                items:
+                  - id: "e_1"
+                    script_id: "s_1"
+                    script_name: "Restart Service"
+                    status: "success"
+                    started_at: "2025-09-08T00:00:00Z"
+                    completed_at: "2025-09-08T00:00:05Z"
+                pagination:
+                  page: 1
+                  page_size: 20
+                  total: 1
+                  total_pages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/automation/executions/{executionId}:
     get:
@@ -1415,6 +2411,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Execution"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/automation/schedules:
     get:
@@ -1424,6 +2426,11 @@ paths:
       operationId: listSchedules
       security:
         - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
       responses:
         "200":
           description: 排程列表
@@ -1431,6 +2438,10 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ScheduleList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     post:
       tags: [Automation]
       summary: 創建排程
@@ -1438,6 +2449,7 @@ paths:
       operationId: createSchedule
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -1451,6 +2463,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Schedule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/automation/schedules/{scheduleId}:
     get:
@@ -1473,8 +2493,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Schedule"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags: [Automation]
       summary: 更新排程
@@ -1482,6 +2506,7 @@ paths:
       operationId: updateSchedule
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: scheduleId
           in: path
@@ -1501,8 +2526,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Schedule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     delete:
       tags: [Automation]
       summary: 刪除排程
@@ -1510,6 +2543,7 @@ paths:
       operationId: deleteSchedule
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: scheduleId
           in: path
@@ -1519,8 +2553,14 @@ paths:
       responses:
         "204":
           description: 排程刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Users - 使用者管理
@@ -1533,6 +2573,7 @@ paths:
       operationId: listUsers
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -1552,6 +2593,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserList"
+              example:
+                items:
+                  - id: "u_1"
+                    username: "alice"
+                    email: "alice@example.com"
+                    role: "team_member"
+                  - id: "u_2"
+                    username: "bob"
+                    email: "bob@example.com"
+                    role: "team_manager"
+                pagination:
+                  page: 1
+                  page_size: 20
+                  total: 2
+                  total_pages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Users]
@@ -1560,6 +2622,7 @@ paths:
       operationId: createUser
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       requestBody:
         required: true
         content:
@@ -1573,6 +2636,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/users/{userId}:
     get:
@@ -1595,6 +2668,13 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+              example:
+                id: "u_1"
+                username: "alice"
+                email: "alice@example.com"
+                role: "team_member"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags: [Users]
@@ -1603,6 +2683,7 @@ paths:
       operationId: updateUser
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       parameters:
         - name: userId
           in: path
@@ -1622,6 +2703,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       tags: [Users]
@@ -1632,6 +2725,7 @@ paths:
       operationId: deleteUser
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       parameters:
         - name: userId
           in: path
@@ -1641,6 +2735,16 @@ paths:
       responses:
         "204":
           description: 使用者刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/users/profile:
     get:
@@ -1657,11 +2761,40 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfile"
+              example:
+                id: "u_123"
+                username: "zoe"
+                email: "zoe@example.com"
+                email_verified: true
+                name: "Zoe"
+                phone: "+886900000000"
+                phone_verified: true
+                avatar_url: "https://example.com/avatars/zoe.png"
+                department: "SRE"
+                teams:
+                  - id: "t_001"
+                    name: "SRE Team"
+                notification_preferences:
+                  email:
+                    enabled: true
+                    severity_filter: [critical, error]
+                  sms:
+                    enabled: false
+                  line:
+                    enabled: false
+                  quiet_hours:
+                    enabled: true
+                    start: "22:00:00"
+                    end: "07:00:00"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       tags: [Users]
       summary: 更新個人資料
-      description: 更新當前登入使用者的個人資料
+      description: 更新當前使用者的個人資料
       operationId: updateProfile
       security:
         - bearerAuth: []
@@ -1678,6 +2811,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/users/profile/change-password:
     post:
@@ -1706,6 +2845,12 @@ paths:
       responses:
         "200":
           description: 密碼修改成功
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/users/profile/notifications:
     put:
@@ -1724,6 +2869,12 @@ paths:
       responses:
         "200":
           description: 通知設定更新成功
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/users/profile/verify-contact:
     post:
@@ -1755,6 +2906,12 @@ paths:
       responses:
         "200":
           description: 驗證成功或驗證碼已發送
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Teams - 團隊管理
@@ -1767,6 +2924,12 @@ paths:
       operationId: listTeams
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
       responses:
         "200":
           description: 團隊列表
@@ -1774,6 +2937,20 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TeamList"
+              example:
+                items:
+                  - id: "t_001"
+                    name: "SRE Team"
+                    description: "Site Reliability Engineering"
+                    manager_id: "u_mgr"
+                    member_count: 3
+                total: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Teams]
@@ -1782,6 +2959,7 @@ paths:
       operationId: createTeam
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -1795,6 +2973,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/teams/{teamId}:
     get:
@@ -1817,6 +3003,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+              example:
+                id: "t_001"
+                name: "SRE Team"
+                description: "Site Reliability Engineering"
+                manager_id: "u_mgr"
+                member_count: 3
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags: [Teams]
@@ -1825,6 +3019,7 @@ paths:
       operationId: updateTeam
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: teamId
           in: path
@@ -1844,6 +3039,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Team"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       tags: [Teams]
@@ -1852,6 +3057,7 @@ paths:
       operationId: deleteTeam
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: teamId
           in: path
@@ -1861,6 +3067,14 @@ paths:
       responses:
         "204":
           description: 團隊刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/teams/{teamId}/members:
     post:
@@ -1896,6 +3110,13 @@ paths:
       responses:
         "200":
           description: 成員管理成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "Team members updated"
 
   # ============================================
   # Notifications - 通知管道
@@ -1908,6 +3129,12 @@ paths:
       operationId: listNotificationChannels
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
       responses:
         "200":
           description: 通知管道列表
@@ -1915,6 +3142,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationChannelList"
+              example:
+                items:
+                  - id: "nc_email_01"
+                    name: "Primary Email"
+                    type: "email"
+                    enabled: true
+                  - id: "nc_slack_01"
+                    name: "SRE Slack"
+                    type: "slack"
+                    enabled: false
+                total: 2
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Notifications]
@@ -1923,6 +3167,7 @@ paths:
       operationId: createNotificationChannel
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       requestBody:
         required: true
         content:
@@ -1936,6 +3181,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationChannel"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/notification-channels/{channelId}:
     get:
@@ -1958,6 +3211,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationChannel"
+              example:
+                id: "nc_email_01"
+                name: "Primary Email"
+                type: "email"
+                enabled: true
+                configuration:
+                  smtp_host: "smtp.example.com"
+                  smtp_port: 587
+                  smtp_username: "noreply@example.com"
+                  smtp_from: "noreply@example.com"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
     put:
       tags: [Notifications]
@@ -1966,6 +3231,7 @@ paths:
       operationId: updateNotificationChannel
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       parameters:
         - name: channelId
           in: path
@@ -1985,6 +3251,16 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/NotificationChannel"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     delete:
       tags: [Notifications]
@@ -1993,6 +3269,7 @@ paths:
       operationId: deleteNotificationChannel
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       parameters:
         - name: channelId
           in: path
@@ -2002,6 +3279,14 @@ paths:
       responses:
         "204":
           description: 通知管道刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/notification-channels/{channelId}/test:
     post:
@@ -2011,6 +3296,7 @@ paths:
       operationId: testNotificationChannel
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       parameters:
         - name: channelId
           in: path
@@ -2038,6 +3324,17 @@ paths:
                     type: boolean
                   message:
                     type: string
+              example:
+                success: true
+                message: "OK"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Settings - 系統設定
@@ -2050,6 +3347,7 @@ paths:
       operationId: getSettings
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       responses:
         "200":
           description: 系統設定
@@ -2057,6 +3355,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SystemSettings"
+              example:
+                general:
+                  site_name: "SRE Platform"
+                  site_url: "https://sre.example.com"
+                  time_zone: "Asia/Taipei"
+                  language: "zh-TW"
+                integration:
+                  grafana_url: "https://grafana.example.com"
+                  prometheus_url: "https://prometheus.example.com"
+                  loki_url: "https://loki.example.com"
+                  keycloak_url: "https://keycloak.example.com"
+                notification:
+                  default_channel: "nc_email_01"
+                  retry_count: 3
+                  retry_delay: 30
+                maintenance:
+                  auto_acknowledge: true
+                  auto_resolve: false
+                  default_assignee: "u_oncall"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     put:
       tags: [Settings]
@@ -2065,6 +3388,7 @@ paths:
       operationId: updateSettings
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       requestBody:
         required: true
         content:
@@ -2074,15 +3398,29 @@ paths:
       responses:
         "200":
           description: 系統設定更新成功
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/settings/maintenance-windows:
     get:
       tags: [Settings]
-      summary: 獲取維護時段
+      summary: 獲取維護窗口
       description: 獲取所有維護時段設定
       operationId: listMaintenanceWindows
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
       responses:
         "200":
           description: 維護時段列表
@@ -2090,11 +3428,28 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MaintenanceWindowList"
+              example:
+                items:
+                  - id: "mw_001"
+                    name: "DB Maintenance"
+                    start_time: "2025-09-10T01:00:00Z"
+                    end_time: "2025-09-10T03:00:00Z"
+                  - id: "mw_002"
+                    name: "Web Rollout"
+                    start_time: "2025-09-12T02:00:00Z"
+                    end_time: "2025-09-12T04:00:00Z"
+                total: 2
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
     post:
       tags: [Settings]
-      summary: 創建維護時段
-      description: 創建新的維護時段
+      summary: 創建維護窗口
+      description: 創建新的維護窗口
       operationId: createMaintenanceWindow
       security:
         - bearerAuth: []
@@ -2111,11 +3466,21 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MaintenanceWindow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/settings/maintenance-windows/{windowId}:
     get:
       tags: [Settings]
-      summary: 獲取單一維護時段
+      summary: 獲取單一維護窗口
       description: 獲取指定維護時段的詳細資訊
       operationId: getMaintenanceWindow
       security:
@@ -2133,12 +3498,18 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MaintenanceWindow"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     put:
       tags: [Settings]
-      summary: 更新維護時段
-      description: 更新指定的維護時段
+      summary: 更新維護窗口
+      description: 更新指定的維護窗口
       operationId: updateMaintenanceWindow
       security:
         - bearerAuth: []
@@ -2161,12 +3532,22 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/MaintenanceWindow"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
     delete:
       tags: [Settings]
-      summary: 刪除維護時段
-      description: 刪除指定的維護時段
+      summary: 刪除維護窗口
+      description: 刪除指定的維護窗口
       operationId: deleteMaintenanceWindow
       security:
         - bearerAuth: []
@@ -2179,8 +3560,16 @@ paths:
       responses:
         "204":
           description: 維護時段刪除成功
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Audit - 審計日誌
@@ -2193,6 +3582,7 @@ paths:
       operationId: queryAuditLogs
       security:
         - bearerAuth: []
+      x-roles: [super_admin]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -2226,6 +3616,43 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AuditLogList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/audit-logs/{logId}:
+    get:
+      tags: [Audit]
+      summary: 獲取審計日誌詳情
+      description: 獲取單筆審計日誌的詳細資訊
+      operationId: getAuditLog
+      security:
+        - bearerAuth: []
+      x-roles: [super_admin]
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 審計日誌詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLog"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   # ============================================
   # Callbacks
@@ -2255,6 +3682,17 @@ paths:
       responses:
         "200":
           description: 回調已接收
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "Callback received"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/notifications:
     get:
@@ -2267,6 +3705,8 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           description: "過濾通知狀態"
@@ -2280,6 +3720,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserNotificationList"
+              example:
+                items:
+                  - id: "n_001"
+                    title: "新告警：CPU 使用率過高"
+                    message: "web-01 CPU > 90% 持續 5 分鐘"
+                    type: "alert"
+                    severity: "warning"
+                    status: "unread"
+                    created_at: "2025-09-08T00:10:00Z"
+                pagination:
+                  page: 1
+                  page_size: 20
+                  total: 1
+                  total_pages: 1
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/notifications/summary:
     get:
@@ -2296,6 +3754,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserNotificationSummary"
+              example:
+                unread_count: 7
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/notifications/mark-all-as-read:
     post:
@@ -2308,6 +3772,17 @@ paths:
       responses:
         "200":
           description: 操作成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "All notifications marked as read"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/notifications/{notificationId}/mark-as-read:
     put:
@@ -2326,6 +3801,19 @@ paths:
       responses:
         "200":
           description: 操作成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+              example:
+                success: true
+                message: "Notification marked as read"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
   /api/v1/capacity-planning/analyze:
     post:
@@ -2351,14 +3839,150 @@ paths:
         "400":
           $ref: "#/components/responses/BadRequest"
 
+  /api/v1/capacity/forecast:
+    post:
+      tags: [Capacity Planning]
+      summary: 預測資源使用
+      description: "根據歷史數據預測指定資源在時間範圍內的使用趨勢"
+      operationId: forecastCapacity
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CapacityForecastRequest"
+      responses:
+        "200":
+          description: "容量預測結果"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapacityForecastResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /api/v1/capacity/reports:
+    get:
+      tags: [Capacity Planning]
+      summary: 獲取容量報告列表
+      description: "獲取容量規劃報告的列表，支援分頁和過濾"
+      operationId: listCapacityReports
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: resource_id
+          in: query
+          schema:
+            type: string
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: "容量報告列表"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapacityReportList"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/capacity/reports/{reportId}:
+    get:
+      tags: [Capacity Planning]
+      summary: 獲取容量報告詳情
+      description: "獲取指定容量報告的詳細資訊"
+      operationId: getCapacityReport
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: "容量報告詳情"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapacityReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/diagnostics/capacity-analysis:
+    post:
+      tags: [Capacity Planning]
+      summary: 容量分析（別名）
+      description: 此為相容性別名端點，與 /api/v1/capacity-planning/analyze 等效。
+      operationId: analyzeCapacityAlias
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CapacityAnalysisRequest"
+      responses:
+        "200":
+          description: "容量分析結果"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CapacityAnalysisResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
   /api/v1/admin/diagnostics:
     get:
       tags: [Admin]
       summary: 獲取平台自身狀態診斷
       description: 獲取平台關鍵健康指標，如自動化腳本和通知管道的失敗率。
       operationId: getPlatformDiagnostics
+      x-roles: [super_admin]
       security:
-        - bearerAuth: [] # Should probably be restricted to admins
+        - bearerAuth: []
+      parameters:
+        - name: period
+          in: query
+          description: 時間範圍（與 start_time/end_time 擇一使用）
+          schema:
+            type: string
+            enum: [1h, 24h, 7d, 30d]
+            default: 24h
+        - name: start_time
+          in: query
+          description: 起始時間（ISO 8601）
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          description: 結束時間（ISO 8601）
+          schema:
+            type: string
+            format: date-time
       responses:
         "200":
           description: "成功獲取平台診斷資訊"
@@ -2366,6 +3990,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PlatformDiagnostics"
+              example:
+                automation_health:
+                  - script_id: "s_1"
+                    script_name: "Restart Service"
+                    total_runs: 42
+                    failure_rate: 0.12
+                notification_health:
+                  - channel_id: "c_email"
+                    channel_name: "Email"
+                    sent_count: 1200
+                    failure_count: 7
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
 
 # ============================================
 # Components
@@ -2405,6 +4046,22 @@ components:
       description: 資源 ID
       schema:
         type: string
+
+    SortByParam:
+      name: sort_by
+      in: query
+      description: 排序欄位（依端點支援的欄位名稱）
+      schema:
+        type: string
+
+    SortOrderParam:
+      name: sort_order
+      in: query
+      description: 排序方向
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
 
   responses:
     BadRequest:
@@ -2471,6 +4128,26 @@ components:
         request_id:
           type: string
           description: 請求追蹤 ID
+      example:
+        error: "FORBIDDEN"
+        message: "無權限存取此資源"
+        details:
+          required_role: "super_admin"
+        request_id: "req-1234567890"
+
+    OperationResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      example:
+        success: true
+        message: "OK"
 
     Pagination:
       type: object
@@ -2487,6 +4164,11 @@ components:
         total_pages:
           type: integer
           description: 總頁數
+      example:
+        page: 1
+        page_size: 20
+        total: 47
+        total_pages: 3
 
     # ============================================
     # Core Schemas
@@ -2549,6 +4231,57 @@ components:
           items:
             $ref: "#/components/schemas/MetricDefinition"
 
+    AuthLoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+      example:
+        username: "dev@example.com"
+        password: "password123"
+
+    TokenRefreshRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+      example:
+        refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh"
+
+    AuthTokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          default: Bearer
+        expires_in:
+          type: integer
+          description: access_token 的有效秒數
+        user:
+          $ref: "#/components/schemas/UserProfile"
+      example:
+        access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.access"
+        refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.refresh"
+        token_type: "Bearer"
+        expires_in: 3600
+        user:
+          id: "u_123"
+          username: "dev"
+          email: "dev@example.com"
+          name: "Dev User"
+
     AutocompleteResult:
       type: object
       properties:
@@ -2558,6 +4291,9 @@ components:
         name:
           type: string
           description: "實體名稱"
+      example:
+        id: "r_1"
+        name: "web-01"
 
     SearchResultItem:
       type: object
@@ -2577,6 +4313,14 @@ components:
             - $ref: "#/components/schemas/User"
             - $ref: "#/components/schemas/AlertRule"
             - $ref: "#/components/schemas/Script"
+      example:
+        type: "resource"
+        score: 0.92
+        item:
+          id: "r_1"
+          name: "web-01"
+          type: "server"
+          status: "healthy"
 
     RoleDefinition:
       type: object
@@ -2590,6 +4334,56 @@ components:
         description:
           type: string
           description: "角色的權限描述"
+      example:
+        name: "super_admin"
+        display_name: "超級管理員"
+        description: "擁有平台所有管理操作權限"
+
+    RoleCreateRequest:
+      type: object
+      required:
+        - name
+        - display_name
+        - permissions
+      properties:
+        name:
+          type: string
+          description: "角色的唯一識別名稱"
+        display_name:
+          type: string
+          description: "角色的顯示名稱"
+        description:
+          type: string
+          description: "角色的描述"
+        permissions:
+          type: array
+          items:
+            type: string
+          description: "角色擁有的權限列表"
+      example:
+        name: "custom_role"
+        display_name: "自定義角色"
+        description: "具有特定權限的自定義角色"
+        permissions: ["read_resources", "write_resources"]
+
+    RoleUpdateRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+          description: "角色的顯示名稱"
+        description:
+          type: string
+          description: "角色的描述"
+        permissions:
+          type: array
+          items:
+            type: string
+          description: "角色擁有的權限列表"
+      example:
+        display_name: "更新的自定義角色"
+        description: "更新後的描述"
+        permissions: ["read_resources", "write_resources", "delete_resources"]
 
     PlatformDiagnostics:
       type: object
@@ -2621,6 +4415,17 @@ components:
                 type: integer
               failure_count:
                 type: integer
+      example:
+        automation_health:
+          - script_id: "s_1"
+            script_name: "Restart Service"
+            total_runs: 42
+            failure_rate: 0.12
+        notification_health:
+          - channel_id: "c_email"
+            channel_name: "Email"
+            sent_count: 1200
+            failure_count: 7
 
     # ============================================
     # Dashboard Schemas
@@ -2661,6 +4466,20 @@ components:
             incident_rate:
               type: number
               description: 事件發生率
+      example:
+        alerts:
+          new: 5
+          processing: 3
+          resolved_today: 12
+        resources:
+          total: 250
+          healthy: 220
+          warning: 20
+          critical: 10
+        kpis:
+          availability: 99.95
+          mttr: 37
+          incident_rate: 0.12
 
     TrendData:
       type: object
@@ -2683,6 +4502,19 @@ components:
                 type: integer
               resources_unhealthy:
                 type: integer
+      example:
+        period: "24h"
+        data_points:
+          - timestamp: "2025-09-07T01:00:00Z"
+            alerts: 2
+            incidents: 1
+            resources_healthy: 218
+            resources_unhealthy: 32
+          - timestamp: "2025-09-07T02:00:00Z"
+            alerts: 1
+            incidents: 0
+            resources_healthy: 220
+            resources_unhealthy: 30
 
     ResourceDistribution:
       type: object
@@ -2719,6 +4551,161 @@ components:
                 type: integer
               critical:
                 type: integer
+      example:
+        by_status:
+          healthy: 220
+          warning: 20
+          critical: 10
+          unknown: 0
+        by_type:
+          server: 120
+          database: 20
+          application: 60
+          network: 30
+          container: 20
+        by_group:
+
+    CapacityForecastRequest:
+      type: object
+      required:
+        - resource_ids
+        - metric_name
+        - forecast_period
+      properties:
+        resource_ids:
+          type: array
+          items:
+            type: string
+          description: "要預測的資源ID列表"
+        metric_name:
+          type: string
+          description: "要預測的指標名稱"
+        forecast_period:
+          type: string
+          enum: [7d, 30d, 90d]
+          description: "預測時間範圍"
+        start_time:
+          type: string
+          format: date-time
+          description: "預測開始時間（可選，預設為現在）"
+      example:
+        resource_ids: ["r_1", "r_2"]
+        metric_name: "cpu_usage"
+        forecast_period: "30d"
+
+    CapacityForecastResponse:
+      type: object
+      properties:
+        forecast_data:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              predicted_value:
+                type: number
+                format: float
+              confidence_interval:
+                type: object
+                properties:
+                  lower:
+                    type: number
+                    format: float
+                  upper:
+                    type: number
+                    format: float
+        recommendations:
+          type: array
+          items:
+            type: string
+          description: "容量規劃建議"
+        alert_threshold:
+          type: number
+          format: float
+          description: "警戒線閾值"
+      example:
+        forecast_data:
+          - timestamp: "2025-09-15T00:00:00Z"
+            predicted_value: 75.5
+            confidence_interval:
+              lower: 70.2
+              upper: 80.8
+        recommendations:
+          - "預計在30天內達到80%使用率"
+          - "建議增加資源容量"
+        alert_threshold: 80.0
+
+    CapacityReportList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CapacityReport"
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+
+    CapacityReport:
+      type: object
+      properties:
+        id:
+          type: string
+        resource_id:
+          type: string
+        resource_name:
+          type: string
+        metric_name:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+        forecast_data:
+          type: array
+          items:
+            $ref: "#/components/schemas/CapacityDataPoint"
+        recommendations:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+      example:
+        id: "cr_1"
+        resource_id: "r_1"
+        resource_name: "web-01"
+        metric_name: "cpu_usage"
+        generated_at: "2025-09-08T00:00:00Z"
+        forecast_data:
+          - timestamp: "2025-09-15T00:00:00Z"
+            predicted_value: 75.5
+        recommendations:
+          - "預計在30天內達到80%使用率"
+        created_at: "2025-09-08T00:00:00Z"
+
+    CapacityDataPoint:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        predicted_value:
+          type: number
+          format: float
+        actual_value:
+          type: number
+          format: float
+        confidence_interval:
+          type: object
+          properties:
+            lower:
+              type: number
+              format: float
+            upper:
+              type: number
+              format: float
 
     # ============================================
     # Resource Schemas
@@ -2784,6 +4771,19 @@ components:
         updated_at:
           type: string
           format: date-time
+      example:
+        id: "r_1"
+        name: "web-01"
+        type: "server"
+        status: "healthy"
+        ip_address: "10.0.0.11"
+        group_id: "g_1"
+        group_name: "Web"
+        tags: ["prod", "frontend"]
+        owner: "u_1"
+        description: "Frontend web server"
+        created_at: "2025-09-07T12:00:00Z"
+        updated_at: "2025-09-08T01:00:00Z"
 
     ResourceList:
       type: object
@@ -2794,6 +4794,23 @@ components:
             $ref: "#/components/schemas/Resource"
         pagination:
           $ref: "#/components/schemas/Pagination"
+      example:
+        items:
+          - id: "r_1"
+            name: "db-01"
+            type: "database"
+            status: "healthy"
+            ip_address: "10.0.0.10"
+          - id: "r_2"
+            name: "web-02"
+            type: "server"
+            status: "warning"
+            ip_address: "10.0.0.21"
+        pagination:
+          page: 1
+          page_size: 20
+          total: 2
+          total_pages: 1
 
     ResourceCreateRequest:
       type: object
@@ -2852,7 +4869,7 @@ components:
       properties:
         operation:
           type: string
-          enum: [delete, add_to_group, remove_from_group, update_tags]
+          enum: [delete, move_group, tag_add, tag_remove]
         resource_ids:
           type: array
           items:
@@ -3273,6 +5290,38 @@ components:
                 type: number
               predicted:
                 type: number
+      example:
+        current_usage:
+          average: 62.5
+          peak: 89.3
+          percentile_95: 78.1
+        forecast:
+          trend: increasing
+          days_to_capacity: 45
+          growth_rate: 12.3
+          capacity_alerts:
+            - alert_type: "cpu_threshold"
+              threshold: "80%"
+              estimated_date: "2025-10-23T00:00:00Z"
+              days_remaining: 45
+              severity: "warning"
+        recommendations:
+          - type: scale_up
+            resource: "web-cluster"
+            priority: high
+            current_allocation: 8
+            recommended_allocation: 12
+            reasoning: "預測 45 天後達到 80% 警戒，建議擴容節點。"
+            cost_impact:
+              monthly_increase: 400
+              currency: USD
+        chart_data:
+          - date: "2025-08-25"
+            historical: 58
+            predicted: 60
+          - date: "2025-08-26"
+            historical: 60
+            predicted: 62
 
     # ============================================
     # Incident Schemas
@@ -3356,6 +5405,25 @@ components:
             $ref: "#/components/schemas/Incident"
         pagination:
           $ref: "#/components/schemas/Pagination"
+      example:
+        items:
+          - id: "i_1001"
+            title: "CPU 高於 90%"
+            severity: "warning"
+            status: "new"
+            affected_resources: ["r_2"]
+            created_at: "2025-09-08T00:12:00Z"
+          - id: "i_1000"
+            title: "資料庫連線失敗"
+            severity: "critical"
+            status: "acknowledged"
+            affected_resources: ["r_1"]
+            created_at: "2025-09-07T23:50:00Z"
+        pagination:
+          page: 1
+          page_size: 20
+          total: 2
+          total_pages: 1
 
     IncidentCreateRequest:
       type: object
@@ -4007,6 +6075,31 @@ components:
                 type: string
         notification_preferences:
           $ref: "#/components/schemas/NotificationPreferences"
+      example:
+        id: "u_123"
+        username: "zoe"
+        email: "zoe@example.com"
+        email_verified: true
+        name: "Zoe"
+        phone: "+886900000000"
+        phone_verified: true
+        avatar_url: "https://example.com/avatars/zoe.png"
+        department: "SRE"
+        teams:
+          - id: "t_001"
+            name: "SRE Team"
+        notification_preferences:
+          email:
+            enabled: true
+            severity_filter: [critical, error]
+          sms:
+            enabled: false
+          line:
+            enabled: false
+          quiet_hours:
+            enabled: true
+            start: "22:00:00"
+            end: "07:00:00"
 
     ProfileUpdateRequest:
       type: object
@@ -4125,6 +6218,27 @@ components:
         updated_at:
           type: string
           format: date-time
+      example:
+        id: "t_001"
+        name: "SRE Team"
+        description: "Site Reliability Engineering"
+        manager_id: "u_mgr"
+        manager_name: "Zoe"
+        member_count: 3
+        members:
+          - id: "u_1"
+            name: "Alice"
+            role: "team_member"
+          - id: "u_2"
+            name: "Bob"
+            role: "team_member"
+        notification_settings:
+          primary_contact: "u_1"
+          escalation_contact: "u_2"
+          subscribers:
+            - user_id: "u_1"
+              user_name: "Alice"
+              notify_on_severities: [critical, error]
 
     TeamList:
       type: object
@@ -4239,6 +6353,20 @@ components:
         updated_at:
           type: string
           format: date-time
+      example:
+        id: "nc_email_01"
+        name: "Primary Email"
+        type: "email"
+        enabled: true
+        configuration:
+          smtp_host: "smtp.example.com"
+          smtp_port: 587
+          smtp_username: "noreply@example.com"
+          smtp_from: "noreply@example.com"
+        test_status:
+          last_test: "2025-09-07T12:00:00Z"
+          success: true
+          message: "OK"
 
     NotificationChannelList:
       type: object
@@ -4249,6 +6377,17 @@ components:
             $ref: "#/components/schemas/NotificationChannel"
         total:
           type: integer
+      example:
+        items:
+          - id: "nc_email_01"
+            name: "Primary Email"
+            type: "email"
+            enabled: true
+          - id: "nc_slack_01"
+            name: "SRE Slack"
+            type: "slack"
+            enabled: false
+        total: 2
 
     NotificationChannelCreateRequest:
       type: object
@@ -4295,7 +6434,7 @@ components:
               type: string
             language:
               type: string
-              enum: [zh-TW, zh-CN, en-US]
+              enum: [zh-TW, en-US]
         integration:
           type: object
           properties:
@@ -4325,6 +6464,25 @@ components:
               type: boolean
             default_assignee:
               type: string
+      example:
+        general:
+          site_name: "SRE Platform"
+          site_url: "https://sre.example.com"
+          time_zone: "Asia/Taipei"
+          language: "zh-TW"
+        integration:
+          grafana_url: "https://grafana.example.com"
+          prometheus_url: "https://prometheus.example.com"
+          loki_url: "https://loki.example.com"
+          keycloak_url: "https://keycloak.example.com"
+        notification:
+          default_channel: "nc_email_01"
+          retry_count: 3
+          retry_delay: 30
+        maintenance:
+          auto_acknowledge: true
+          auto_resolve: false
+          default_assignee: "u_oncall"
 
     MaintenanceWindow:
       type: object
@@ -4355,6 +6513,17 @@ components:
         created_at:
           type: string
           format: date-time
+      example:
+        id: "mw_001"
+        name: "DB Maintenance"
+        description: "Weekly DB patching"
+        start_time: "2025-09-10T01:00:00Z"
+        end_time: "2025-09-10T03:00:00Z"
+        recurring: true
+        recurrence_pattern: "weekly"
+        affected_resources: ["r_1", "r_3"]
+        created_by: "u_admin"
+        created_at: "2025-09-08T00:00:00Z"
 
     MaintenanceWindowList:
       type: object
@@ -4365,6 +6534,17 @@ components:
             $ref: "#/components/schemas/MaintenanceWindow"
         total:
           type: integer
+      example:
+        items:
+          - id: "mw_001"
+            name: "DB Maintenance"
+            start_time: "2025-09-10T01:00:00Z"
+            end_time: "2025-09-10T03:00:00Z"
+          - id: "mw_002"
+            name: "Web Rollout"
+            start_time: "2025-09-12T02:00:00Z"
+            end_time: "2025-09-12T04:00:00Z"
+        total: 2
 
     MaintenanceWindowCreateRequest:
       type: object
@@ -4392,6 +6572,14 @@ components:
           type: array
           items:
             type: string
+      example:
+        name: "DB Maintenance"
+        description: "Weekly DB patching"
+        start_time: "2025-09-10T01:00:00Z"
+        end_time: "2025-09-10T03:00:00Z"
+        recurring: true
+        recurrence_pattern: "weekly"
+        affected_resources: ["r_1", "r_3"]
 
     MaintenanceWindowUpdateRequest:
       type: object
@@ -4415,6 +6603,11 @@ components:
           type: array
           items:
             type: string
+      example:
+        name: "DB Maintenance Window"
+        description: "Extended window"
+        start_time: "2025-09-10T01:30:00Z"
+        end_time: "2025-09-10T03:30:00Z"
 
     # ============================================
     # Audit Log Schemas
@@ -4456,6 +6649,23 @@ components:
           type: string
         user_agent:
           type: string
+      example:
+        id: "al_001"
+        timestamp: "2025-09-08T00:00:00Z"
+        user_id: "u_123"
+        username: "zoe"
+        action: "update"
+        resource_type: "resource"
+        resource_id: "r_1"
+        resource_name: "web-01"
+        changes:
+          before:
+            status: "warning"
+          after:
+            status: "healthy"
+        result: "success"
+        ip_address: "203.0.113.10"
+        user_agent: "Mozilla/5.0"
 
     AuditLogList:
       type: object
@@ -4466,9 +6676,25 @@ components:
             $ref: "#/components/schemas/AuditLog"
         pagination:
           $ref: "#/components/schemas/Pagination"
+      example:
+        items:
+          - id: "al_001"
+            timestamp: "2025-09-08T00:00:00Z"
+            user_id: "u_123"
+            username: "zoe"
+            action: "update"
+            resource_type: "resource"
+            resource_id: "r_1"
+            resource_name: "web-01"
+            result: "success"
+        pagination:
+          page: 1
+          page_size: 20
+          total: 1
+          total_pages: 1
 
     # ============================================
-    # Notification Center Schemas (G-01)
+    # Notification Center Schemas
     # ============================================
     UserNotification:
       type: object
@@ -4497,6 +6723,15 @@ components:
         link:
           type: string
           description: "相關資源的連結 URL"
+      example:
+        id: "n_001"
+        title: "新告警：CPU 使用率過高"
+        message: "web-01 CPU > 90% 持續 5 分鐘"
+        type: "alert"
+        severity: "warning"
+        status: "unread"
+        created_at: "2025-09-08T00:10:00Z"
+        link: "/incidents/i_1001"
 
     UserNotificationList:
       type: object
@@ -4507,9 +6742,25 @@ components:
             $ref: "#/components/schemas/UserNotification"
         pagination:
           $ref: "#/components/schemas/Pagination"
+      example:
+        items:
+          - id: "n_001"
+            title: "新告警：CPU 使用率過高"
+            message: "web-01 CPU > 90% 持續 5 分鐘"
+            type: "alert"
+            severity: "warning"
+            status: "unread"
+            created_at: "2025-09-08T00:10:00Z"
+        pagination:
+          page: 1
+          page_size: 20
+          total: 1
+          total_pages: 1
 
     UserNotificationSummary:
       type: object
       properties:
         unread_count:
           type: integer
+      example:
+        unread_count: 7
