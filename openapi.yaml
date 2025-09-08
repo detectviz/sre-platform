@@ -3835,6 +3835,7 @@ paths:
       operationId: analyzeCapacity
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -3859,6 +3860,7 @@ paths:
       operationId: forecastCapacity
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       requestBody:
         required: true
         content:
@@ -3883,6 +3885,7 @@ paths:
       operationId: listCapacityReports
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -3922,6 +3925,7 @@ paths:
       operationId: getCapacityReport
       security:
         - bearerAuth: []
+      x-roles: [team_manager, super_admin]
       parameters:
         - name: reportId
           in: path
@@ -5290,6 +5294,19 @@ components:
                   currency:
                     type: string
                     default: USD
+              actionable:
+                type: boolean
+                description: "此建議是否可直接觸發動作"
+                example: true
+              action_type:
+                type: string
+                enum: [automation_script, external_link]
+                description: "動作類型"
+                example: "automation_script"
+              action_target:
+                type: string
+                description: "動作目標，例如 script_id 或一個 URL"
+                example: "script_123_auto_scale_up"
         chart_data:
           type: array
           items:
