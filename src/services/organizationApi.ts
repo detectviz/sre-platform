@@ -135,17 +135,6 @@ export const organizationApiSlice = createApi({
       },
       invalidatesTags: (result, error, { id }) => [{ type: 'Team', id }, { type: 'Team', id: 'LIST' }],
     }),
-    batchDeleteTeams: builder.mutation<OperationResult, string[]>({
-      async queryFn(ids) {
-        try {
-          const data = await teamsApiClient.batchDeleteTeams({ batchDeleteTeamsRequest: { ids } });
-          return { data };
-        } catch (error) {
-          return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
-        }
-      },
-      invalidatesTags: [{ type: 'Team', id: 'LIST' }],
-    }),
   }),
 });
 
@@ -160,5 +149,4 @@ export const {
   useDeleteTeamMutation,
   useCreateTeamMutation,
   useUpdateTeamMutation,
-  useBatchDeleteTeamsMutation,
 } = organizationApiSlice;

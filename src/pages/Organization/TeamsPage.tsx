@@ -5,12 +5,12 @@ import {
   useDeleteTeamMutation,
   useCreateTeamMutation,
   useUpdateTeamMutation,
-  useBatchDeleteTeamsMutation,
+  // useBatchDeleteTeamsMutation, // This hook is now removed
 } from '../../services/organizationApi';
 import TeamsTable from '../../features/organization/components/TeamsTable';
 import TeamsFilter from '../../features/organization/components/TeamsFilter';
 import TeamFormModal from '../../features/organization/components/TeamFormModal';
-import TeamsBatchActions from '../../features/organization/components/TeamsBatchActions';
+// import TeamsBatchActions from '../../features/organization/components/TeamsBatchActions'; // This component is now removed
 import { Team } from '../../services/api-client';
 
 const { Title } = Typography;
@@ -32,7 +32,7 @@ const TeamsPage: React.FC = () => {
   const [deleteTeam] = useDeleteTeamMutation();
   const [createTeam, { isLoading: isCreating }] = useCreateTeamMutation();
   const [updateTeam, { isLoading: isUpdating }] = useUpdateTeamMutation();
-  const [batchDeleteTeams, { isLoading: isBatchDeleting }] = useBatchDeleteTeamsMutation();
+  // const [batchDeleteTeams, { isLoading: isBatchDeleting }] = useBatchDeleteTeamsMutation(); // This hook is now removed
 
   // 處理篩選
   const handleApplyFilters = (filters: { search?: string }) => {
@@ -54,16 +54,8 @@ const TeamsPage: React.FC = () => {
     }
   };
 
-  // 處理批次刪除
-  const handleBatchDelete = async () => {
-    try {
-      await batchDeleteTeams(selectedRowKeys as string[]).unwrap();
-      message.success('批次刪除成功');
-      setSelectedRowKeys([]);
-    } catch {
-      message.error('批次刪除失敗');
-    }
-  };
+  // 處理批次刪除 (功能已移除)
+  // const handleBatchDelete = async () => { ... };
 
   // 處理編輯
   const handleEdit = (team: Team) => {
@@ -103,15 +95,11 @@ const TeamsPage: React.FC = () => {
     <div>
       <Title level={2}>團隊管理</Title>
       <TeamsFilter onApplyFilters={handleApplyFilters} onAddTeam={handleAddTeam} />
-      <TeamsBatchActions
-        selectedCount={selectedRowKeys.length}
-        onBatchDelete={handleBatchDelete}
-        onClearSelection={() => setSelectedRowKeys([])}
-      />
+      {/* Batch actions removed as the API endpoint is not available */}
       <TeamsTable
         data={data?.items}
         pagination={data?.pagination}
-        loading={isLoading || isFetching || isBatchDeleting}
+        loading={isLoading || isFetching}
         selectedRowKeys={selectedRowKeys}
         onSelectionChange={setSelectedRowKeys}
         onTableChange={handleTableChange}
