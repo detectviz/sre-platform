@@ -26,7 +26,7 @@ export const dashboardApiSlice = createApi({
         try {
           const summary = await dashboardApiClient.getDashboardSummary();
           return { data: summary };
-        } catch (error)_ {
+        } catch (error) {
           // 為了讓錯誤處理更一致，我們可以將其格式化為 FetchBaseQueryError
           return { error: { status: 'CUSTOM_ERROR', error: String(error) } };
         }

@@ -79,8 +79,8 @@ describe("AuditApi", () => {
     const userId: string = "userId_example"
     const action: string = "action_example"
     const resourceType: string = "resourceType_example"
-    const startTime: Date = 2013-10-20T19:20:30+01:00
-    const endTime: Date = 2013-10-20T19:20:30+01:00
+    const startTime: Date = new Date("2013-10-20T19:20:30+01:00")
+    const endTime: Date = new Date("2013-10-20T19:20:30+01:00")
     return expect(instance.queryAuditLogs(page, pageSize, userId, action, resourceType, startTime, endTime, {})).resolves.toBe(null)
   })
 })
@@ -273,8 +273,8 @@ describe("IncidentsApi", () => {
   test("listAlerts", () => {
     const severity: string = "severity_example"
     const status: string = "status_example"
-    const startTime: Date = 2013-10-20T19:20:30+01:00
-    const endTime: Date = 2013-10-20T19:20:30+01:00
+    const startTime: Date = new Date("2013-10-20T19:20:30+01:00")
+    const endTime: Date = new Date("2013-10-20T19:20:30+01:00")
     return expect(instance.listAlerts(severity, status, startTime, endTime, {})).resolves.toBe(null)
   })
   test("listIncidents", () => {
@@ -282,8 +282,8 @@ describe("IncidentsApi", () => {
     const pageSize: number = 56
     const status: string = "status_example"
     const severity: string = "severity_example"
-    const startTime: Date = 2013-10-20T19:20:30+01:00
-    const endTime: Date = 2013-10-20T19:20:30+01:00
+    const startTime: Date = new Date("2013-10-20T19:20:30+01:00")
+    const endTime: Date = new Date("2013-10-20T19:20:30+01:00")
     const resourceId: string = "resourceId_example"
     return expect(instance.listIncidents(page, pageSize, status, severity, startTime, endTime, resourceId, {})).resolves.toBe(null)
   })
