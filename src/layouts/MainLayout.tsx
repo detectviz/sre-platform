@@ -23,6 +23,11 @@ const menuItems = [
     icon: <HddOutlined />,
     label: <Link to="/resources">資源管理</Link>,
   },
+  {
+    key: '3',
+    icon: <BellOutlined />,
+    label: <Link to="/incidents">告警紀錄</Link>,
+  },
 ];
 
 const MainLayout: React.FC = () => {
