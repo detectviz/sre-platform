@@ -1,8 +1,9 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import {
-  Configuration,
   UsersApi,
   TeamsApi,
+} from './api-client/api';
+import type {
   OperationResult,
   UserList,
   ListUsersRequest,
@@ -14,7 +15,8 @@ import {
   Team,
   CreateTeamRequest,
   UpdateTeamRequest,
-} from './api-client';
+} from './api-client/api';
+import { Configuration } from './api-client/configuration';
 
 // 建立一個 API client 的實例
 const apiConfig = new Configuration({ basePath: 'http://localhost:8081' });

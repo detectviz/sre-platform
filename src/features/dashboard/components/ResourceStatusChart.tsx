@@ -1,10 +1,10 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
 import { Spin } from 'antd';
-import { ResourceDistribution } from '../../../services/api-client';
+import type { ResourceDistribution } from '../../../services/api-client';
 
 interface ResourceStatusChartProps {
-  chartData: ResourceDistribution['by_status'];
+  chartData: ResourceDistribution['byStatus'];
   loading?: boolean;
 }
 
@@ -18,10 +18,10 @@ const ResourceStatusChart: React.FC<ResourceStatusChartProps> = ({ chartData, lo
 
   const getOption = () => {
     const data = [
-      { value: chartData.healthy, name: '正常', itemStyle: { color: '#52c41a' } },
-      { value: chartData.warning, name: '警告', itemStyle: { color: '#faad14' } },
-      { value: chartData.critical, name: '異常', itemStyle: { color: '#f5222d' } },
-      { value: chartData.unknown, name: '未知', itemStyle: { color: '#bfbfbf' } },
+      { value: chartData?.healthy ?? 0, name: '正常', itemStyle: { color: '#52c41a' } },
+      { value: chartData?.warning ?? 0, name: '警告', itemStyle: { color: '#faad14' } },
+      { value: chartData?.critical ?? 0, name: '異常', itemStyle: { color: '#f5222d' } },
+      { value: chartData?.unknown ?? 0, name: '未知', itemStyle: { color: '#bfbfbf' } },
     ].filter(item => item.value > 0); // 只顯示有數據的項目
 
     return {

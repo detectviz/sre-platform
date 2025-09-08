@@ -8,7 +8,7 @@ import IncidentsTable from '../features/incidents/components/IncidentsTable';
 import IncidentsFilter from '../features/incidents/components/IncidentsFilter';
 import IncidentsBatchActions from '../features/incidents/components/IncidentsBatchActions';
 import IncidentDetailModal from '../features/incidents/components/IncidentDetailModal';
-import { Incident } from '../services/api-client';
+import type { Incident } from '../services/api-client';
 
 const { Title } = Typography;
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Modal, Tabs, Descriptions, Tag, Typography } from 'antd';
 import type { TabsProps } from 'antd';
-import { Incident } from '../../../services/api-client';
+import type { Incident } from '../../../services/api-client';
 
 const { Title, Paragraph } = Typography;
 

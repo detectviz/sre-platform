@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, Tag, Space, Button } from 'antd';
 import type { TableProps } from 'antd';
-import { Incident, Pagination } from '../../../services/api-client';
+import type { Incident, Pagination } from '../../../services/api-client';
 
 // 嚴重性與其對應的顏色
 const severityMap: { [key: string]: { color: string; text: string } } = {

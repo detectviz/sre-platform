@@ -3,7 +3,7 @@ import { Button, Card, Form, Input, Typography } from 'antd';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../features/auth/authSlice';
-import { AppDispatch } from '../store/store';
+import type { AppDispatch } from '../store/store';
 
 const { Title } = Typography;
 

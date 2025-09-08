@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo } from 'react';
 import { Modal, Form, Input, Select } from 'antd';
-import { Team } from '../../../services/api-client';
+import type { Team } from '../../../services/api-client';
 import { useListUsersQuery } from '../../../services/organizationApi';
 
 const { Option } = Select;

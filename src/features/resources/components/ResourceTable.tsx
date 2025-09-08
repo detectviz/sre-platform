@@ -1,7 +1,7 @@
 import React from 'react';
 import { Table, Tag, Space, Popconfirm, Tooltip } from 'antd';
 import type { TableProps } from 'antd';
-import { Resource, Pagination } from '../../../services/api-client';
+import type { Resource, Pagination } from '../../../services/api-client';
 
 // 狀態與其對應的顏色和文字
 const statusMap = {

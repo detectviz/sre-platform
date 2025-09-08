@@ -1,10 +1,12 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
 import { Spin } from 'antd';
-import { ResourceDistribution } from '../../../services/api-client';
+import type { ResourceDistribution } from '../../../services/api-client';
+
+type ResourceGroupItem = NonNullable<ResourceDistribution['byGroup']>[0];
 
 interface ResourceGroupChartProps {
-  chartData: ResourceDistribution['by_group'];
+  chartData: NonNullable<ResourceDistribution['byGroup']>;
   loading?: boolean;
 }
 
@@ -18,10 +20,10 @@ const ResourceGroupChart: React.FC<ResourceGroupChartProps> = ({ chartData, load
 
   const getOption = () => {
     // 從 chartData 中提取圖表需要的標籤和數據系列
-    const groupNames = chartData.map(item => item.group_name);
-    const healthyData = chartData.map(item => item.healthy);
-    const warningData = chartData.map(item => item.warning);
-    const criticalData = chartData.map(item => item.critical);
+    const groupNames = chartData.map((item: ResourceGroupItem) => item.groupName ?? '');
+    const healthyData = chartData.map((item: ResourceGroupItem) => item.healthy ?? 0);
+    const warningData = chartData.map((item: ResourceGroupItem) => item.warning ?? 0);
+    const criticalData = chartData.map((item: ResourceGroupItem) => item.critical ?? 0);
 
     return {
       tooltip: {

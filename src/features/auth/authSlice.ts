@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 import type { RootState } from '../../store/store';
 
 // 定義使用者的基本資訊結構
@@ -23,7 +23,7 @@ export const authSlice = createSlice({
   initialState,
   reducers: {
     // 登入 action
-    login: (state, action: PayloadAction<User>) => {
+    login: (state, action: { payload: User }) => {
       state.isAuthenticated = true;
       state.user = action.payload;
     },

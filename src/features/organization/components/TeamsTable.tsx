@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Button, Space, Popconfirm, Tag } from 'antd';
-import { Team, Pagination, Subscriber } from '../../../services/api-client';
+import type { Team, Pagination, Subscriber } from '../../../services/api-client';
 
 interface TeamsTableProps {
   data?: Team[];

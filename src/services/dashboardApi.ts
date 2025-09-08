@@ -1,5 +1,11 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { DashboardApi, DashboardSummary, ResourceDistribution } from './api-client';
+import {
+  DashboardApi,
+} from './api-client/api';
+import type {
+  DashboardSummary,
+  ResourceDistribution,
+} from './api-client/api';
 import { Configuration } from './api-client/configuration';
 
 // 建立一個 DashboardApi 的實例。

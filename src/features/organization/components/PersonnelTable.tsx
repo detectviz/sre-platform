@@ -1,6 +1,6 @@
 import React from 'react';
 import { Table, Button, Space, Popconfirm, Tag } from 'antd';
-import { User, Pagination } from '../../../services/api-client';
+import type { User, Pagination } from '../../../services/api-client';
 
 interface PersonnelTableProps {
   data?: User[];

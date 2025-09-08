@@ -1,12 +1,14 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 import {
   IncidentsApi,
-  Configuration,
+} from './api-client/api';
+import type {
   IncidentList,
   ListIncidentsRequest,
   BatchIncidentOperation,
   BatchOperationResult,
-} from './api-client';
+} from './api-client/api';
+import { Configuration } from './api-client/configuration';
 
 // 建立一個 IncidentsApi 的實例
 const apiConfig = new Configuration({ basePath: 'http://localhost:8081' });
@@ -36,9 +38,9 @@ export const incidentsApiSlice = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.items.map(({ id }) => ({ type: 'Incident' as const, id })),
-              { type: 'Incident', id: 'LIST' },
-            ]
+            ...result.items.map(({ id }) => ({ type: 'Incident' as const, id })),
+            { type: 'Incident', id: 'LIST' },
+          ]
           : [{ type: 'Incident', id: 'LIST' }],
     }),
 

@@ -11,7 +11,7 @@ import TeamsTable from '../../features/organization/components/TeamsTable';
 import TeamsFilter from '../../features/organization/components/TeamsFilter';
 import TeamFormModal from '../../features/organization/components/TeamFormModal';
 // import TeamsBatchActions from '../../features/organization/components/TeamsBatchActions'; // This component is now removed
-import { Team } from '../../services/api-client';
+import type { Team } from '../../services/api-client';
 
 const { Title } = Typography;
 

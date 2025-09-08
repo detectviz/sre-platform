@@ -11,7 +11,7 @@ import PersonnelTable from '../../features/organization/components/PersonnelTabl
 import PersonnelFilter from '../../features/organization/components/PersonnelFilter';
 import PersonnelFormModal from '../../features/organization/components/PersonnelFormModal';
 import PersonnelBatchActions from '../../features/organization/components/PersonnelBatchActions';
-import { User } from '../../services/api-client';
+import type { User } from '../../services/api-client';
 
 const { Title } = Typography;
 
