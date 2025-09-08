@@ -66,7 +66,7 @@
 
 ### B10. 容量規劃（specs 10；API 對應）
 - [ ] 視圖與資料渲染（空/錯/載入三態）
-- [ ] 容量預測功能（/api/v1/capacity/forecast）
+- [x] 容量預測功能（/api/v1/capacity/forecast）
 - [ ] 容量報告列表與詳情（/api/v1/capacity/reports/*）
 
 ### B11. 通知中心（specs 22；API /api/v1/notifications/*）
