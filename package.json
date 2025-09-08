@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.9.0",
+    "@reduxjs/toolkit": "^2.2.0",
     "@types/isomorphic-fetch": "^0.0.39",
     "antd": "^5.27.3",
     "echarts": "^5.6.0",
