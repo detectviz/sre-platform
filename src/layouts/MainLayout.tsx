@@ -5,6 +5,7 @@ import {
   UserOutlined,
   BellOutlined,
   HddOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { Avatar, Badge, Breadcrumb, Button, Layout, Menu, Space, theme } from 'antd';
 import { Link, Outlet } from 'react-router-dom';
@@ -14,19 +15,34 @@ const { Header, Content, Footer, Sider } = Layout;
 // 導航菜單項目
 const menuItems = [
   {
-    key: '1',
+    key: 'dashboard',
     icon: <PieChartOutlined />,
     label: <Link to="/dashboard">總覽儀表板</Link>,
   },
   {
-    key: '2',
+    key: 'incidents',
+    icon: <BellOutlined />,
+    label: <Link to="/incidents">告警紀錄</Link>,
+  },
+  {
+    key: 'resources',
     icon: <HddOutlined />,
     label: <Link to="/resources">資源管理</Link>,
   },
   {
-    key: '3',
-    icon: <BellOutlined />,
-    label: <Link to="/incidents">告警紀錄</Link>,
+    key: 'organization',
+    icon: <TeamOutlined />,
+    label: '組織',
+    children: [
+      {
+        key: 'org_personnel',
+        label: <Link to="/organization/personnel">人員管理</Link>,
+      },
+      {
+        key: 'org_teams',
+        label: <Link to="/organization/teams">團隊管理</Link>,
+      },
+    ],
   },
 ];
 
@@ -42,7 +58,7 @@ const MainLayout: React.FC = () => {
         <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)', textAlign: 'center', color: 'white', lineHeight: '32px' }}>
           SRE
         </div>
-        <Menu theme="dark" defaultSelectedKeys={['1']} mode="inline" items={menuItems} />
+        <Menu theme="dark" defaultSelectedKeys={['dashboard']} mode="inline" items={menuItems} />
       </Sider>
       <Layout>
         <Header style={{ padding: '0 24px', background: colorBgContainer, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
