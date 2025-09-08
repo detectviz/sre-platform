@@ -1724,19 +1724,31 @@ paths:
           description: 是否啟用
       responses:
         "200":
-          description: 排程列表
+          description: 事件規則列表
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ScheduleList"
+                $ref: "#/components/schemas/AlertRuleList"
               example:
                 items:
-                  - id: "sch_1"
-                    script_id: "s_1"
-                    cron_expression: "0 * * * *"
+                  - id: "ar_1"
+                    name: "High CPU Usage"
+                    description: "CPU usage above 90% for 5 minutes"
+                    condition:
+                      metric: "cpu_usage"
+                      operator: "gt"
+                      threshold: 90
+                      duration: 300
+                    severity: "warning"
                     enabled: true
-                    next_run: "2025-09-08T07:00:00Z"
-                total: 1
+                    notification_channels: ["nc_email_01"]
+                    created_at: "2025-09-08T00:00:00Z"
+                    updated_at: "2025-09-08T00:00:00Z"
+                pagination:
+                  page: 1
+                  page_size: 20
+                  total: 1
+                  total_pages: 1
         "401":
           $ref: "#/components/responses/Unauthorized"
         "500":
@@ -2279,7 +2291,7 @@ paths:
       tags: [Automation]
       security:
         - bearerAuth: []
-      x-roles: [team_manager, super_admin]
+      x-roles: [team_manager, super_admin, team_member]
       parameters:
         - name: scriptId
           in: path

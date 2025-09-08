@@ -17,6 +17,8 @@
 - [8. 事件規則 (Alert Rules)](#8-事件規則-alert-rules)
 - [9. 自動化 (Automation)](#9-自動化-automation)
 - [10. 容量規劃 (Capacity Planning)](#10-容量規劃-capacity-planning)
+  - [10.5. 容量預測功能](#105-容量預測功能)
+  - [10.6. 容量報告功能](#106-容量報告功能)
 - [11. 事件紀錄 (Incidents)](#11-事件紀錄-incidents)
 - [12. 個人資料與設定 (Profile & Settings)](#12-個人資料與設定-profile--settings)
 - [13. 系統設定 (System Settings)](#13-系統設定-system-settings)
@@ -201,9 +203,9 @@
 
 ### **5.3. 視覺設計**
 * **核心風格**: 
-	* 強調**一覽性**和**關鍵資訊快速獲取**。  
-	* 採用 Ant Design Grid 和 Card 形成卡片式佈局。  
-	* 使用不同顏色區分卡片狀態，提升視覺衝擊力。   
+  * 強調**一覽性**和**關鍵資訊快速獲取**。  
+  * 採用 Ant Design Grid 和 Card 形成卡片式佈局。  
+  * 使用不同顏色區分卡片狀態，提升視覺衝擊力。   
 * **頁面說明**:  
   * **[儀表板]**: 畫面由多個卡片組成。頂部是三張並排的 KPI 狀態趨勢卡片（例如：「新事件」、「處理中」、「今日已解決」），使用 Statistic 元件突顯核心數字，並附有與昨日比較的趨勢百分比。下方左側是「資源群組狀態總覽」的長條圖，右側是「資源狀態分佈」的圓餅圖，兩者都使用了 ECharts 進行數據可視化，色彩清晰，圖例明確。
 
@@ -389,6 +391,57 @@
   * [ ] 能正確顯示預測指標卡片和趨勢圖。  
   * [ ] 圖表 Y 軸和 Tooltip 顯示正確單位。  
   * [ ] 建議措施旁的按鈕可被點擊並觸發流程。
+
+## **10.5. 容量預測功能**
+
+### **10.5.1. 功能目標**
+提供基於歷史數據的資源使用量預測功能，幫助使用者了解未來資源消耗趨勢。
+
+### **10.5.2. 功能規格**
+* **輸入**: 選擇特定資源和預測時間範圍。
+* **輸出**: 
+  * **預測趨勢圖**: 顯示歷史數據與未來預測的趨勢線。
+  * **關鍵預測指標**: 以卡片形式呈現預測的關鍵數據點。
+
+### **10.5.3. 視覺設計**
+* **核心風格**: 數據驅動的預測視圖，強調歷史趨勢與未來預測的對比。
+* **視覺設計描述**:
+  * **頁面佈局**: 可作為容量規劃頁面的一個子功能或獨立頁面。
+  * **預測圖表**: 使用 ECharts 折線圖，用不同顏色或線型區分歷史數據（實線）和預測數據（虛線）。
+  * **預測指標卡片**: 顯示關鍵預測數據，如預計達到特定使用率的時間點。
+
+### **10.5.4. 開發規格**
+* **核心元件**: CapacityForecastChart.tsx, CapacityForecastMetrics.tsx
+* **API 端點**: POST /api/v1/capacity/forecast
+* **驗收條件**:
+  * [ ] 能正確呼叫預測 API 並顯示結果
+  * [ ] 圖表能清晰區分歷史與預測數據
+  * [ ] 預測指標能正確顯示關鍵數據點
+
+## **10.6. 容量報告功能**
+
+### **10.6.1. 功能目標**
+提供容量規劃分析報告的存儲、查看和管理功能。
+
+### **10.6.2. 功能規格**
+* **報告列表**: 顯示所有容量規劃報告，支援分頁、排序和過濾。
+* **報告詳情**: 顯示單個報告的完整分析結果，包括圖表和建議措施。
+
+### **10.6.3. 視覺設計**
+* **核心風格**: 報告管理界面，強調內容的結構化呈現。
+* **視覺設計描述**:
+  * **報告列表頁面**: 使用 Ant Design Table 顯示報告列表，包含報告名稱、生成時間、相關資源等欄位。
+  * **報告詳情頁面**: 採用卡片式佈局展示報告的各個部分，包括摘要、圖表、預測指標和建議措施。
+
+### **10.6.4. 開發規格**
+* **核心元件**: CapacityReportsPage.tsx, CapacityReportDetailPage.tsx
+* **API 端點**: 
+  * GET /api/v1/capacity/reports (獲取報告列表)
+  * GET /api/v1/capacity/reports/{reportId} (獲取報告詳情)
+* **驗收條件**:
+  * [ ] 能正確顯示報告列表並支援分頁
+  * [ ] 能查看報告詳情並顯示所有分析結果
+  * [ ] 報告內容能完整呈現分析數據和建議
 
 ## **11. 事件紀錄 (Incidents)**
 
@@ -859,7 +912,7 @@
 | `/api/v1/alert-rules/{ruleId}` | PUT, DELETE | team_manager, super_admin |
 | `/api/v1/automation/scripts` | POST | team_manager, super_admin |
 | `/api/v1/automation/scripts/{scriptId}` | PUT, DELETE | team_manager, super_admin |
-| `/api/v1/automation/scripts/{scriptId}/run` | POST | team_manager, super_admin |
+| `/api/v1/automation/scripts/{scriptId}/run` | POST | team_manager, super_admin, team_member |
 | `/api/v1/automation/schedules` | POST | team_manager, super_admin |
 | `/api/v1/settings` | PUT | super_admin |
 | `/api/v1/settings/maintenance-windows` | GET, POST | super_admin |
