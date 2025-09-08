@@ -167,7 +167,7 @@ tags:
   - name: Incidents
     description: 事件管理
   - name: Alert Rules
-    description: 告警規則
+    description: 事件規則
   - name: Automation
     description: 自動化腳本
   - name: Users
@@ -256,7 +256,7 @@ paths:
     get:
       tags: [Core]
       summary: 獲取可用監控指標列表
-      description: 獲取所有可用於建立告警規則的監控指標及其定義。
+      description: 獲取所有可用於建立事件規則的監控指標及其定義。
       operationId: getMetricDefinitions
       security:
         - bearerAuth: []
@@ -1275,7 +1275,7 @@ paths:
             format: date-time
         - name: resource_id
           in: query
-          description: "依特定資源 ID 篩選關聯的告警事件"
+          description: "依特定資源 ID 篩選關聯的事件事件"
           schema:
             type: string
       responses:
@@ -1341,8 +1341,8 @@ paths:
   /api/v1/incidents/batch:
     post:
       tags: [Incidents]
-      summary: 批次處理告警事件
-      description: 對多個告警事件執行批次操作，例如批次確認或解決。
+      summary: 批次處理事件
+      description: 對多個事件事件執行批次操作，例如批次確認或解決。
       operationId: batchUpdateIncidents
       security:
         - bearerAuth: []
@@ -1638,8 +1638,8 @@ paths:
   /api/v1/incidents/{incidentId}/correlated:
     get:
       tags: [Incidents]
-      summary: 獲取關聯告警事件
-      description: 獲取與指定告警在時間上或拓撲上相關的其他告警事件。
+      summary: 獲取關聯事件
+      description: 獲取與指定事件在時間上或拓撲上相關的其他事件事件。
       operationId: getCorrelatedIncidents
       security:
         - bearerAuth: []
@@ -1651,7 +1651,7 @@ paths:
             type: string
       responses:
         "200":
-          description: "成功返回關聯告警列表"
+          description: "成功返回關聯事件列表"
           content:
             application/json:
               schema:
@@ -1706,13 +1706,13 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
   # ============================================
-  # Alert Rules - 告警規則
+  # Alert Rules - 事件規則
   # ============================================
   /api/v1/alert-rules:
     get:
       tags: [Alert Rules]
-      summary: 獲取告警規則列表
-      description: 獲取所有告警規則
+      summary: 獲取事件規則列表
+      description: 獲取所有事件規則
       operationId: listAlertRules
       security:
         - bearerAuth: []
@@ -1744,8 +1744,8 @@ paths:
 
     post:
       tags: [Alert Rules]
-      summary: 創建告警規則
-      description: 創建新的告警規則
+      summary: 創建事件規則
+      description: 創建新的事件規則
       operationId: createAlertRule
       security:
         - bearerAuth: []
@@ -1776,7 +1776,7 @@ paths:
     get:
       tags: [Alert Rules]
       summary: 獲取規則詳情
-      description: 獲取特定告警規則的詳情
+      description: 獲取特定事件規則的詳情
       operationId: getAlertRule
       security:
         - bearerAuth: []
@@ -1802,8 +1802,8 @@ paths:
 
     put:
       tags: [Alert Rules]
-      summary: 更新告警規則
-      description: 更新告警規則
+      summary: 更新事件規則
+      description: 更新事件規則
       operationId: updateAlertRule
       security:
         - bearerAuth: []
@@ -1840,9 +1840,9 @@ paths:
 
     delete:
       tags: [Alert Rules]
-      summary: 刪除告警規則
+      summary: 刪除事件規則
       description: |
-        刪除告警規則。
+        刪除事件規則。
         **建議**: 為了提高平台的容錯能力和操作安全性，建議實作軟刪除 (Soft Delete) 機制。此操作可將規則標記為 `archived` 而非物理刪除，並提供相應的 API (如 `GET /alert-rules?status=archived` 和 `POST /alert-rules/{ruleId}/restore`) 來查看和恢復被誤刪的規則。
       operationId: deleteAlertRule
       security:
@@ -1869,8 +1869,8 @@ paths:
   /api/v1/alert-rules/{ruleId}/test:
     post:
       tags: [Alert Rules]
-      summary: 測試告警規則
-      description: 測試告警規則是否正常運作
+      summary: 測試事件規則
+      description: 測試事件規則是否正常運作
       operationId: testAlertRule
       security:
         - bearerAuth: []
@@ -1909,7 +1909,7 @@ paths:
     post:
       tags: [Alert Rules]
       summary: 啟用規則
-      description: 啟用告警規則
+      description: 啟用事件規則
       operationId: enableAlertRule
       security:
         - bearerAuth: []
@@ -1942,7 +1942,7 @@ paths:
     post:
       tags: [Alert Rules]
       summary: 停用規則
-      description: 停用告警規則
+      description: 停用事件規則
       operationId: disableAlertRule
       security:
         - bearerAuth: []
@@ -1974,7 +1974,7 @@ paths:
   /api/v1/alerts:
     get:
       tags: [Incidents]
-      summary: 獲取當前告警列表
+      summary: 獲取當前事件列表
       description: 獲取所有活躍的事件
       operationId: listAlerts
       security:
@@ -1995,7 +1995,7 @@ paths:
           schema:
             type: string
             enum: [firing, resolved, pending]
-          description: 告警狀態
+          description: 事件狀態
         - name: start_time
           in: query
           schema:
@@ -2008,7 +2008,7 @@ paths:
             format: date-time
       responses:
         "200":
-          description: 告警列表
+          description: 事件列表
           content:
             application/json:
               schema:
@@ -2248,7 +2248,7 @@ paths:
       summary: 刪除腳本
       description: |
         刪除自動化腳本。
-        **建議**: 同告警規則，為了提高平台的容錯能力和操作安全性，建議對關鍵腳本實作軟刪除 (Soft Delete) 機制。
+        **建議**: 同事件規則，為了提高平台的容錯能力和操作安全性，建議對關鍵腳本實作軟刪除 (Soft Delete) 機制。
       operationId: deleteScript
       security:
         - bearerAuth: []
@@ -2721,7 +2721,7 @@ paths:
       summary: 刪除使用者
       description: |
         刪除使用者。
-        **注意**: 為了確保系統資料的完整性，如果該使用者仍被指派了告警事件或作為資源負責人，API 應返回 409 Conflict 錯誤，並在響應中告知前端有哪些關聯的任務需要先被轉移。或者，可以考慮增加一個可選的 `reassign_to_user_id` 參數來自動完成任務轉移。
+        **注意**: 為了確保系統資料的完整性，如果該使用者仍被指派了事件事件或作為資源負責人，API 應返回 409 Conflict 錯誤，並在響應中告知前端有哪些關聯的任務需要先被轉移。或者，可以考慮增加一個可選的 `reassign_to_user_id` 參數來自動完成任務轉移。
       operationId: deleteUser
       security:
         - bearerAuth: []
@@ -3723,7 +3723,7 @@ paths:
               example:
                 items:
                   - id: "n_001"
-                    title: "新告警：CPU 使用率過高"
+                    title: "新事件：CPU 使用率過高"
                     message: "web-01 CPU > 90% 持續 5 分鐘"
                     type: "alert"
                     severity: "warning"
@@ -5394,7 +5394,7 @@ components:
           type: array
           items:
             type: string
-          description: "由此告警事件觸發的自動化執行 ID 列表"
+          description: "由此事件事件觸發的自動化執行 ID 列表"
 
     IncidentList:
       type: object
@@ -5572,12 +5572,12 @@ components:
               default: false
             script_id:
               type: string
-              description: "觸發告警時要執行的自動化腳本 ID"
+              description: "觸發事件時要執行的自動化腳本 ID"
             parameters:
               type: object
               additionalProperties: true
               description: "傳遞給腳本的參數"
-          description: "告警觸發時的自動化設定"
+          description: "事件觸發時的自動化設定"
         created_at:
           type: string
           format: date-time
@@ -5848,7 +5848,7 @@ components:
           type: string
         triggering_incident_id:
           type: string
-          description: "觸發此次執行的告警事件 ID"
+          description: "觸發此次執行的事件事件 ID"
 
     ExecutionList:
       type: object
@@ -6725,7 +6725,7 @@ components:
           description: "相關資源的連結 URL"
       example:
         id: "n_001"
-        title: "新告警：CPU 使用率過高"
+        title: "新事件：CPU 使用率過高"
         message: "web-01 CPU > 90% 持續 5 分鐘"
         type: "alert"
         severity: "warning"
@@ -6745,7 +6745,7 @@ components:
       example:
         items:
           - id: "n_001"
-            title: "新告警：CPU 使用率過高"
+            title: "新事件：CPU 使用率過高"
             message: "web-01 CPU > 90% 持續 5 分鐘"
             type: "alert"
             severity: "warning"

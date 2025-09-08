@@ -33,14 +33,14 @@
 - [ ] 列表/詳情/CRUD
 - [ ] 成員維護（/resource-groups/{groupId}/members）
 
-### B4. 告警事件（specs 11；API /incidents/*, /alerts）
+### B4. 事件（specs 11；API /incidents/*, /alerts）
 - [ ] 列表/詳情（/incidents, /incidents/{id}）
 - [ ] 確認/解決/指派/註記（acknowledge/resolve/assign/comments）
 - [ ] 關聯事件（/incidents/{id}/correlated）
-- [ ] 告警列表（/alerts）具備分頁排序與 response-level example 驗證
+- [ ] 事件列表（/alerts）具備分頁排序與 response-level example 驗證
 - [ ] AI 事件報告（/incidents/generate-report）
 
-### B5. 告警規則（specs 8；API /alert-rules/*）
+### B5. 事件規則（specs 8；API /alert-rules/*）
 - [ ] 列表/詳情/CRUD
 - [ ] 啟用/停用（enable/disable）
 - [ ] 測試規則（/alert-rules/{id}/test）
