@@ -3,6 +3,7 @@ import authReducer from '../features/auth/authSlice';
 import { dashboardApiSlice } from '../services/dashboardApi';
 import { resourcesApiSlice } from '../services/resourcesApi';
 import { incidentsApiSlice } from '../services/incidentsApi';
+import { organizationApiSlice } from '../services/organizationApi';
 
 // 設定 Redux store
 export const store = configureStore({
@@ -13,13 +14,15 @@ export const store = configureStore({
     [dashboardApiSlice.reducerPath]: dashboardApiSlice.reducer,
     [resourcesApiSlice.reducerPath]: resourcesApiSlice.reducer,
     [incidentsApiSlice.reducerPath]: incidentsApiSlice.reducer,
+    [organizationApiSlice.reducerPath]: organizationApiSlice.reducer,
   },
   // 加入所有 API middleware
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
       .concat(dashboardApiSlice.middleware)
       .concat(resourcesApiSlice.middleware)
-      .concat(incidentsApiSlice.middleware),
+      .concat(incidentsApiSlice.middleware)
+      .concat(organizationApiSlice.middleware),
 });
 
 // 從 store 本身推斷出 `RootState` 和 `AppDispatch` 類型

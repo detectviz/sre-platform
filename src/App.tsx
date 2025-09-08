@@ -7,6 +7,8 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import ResourcesPage from './pages/ResourcesPage';
 import IncidentsPage from './pages/IncidentsPage';
+import PersonnelPage from './pages/Organization/PersonnelPage';
+import TeamsPage from './pages/Organization/TeamsPage';
 
 /**
  * 受保護的路由元件
@@ -36,6 +38,8 @@ const AppRoutes: React.FC = () => {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="resources" element={<ResourcesPage />} />
           <Route path="incidents" element={<IncidentsPage />} />
+          <Route path="organization/personnel" element={<PersonnelPage />} />
+          <Route path="organization/teams" element={<TeamsPage />} />
           {/* 未來可以在此處加入更多受保護的路由 */}
         </Route>
 
