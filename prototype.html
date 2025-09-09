@@ -1,0 +1,2082 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SRE 平台互動原型</title>
+  <!-- React, Babel, Day.js -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+  <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+  <script src="https://unpkg.com/dayjs@1.11.10/plugin/relativeTime.js"></script>
+  <script src="https://unpkg.com/dayjs@1.11.10/plugin/isBetween.js"></script>
+  <!-- Ant Design -->
+  <script src="https://unpkg.com/antd@5.19.1/dist/antd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/antd@5.19.1/dist/reset.css" />
+  <!-- Ant Design Icons -->
+  <script src="https://unpkg.com/@ant-design/icons@5.3.7/dist/index.umd.min.js"></script>
+  <!-- ECharts -->
+  <script src="https://unpkg.com/echarts@5.5.0/dist/echarts.min.js"></script>
+
+  <style>
+    /* Structural and specific styles that are theme-agnostic */
+    body {
+      background-color: #161719;
+      color: #d8d9da;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+    }
+
+    .page-title {
+      font-size: 28px;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .page-subtitle {
+      font-size: 14px;
+      color: #a0a0a0;
+      margin-bottom: 24px;
+    }
+
+    .ant-table-row.row-highlight>td {
+      background-color: rgba(255, 77, 79, 0.1) !important;
+    }
+
+    .code-editor-like {
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+    }
+
+    .log-viewer {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+      padding: 16px;
+      border-radius: 4px;
+      max-height: 400px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .admin-card {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .admin-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip } = antd;
+    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, HomeOutlined, QuestionCircleOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CodeSandboxOutlined, CopyOutlined, PlayCircleOutlined, BulbOutlined, RobotOutlined } = icons;
+    const { Title, Text, Paragraph } = Typography;
+    const { TextArea } = Input;
+    const { RangePicker } = DatePicker;
+    dayjs.extend(dayjs_plugin_relativeTime);
+    dayjs.extend(dayjs_plugin_isBetween);
+
+    // --- Custom Hook for localStorage ---
+    const useLocalStorageState = (key, defaultValue) => {
+      const [state, setState] = useState(() => {
+        try {
+          const storedValue = window.localStorage.getItem(key);
+          // Reviver function to parse ISO date strings back to dayjs objects
+          const reviver = (k, v) => {
+            if (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(v)) {
+              return dayjs(v);
+            }
+            if (k === 'timeRange' && Array.isArray(v)) {
+              return [dayjs(v[0]), dayjs(v[1])];
+            }
+            if (k === 'lastRun' && typeof v === 'string') {
+              return dayjs(v);
+            }
+            return v;
+          };
+          return storedValue ? JSON.parse(storedValue, reviver) : defaultValue;
+        } catch (error) {
+          console.error("Error reading from localStorage for key:", key, error);
+          return defaultValue;
+        }
+      });
+
+      useEffect(() => {
+        try {
+          window.localStorage.setItem(key, JSON.stringify(state));
+        } catch (error) {
+          console.error("Error writing to localStorage for key:", key, error);
+        }
+      }, [key, state]);
+
+      return [state, setState];
+    };
+
+
+    // --- ECharts Component ---
+    const EchartsForReact = ({ option, isDark }) => {
+      const chartRef = useRef(null);
+      useEffect(() => {
+        let chart;
+        if (chartRef.current !== null) {
+          chart = echarts.init(chartRef.current, isDark ? 'dark' : 'light', { renderer: 'svg' });
+          chart.setOption({ backgroundColor: 'transparent', ...option });
+        }
+        const resizeChart = () => { if (chart && !chart.isDisposed()) chart.resize(); };
+        window.addEventListener('resize', resizeChart);
+        return () => { if (chart) chart.dispose(); window.removeEventListener('resize', resizeChart); };
+      }, [option, isDark]);
+      return <div ref={chartRef} style={{ width: '100%', height: '350px' }} />;
+    };
+
+    // --- Page Components ---
+    const LoginPage = ({ onLogin }) => {
+      const [form] = Form.useForm();
+      const onFinish = (values) => {
+        message.loading({ content: '登入中...', key: 'login' });
+        setTimeout(() => {
+          if (values.username === 'admin' && values.password === 'admin') {
+            message.success({ content: '登入成功', key: 'login' });
+            onLogin();
+          } else {
+            message.error({ content: '帳號或密碼錯誤', key: 'login' });
+          }
+        }, 500);
+      };
+      return (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+          <Card style={{ width: 400 }}><div style={{ textAlign: 'center', marginBottom: 24 }}><Title level={3}>SRE Platform</Title></div><Form form={form} name="login" onFinish={onFinish} layout="vertical" initialValues={{ username: 'admin', password: 'admin' }}><Form.Item label="帳號" name="username" rules={[{ required: true, message: '請輸入帳號 (admin)' }]}><Input /></Form.Item><Form.Item label="密碼" name="password" rules={[{ required: true, message: '請輸入密碼 (admin)' }]}><Input.Password /></Form.Item><Form.Item><Button type="primary" htmlType="submit" block>登入</Button></Form.Item></Form></Card>
+        </div>
+      );
+    };
+
+    // --- Page Components (Enhanced and Placeholders) ---
+    const DashboardPage = ({ themeMode }) => {
+      const baseChartOptions = {
+        tooltip: {},
+        xAxis: { data: ['Web', 'Database', 'Application', 'Container'] },
+        yAxis: {},
+        series: [{ name: '資源數', type: 'bar', data: [120, 20, 60, 20] }]
+      };
+
+      const barOption = { ...baseChartOptions };
+      const pieOption = {
+        tooltip: { trigger: 'item' },
+        series: [{ name: '資源狀態', type: 'pie', radius: ['40%', '70%'], data: [{ value: 220, name: 'Healthy' }, { value: 20, name: 'Warning' }, { value: 10, name: 'Critical' }] }]
+      };
+
+      const StatCard = ({ icon, color, title, value }) => (
+        <Card>
+          <Space align="center" size="large">
+            <div style={{ fontSize: '32px', color: color }}>{icon}</div>
+            <Statistic title={title} value={value} />
+          </Space>
+        </Card>
+      );
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">總覽儀表板</Title>
+          <Paragraph className="page-subtitle" type="secondary">查看系統整體健康狀況與關鍵指標。</Paragraph>
+          <Row gutter={[16, 16]}>
+            <Col xs={24} md={8}><StatCard icon={<FireOutlined />} color="#ff4d4f" title="新事件" value={5} /></Col>
+            <Col xs={24} md={8}><StatCard icon={<ClockCircleOutlined />} color="#faad14" title="處理中" value={3} /></Col>
+            <Col xs={24} md={8}><StatCard icon={<CheckCircleOutlined />} color="#52c41a" title="今日已解決" value={12} /></Col>
+          </Row>
+          <Row gutter={[16, 16]} style={{ marginTop: '24px' }}>
+            <Col xs={24} lg={12}><Card title="資源類型分佈"><EchartsForReact option={barOption} isDark={themeMode === 'dark'} /></Card></Col>
+            <Col xs={24} lg={12}><Card title="資源狀態分佈"><EchartsForReact option={pieOption} isDark={themeMode === 'dark'} /></Card></Col>
+          </Row>
+        </React.Fragment>
+      );
+    };
+
+    const ResourceListPage = () => {
+      const mockGroups = [
+        { id: 'g_1', name: 'Production Database' },
+        { id: 'g_2', name: 'Production Web Servers' },
+        { id: 'g_3', name: 'Staging Environment' },
+      ];
+      const initialData = [
+        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10' },
+        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21' },
+        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35' },
+        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40' },
+      ];
+
+      const [resources, setResources] = useLocalStorageState('sre-resources', initialData);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editingResource, setEditingResource] = useState(null);
+      const [searchText, setSearchText] = useState('');
+      const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+      const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+      const [form] = Form.useForm();
+      const [moveForm] = Form.useForm();
+      const { message, modal } = antd.App.useApp();
+
+      const showModal = (resource = null) => { setEditingResource(resource); form.setFieldsValue(resource || { name: '', ip_address: '', type: 'server', status: 'healthy' }); setIsModalOpen(true); };
+      const handleCancel = () => { setIsModalOpen(false); setEditingResource(null); form.resetFields(); };
+      const onFinish = (values) => { if (editingResource) { setResources(resources.map(res => res.key === editingResource.key ? { ...res, ...values } : res)); message.success('資源更新成功'); } else { const newResource = { ...values, key: `r_${Date.now()}` }; setResources([newResource, ...resources]); message.success('資源新增成功'); } handleCancel(); };
+      const handleDelete = (key) => { modal.confirm({ title: '確定要刪除此資源嗎？', icon: <ExclamationCircleOutlined />, content: '此操作無法復原。', okText: '確定', okType: 'danger', cancelText: '取消', onOk() { setResources(resources.filter(res => res.key !== key)); message.success('資源刪除成功'); } }); };
+
+      const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+      };
+
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const hasSelected = selectedRowKeys.length > 0;
+
+      const handleBatchDelete = () => {
+        modal.confirm({
+          title: `確定要刪除 ${selectedRowKeys.length} 個資源嗎？`,
+          icon: <ExclamationCircleOutlined />,
+          content: '此操作無法復原。',
+          okText: '確定',
+          okType: 'danger',
+          cancelText: '取消',
+          onOk() {
+            setResources(resources.filter(res => !selectedRowKeys.includes(res.key)));
+            setSelectedRowKeys([]);
+            message.success('批次刪除成功');
+          }
+        });
+      };
+
+      const handleMoveGroup = (values) => {
+        console.log(`Moving ${selectedRowKeys.length} items to group ${values.groupId}`);
+        message.success(`已將 ${selectedRowKeys.length} 個資源移動至新群組`);
+        setIsMoveModalOpen(false);
+        setSelectedRowKeys([]);
+      };
+
+      const batchActions = [
+        { key: 'delete', label: '批次刪除', onClick: handleBatchDelete },
+        { key: 'move', label: '移動群組', onClick: () => setIsMoveModalOpen(true) },
+      ];
+
+      const columns = [{ title: '資源名稱', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name), render: text => <a>{text}</a> }, { title: 'IP位址', dataIndex: 'ip_address', sorter: (a, b) => a.ip_address.localeCompare(b.ip_address) }, { title: '狀態', dataIndex: 'status', filters: [{ text: 'Healthy', value: 'healthy' }, { text: 'Warning', value: 'warning' }, { text: 'Critical', value: 'critical' },], onFilter: (value, record) => record.status.indexOf(value) === 0, render: s => <Tag color={s === 'healthy' ? 'green' : (s === 'warning' ? 'orange' : 'red')}>{s.toUpperCase()}</Tag> }, { title: '類型', dataIndex: 'type', filters: [{ text: 'Database', value: 'database' }, { text: 'Server', value: 'server' }, { text: 'Gateway', value: 'gateway' }, { text: 'Cache', value: 'cache' },], onFilter: (value, record) => record.type.indexOf(value) === 0 }, { title: '操作', key: 'action', render: (_, record) => (<Space> <Button type="link" onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }];
+      const filteredResources = resources.filter(res => res.name.toLowerCase().includes(searchText.toLowerCase()) || res.ip_address.toLowerCase().includes(searchText.toLowerCase()));
+
+      return (<React.Fragment> <Title level={2} className="page-title">資源列表</Title> <Paragraph className="page-subtitle" type="secondary">集中管理、探索與操作所有監控資源。</Paragraph> <Card> <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+        <Space>
+          {hasSelected && (
+            <Dropdown menu={{ items: batchActions }}>
+              <Button>批次操作 ({selectedRowKeys.length}) <DownOutlined /></Button>
+            </Dropdown>
+          )}
+          <Input.Search placeholder="搜尋資源名稱或 IP" onChange={e => setSearchText(e.target.value)} style={{ width: 300 }} />
+        </Space>
+        <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增資源</Button> </div>
+        {
+          resources.length > 0 ?
+            <Table rowSelection={rowSelection} columns={columns} dataSource={filteredResources} rowKey="key" /> :
+            <Empty description="尚無任何資源">
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增資源</Button>
+            </Empty>
+        }
+      </Card>
+        <Modal title={editingResource ? '編輯資源' : '新增資源'} open={isModalOpen} onCancel={handleCancel} footer={null}> <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}> <Form.Item name="name" label="資源名稱" rules={[{ required: true, message: '請輸入資源名稱' }]}><Input /></Form.Item> <Form.Item name="ip_address" label="IP 位址" rules={[{ required: true, message: '請輸入 IP 位址' }]}><Input /></Form.Item> <Form.Item name="type" label="類型" rules={[{ required: true, message: '請選擇資源類型' }]}> <Select> <Select.Option value="server">Server</Select.Option> <Select.Option value="database">Database</Select.Option> <Select.Option value="gateway">Gateway</Select.Option> <Select.Option value="cache">Cache</Select.Option> <Select.Option value="container">Container</Select.Option> </Select> </Form.Item> <Form.Item name="status" label="狀態" rules={[{ required: true, message: '請選擇資源狀態' }]}> <Select> <Select.Option value="healthy">Healthy</Select.Option> <Select.Option value="warning">Warning</Select.Option> <Select.Option value="critical">Critical</Select.Option> </Select> </Form.Item> <Form.Item style={{ textAlign: 'right' }}> <Button onClick={handleCancel} style={{ marginRight: 8 }}>取消</Button> <Button type="primary" htmlType="submit">確定</Button> </Form.Item> </Form> </Modal>
+        <Modal title="移動至群組" open={isMoveModalOpen} onCancel={() => setIsMoveModalOpen(false)} onOk={() => moveForm.submit()}>
+          <Form form={moveForm} layout="vertical" onFinish={handleMoveGroup} style={{ marginTop: 24 }}>
+            <Form.Item name="groupId" label="選擇目標群組" rules={[{ required: true, message: '請選擇一個目標群組' }]}>
+              <Select options={mockGroups.map(g => ({ label: g.name, value: g.id }))} />
+            </Form.Item>
+          </Form>
+        </Modal>
+      </React.Fragment>);
+    };
+
+    const ResourceGroupsPage = () => {
+      const allResourcesData = [
+        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10' },
+        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21' },
+        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35' },
+        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40' },
+        { key: 'r_5', name: 'web-staging-01', type: 'server', status: 'healthy', ip_address: '10.1.0.11' },
+        { key: 'r_6', name: 'db-staging-01', type: 'database', status: 'healthy', ip_address: '10.1.0.12' },
+      ];
+
+      const initialGroups = [
+        { key: 'g_1', name: 'Production Database', description: '所有生產環境的資料庫', members: ['r_1'] },
+        { key: 'g_2', name: 'Production Web Servers', description: '所有生產環境的 Web 伺服器', members: ['r_2'] },
+        { key: 'g_3', name: 'Staging Environment', description: '測試環境所有資源', members: ['r_5', 'r_6'] },
+      ];
+
+      const [groups, setGroups] = useLocalStorageState('sre-groups', initialGroups);
+      const [allResources] = useState(allResourcesData.map(r => ({ ...r, title: r.name })));
+      const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+      const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+      const [editingGroup, setEditingGroup] = useState(null);
+      const [targetKeys, setTargetKeys] = useState([]);
+      const [searchText, setSearchText] = useState('');
+      const [groupForm] = Form.useForm();
+      const { message, modal } = antd.App.useApp();
+
+      const getStatusSummary = (memberKeys) => {
+        const summary = { healthy: 0, warning: 0, critical: 0 };
+        memberKeys.forEach(key => {
+          const resource = allResources.find(r => r.key === key);
+          if (resource) {
+            summary[resource.status]++;
+          }
+        });
+        return summary;
+      };
+
+      const showGroupModal = (group = null) => {
+        setEditingGroup(group);
+        groupForm.setFieldsValue(group || { name: '', description: '' });
+        setIsGroupModalOpen(true);
+      };
+      const handleGroupCancel = () => {
+        setIsGroupModalOpen(false);
+        setEditingGroup(null);
+        groupForm.resetFields();
+      };
+      const handleGroupFinish = (values) => {
+        if (editingGroup) {
+          setGroups(groups.map(g => g.key === editingGroup.key ? { ...g, ...values } : g));
+          message.success('群組更新成功');
+        } else {
+          const newGroup = { ...values, key: `g_${Date.now()}`, members: [] };
+          setGroups([newGroup, ...groups]);
+          message.success('群組新增成功');
+        }
+        handleGroupCancel();
+      };
+      const handleGroupDelete = (key) => {
+        modal.confirm({ title: '確定要刪除此群組嗎？', icon: <ExclamationCircleOutlined />, content: '此操作無法復原。', okText: '確定', okType: 'danger', cancelText: '取消', onOk() { setGroups(groups.filter(g => g.key !== key)); message.success('群組刪除成功'); } });
+      };
+
+      const showMembersModal = (group) => {
+        setEditingGroup(group);
+        setTargetKeys(group.members);
+        setIsMembersModalOpen(true);
+      };
+      const handleMembersCancel = () => {
+        setIsMembersModalOpen(false);
+        setEditingGroup(null);
+        setTargetKeys([]);
+      };
+      const handleMembersChange = (newTargetKeys) => {
+        setTargetKeys(newTargetKeys);
+      };
+      const handleMembersSave = () => {
+        setGroups(groups.map(g => g.key === editingGroup.key ? { ...g, members: targetKeys } : g));
+        message.success('成員更新成功');
+        handleMembersCancel();
+      };
+
+      const columns = [
+        { title: '群組名稱', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name), render: (text, record) => <a onClick={() => showMembersModal(record)}>{text}</a> },
+        { title: '描述', dataIndex: 'description' },
+        { title: '成員數量', dataIndex: 'members', render: members => members.length },
+        {
+          title: '狀態摘要', dataIndex: 'members', render: members => {
+            const summary = getStatusSummary(members);
+            return (
+              <span>
+                <Tag color="green">Healthy: {summary.healthy}</Tag>
+                <Tag color="orange">Warning: {summary.warning}</Tag>
+                <Tag color="red">Critical: {summary.critical}</Tag>
+              </span>
+            );
+          }
+        },
+        {
+          title: '操作', key: 'action', render: (_, record) => (
+            <span>
+              <Button type="link" onClick={() => showMembersModal(record)}>管理成員</Button>
+              <Divider type="vertical" />
+              <Button type="link" onClick={() => showGroupModal(record)}>編輯</Button>
+              <Divider type="vertical" />
+              <Button type="link" danger onClick={() => handleGroupDelete(record.key)}>刪除</Button>
+            </span>
+          )
+        },
+      ];
+
+      const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchText.toLowerCase()));
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">資源群組</Title>
+          <Paragraph className="page-subtitle" type="secondary">管理資源的分群，支援階層，並提供群組層級の狀態摘要與成員管理。</Paragraph>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Input.Search placeholder="搜尋群組名稱" onChange={e => setSearchText(e.target.value)} style={{ width: 300 }} />
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showGroupModal()}>新增群組</Button>
+            </div>
+            {
+              filteredGroups.length > 0 ?
+                <Table columns={columns} dataSource={filteredGroups} /> :
+                <Empty description="尚無任何資源群組">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={() => showGroupModal()}>立即新增群組</Button>
+                </Empty>
+            }
+          </Card>
+
+          <Modal title={editingGroup ? '編輯群組' : '新增群組'} open={isGroupModalOpen} onCancel={handleGroupCancel} footer={null}>
+            <Form form={groupForm} layout="vertical" onFinish={handleGroupFinish} style={{ marginTop: 24 }}>
+              <Form.Item name="name" label="群組名稱" rules={[{ required: true }]}><Input /></Form.Item>
+              <Form.Item name="description" label="描述"><TextArea rows={3} /></Form.Item>
+              <Form.Item style={{ textAlign: 'right' }}>
+                <Button onClick={handleGroupCancel} style={{ marginRight: 8 }}>取消</Button>
+                <Button type="primary" htmlType="submit">確定</Button>
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          {editingGroup && (
+            <Modal
+              title={`管理成員: ${editingGroup.name}`}
+              open={isMembersModalOpen}
+              onCancel={handleMembersCancel}
+              width={700}
+              onOk={handleMembersSave}
+              okText="儲存變更"
+              cancelText="取消"
+            >
+              <Transfer
+                dataSource={allResources}
+                showSearch
+                targetKeys={targetKeys}
+                onChange={handleMembersChange}
+                render={item => item.title}
+                listStyle={{ width: 300, height: 300, marginTop: 16 }}
+              />
+            </Modal>
+          )}
+        </React.Fragment>
+      );
+    };
+
+    const ResourcesPage = ({ onNavigate }) => {
+      const cards = [{ key: 'resource-list', icon: <HddOutlined />, title: '資源列表', description: '集中管理、探索與操作所有監控資源。' }, { key: 'resource-groups', icon: <ApartmentOutlined />, title: '資源群組', description: '管理資源的分群，支援階層化管理。' },];
+      return (<React.Fragment> <Title level={2} className="page-title">資源管理</Title> <Paragraph className="page-subtitle" type="secondary">探索、組織與管理您的所有基礎設施資源。</Paragraph> <Row gutter={[16, 16]}> {cards.map(item => (<Col key={item.key} xs={24} md={12} lg={8}> <Card className="admin-card" onClick={() => onNavigate(item.key)}><Card.Meta avatar={item.icon} title={<Title level={5}>{item.title}</Title>} description={item.description} /></Card> </Col>))} </Row> </React.Fragment>);
+    };
+
+    const IncidentsPage = ({ onNavigate }) => {
+      const cards = [{ key: 'incident-list', icon: <HistoryOutlined />, title: '事件紀錄', description: '高效的事件處理中心，追蹤所有告警事件。' }, { key: 'alerting-rules', icon: <BellOutlined />, title: '告警規則', description: '定義事件觸發條件，並關聯通知與自動化。' }, { key: 'silences', icon: <PauseCircleOutlined />, title: '靜音規則', description: '建立臨時或計劃性的靜音，例如維護時段。' },];
+      return (<React.Fragment> <Title level={2} className="page-title">事件中心</Title> <Paragraph className="page-subtitle" type="secondary">集中管理告警、事件並設定靜音規則。</Paragraph> <Row gutter={[16, 16]}> {cards.map(item => (<Col key={item.key} xs={24} md={12} lg={8}> <Card className="admin-card" onClick={() => onNavigate(item.key)}><Card.Meta avatar={item.icon} title={<Title level={5}>{item.title}</Title>} description={item.description} /></Card> </Col>))} </Row> </React.Fragment>);
+    };
+
+    const AnalyzingPage = ({ onNavigate }) => {
+      const cards = [{ key: 'capacity-planning', icon: <BarChartOutlined />, title: '容量規劃', description: '分析歷史數據，預測未來資源消耗趨勢。' },];
+      return (<React.Fragment> <Title level={2} className="page-title">分析與報告</Title> <Paragraph className="page-subtitle" type="secondary">深入了解系統趨勢與效能瓶頸。</Paragraph> <Row gutter={[16, 16]}> {cards.map(item => (<Col key={item.key} xs={24} md={12} lg={8}> <Card className="admin-card" onClick={() => onNavigate(item.key)}><Card.Meta avatar={item.icon} title={<Title level={5}>{item.title}</Title>} description={item.description} /></Card> </Col>))} </Row> </React.Fragment>);
+    };
+
+    const AutomationPage = ({ onNavigate }) => {
+      const cards = [{ key: 'scripts', icon: <CodeOutlined />, title: '腳本庫', description: '管理、編輯與測試用於自動化修復或日常任務的腳本。' }, { key: 'schedules', icon: <ScheduleOutlined />, title: '排程管理', description: '設定定時執行的自動化任務，例如備份或健康檢查。' }, { key: 'executions', icon: <CarryOutOutlined />, title: '執行日誌', description: '追蹤所有自動化腳本的執行歷史、狀態與結果。' },];
+      return (<React.Fragment> <Title level={2} className="page-title">自動化中心</Title> <Paragraph className="page-subtitle" type="secondary">管理自動化腳本、排程任務與執行歷史。</Paragraph> <Row gutter={[16, 16]}> {cards.map(item => (<Col key={item.key} xs={24} md={12} lg={8}> <Card className="admin-card" onClick={() => onNavigate(item.key)}><Card.Meta avatar={item.icon} title={<Title level={5}>{item.title}</Title>} description={item.description} /></Card> </Col>))} </Row> </React.Fragment>);
+    };
+
+    const IncidentListPage = ({ onNavigate }) => {
+      const initialData = [
+        { key: 'i_1', summary: 'CPU high on db-prod-01', severity: 'critical', source: 'Prometheus', status: 'firing', created_at: dayjs().subtract(5, 'minutes'), automation_id: 'e_1' },
+        { key: 'i_2', summary: 'Disk space low on web-prod-02', severity: 'warning', source: 'Grafana', status: 'acknowledged', created_at: dayjs().subtract(2, 'hour') },
+        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'firing', created_at: dayjs().subtract(1, 'day') },
+        { key: 'i_4', summary: 'Pod CrashLoopBackOff in kube-system', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day') },
+      ];
+      const [incidents, setIncidents] = useLocalStorageState('sre-incidents', initialData);
+      const [searchText, setSearchText] = useState('');
+      const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+      const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+      const [currentIncident, setCurrentIncident] = useState(null);
+      const { message, modal } = antd.App.useApp();
+
+      const handleStatusChange = (keys, newStatus) => {
+        const actionText = newStatus === 'acknowledged' ? '確認' : '解決';
+        setIncidents(incidents.map(inc => (keys.includes(inc.key) ? { ...inc, status: newStatus } : inc)));
+        message.success(`事件狀態已更新`);
+        if (isDetailModalOpen) {
+          setCurrentIncident(prev => ({ ...prev, status: newStatus }));
+        }
+      };
+
+      const handleBatchUpdate = (newStatus) => {
+        const actionText = newStatus === 'acknowledged' ? '確認' : '解決';
+        modal.confirm({
+          title: `確定要批次 ${actionText} ${selectedRowKeys.length} 個事件嗎？`,
+          icon: <ExclamationCircleOutlined />,
+          onOk() {
+            handleStatusChange(selectedRowKeys, newStatus);
+            setSelectedRowKeys([]);
+          }
+        });
+      };
+
+      const showDetailModal = (record) => {
+        setCurrentIncident(record);
+        setIsDetailModalOpen(true);
+      };
+
+      const columns = [
+        { title: '嚴重性', dataIndex: 'severity', sorter: (a, b) => a.severity.localeCompare(b.severity), filters: [{ text: 'Critical', value: 'critical' }, { text: 'Warning', value: 'warning' }], onFilter: (v, r) => r.severity.includes(v), render: s => <Tag color={s === 'critical' ? 'red' : 'orange'}>{s.toUpperCase()}</Tag> },
+        { title: '摘要', dataIndex: 'summary', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
+        { title: '來源', dataIndex: 'source', sorter: (a, b) => a.source.localeCompare(b.source) },
+        { title: '狀態', dataIndex: 'status', filters: [{ text: 'Firing', value: 'firing' }, { text: 'Acknowledged', value: 'acknowledged' }, { text: 'Resolved', value: 'resolved' }], onFilter: (v, r) => r.status.includes(v), render: s => <Tag>{s.toUpperCase()}</Tag> },
+        { title: '觸發時間', dataIndex: 'created_at', sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(), render: time => <span title={time.format('YYYY-MM-DD HH:mm:ss')}>{time.fromNow()}</span> },
+        {
+          title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+              <Button type="link" disabled={record.status !== 'firing'} onClick={() => handleStatusChange([record.key], 'acknowledged')}>
+                確認
+              </Button>
+              <Button type="link" onClick={() => showDetailModal(record)}>
+                詳情
+              </Button>
+            </Space>
+          )
+        },
+      ];
+
+      const filteredIncidents = incidents.filter(inc => inc.summary.toLowerCase().includes(searchText.toLowerCase()));
+      const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const hasSelected = selectedRowKeys.length > 0;
+
+      const detailTabs = currentIncident ? [
+        {
+          key: 'details', label: '詳情', children:
+            <Descriptions bordered column={1} size="small">
+              <Descriptions.Item label="摘要">{currentIncident.summary}</Descriptions.Item>
+              <Descriptions.Item label="嚴重性"><Tag color={currentIncident.severity === 'critical' ? 'red' : 'orange'}>{currentIncident.severity.toUpperCase()}</Tag></Descriptions.Item>
+              <Descriptions.Item label="狀態">{currentIncident.status.toUpperCase()}</Descriptions.Item>
+              <Descriptions.Item label="來源">{currentIncident.source}</Descriptions.Item>
+              <Descriptions.Item label="觸發時間">{currentIncident.created_at.format('YYYY-MM-DD HH:mm:ss')}</Descriptions.Item>
+            </Descriptions>
+        },
+        {
+          key: 'history', label: '處理歷史', children:
+            <React.Fragment>
+              <Timeline
+                items={[
+                  { children: `事件建立於 ${currentIncident.created_at.format('YYYY-MM-DD HH:mm:ss')}` },
+                  { children: '事件已被確認', dot: <ClockCircleOutlined />, color: 'blue' },
+                  { children: '事件已解決', color: 'green' },
+                ]}
+              />
+              <TextArea rows={3} placeholder="新增處理紀錄..." />
+              <Button style={{ marginTop: 8 }}>新增紀錄</Button>
+            </React.Fragment>
+        },
+        { key: 'related', label: '關聯事件', children: <List size="small" bordered dataSource={['API latency over 500ms']} renderItem={(item) => <List.Item>{item}</List.Item>} /> },
+        { key: 'automation', label: '自動化', children: currentIncident.automation_id ? <p>執行紀錄 ID: <a onClick={() => onNavigate('executions')}>{currentIncident.automation_id}</a></p> : <p>此事件未觸發自動化腳本。</p> },
+      ] : [];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">事件紀錄</Title>
+          <Paragraph className="page-subtitle" type="secondary">高效的事件處理中心，集中追蹤、處理與分析所有告警事件。</Paragraph>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Space>
+                {hasSelected && (
+                  <Space>
+                    <Button onClick={() => handleBatchUpdate('acknowledged')}>批次確認</Button>
+                    <Button onClick={() => handleBatchUpdate('resolved')}>批次解決</Button>
+                    <Text type="secondary">已選取 {selectedRowKeys.length} 項</Text>
+                  </Space>
+                )}
+              </Space>
+              <Input.Search placeholder="搜尋事件摘要" onChange={e => setSearchText(e.target.value)} style={{ width: 300 }} />
+            </div>
+            <Table rowSelection={rowSelection} columns={columns} dataSource={filteredIncidents} rowKey="key" />
+          </Card>
+          <Modal title="事件詳情" open={isDetailModalOpen} onCancel={() => setIsDetailModalOpen(false)}
+            footer={<Space>
+              <Button icon={<RobotOutlined />}>AI 分析</Button>
+              <Button type="primary" disabled={currentIncident && currentIncident.status !== 'firing'} onClick={() => { handleStatusChange([currentIncident.key], 'acknowledged') }}>確認收到 (Ack)</Button>
+              <Button onClick={() => setIsDetailModalOpen(false)}>關閉</Button>
+            </Space>}
+            width={700}>
+            {currentIncident &&
+              <div style={{ maxHeight: '60vh', overflowY: 'auto', paddingRight: '16px' }}>
+                <Space direction="vertical" style={{ width: '100%' }}>
+                  <Card title="詳情">
+                    <Descriptions bordered column={1} size="small">
+                      <Descriptions.Item label="摘要">{currentIncident.summary}</Descriptions.Item>
+                      <Descriptions.Item label="嚴重性"><Tag color={currentIncident.severity === 'critical' ? 'red' : 'orange'}>{currentIncident.severity.toUpperCase()}</Tag></Descriptions.Item>
+                      <Descriptions.Item label="狀態">{currentIncident.status.toUpperCase()}</Descriptions.Item>
+                      <Descriptions.Item label="來源">{currentIncident.source}</Descriptions.Item>
+                      <Descriptions.Item label="觸發時間">{currentIncident.created_at.format('YYYY-MM-DD HH:mm:ss')}</Descriptions.Item>
+                    </Descriptions>
+                  </Card>
+                  <Card title="處理歷史">
+                    <Timeline
+                      items={[
+                        { children: `事件建立於 ${currentIncident.created_at.format('YYYY-MM-DD HH:mm:ss')}` },
+                        { children: '事件已被確認', dot: <ClockCircleOutlined />, color: 'blue' },
+                        { children: '事件已解決', color: 'green' },
+                      ]}
+                    />
+                    <TextArea rows={3} placeholder="新增處理紀錄..." />
+                    <Button style={{ marginTop: 8 }}>新增紀錄</Button>
+                  </Card>
+                  <Card title="關聯事件">
+                    <List size="small" bordered dataSource={['API latency over 500ms']} renderItem={(item) => <List.Item>{item}</List.Item>} />
+                  </Card>
+                  <Card title="自動化">
+                    {currentIncident.automation_id ? <p>執行紀錄 ID: <a onClick={() => onNavigate('executions')}>{currentIncident.automation_id}</a></p> : <p>此事件未觸發自動化腳本。</p>}
+                  </Card>
+                </Space>
+              </div>
+            }
+          </Modal>
+        </React.Fragment>
+      );
+    };
+
+    const AlertingRulesPage = () => {
+      const mockMetrics = [
+        { id: 'cpu_utilization', name: 'CPU 使用率 (%)' },
+        { id: 'memory_usage', name: '記憶體使用率 (%)' },
+        { id: 'disk_space', name: '磁碟空間使用率 (%)' },
+        { id: 'replication_lag_s', name: '資料庫複製延遲 (秒)' },
+        { id: 'p95_latency_ms', name: 'P95 延遲 (ms)' },
+      ];
+      const mockScripts = [
+        { id: 's_1', name: 'Auto-scaling for Web Servers', params: [{ name: 'instance_count', type: 'number', label: '實例數量' }] },
+        { id: 's_2', name: 'Increase Database Disk Volume', params: [{ name: 'increase_gb', type: 'number', label: '增加容量 (GB)' }] },
+        { id: 's_3', name: 'Restart Pod', params: [{ name: 'pod_name', type: 'string', label: 'Pod 名稱' }] },
+      ];
+      const mockChannels = [{ id: 'c_1', name: 'Email' }, { id: 'c_2', name: 'Slack' }, { id: 'c_3', name: 'Webhook' }];
+
+      const initialRules = [
+        { key: 'rule_1', name: '高 CPU 使用率', target: 'Production Web Servers', conditions: 'cpu > 90%', notifications: ['Slack'], enabled: true },
+        { key: 'rule_2', name: '資料庫延遲', target: 'Production Database', conditions: 'replication_lag > 10s', notifications: ['Email', 'Slack'], enabled: true },
+        { key: 'rule_3', name: '測試規則', target: 'Staging', conditions: 'mem > 50%', notifications: ['Email'], enabled: false },
+      ];
+
+      const [rules, setRules] = useLocalStorageState('sre-alert-rules', initialRules);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editingRule, setEditingRule] = useState(null);
+      const [searchText, setSearchText] = useState('');
+      const [form] = Form.useForm();
+      const { message, modal } = antd.App.useApp();
+
+      const selectedScriptId = Form.useWatch('automation_script', form);
+      const selectedScript = mockScripts.find(s => s.id === selectedScriptId);
+
+      const showModal = (rule = null) => {
+        setEditingRule(rule);
+        form.setFieldsValue(rule || {
+          name: '',
+          description: '',
+          condition_groups: [{ conditions: [{}] }],
+          severity: 'critical',
+          automation_enabled: false
+        });
+        setIsModalOpen(true);
+      };
+
+      const handleCancel = () => {
+        setIsModalOpen(false);
+        setEditingRule(null);
+        form.resetFields();
+      };
+
+      const onFinish = (values) => {
+        console.log("Rule Submitted:", values);
+        message.success(editingRule ? '規則更新成功' : '規則新增成功');
+        handleCancel();
+      };
+
+      const handleDelete = (key) => {
+        modal.confirm({
+          title: '確定要刪除此規則嗎？', icon: <ExclamationCircleOutlined />, onOk: () => {
+            setRules(rules.filter(r => r.key !== key));
+            message.success('規則已刪除');
+          }
+        });
+      };
+
+      const handleToggleEnable = (key, checked) => {
+        setRules(rules.map(r => r.key === key ? { ...r, enabled: checked } : r));
+        message.success(`規則已${checked ? '啟用' : '停用'}`);
+      };
+
+      const columns = [
+        { title: '規則名稱', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
+        { title: '監控對象', dataIndex: 'target' },
+        { title: '觸發條件', dataIndex: 'conditions' },
+        { title: '通知方式', dataIndex: 'notifications', render: n => n.map(c => <Tag key={c}>{c}</Tag>) },
+        { title: '狀態', dataIndex: 'enabled', render: (enabled, record) => <Switch checked={enabled} onChange={(checked) => handleToggleEnable(record.key, checked)} /> },
+        {
+          title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+              <Button type="link" onClick={() => showModal(record)}>編輯</Button>
+              <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+            </Space>
+          )
+        }
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">告警規則</Title>
+          <Paragraph className="page-subtitle" type="secondary">定義事件觸發條件，並關聯通知管道和自動化腳本。</Paragraph>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Input.Search placeholder="搜尋規則名稱" style={{ width: 300 }} />
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增規則</Button>
+            </div>
+            {
+              rules.length > 0 ?
+                <Table columns={columns} dataSource={rules} /> :
+                <Empty description="尚無任何告警規則">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增規則</Button>
+                </Empty>
+            }
+          </Card>
+
+          <Modal title={editingRule ? '編輯規則' : '新建規則'} open={isModalOpen} onCancel={handleCancel} width={800} footer={[
+            <Button key="back" onClick={handleCancel}>取消</Button>,
+            <Button key="submit" type="primary" onClick={() => form.submit()}>儲存</Button>
+          ]}>
+            <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
+              <Collapse defaultActiveKey={['1', '2']}>
+                <Collapse.Panel header="1. 基本資訊" key="1">
+                  <Form.Item name="name" label="規則名稱" rules={[{ required: true }]}>
+                    <Input />
+                  </Form.Item>
+                  <Form.Item name="description" label="描述">
+                    <TextArea rows={2} />
+                  </Form.Item>
+                </Collapse.Panel>
+                <Collapse.Panel header="2. 觸發條件" key="2">
+                  <Form.List name="condition_groups">
+                    {(fields, { add, remove }) => (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                        {fields.map(({ key, name, ...restField }) => (
+                          <Card key={key} size="small" title={`條件群組 ${name + 1}`} extra={<MinusCircleOutlined onClick={() => remove(name)} />}>
+                            <Form.List name={[name, 'conditions']}>
+                              {(subFields, { add: subAdd, remove: subRemove }) => (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  {subFields.map((subField) => (
+                                    <Space key={subField.key} align="baseline">
+                                      <Form.Item {...subField} name={[subField.name, 'metric']} rules={[{ required: true }]}>
+                                        <Select style={{ width: 180 }} options={mockMetrics.map(m => ({ label: m.name, value: m.id }))} placeholder="監控指標" />
+                                      </Form.Item>
+                                      <Form.Item {...subField} name={[subField.name, 'operator']} initialValue=">" rules={[{ required: true }]}>
+                                        <Select style={{ width: 80 }}>
+                                          <Select.Option value=">">&gt;</Select.Option>
+                                          <Select.Option value="<">&lt;</Select.Option>
+                                          <Select.Option value="=">=</Select.Option>
+                                        </Select>
+                                      </Form.Item>
+                                      <Form.Item {...subField} name={[subField.name, 'value']} rules={[{ required: true }]}>
+                                        <InputNumber placeholder="閾值" />
+                                      </Form.Item>
+                                      <MinusCircleOutlined onClick={() => subRemove(subField.name)} />
+                                    </Space>
+                                  ))}
+                                  <Button type="dashed" onClick={() => subAdd()} block icon={<PlusOutlined />}>新增 AND 條件</Button>
+                                </div>
+                              )}
+                            </Form.List>
+                          </Card>
+                        ))}
+                        <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>新增 OR 條件群組</Button>
+                      </div>
+                    )}
+                  </Form.List>
+                </Collapse.Panel>
+                <Collapse.Panel header="3. 事件內容與通知" key="3">
+                  <Form.Item name="summary" label="事件摘要樣板" rules={[{ required: true }]} initialValue="{{resource.name}} 的 {{metric.name}} 已達 {{metric.value}}">
+                    <Input />
+                  </Form.Item>
+                  <Form.Item name="severity" label="嚴重性" initialValue="critical">
+                    <Select>
+                      <Select.Option value="critical">Critical</Select.Option>
+                      <Select.Option value="warning">Warning</Select.Option>
+                      <Select.Option value="info">Info</Select.Option>
+                    </Select>
+                  </Form.Item>
+                  <Form.Item name="notification_channels" label="通知管道">
+                    <Select mode="multiple" options={mockChannels.map(c => ({ label: c.name, value: c.id }))} />
+                  </Form.Item>
+                </Collapse.Panel>
+                <Collapse.Panel header="4. 自動化響應" key="4">
+                  <Form.Item name="automation_enabled" valuePropName="checked">
+                    <Switch />
+                  </Form.Item>
+                  <Form.Item name="automation_script" label="選擇腳本">
+                    <Select allowClear options={mockScripts.map(s => ({ label: s.name, value: s.id }))} />
+                  </Form.Item>
+                  {selectedScript && (
+                    <Card size="small" title="腳本參數">
+                      {selectedScript.params.map(p => (
+                        <Form.Item key={p.name} name={['automation_params', p.name]} label={p.label} rules={[{ required: true }]}>
+                          {p.type === 'number' ? <InputNumber style={{ width: '100%' }} /> : <Input />}
+                        </Form.Item>
+                      ))}
+                    </Card>
+                  )}
+                </Collapse.Panel>
+              </Collapse>
+            </Form>
+          </Modal>
+        </React.Fragment>
+      );
+    };
+
+    const SilencesPage = () => {
+      const initialSilences = [
+        { key: 's_1', name: 'DB 維護', description: '資料庫例行維護', timeRange: [dayjs().subtract(1, 'hour'), dayjs().add(1, 'hour')], creator: 'admin', matchers: [{ key: 'resource_group', op: '=', value: 'Production Database' }] },
+        { key: 's_2', name: '預期內的 API 延遲', description: '因上游服務問題導致', timeRange: [dayjs().add(1, 'day'), dayjs().add(1, 'day').add(4, 'hour')], creator: 'dev_user', matchers: [{ key: 'alert_name', op: '=', value: 'API latency high' }] },
+        { key: 's_3', name: '已過期的靜音', description: '舊的維護窗口', timeRange: [dayjs().subtract(2, 'day'), dayjs().subtract(2, 'day').add(2, 'hour')], creator: 'admin', matchers: [] },
+      ];
+
+      const [silences, setSilences] = useLocalStorageState('sre-silences', initialSilences);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editingSilence, setEditingSilence] = useState(null);
+      const [form] = Form.useForm();
+      const { message, modal } = antd.App.useApp();
+
+      const getStatus = (record) => {
+        const now = dayjs();
+        const start = record.timeRange[0];
+        const end = record.timeRange[1];
+        if (now.isBefore(start)) return { color: 'blue', text: '待生效' };
+        if (now.isAfter(end)) return { color: 'gray', text: '已過期' };
+        return { color: 'green', text: '生效中' };
+      };
+
+      const showModal = (silence = null) => {
+        setEditingSilence(silence);
+        form.setFieldsValue(silence || { matchers: [{}] }); // Ensure matchers has at least one empty item
+        setIsModalOpen(true);
+      };
+
+      const handleCancel = () => {
+        setIsModalOpen(false);
+        setEditingSilence(null);
+        form.resetFields();
+      };
+
+      const onFinish = (values) => {
+        if (editingSilence) {
+          // Update logic
+        } else {
+          const newSilence = { ...values, key: `s_${Date.now()}`, creator: 'admin' };
+          setSilences([newSilence, ...silences]);
+        }
+        message.success(editingSilence ? '靜音規則更新成功' : '靜音規則新增成功');
+        handleCancel();
+      };
+
+      const handleDelete = (key) => {
+        modal.confirm({
+          title: '確定要刪除此靜音規則嗎？',
+          icon: <ExclamationCircleOutlined />,
+          onOk: () => {
+            setSilences(silences.filter(s => s.key !== key));
+            message.success('靜音規則已刪除');
+          }
+        });
+      };
+
+      const columns = [
+        { title: '名稱', dataIndex: 'name' },
+        {
+          title: '狀態', key: 'status', render: (_, record) => {
+            const status = getStatus(record);
+            return <Tag color={status.color}>{status.text}</Tag>;
+          }
+        },
+        { title: '匹配條件', dataIndex: 'matchers', render: (matchers) => (matchers && matchers.length > 0) ? matchers.map((m, i) => <Tag key={i}>{`${m.key} ${m.op} ${m.value}`}</Tag>) : '無' },
+        { title: '開始時間', dataIndex: 'timeRange', render: (range) => range[0].format('YYYY-MM-DD HH:mm') },
+        { title: '結束時間', dataIndex: 'timeRange', render: (range) => range[1].format('YYYY-MM-DD HH:mm') },
+        { title: '創建者', dataIndex: 'creator' },
+        {
+          title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+              <Button type="link" onClick={() => showModal(record)}>編輯</Button>
+              <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+            </Space>
+          )
+        }
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">靜音規則</Title>
+          <Paragraph className="page-subtitle" type="secondary">在計畫性維護或已知問題期間能自動抑制相關事件通知。</Paragraph>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+              <Input.Search placeholder="搜尋規則" style={{ width: 300 }} />
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增靜音規則</Button>
+            </div>
+            {
+              silences.length > 0 ?
+                <Table columns={columns} dataSource={silences} /> :
+                <Empty description="尚無任何靜音規則">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增靜音規則</Button>
+                </Empty>
+            }
+          </Card>
+          <Modal title={editingSilence ? '編輯靜音規則' : '新增靜音規則'} open={isModalOpen} onCancel={handleCancel} onOk={() => form.submit()} okText="儲存" cancelText="取消" width={600}>
+            <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
+              <Form.Item name="name" label="名稱" rules={[{ required: true }]}><Input /></Form.Item>
+              <Form.Item name="description" label="描述"><TextArea rows={2} /></Form.Item>
+              <Form.Item name="timeRange" label="時間範圍" rules={[{ required: true }]}>
+                <RangePicker showTime format="YYYY-MM-DD HH:mm" style={{ width: '100%' }} />
+              </Form.Item>
+              <Form.List name="matchers">
+                {(fields, { add, remove }) => (
+                  <React.Fragment>
+                    {fields.map(({ key, name, ...restField }) => (
+                      <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
+                        <Form.Item {...restField} name={[name, 'key']} rules={[{ required: true }]}>
+                          <Select style={{ width: 150 }} placeholder="標籤">
+                            <Select.Option value="resource_name">資源名稱</Select.Option>
+                            <Select.Option value="resource_group">資源群組</Select.Option>
+                            <Select.Option value="alert_name">告警名稱</Select.Option>
+                          </Select>
+                        </Form.Item>
+                        <Form.Item {...restField} name={[name, 'op']} rules={[{ required: true }]} initialValue="=">
+                          <Select style={{ width: 70 }}>
+                            <Select.Option value="=">=</Select.Option>
+                            <Select.Option value="!=">!=</Select.Option>
+                            <Select.Option value="=~">~=</Select.Option>
+                          </Select>
+                        </Form.Item>
+                        <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
+                          <Input placeholder="標籤值" />
+                        </Form.Item>
+                        <MinusCircleOutlined onClick={() => remove(name)} />
+                      </Space>
+                    ))}
+                    <Form.Item>
+                      <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined />}>
+                        新增匹配條件
+                      </Button>
+                    </Form.Item>
+                  </React.Fragment>
+                )}
+              </Form.List>
+            </Form>
+          </Modal>
+        </React.Fragment>
+      );
+    };
+
+    const ScriptsPage = ({ scripts, setScripts, addExecution }) => {
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editingScript, setEditingScript] = useState(null);
+      const [form] = Form.useForm();
+      const { message, modal } = antd.App.useApp();
+
+      const showModal = (script = null) => {
+        setEditingScript(script);
+        form.setFieldsValue(script || { name: '', type: 'Python', description: '', code: '' });
+        setIsModalOpen(true);
+      };
+      const handleCancel = () => setIsModalOpen(false);
+      const onFinish = (values) => {
+        message.success(editingScript ? '腳本更新成功' : '腳本新增成功');
+        // Logic to update/add script
+        handleCancel();
+      };
+      const handleRun = (script) => {
+        modal.confirm({
+          title: `確定要執行腳本 "${script.name}" 嗎?`,
+          icon: <PlayCircleOutlined />,
+          onOk: () => {
+            message.loading({ content: '執行中...', key: 'run_script' });
+            setTimeout(() => {
+              addExecution({
+                key: `e_${Date.now()}`,
+                scriptName: script.name,
+                trigger: { type: 'Manual', user: 'admin' },
+                status: 'success',
+                startTime: dayjs(),
+                duration: `${(Math.random() * 5).toFixed(1)}s`
+              });
+              message.success({ content: '執行成功', key: 'run_script' });
+            }, 1000);
+          }
+        })
+      };
+
+      const columns = [
+        { title: '腳本名稱', dataIndex: 'name' },
+        { title: '類型', dataIndex: 'type', render: t => <Tag>{t}</Tag> },
+        { title: '描述', dataIndex: 'description' },
+        { title: '創建者', dataIndex: 'creator' },
+        {
+          title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+              <Button type="link" icon={<PlayCircleOutlined />} onClick={() => handleRun(record)}>運行</Button>
+              <Button type="link" onClick={() => showModal(record)}>編輯</Button>
+              <Button type="link" danger>刪除</Button>
+            </Space>
+          )
+        }
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">腳本庫</Title>
+          <Paragraph className="page-subtitle" type="secondary">提供自動化腳本的開發與管理界面。</Paragraph>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增腳本</Button>
+            </div>
+            {
+              scripts.length > 0 ?
+                <Table columns={columns} dataSource={scripts} /> :
+                <Empty description="尚無任何腳本">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增腳本</Button>
+                </Empty>
+            }
+          </Card>
+          <Modal title={editingScript ? '編輯腳本' : '新建腳本'} open={isModalOpen} onCancel={handleCancel} onOk={() => form.submit()} width={800}>
+            <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
+              <Form.Item name="name" label="腳本名稱" rules={[{ required: true }]}>
+                <Input />
+              </Form.Item>
+              <Form.Item name="type" label="類型" rules={[{ required: true }]}>
+                <Select><Select.Option value="Python">Python</Select.Option><Select.Option value="Bash">Bash</Select.Option></Select>
+              </Form.Item>
+              <Form.Item name="description" label="描述">
+                <TextArea rows={2} />
+              </Form.Item>
+              <Form.Item name="code" label="腳本內容" rules={[{ required: true }]}>
+                <TextArea rows={15} className="code-editor-like" />
+              </Form.Item>
+            </Form>
+          </Modal>
+        </React.Fragment>
+      );
+    };
+
+    const SchedulesPage = ({ scripts }) => {
+      const initialSchedules = [
+        { key: 'sch_1', name: '每日資料庫備份', cron: '0 2 * * *', scriptId: 's_3', lastRun: dayjs().subtract(1, 'day').hour(2), enabled: true },
+        { key: 'sch_2', name: '每小時清理臨時文件', cron: '0 * * * *', scriptId: 's_2', lastRun: dayjs().subtract(30, 'minute'), enabled: false },
+      ];
+      const [schedules, setSchedules] = useLocalStorageState('sre-schedules', initialSchedules);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editingSchedule, setEditingSchedule] = useState(null);
+      const [form] = Form.useForm();
+      const { message, modal } = antd.App.useApp();
+      const selectedScriptId = Form.useWatch('scriptId', form);
+      const selectedScript = scripts.find(function (s) { return s.key === selectedScriptId; });
+
+      const getScriptName = (id) => {
+        const script = scripts.find(function (s) { return s.key === id; });
+        return script ? script.name : '未知腳本';
+      };
+
+      const showModal = (schedule = null) => {
+        setEditingSchedule(schedule);
+        form.setFieldsValue(schedule || { name: '', description: '', cron: '0 * * * *', enabled: true });
+        setIsModalOpen(true);
+      };
+      const handleCancel = () => setIsModalOpen(false);
+      const onFinish = (values) => {
+        message.success(editingSchedule ? '排程更新成功' : '排程新增成功');
+        handleCancel();
+      };
+
+      const columns = [
+        { title: '任務名稱', dataIndex: 'name' },
+        { title: '狀態', dataIndex: 'enabled', render: e => <Switch defaultChecked={e} /> },
+        { title: '執行腳本', dataIndex: 'scriptId', render: id => getScriptName(id) },
+        { title: 'CRON 觸發條件', dataIndex: 'cron', render: c => <code>{c}</code> },
+        { title: '上次執行', dataIndex: 'lastRun', render: time => time.fromNow() },
+        { title: '操作', key: 'action', render: (_, record) => <Space><Button type="link" onClick={() => showModal(record)}>編輯</Button><Button type="link" danger>刪除</Button></Space> }
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">排程管理</Title>
+          <Paragraph className="page-subtitle" type="secondary">提供對定時執行任務的完整管理界面。</Paragraph>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增排程</Button>
+            </div>
+            {
+              schedules.length > 0 ?
+                <Table columns={columns} dataSource={schedules} /> :
+                <Empty description="尚無任何排程">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增排程</Button>
+                </Empty>
+            }
+          </Card>
+          <Modal title={editingSchedule ? '編輯排程' : '新增排程'} open={isModalOpen} onCancel={handleCancel} onOk={() => form.submit()}>
+            <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
+              <Form.Item name="name" label="任務名稱" rules={[{ required: true }]}><Input /></Form.Item>
+              <Form.Item name="description" label="描述"><TextArea rows={2} /></Form.Item>
+              <Form.Item name="scriptId" label="執行腳本" rules={[{ required: true }]}>
+                <Select showSearch options={scripts.map(s => ({ label: s.name, value: s.key }))} />
+              </Form.Item>
+              <Form.Item name="cron" label={
+                <Space>
+                  <span>CRON 表達式</span>
+                  <Tooltip title="依序為：分 時 日 月 週。 `* * * * *` 表示每分鐘執行一次。">
+                    <InfoCircleOutlined />
+                  </Tooltip>
+                </Space>
+              } rules={[{ required: true }]}>
+                <Input />
+              </Form.Item>
+              {selectedScript && selectedScript.params && (
+                <Card size="small" title="腳本參數">
+                  {selectedScript.params.map(p => (
+                    <Form.Item key={p.name} name={['params', p.name]} label={p.label} rules={[{ required: true }]}>
+                      {p.type === 'number' ? <InputNumber style={{ width: '100%' }} /> : <Input />}
+                    </Form.Item>
+                  ))}
+                </Card>
+              )}
+            </Form>
+          </Modal>
+        </React.Fragment>
+      );
+    };
+
+    const ExecutionsPage = ({ executions, setExecutions }) => {
+      const [logModal, setLogModal] = useState({ open: false, log: '' });
+
+      const viewLog = (record) => {
+        const logContent = `[${record.startTime.format('YYYY-MM-DD HH:mm:ss')}] Starting execution for script: ${record.scriptName}\nTriggered by: ${record.trigger.type}\n...\nExecution ${record.status}.\nDuration: ${record.duration}`;
+        setLogModal({ open: true, log: logContent });
+      };
+
+      const copyLog = () => {
+        navigator.clipboard.writeText(logModal.log);
+        message.success('日誌已複製');
+      };
+
+      const columns = [
+        { title: '狀態', dataIndex: 'status', render: s => <Tag color={s === 'success' ? 'green' : 'red'}>{s.toUpperCase()}</Tag> },
+        { title: '腳本名稱', dataIndex: 'scriptName' },
+        { title: '觸發方式', dataIndex: 'trigger', render: t => t.type === 'Manual' ? `手動 (${t.user})` : t.type },
+        { title: '開始時間', dataIndex: 'startTime', render: t => t.format('YYYY-MM-DD HH:mm:ss') },
+        { title: '執行耗時', dataIndex: 'duration' },
+        { title: '操作', key: 'action', render: (_, record) => <Button type="link" onClick={() => viewLog(record)}>查看日誌</Button> }
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">執行日誌</Title>
+          <Paragraph className="page-subtitle" type="secondary">追蹤所有自動化腳本的執行歷史與結果。</Paragraph>
+          <Card>
+            <Table columns={columns} dataSource={executions} />
+          </Card>
+          <Modal title="執行日誌" open={logModal.open} onCancel={() => setLogModal({ open: false, log: '' })} footer={null} width={700}>
+            <div style={{ marginTop: 24 }}>
+              <Button icon={<CopyOutlined />} onClick={copyLog} style={{ marginBottom: 16 }}>複製日誌</Button>
+              <div className="log-viewer">
+                <pre>{logModal.log}</pre>
+              </div>
+            </div>
+          </Modal>
+        </React.Fragment>
+      );
+    };
+
+    const CapacityPlanningPage = ({ themeMode }) => {
+      const [form] = Form.useForm();
+      const { message, modal } = antd.App.useApp();
+      const [analysisResult, setAnalysisResult] = useState(null);
+      const [isLoading, setIsLoading] = useState(false);
+      const [confirmModal, setConfirmModal] = useState({ open: false, script: null });
+
+      const mockResourceGroups = [
+        { id: 'g_1', name: 'Production Database' },
+        { id: 'g_2', name: 'Production Web Servers' },
+      ];
+      const mockMetrics = [
+        { id: 'cpu_utilization', name: 'CPU 使用率 (%)' },
+        { id: 'memory_usage', name: '記憶體使用率 (GB)' },
+        { id: 'disk_space', name: '磁碟空間使用率 (%)' },
+      ];
+      const mockScripts = [
+        { id: 's_1', name: 'Auto-scaling for Web Servers' },
+        { id: 's_2', name: 'Increase Database Disk Volume' },
+      ];
+
+      const handleAnalysis = (values) => {
+        setIsLoading(true);
+        setAnalysisResult(null);
+        setTimeout(() => {
+          const historical = Array.from({ length: 30 }, (_, i) => {
+            const date = dayjs().subtract(30 - i, 'days').format('YYYY-MM-DD');
+            const value = 50 + i * 0.5 + Math.random() * 5;
+            return [date, value.toFixed(2)];
+          });
+
+          const lastValue = parseFloat(historical[historical.length - 1][1]);
+          const prediction = Array.from({ length: 90 }, (_, i) => {
+            const date = dayjs().add(i + 1, 'days').format('YYYY-MM-DD');
+            const value = lastValue + i * 0.3 + Math.random() * 2;
+            return [date, value.toFixed(2)];
+          });
+
+          setAnalysisResult({
+            key_metrics: { days_to_threshold: 45, threshold: 80, current_value: lastValue.toFixed(2), },
+            chart_data: { historical, prediction },
+            suggestions: [
+              { text: '目前的資源增長趨勢穩定，但預計在 45 天後達到 80% 的警戒線。', actionable: false },
+              { text: '建議執行擴容腳本，增加 2 個 Web Server 實例以應對預期流量增長。', actionable: true, action_type: '執行擴容腳本', action_target: { script_id: 's_1' } },
+              { text: '考慮對資料庫進行垂直擴容，將實例類型升級至下一個級別。', actionable: false },
+            ]
+          });
+          setIsLoading(false);
+        }, 1500);
+      };
+
+      const handleActionClick = (suggestion) => {
+        const script = mockScripts.find(s => s.id === suggestion.action_target.script_id);
+        if (script) {
+          setConfirmModal({ open: true, script: script });
+        }
+      };
+
+      const handleConfirmOk = () => {
+        message.loading({ content: '正在執行腳本...', key: 'exec' });
+        setTimeout(() => {
+          message.success({ content: `腳本 "${confirmModal.script.name}" 已成功執行`, key: 'exec' });
+          setConfirmModal({ open: false, script: null });
+        }, 1000);
+      };
+
+      const chartOption = analysisResult ? {
+        backgroundColor: 'transparent',
+        tooltip: { trigger: 'axis' },
+        legend: { data: ['歷史數據', '預測趨勢'] },
+        xAxis: { type: 'category', data: [...analysisResult.chart_data.historical.map(d => d[0]), ...analysisResult.chart_data.prediction.map(d => d[0])] },
+        yAxis: { type: 'value', axisLabel: { formatter: '{value} %' } },
+        series: [
+          { name: '歷史數據', type: 'line', data: analysisResult.chart_data.historical, smooth: true },
+          { name: '預測趨勢', type: 'line', data: [...Array(29).fill(null), analysisResult.chart_data.historical[29], ...analysisResult.chart_data.prediction], smooth: true, lineStyle: { type: 'dashed' } },
+          {
+            name: '警戒線', type: 'line',
+            markLine: {
+              silent: true,
+              data: [{ yAxis: 80, name: '80% 警戒線' }],
+              label: { position: 'end', formatter: '{b}', color: '#ff4d4f' },
+              lineStyle: { color: '#ff4d4f' }
+            }
+          }
+        ]
+      } : {};
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">容量規劃</Title>
+          <Paragraph className="page-subtitle" type="secondary">分析歷史數據，預測未來資源消耗趨勢，從被動事件轉向主動規劃。</Paragraph>
+          <Card title="分析設定">
+            <Form form={form} layout="inline" onFinish={handleAnalysis}>
+              <Form.Item name="resource_group" label="選擇資源群組" rules={[{ required: true }]}>
+                <Select style={{ width: 200 }} options={mockResourceGroups.map(g => ({ label: g.name, value: g.id }))} />
+              </Form.Item>
+              <Form.Item name="metric" label="選擇關鍵效能指標" rules={[{ required: true }]}>
+                <Select style={{ width: 200 }} options={mockMetrics.map(m => ({ label: m.name, value: m.id }))} />
+              </Form.Item>
+              <Form.Item name="period" label="預測期間" initialValue="90d" rules={[{ required: true }]}>
+                <Select style={{ width: 150 }}>
+                  <Select.Option value="30d">未來 30 天</Select.Option>
+                  <Select.Option value="60d">未來 60 天</Select.Option>
+                  <Select.Option value="90d">未來 90 天</Select.Option>
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit" loading={isLoading}>開始分析</Button>
+              </Form.Item>
+            </Form>
+          </Card>
+
+          <Spin spinning={isLoading} tip="正在進行數據分析與趨勢預測...">
+            {analysisResult ? (
+              <div style={{ marginTop: 24 }}>
+                <Row gutter={[16, 16]}>
+                  <Col xs={24} md={8}><Card><Statistic title="目前使用率" value={analysisResult.key_metrics.current_value} suffix="%" /></Card></Col>
+                  <Col xs={24} md={8}><Card><Statistic title="預計達到 80% 警戒線" value={`${analysisResult.key_metrics.days_to_threshold} 天後`} /></Card></Col>
+                </Row>
+                <Card title="趨勢預測圖" style={{ marginTop: 16 }}>
+                  <EchartsForReact option={chartOption} isDark={themeMode === 'dark'} />
+                </Card>
+                <Card title="分析與建議">
+                  <List
+                    dataSource={analysisResult.suggestions}
+                    renderItem={item => (
+                      <List.Item actions={item.actionable ? [<Button type="primary" icon={<ThunderboltOutlined />} onClick={() => handleActionClick(item)}>{item.action_type}</Button>] : []}>
+                        <List.Item.Meta description={item.text} />
+                      </List.Item>
+                    )}
+                  />
+                </Card>
+              </div>
+            ) : (
+              !isLoading && <Card style={{ marginTop: 24, textAlign: 'center' }}><Empty description="請選擇資源與指標以開始分析" /></Card>
+            )}
+          </Spin>
+
+          <Modal
+            title="確認執行自動化腳本"
+            open={confirmModal.open}
+            onOk={handleConfirmOk}
+            onCancel={() => setConfirmModal({ open: false, script: null })}
+            okText="確認執行"
+            cancelText="取消"
+          >
+            {confirmModal.script && <p>您確定要執行以下腳本嗎？<br /><strong>腳本名稱:</strong> {confirmModal.script.name}</p>}
+          </Modal>
+        </React.Fragment>
+      );
+    };
+
+    const UserAndTeamManagementPage = () => {
+      const initialUsers = [
+        { key: 'u_1', name: 'Admin User', email: 'admin@example.com', teams: ['t_3'], roles: ['super_admin'] },
+        { key: 'u_2', name: 'Dev User', email: 'dev@example.com', teams: ['t_1'], roles: ['team_manager', 'team_member'] },
+        { key: 'u_3', name: 'View User', email: 'view@example.com', teams: ['t_2'], roles: ['viewer'] },
+      ];
+      const initialTeams = [
+        { key: 't_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['u_2'] },
+        { key: 't_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['u_3'] },
+        { key: 't_3', name: 'Administrators', description: '平台最高權限管理者', members: ['u_1'] },
+      ];
+      const mockRoles = [
+        { id: 'super_admin', name: '超級管理員' }, { id: 'team_manager', name: '團隊管理員' },
+        { id: 'team_member', name: '團隊成員' }, { id: 'viewer', name: '唯讀用戶' }
+      ];
+
+      const [users, setUsers] = useLocalStorageState('sre-users', initialUsers);
+      const [teams, setTeams] = useLocalStorageState('sre-teams', initialTeams);
+      const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+      const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+      const [editingUser, setEditingUser] = useState(null);
+      const [editingTeam, setEditingTeam] = useState(null);
+      const [userForm] = Form.useForm();
+      const [teamForm] = Form.useForm();
+
+      const getTeamNames = (teamIds) => teamIds.map(id => {
+        const team = teams.find(t => t.key === id);
+        return team ? team.name : id;
+      });
+      const getRoleNames = (roleIds) => roleIds.map(id => {
+        const role = mockRoles.find(r => r.id === id);
+        return role ? role.name : id;
+      });
+
+      const userColumns = [
+        { title: '姓名', dataIndex: 'name' }, { title: '電子郵件', dataIndex: 'email' },
+        { title: '團隊', dataIndex: 'teams', render: ids => getTeamNames(ids).join(', ') },
+        { title: '角色', dataIndex: 'roles', render: ids => ids.map(id => <Tag key={id}>{getRoleNames([id])}</Tag>) },
+        { title: '操作', key: 'action', render: () => <a>編輯</a> }
+      ];
+
+      const teamColumns = [
+        { title: '團隊名稱', dataIndex: 'name' }, { title: '成員數', dataIndex: 'members', render: m => m.length },
+        { title: '描述', dataIndex: 'description' },
+        { title: '操作', key: 'action', render: (_, record) => <a>編輯</a> }
+      ];
+
+      const tabItems = [
+        { key: 'users', label: '人員管理', children: <Table dataSource={users} columns={userColumns} /> },
+        { key: 'teams', label: '團隊管理', children: <Table dataSource={teams} columns={teamColumns} /> }
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">使用者與團隊管理</Title>
+          <Paragraph className="page-subtitle" type="secondary">集中管理平台的所有使用者帳號、團隊結構與權限角色。</Paragraph>
+          <Card>
+            <Tabs defaultActiveKey="users" items={tabItems} tabBarExtraContent={<Space><Button>新增團隊</Button><Button type="primary">邀請使用者</Button></Space>} />
+          </Card>
+        </React.Fragment>
+      );
+    };
+
+    const RoleManagementPage = () => {
+      const permissionTreeData = [
+        {
+          title: '資源管理', key: 'resources', children: [
+            { title: '讀取資源列表', key: 'res:list:read' },
+            { title: '寫入資源', key: 'res:list:write' },
+            { title: '讀取資源群組', key: 'res:group:read' },
+            { title: '寫入資源群組', key: 'res:group:write' },
+          ]
+        },
+        {
+          title: '事件管理', key: 'incidents', children: [
+            { title: '讀取事件', key: 'inc:list:read' },
+            { title: '確認/解決事件', key: 'inc:list:update' },
+            { title: '讀取告警規則', key: 'inc:rule:read' },
+            { title: '寫入告警規則', key: 'inc:rule:write' },
+          ]
+        },
+      ];
+      const initialRoles = [
+        { key: 'super_admin', name: '超級管理員', isBuiltIn: true, permissions: ['resources', 'incidents'] },
+        { key: 'team_manager', name: '團隊管理員', isBuiltIn: true, permissions: ['res:list:read', 'res:list:write', 'inc:list:read', 'inc:rule:write'] },
+        { key: 'viewer', name: '唯讀用戶', isBuiltIn: true, permissions: ['res:list:read', 'inc:list:read'] },
+        { key: 'custom_role_1', name: '自定義DBA角色', isBuiltIn: false, permissions: ['res:list:read', 'res:group:write'] },
+      ];
+
+      const [roles, setRoles] = useLocalStorageState('sre-roles', initialRoles);
+      const [selectedRoleKey, setSelectedRoleKey] = useState('super_admin');
+      const [checkedKeys, setCheckedKeys] = useState([]);
+      const { message } = antd.App.useApp();
+
+      const selectedRole = roles.find(r => r.key === selectedRoleKey);
+
+      useEffect(() => {
+        if (selectedRole) {
+          setCheckedKeys(selectedRole.permissions);
+        }
+      }, [selectedRole]);
+
+      const handleSelectRole = (key) => setSelectedRoleKey(key);
+      const onCheck = (keys) => setCheckedKeys(keys);
+      const handleSave = () => message.success(`角色 "${selectedRole.name}" 的權限已更新`);
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">角色管理</Title>
+          <Paragraph className="page-subtitle" type="secondary">為 super_admin 提供一個管理系統角色與其權限的界面。</Paragraph>
+          <Row gutter={16}>
+            <Col span={6}>
+              <Card title="角色列表" extra={<Button type="primary" size="small">新增角色</Button>}>
+                <List
+                  dataSource={roles}
+                  renderItem={item => (
+                    <List.Item onClick={() => handleSelectRole(item.key)} style={{ cursor: 'pointer', background: selectedRoleKey === item.key ? '#2c2d2f' : 'transparent' }}>
+                      {item.name}
+                    </List.Item>
+                  )}
+                />
+              </Card>
+            </Col>
+            <Col span={18}>
+              {selectedRole && (
+                <Card title={
+                  <Space>
+                    <span>{selectedRole.name}</span>
+                    <Tag color={selectedRole.isBuiltIn ? 'red' : 'blue'}>{selectedRole.isBuiltIn ? '內建角色' : '自定義角色'}</Tag>
+                  </Space>
+                }>
+                  <Title level={5}>權限設定</Title>
+                  <Tree
+                    checkable
+                    treeData={permissionTreeData}
+                    checkedKeys={checkedKeys}
+                    onCheck={onCheck}
+                    disabled={selectedRole.isBuiltIn}
+                    defaultExpandAll
+                  />
+                  {!selectedRole.isBuiltIn && <Button type="primary" onClick={handleSave} style={{ marginTop: 16 }}>儲存變更</Button>}
+                </Card>
+              )}
+            </Col>
+          </Row>
+        </React.Fragment>
+      );
+    };
+
+    const NotificationChannelsPage = () => {
+      const initialChannels = [
+        { key: 'nc_1', name: 'Default Email', type: 'Email', enabled: true, lastTest: { result: 'success', time: dayjs().subtract(1, 'day') } },
+        { key: 'nc_2', name: 'On-call Slack', type: 'Slack', enabled: true, lastTest: { result: 'success', time: dayjs().subtract(2, 'hour') } },
+        { key: 'nc_3', name: 'Billing Webhook', type: 'Webhook', enabled: false, lastTest: { result: 'failed', time: dayjs().subtract(3, 'day'), message: 'Connection timed out' } },
+      ];
+
+      const [channels, setChannels] = useLocalStorageState('sre-channels', initialChannels);
+      const [isModalOpen, setIsModalOpen] = useState(false);
+      const [editingChannel, setEditingChannel] = useState(null);
+      const [form] = Form.useForm();
+      const { message } = antd.App.useApp();
+
+      const channelType = Form.useWatch('type', form);
+
+      const showModal = (channel = null) => {
+        setEditingChannel(channel);
+        form.setFieldsValue(channel || { name: '', type: 'Email', enabled: true });
+        setIsModalOpen(true);
+      };
+      const handleCancel = () => setIsModalOpen(false);
+      const onFinish = (values) => message.success('儲存成功');
+      const handleTest = () => {
+        message.loading({ content: "正在發送測試訊息...", key: "test" });
+        setTimeout(() => message.success({ content: "測試訊息發送成功", key: "test" }), 1000);
+      }
+
+      const columns = [
+        { title: '名稱', dataIndex: 'name' },
+        { title: '類型', dataIndex: 'type' },
+        { title: '啟用狀態', dataIndex: 'enabled', render: e => <Switch defaultChecked={e} /> },
+        { title: '最近測試結果', dataIndex: 'lastTest', render: lt => <Tag color={lt.result === 'success' ? 'green' : 'red'}>{lt.result.toUpperCase()}</Tag> },
+        { title: '最近測試時間', dataIndex: 'lastTest', render: lt => lt.time.fromNow() },
+        { title: '操作', key: 'action', render: (_, record) => <Space><Button type="link" onClick={() => showModal(record)}>編輯</Button><Button danger type="link">刪除</Button></Space> },
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">通知管道</Title>
+          <Paragraph className="page-subtitle" type="secondary">提供系統通知管道的集中管理、測試與狀態追蹤。</Paragraph>
+          <Card>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增通知管道</Button>
+            </div>
+            <Table columns={columns} dataSource={channels} />
+          </Card>
+          <Modal title={editingChannel ? "編輯通知管道" : "新增通知管道"} open={isModalOpen} onCancel={handleCancel}
+            footer={[
+              <Button key="back" onClick={handleCancel}>取消</Button>,
+              <Button key="test" onClick={handleTest}>發送測試</Button>,
+              <Button key="submit" type="primary" onClick={() => form.submit()}>儲存</Button>
+            ]}
+          >
+            <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
+              <Form.Item name="name" label="名稱" rules={[{ required: true }]}><Input /></Form.Item>
+              <Form.Item name="type" label="管道類型" rules={[{ required: true }]}>
+                <Select>
+                  <Select.Option value="Email">Email</Select.Option>
+                  <Select.Option value="Webhook">Webhook (通用)</Select.Option>
+                  <Select.Option value="Slack">Slack</Select.Option>
+                  <Select.Option value="LINE Notify">LINE Notify</Select.Option>
+                  <Select.Option value="SMS">SMS</Select.Option>
+                </Select>
+              </Form.Item>
+
+              {channelType === 'Email' && (
+                <React.Fragment>
+                  <Form.Item name="to" label="收件人 (To)" rules={[{ required: true }]}><Input /></Form.Item>
+                  <Form.Item name="cc" label="副本 (CC)"><Input /></Form.Item>
+                  <Form.Item name="bcc" label="密件副本 (BCC)"><Input /></Form.Item>
+                </React.Fragment>
+              )}
+              {channelType === 'Webhook' && (
+                <React.Fragment>
+                  <Form.Item name="webhook_url" label="Webhook URL" rules={[{ required: true, type: 'url' }]}><Input /></Form.Item>
+                  <Form.Item name="webhook_method" label="HTTP 方法 (Method)" initialValue="POST">
+                    <Select>
+                      <Select.Option value="POST">POST</Select.Option>
+                      <Select.Option value="PUT">PUT</Select.Option>
+                    </Select>
+                  </Form.Item>
+                </React.Fragment>
+              )}
+              {channelType === 'Slack' && (
+                <React.Fragment>
+                  <Form.Item name="slack_url" label="Incoming Webhook URL" rules={[{ required: true, type: 'url' }]}><Input /></Form.Item>
+                  <Form.Item name="slack_mention" label="提及對象 (Mention)"><Input placeholder="@channel, @here, or user_id" /></Form.Item>
+                </React.Fragment>
+              )}
+              {channelType === 'LINE Notify' && (
+                <Form.Item name="line_token" label="存取權杖 (Access Token)" rules={[{ required: true }]}><Input.Password /></Form.Item>
+              )}
+              {channelType === 'SMS' && (
+                <Form.Item name="sms_recipient" label="收件人手機號碼" rules={[{ required: true }]}><Input placeholder="例如: +886912345678" /></Form.Item>
+              )}
+            </Form>
+          </Modal>
+        </React.Fragment>
+      )
+    };
+
+    const SystemSettingsPage = () => {
+      const [form] = Form.useForm();
+      const { message } = antd.App.useApp();
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">系統設定</Title>
+          <Paragraph className="page-subtitle" type="secondary">為 super_admin 提供設定平台級別全域參數的界面。</Paragraph>
+          <Form form={form} layout="vertical">
+            <Card title="平台基本設定" style={{ marginBottom: 16 }}>
+              <Form.Item name="platform_name" label="平台名稱"><Input /></Form.Item>
+              <Form.Item name="default_lang" label="預設語言"><Select><Select.Option value="en">English</Select.Option><Select.Option value="zh-Hant">繁體中文</Select.Option></Select></Form.Item>
+            </Card>
+            <Card title="認證設定" style={{ marginBottom: 16 }}>
+              <Form.Item name="oidc_enabled" label="啟用 OIDC" valuePropName="checked"><Switch /></Form.Item>
+              <Form.Item name="oidc_client_id" label="客戶端 ID"><Input /></Form.Item>
+              <Form.Item name="oidc_client_secret" label="客戶端密鑰"><Input.Password /></Form.Item>
+            </Card>
+            <Card title="郵件伺服器設定">
+              <Form.Item name="smtp_host" label="SMTP 伺服器"><Input /></Form.Item>
+              <Form.Item name="smtp_port" label="埠號"><InputNumber /></Form.Item>
+              <Form.Item name="smtp_user" label="使用者名稱"><Input /></Form.Item>
+              <Form.Item name="smtp_pass" label="密碼"><Input.Password /></Form.Item>
+            </Card>
+            <div style={{ marginTop: 24, textAlign: 'right' }}>
+              <Space>
+                <Button>還原預設值</Button>
+                <Button type="primary" onClick={() => message.success('設定已儲存')}>儲存</Button>
+              </Space>
+            </div>
+          </Form>
+        </React.Fragment>
+      );
+    };
+    const PlatformDiagnosticsPage = () => {
+      const scriptHealthData = [
+        { key: 1, name: 'Auto-scaling for Web Servers', total: 150, failed: 8, rate: 5.3 },
+        { key: 2, name: 'Increase Database Disk Volume', total: 30, failed: 0, rate: 0 },
+        { key: 3, name: 'Daily Backup', total: 7, failed: 1, rate: 14.3 },
+      ];
+      const channelHealthData = [
+        { key: 1, name: 'On-call Slack', total: 532, failed: 1, rate: 0.2 },
+        { key: 2, name: 'Default Email', total: 1024, failed: 0, rate: 0 },
+        { key: 3, name: 'Billing Webhook', total: 50, failed: 6, rate: 12.0 },
+      ];
+
+      const healthColumns = [
+        { title: '名稱', dataIndex: 'name' },
+        { title: '總次數', dataIndex: 'total' },
+        { title: '失敗率', dataIndex: 'rate', render: (rate) => <Progress percent={rate} status={rate > 5 ? 'exception' : 'normal'} format={p => `${p}%`} /> }
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">平台狀態診斷</Title>
+          <Paragraph className="page-subtitle" type="secondary">監控 SRE 平台自身的健康狀況，快速發現系統瓶頸。</Paragraph>
+          <div style={{ marginBottom: 24 }}>
+            <Radio.Group defaultValue="24h">
+              <Radio.Button value="24h">過去 24 小時</Radio.Button>
+              <Radio.Button value="7d">過去 7 天</Radio.Button>
+            </Radio.Group>
+          </div>
+          <Row gutter={[16, 16]}>
+            <Col span={12}>
+              <Card title="自動化健康度">
+                <Table
+                  columns={healthColumns}
+                  dataSource={scriptHealthData}
+                  rowClassName={(record) => record.rate > 10 ? 'row-highlight' : ''}
+                  pagination={false}
+                />
+              </Card>
+            </Col>
+            <Col span={12}>
+              <Card title="通知管道健康度">
+                <Table
+                  columns={healthColumns}
+                  dataSource={channelHealthData}
+                  rowClassName={(record) => record.rate > 10 ? 'row-highlight' : ''}
+                  pagination={false}
+                />
+              </Card>
+            </Col>
+          </Row>
+        </React.Fragment>
+      );
+    };
+
+    const AuditLogsPage = () => {
+      const [drawer, setDrawer] = useState({ open: false, data: null });
+      const initialLogs = [
+        { key: 1, time: dayjs().subtract(5, 'minutes'), user: 'admin', action: 'execute', type: 'Script', id: 's_1', result: 'success' },
+        { key: 2, time: dayjs().subtract(1, 'hour'), user: 'admin', action: 'update', type: 'AlertRule', id: 'rule_2', result: 'success', diff: { before: 'severity: warning', after: 'severity: critical' } },
+        { key: 3, time: dayjs().subtract(3, 'hour'), user: 'dev_user', action: 'login', type: 'User', id: 'dev_user', result: 'success' },
+        { key: 4, time: dayjs().subtract(4, 'hour'), user: 'system', action: 'create', type: 'Incident', id: 'i_4', result: 'failure', message: 'Rate limit exceeded' },
+      ];
+
+      const showDrawer = (record) => setDrawer({ open: true, data: record });
+      const closeDrawer = () => setDrawer({ open: false, data: null });
+
+      const columns = [
+        { title: '時間', dataIndex: 'time', render: t => t.format('YYYY-MM-DD HH:mm:ss') },
+        { title: '操作者', dataIndex: 'user' },
+        { title: '動作', dataIndex: 'action', render: a => <Tag>{a.toUpperCase()}</Tag> },
+        { title: '資源類型', dataIndex: 'type' },
+        { title: '資源 ID', dataIndex: 'id' },
+        { title: '結果', dataIndex: 'result', render: r => <Tag color={r === 'success' ? 'green' : 'red'}>{r.toUpperCase()}</Tag> },
+        { title: '操作', key: 'action', render: (_, record) => <Button type="link" onClick={() => showDrawer(record)}>查看詳情</Button> },
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">審計日誌</Title>
+          <Paragraph className="page-subtitle" type="secondary">追蹤平台重要操作的審計紀錄，用於追溯與合規。</Paragraph>
+          <Card style={{ marginBottom: 16 }}>
+            <Form layout="inline">
+              <Form.Item label="時間範圍"><RangePicker showTime /></Form.Item>
+              <Form.Item label="使用者"><Input style={{ width: 150 }} /></Form.Item>
+              <Form.Item label="動作類型"><Select style={{ width: 120 }}><Select.Option value="create">Create</Select.Option></Select></Form.Item>
+              <Button type="primary">查詢</Button>
+            </Form>
+          </Card>
+          <Card>
+            <Table columns={columns} dataSource={initialLogs} rowClassName={r => r.result === 'failure' ? 'row-highlight' : ''} />
+          </Card>
+          <Drawer title="日誌詳情" onClose={closeDrawer} open={drawer.open} width={500}>
+            {drawer.data && (
+              <List>
+                <List.Item><Text strong>時間:</Text> {drawer.data.time.format('YYYY-MM-DD HH:mm:ss')}</List.Item>
+                <List.Item><Text strong>操作者:</Text> {drawer.data.user}</List.Item>
+                <List.Item><Text strong>動作:</Text> {drawer.data.action}</List.Item>
+                <List.Item><Text strong>資源:</Text> {drawer.data.type} ({drawer.data.id})</List.Item>
+                <List.Item><Text strong>結果:</Text> <Tag color={drawer.data.result === 'success' ? 'green' : 'red'}>{drawer.data.result.toUpperCase()}</Tag></List.Item>
+                {drawer.data.message && <List.Item><Text strong>訊息:</Text> {drawer.data.message}</List.Item>}
+                {drawer.data.diff && (
+                  <List.Item>
+                    <pre>
+                      <strong>變更差異:</strong><br />
+                      - {drawer.data.diff.before}<br />
+                      + {drawer.data.diff.after}
+                    </pre>
+                  </List.Item>
+                )}
+              </List>
+            )}
+          </Drawer>
+        </React.Fragment>
+      );
+    };
+
+    const ProfilePage = ({ themeMode, setThemeMode }) => {
+      const [form] = Form.useForm();
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">個人資料與偏好設定</Title>
+          <Paragraph className="page-subtitle" type="secondary">管理您的個人資訊、密碼與通知偏好。</Paragraph>
+          <Tabs tabPosition="left">
+            <Tabs.TabPane tab="個人資訊" key="1">
+              <Card title="Profile">
+                <Form layout="vertical" form={form} style={{ maxWidth: 500 }}>
+                  <Form.Item label="姓名" name="name"><Input defaultValue="Admin User" /></Form.Item>
+                  <Form.Item label="電子郵件" name="email"><Input defaultValue="admin@example.com" disabled /></Form.Item>
+                  <Form.Item><Button type="primary">更新個人資訊</Button></Form.Item>
+                </Form>
+              </Card>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="密碼安全" key="2">
+              <Card title="變更密碼">
+                <Form layout="vertical" style={{ maxWidth: 500 }}>
+                  <Form.Item label="目前密碼" name="currentPassword"><Input.Password /></Form.Item>
+                  <Form.Item label="新密碼" name="newPassword"><Input.Password /></Form.Item>
+                  <Form.Item label="確認新密碼" name="confirmPassword"><Input.Password /></Form.Item>
+                  <Form.Item><Button type="primary">更新密碼</Button></Form.Item>
+                </Form>
+              </Card>
+            </Tabs.TabPane>
+            <Tabs.TabPane tab="通知設定" key="3">
+              <Card title="Preferences">
+                <Form layout="vertical" style={{ maxWidth: 500 }}>
+                  <Form.Item label="介面主題" name="theme">
+                    <Select value={themeMode} onChange={setThemeMode}><Select.Option value="dark">Dark</Select.Option><Select.Option value="light">Light</Select.Option></Select>
+                  </Form.Item>
+                  <Form.Item label="預設儀表板" name="homeDashboard">
+                    <Select defaultValue="default"><Select.Option value="default">Default</Select.Option></Select>
+                  </Form.Item>
+                  <Form.Item label="時區" name="timezone">
+                    <Select defaultValue="utc"><Select.Option value="utc">UTC</Select.Option><Select.Option value="local">Browser Time</Select.Option></Select>
+                  </Form.Item>
+                  <Form.Item><Button type="primary">儲存偏好設定</Button></Form.Item>
+                </Form>
+              </Card>
+            </Tabs.TabPane>
+          </Tabs>
+        </React.Fragment>
+      );
+    };
+
+    const AdministrationPage = ({ onNavigate }) => {
+      const adminCards = [{ group: '存取控制 (Access Control)', items: [{ key: 'organization', icon: <TeamOutlined />, title: '使用者與團隊管理', description: '管理使用者帳號、所屬團隊與權限角色。' }, { key: 'role-management', icon: <ApartmentOutlined />, title: '角色管理', description: '管理系統角色與其對應的權限。' }] }, { group: '平台設定 (Platform Settings)', items: [{ key: 'notification-channels', icon: <BellOutlined />, title: '通知管道', description: '設定系統發送通知的各種管道。' }, { key: 'system-settings', icon: <BuildOutlined />, title: '系統設定', description: '設定平台級別的全域參數。' }] }, { group: '平台維運 (Platform Operations)', items: [{ key: 'diagnostics', icon: <ControlOutlined />, title: '平台診斷', description: '監控 SRE 平台自身的健康狀況。' }, { key: 'audit-logs', icon: <AuditOutlined />, title: '審計日誌', description: '追蹤與審計平台上的所有重要操作紀錄。' }] }];
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">Administration</Title><Paragraph className="page-subtitle" type="secondary">管理平台級別的設定、存取控制與維運狀態。</Paragraph>
+          {adminCards.map(group => (
+            <div key={group.group} style={{ marginBottom: '32px' }}>
+              <Title level={4} style={{ marginBottom: '16px' }}>{group.group}</Title>
+              <Row gutter={[16, 16]}>
+                {group.items.map(item => (
+                  <Col key={item.key} xs={24} md={12} lg={8}>
+                    <Card className="admin-card" onClick={() => onNavigate(item.key)}><Card.Meta avatar={item.icon} title={<Title level={5}>{item.title}</Title>} description={item.description} /></Card>
+                  </Col>
+                ))}
+              </Row>
+            </div>
+          ))}
+        </React.Fragment>
+      );
+    };
+
+    // --- Main App Component ---
+    const MainApp = ({ themeMode, setThemeMode }) => {
+      const [currentPage, setCurrentPage] = useState('dashboard');
+      const [collapsed, setCollapsed] = useState(false);
+      const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
+      const { message } = antd.App.useApp();
+
+      const initialScripts = [
+        { key: 's_1', name: 'Auto-scaling for Web Servers', type: 'Python', description: '自動擴展 Web 伺服器實例', creator: 'admin', code: '# Python script to scale web servers\nprint("Scaling up web servers...")', params: [{ name: 'instance_count', type: 'number', label: '實例數量' }] },
+        { key: 's_2', name: 'Increase Database Disk Volume', type: 'Bash', description: '增加資料庫磁碟區容量', creator: 'admin', code: '#!/bin/bash\n# Bash script to increase disk volume\necho "Increasing DB disk size..."', params: [{ name: 'increase_gb', type: 'number', label: '增加容量 (GB)' }] },
+        { key: 's_3', name: 'Daily Backup', type: 'Python', description: '每日資料庫備份', creator: 'dev_user', code: '# Python script for daily backup\nprint("Starting daily backup...")' },
+      ];
+      const initialExecutions = [
+        { key: 'e_1', scriptName: 'Auto-scaling for Web Servers', trigger: { type: 'Event', id: 'i_2' }, status: 'success', startTime: dayjs().subtract(2, 'hour'), duration: '5.2s' },
+        { key: 'e_2', scriptName: 'Increase Database Disk Volume', trigger: { type: 'Manual', user: 'admin' }, status: 'failed', startTime: dayjs().subtract(1, 'day'), duration: '2.1s' },
+        { key: 'e_3', scriptName: 'Daily Backup', trigger: { type: 'Schedule', id: 'sch_1' }, status: 'success', startTime: dayjs().subtract(1, 'day').hour(2), duration: '15m 30s' },
+      ];
+
+      const [scripts, setScripts] = useLocalStorageState('sre-scripts', initialScripts);
+      const [executions, setExecutions] = useLocalStorageState('sre-executions', initialExecutions);
+
+      const addExecution = (newExecution) => {
+        setExecutions(function (prev) { return [newExecution, ...prev] });
+      };
+
+      const handleLogout = () => { message.success('已成功登出'); setTimeout(() => window.location.reload(), 500); }
+      const handleMenuSelect = ({ key }) => setCurrentPage(key);
+      const getItem = (label, key, icon, children) => ({ key, icon, children, label });
+      const sideMenuItems = [getItem('儀表板', 'dashboard', <DashboardOutlined />), { type: 'divider' }, getItem('資源', 'resources', <HddOutlined />, [getItem('資源列表', 'resource-list'), getItem('資源群組', 'resource-groups'),]), getItem('事件', 'incidents', <HistoryOutlined />, [getItem('事件紀錄', 'incident-list'), getItem('告警規則', 'alerting-rules'), getItem('靜音規則', 'silences'),]), { type: 'divider' }, getItem('分析', 'analyzing', <BarChartOutlined />, [getItem('容量規劃', 'capacity-planning'),]), getItem('自動化', 'automation', <CodeOutlined />, [getItem('腳本庫', 'scripts'), getItem('排程管理', 'schedules'), getItem('執行日誌', 'executions'),]), { type: 'divider' }, getItem('管理', 'administration', <SettingOutlined />),];
+
+      useEffect(() => {
+        const handleKeyDown = (e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            setIsSearchModalOpen(true);
+          }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+      }, []);
+
+      const PageContent = () => {
+        switch (currentPage) {
+          case 'dashboard': return <DashboardPage themeMode={themeMode} />;
+          case 'resources': return <ResourcesPage onNavigate={setCurrentPage} />;
+          case 'incidents': return <IncidentsPage onNavigate={setCurrentPage} />;
+          case 'analyzing': return <AnalyzingPage onNavigate={setCurrentPage} />;
+          case 'automation': return <AutomationPage onNavigate={setCurrentPage} />;
+          case 'resource-list': return <ResourceListPage />;
+          case 'resource-groups': return <ResourceGroupsPage />;
+          case 'incident-list': return <IncidentListPage onNavigate={setCurrentPage} />;
+          case 'alerting-rules': return <AlertingRulesPage />;
+          case 'silences': return <SilencesPage />;
+          case 'capacity-planning': return <CapacityPlanningPage themeMode={themeMode} />;
+          case 'scripts': return <ScriptsPage scripts={scripts} setScripts={setScripts} addExecution={addExecution} />;
+          case 'schedules': return <SchedulesPage scripts={scripts} />;
+          case 'executions': return <ExecutionsPage executions={executions} setExecutions={setExecutions} />;
+          case 'administration': return <AdministrationPage onNavigate={setCurrentPage} />;
+          case 'organization': return <UserAndTeamManagementPage />;
+          case 'role-management': return <RoleManagementPage />;
+          case 'notification-channels': return <NotificationChannelsPage />;
+          case 'system-settings': return <SystemSettingsPage />;
+          case 'diagnostics': return <PlatformDiagnosticsPage />;
+          case 'audit-logs': return <AuditLogsPage />;
+          case 'profile': return <ProfilePage themeMode={themeMode} setThemeMode={setThemeMode} />;
+          default: return <DashboardPage />;
+        }
+      };
+
+      const findLabel = (key, menu) => {
+        for (const item of menu) {
+          if (item.key === key) return { parent: null, parentKey: null, child: item.label };
+          if (item.children) {
+            for (const child of item.children) {
+              if (child.key === key) return { parent: item.label, parentKey: item.key, child: child.label };
+            }
+          }
+        }
+        const adminPageMap = { organization: '使用者與團隊管理', 'role-management': '角色管理', 'notification-channels': '通知管道', 'system-settings': '系統設定', diagnostics: '平台診斷', 'audit-logs': '審計日誌', profile: '個人資料' };
+        if (adminPageMap[key]) return { parent: '管理', parentKey: 'administration', child: adminPageMap[key] };
+        return { parent: null, parentKey: null, child: '儀表板' };
+      };
+
+      const { parent, parentKey, child } = findLabel(currentPage, sideMenuItems);
+      const breadcrumbItems = [{ title: <a onClick={() => setCurrentPage('dashboard')}>Home</a> }];
+      if (parent) {
+        breadcrumbItems.push({ title: <a onClick={() => setCurrentPage(parentKey)}>{parent}</a> });
+      }
+      if (child && child !== '儀表板' && child !== parent) {
+        breadcrumbItems.push({ title: child });
+      }
+
+      const userMenuItems = [
+        { key: 'profile', label: '個人資料', icon: <UserOutlined />, onClick: () => setCurrentPage('profile') },
+        { key: 'theme', label: `切換至 ${themeMode === 'dark' ? '淺色' : '深色'} 模式`, icon: <BulbOutlined />, onClick: () => setThemeMode(themeMode === 'dark' ? 'light' : 'dark') },
+        { type: 'divider' },
+        { key: 'logout', label: '登出', icon: <LogoutOutlined />, onClick: handleLogout }
+      ];
+
+      const NotificationCenter = () => {
+        const [notifications, setNotifications] = useState([
+          { id: 1, type: 'error', title: 'CPU high on db-prod-01', time: dayjs().subtract(5, 'minutes'), read: false },
+          { id: 2, type: 'system', title: 'Script "Daily Backup" executed successfully', time: dayjs().subtract(2, 'hours'), read: false },
+          { id: 3, type: 'warning', title: 'Disk space low on web-prod-02', time: dayjs().subtract(1, 'day'), read: true },
+        ]);
+        const unreadCount = notifications.filter(n => !n.read).length;
+
+        const handleMarkAllAsRead = () => {
+          setNotifications(notifications.map(n => ({ ...n, read: true })));
+          message.success('所有通知已標為已讀');
+        }
+
+        const content = (
+          <div style={{ width: 350 }}>
+            <List
+              header={<div style={{ display: 'flex', justifyContent: 'space-between' }}><b>通知中心</b><Button type="link" size="small" onClick={handleMarkAllAsRead}>全部標為已讀</Button></div>}
+              footer={<div style={{ textAlign: 'center' }}><a onClick={() => message.info("導向所有通知頁面")}>查看所有通知</a></div>}
+              dataSource={notifications}
+              renderItem={item => (
+                <List.Item onClick={() => message.info(`跳轉至 ${item.title} 相關頁面`)} style={{ cursor: 'pointer' }}>
+                  <List.Item.Meta
+                    avatar={<Avatar icon={item.type === 'error' ? <ExclamationCircleOutlined /> : <InfoCircleOutlined />} style={{ backgroundColor: item.type === 'error' ? '#ff4d4f' : '#1677ff' }} />}
+                    title={<a style={{ fontWeight: item.read ? 'normal' : 'bold' }}>{item.title}</a>}
+                    description={item.time.fromNow()}
+                  />
+                </List.Item>
+              )}
+            />
+          </div>
+        );
+        return (
+          <Popover content={content} trigger="click" placement="bottomRight">
+            <Badge count={unreadCount} size="small"><BellOutlined style={{ fontSize: '18px' }} /></Badge>
+          </Popover>
+        );
+      };
+
+      const GlobalSearch = () => {
+        const [query, setQuery] = useState('');
+        const mockResults = [
+          { type: '資源', items: [{ key: 'r_1', name: 'db-prod-01', desc: '10.0.0.10' }] },
+          { type: '事件', items: [{ key: 'i_1', name: 'CPU high on db-prod-01', desc: 'Firing' }] },
+          { type: '自動化腳本', items: [{ key: 's_1', name: 'Auto-scaling for Web Servers', desc: 'Python Script' }] },
+        ];
+
+        const filteredResults = query ? mockResults.map(function (group) {
+          return {
+            ...group,
+            items: group.items.filter(function (item) {
+              return item.name.toLowerCase().includes(query.toLowerCase())
+            })
+          }
+        }).filter(function (group) { return group.items.length > 0 }) : [];
+
+        return (
+          <Modal open={isSearchModalOpen} onCancel={() => setIsSearchModalOpen(false)} footer={null} closable={false} width={600} style={{ top: 50 }}>
+            <Input size="large" placeholder="搜尋資源、事件、腳本..." prefix={<SearchOutlined />} onChange={(e) => setQuery(e.target.value)} autoFocus />
+            {query && <List
+              style={{ marginTop: 16 }}
+              dataSource={filteredResults}
+              renderItem={group => (
+                <List
+                  header={<Divider orientation="left">{group.type}</Divider>}
+                  dataSource={group.items}
+                  renderItem={item => <List.Item style={{ cursor: 'pointer' }} onClick={() => message.info(`跳轉至 ${item.name} 詳情`)}>{item.name}</List.Item>}
+                />
+              )}
+            />}
+          </Modal>
+        );
+      };
+
+      return (
+        <Layout style={{ minHeight: '100vh' }}>
+          <Layout.Sider trigger={null} collapsible collapsed={collapsed} width={220}>
+            <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: '10px' }} onClick={() => setCurrentPage('dashboard')}>
+              <CodeSandboxOutlined style={{ fontSize: '24px' }} />
+              {!collapsed && <Title level={4} style={{ margin: 0 }}>SRE Platform</Title>}
+            </div>
+            <Menu theme="dark" mode="inline" defaultOpenKeys={['resources', 'incidents', 'automation', 'analyzing']} selectedKeys={[currentPage]} items={sideMenuItems} onClick={handleMenuSelect} />
+          </Layout.Sider>
+          <Layout>
+            <Layout.Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <Button type="text" icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />} onClick={() => setCollapsed(!collapsed)} />
+                <Breadcrumb items={breadcrumbItems} />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                <Input prefix={<SearchOutlined />} placeholder="Search... (Ctrl+K)" style={{ width: 250 }} onClick={() => setIsSearchModalOpen(true)} readOnly />
+                <Button type="text" icon={<QuestionCircleOutlined />} />
+                <NotificationCenter />
+                <Dropdown menu={{ items: userMenuItems }}>
+                  <a onClick={function (e) { e.preventDefault() }} style={{ display: 'flex', alignItems: 'center' }}>
+                    <Avatar size="small" icon={<UserOutlined />} />
+                    <span style={{ margin: '0 8px' }}>admin</span>
+                    <DownOutlined />
+                  </a>
+                </Dropdown>
+              </div>
+            </Layout.Header>
+            <Layout.Content style={{ padding: '24px' }}>
+              <PageContent />
+            </Layout.Content>
+            <GlobalSearch />
+          </Layout>
+        </Layout>
+      );
+    };
+
+    const AppWrapper = () => {
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [themeMode, setThemeMode] = useLocalStorageState('sre-theme-mode', 'dark');
+
+      const handleLogin = () => setIsAuthenticated(true);
+
+      const currentTheme = {
+        algorithm: themeMode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        components: {
+          Layout: {
+            siderBg: themeMode === 'dark' ? '#161719' : '#ffffff',
+            headerBg: themeMode === 'dark' ? '#161719' : '#ffffff',
+          },
+          Menu: {
+            darkItemBg: '#161719',
+          },
+          Card: {
+            colorBgContainer: themeMode === 'dark' ? '#202226' : '#ffffff'
+          },
+          Modal: {
+            contentBg: themeMode === 'dark' ? '#202226' : '#ffffff',
+            headerBg: themeMode === 'dark' ? '#202226' : '#ffffff',
+          },
+          Drawer: {
+            colorBgElevated: themeMode === 'dark' ? '#202226' : '#ffffff',
+          },
+          Popover: {
+            colorBgElevated: themeMode === 'dark' ? '#202226' : '#ffffff',
+          },
+          Dropdown: {
+            colorBgElevated: themeMode === 'dark' ? '#202226' : '#ffffff',
+          },
+          Select: {
+            colorBgElevated: themeMode === 'dark' ? '#202226' : '#ffffff',
+          },
+          DatePicker: {
+            colorBgContainer: themeMode === 'dark' ? '#161719' : '#ffffff',
+            colorBgElevated: themeMode === 'dark' ? '#202226' : '#ffffff',
+          },
+          Tree: {
+            colorBgContainer: themeMode === 'dark' ? '#202226' : '#ffffff',
+          }
+        }
+      };
+
+      return (
+        <ConfigProvider theme={currentTheme}>
+          <antd.App>
+            {isAuthenticated ? <MainApp themeMode={themeMode} setThemeMode={setThemeMode} /> : <LoginPage onLogin={handleLogin} />}
+          </antd.App>
+        </ConfigProvider>
+      )
+    }
+
+    const container = document.getElementById('root');
+    const root = ReactDOM.createRoot(container);
+    root.render(<AppWrapper />);
+  </script>
+</body>
+
+</html>
