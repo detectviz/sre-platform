@@ -744,7 +744,7 @@ GET /api/v1/notifications          # 獲取通知列表
 - **資源詳情**:
     - 點擊任一資源應能進入其詳情頁面。
     - 詳情頁建議使用由上到下的垂直佈局，區分以下內容：
-        - **基本資訊**: 展示資源的詳細屬性。
+        - **基本資訊**: 展示資源的詳細屬性。此處應包含一個**關聯靜音規則**的區塊，用以顯示當前所有套用至此資源的靜音規則列表 (來自 `resource.silences` 陣列)。
         - **歷史指標**: 繪製 CPU、記憶體等關鍵指標在過去一段時間的趨勢圖。
         - **關聯事件**: 展示與該資源相關的事件歷史列表。
 - **資源探索**:
@@ -994,6 +994,7 @@ GET /api/v1/notifications          # 獲取通知列表
 
 ### **10.2. 功能規格**
 *   **列表與管理**: 提供對已設定靜音規則的列表、新增、編輯和刪除功能。
+*   **生命週期管理**: 提供對靜音規則的啟用與停用功能，方便臨時控制規則是否生效。
 *   **時間範圍設定**: 使用日期時間選擇器設定靜音的開始和結束時間。
 *   **匹配規則**: 可以根據資源、資源群組、事件標籤等條件設定靜音規則的匹配範圍。
 *   **重複規則**: 支援設定週期性重複的靜音規則。
@@ -1007,7 +1008,7 @@ GET /api/v1/notifications          # 獲取通知列表
         *   下方主體部分是一個 Ant Design Table，用於展示所有已設定的靜音規則列表。
     *   **表格 (Table) 設計**:
         *   **表格欄位**會清晰地列出靜音規則的關鍵資訊，例如：「名稱」、「描述」、「開始時間」、「結束時間」、「匹配條件」、「創建者」以及「狀態」。
-        *   「狀態」欄位可以使用 Tag 元件來直觀顯示（如「生效中」、「已過期」、「已停用」）。
+        *   「狀態」欄位建議使用 **Ant Design `Switch` 元件**，讓使用者可以直接在列表上點擊切換規則的啟用 (`active`) 或停用 (`disabled`) 狀態，並即時呼叫對應的 API。對於已過期的規則，則顯示為灰色的「已過期」文字。
         *   每行末尾都會有「編輯」和「刪除」的文字按鈕，用於管理單個項目。
     *   **新增/編輯彈窗 (Modal) 設計**:
         *   點擊「新增」或「編輯」按鈕後，會彈出一個 Modal，內部是一個結構清晰的 Form。
@@ -1028,6 +1029,8 @@ GET /api/v1/notifications          # 獲取通知列表
   * `GET /api/v1/incidents/silences/{silenceId}` (獲取單一靜音規則)
   * `PUT /api/v1/incidents/silences/{silenceId}` (更新靜音規則)
   * `DELETE /api/v1/incidents/silences/{silenceId}` (刪除靜音規則)
+  * `POST /api/v1/incidents/silences/{silenceId}/enable` (啟用靜音規則)
+  * `POST /api/v1/incidents/silences/{silenceId}/disable` (停用靜音規則)
 *   **核心元件**: SilencesPage.tsx, SilencesTable.tsx, SilenceFormModal.tsx
 *   **權限**:
     - **讀取權限**: 所有登入使用者可查看靜音規則
@@ -1390,6 +1393,8 @@ GET /api/v1/notifications          # 獲取通知列表
 | `/api/v1/incidents/silences` | POST | `team_manager`, `super_admin` | 創建靜音規則 |
 | `/api/v1/incidents/silences/{silenceId}` | PUT | `team_manager`, `super_admin` | 更新靜音規則 |
 | `/api/v1/incidents/silences/{silenceId}` | DELETE | `team_manager`, `super_admin` | 刪除靜音規則 |
+| `/api/v1/incidents/silences/{silenceId}/enable` | POST | `team_manager`, `super_admin` | 啟用靜音規則 |
+| `/api/v1/incidents/silences/{silenceId}/disable` | POST | `team_manager`, `super_admin` | 停用靜音規則 |
 | `/api/v1/automation/scripts` | POST | `team_manager`, `super_admin` | 創建腳本 |
 | `/api/v1/automation/scripts/{scriptId}` | PUT | `team_manager`, `super_admin` | 更新腳本 |
 | `/api/v1/automation/scripts/{scriptId}` | DELETE | `team_manager`, `super_admin` | 刪除腳本 |

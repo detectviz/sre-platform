@@ -2219,6 +2219,68 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /api/v1/incidents/silences/{silenceId}/enable:
+    post:
+      tags: [Incidents]
+      summary: 啟用靜音規則
+      description: 啟用一個指定的靜音規則，使其狀態變為 active。
+      operationId: enableSilence
+      security:
+        - bearerAuth: []
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: silenceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 靜音規則已啟用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /api/v1/incidents/silences/{silenceId}/disable:
+    post:
+      tags: [Incidents]
+      summary: 停用靜音規則
+      description: 停用一個指定的靜音規則，使其狀態變為 disabled。
+      operationId: disableSilence
+      security:
+        - bearerAuth: []
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: silenceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 靜音規則已停用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /api/v1/alerts:
     get:
       tags: [Incidents]
@@ -4098,30 +4160,6 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
-  /api/v1/analyzing/capacity/diagnostics:
-    post:
-      tags: [Capacity Planning]
-      summary: 容量分析（別名）
-      description: 此為相容性別名端點，與 /api/v1/capacity-planning/analyze 等效。
-      operationId: analyzeCapacityAlias
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CapacityAnalysisRequest"
-      responses:
-        "200":
-          description: "容量分析結果"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CapacityAnalysisResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-
   /api/v1/admin/diagnostics:
     get:
       tags: [Admin]
@@ -4953,8 +4991,11 @@ components:
           description: 負責人
         description:
           type: string
-        maintenance_window:
-          $ref: "#/components/schemas/Silences"
+        silences:
+          type: array
+          items:
+            $ref: "#/components/schemas/Silence"
+          description: "套用於此資源的靜音規則列表"
         metrics:
           type: object
           properties:
@@ -6944,7 +6985,7 @@ components:
           auto_resolve: false
           default_assignee: "u_oncall"
 
-    Silences:
+    Silence:
       type: object
       properties:
         id:
@@ -6991,7 +7032,7 @@ components:
         items:
           type: array
           items:
-            $ref: "#/components/schemas/Silences"
+            $ref: "#/components/schemas/Silence"
         total:
           type: integer
       example:
