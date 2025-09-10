@@ -1,124 +1,82 @@
-# SRE 平台 API 架構審查報告
+# SRE 平台規格與 API 契約對齊性審查報告
 
 **版本:** 1.0
-**審查員:** Jules
-**日期:** 2025-09-10
+**審查員:** Jules (API 架構師)
+**日期:** 2025-09-09
 
----
+## 1. 審查目的
 
-## **總體評價 (Overall Assessment)**
+本報告旨在記錄對 SRE 平台前端規格 `specs.md` 與後端 API 契約 `openapi.yaml` 的全面審查結果。審查的核心目標是確保兩份文件的無縫對齊，找出並修復所有不一致、缺失或可以改進的地方，為後續的開發、測試與自動化流程提供堅實的基礎。
 
-本次審查旨在比對前端開發規格書 (`specs.md`) 與後端 API 契約 (`openapi.yaml`)。總體而言，這兩份文件品質極高，展現了優秀的工程實踐。文件定位清晰、內容完整、高度對齊，為 AI 驅動的端到端開發奠定了堅實的基礎。
+## 2. 審查範圍
 
-`specs.md` 作為前端的 SSOT，詳細定義了 UI/UX 和互動邏輯。`openapi.yaml` 則提供了精確的後端數據契約，並透過 `x-*` 擴展欄位巧妙地將非功能性需求、權限模型等元數據納入契約，堪稱典範。
+- **前端規格文件:** `specs.md` (版本 3.0)
+- **後端 API 文件:** `openapi.yaml` (版本 1.1.0)
 
-多數情況下，兩份文件保持了驚人的一致性。本報告將聚焦於一些細微的差異點與潛在的優化機會，旨在將這套優秀的文件提升至更高水平。
+## 3. 總體評價
 
----
+`specs.md` 和 `openapi.yaml` 的初始品質都非常高，大部分內容已經對齊得相當好。前端規格詳盡地描述了使用者介面與互動，而後端 API 契約則結構清晰，並有效利用了擴展屬性 (`x-*`) 來豐富其語意。
 
-## **1. 文件定位 (Document Purpose)**
+主要的改進機會在於**消除潛在的資訊來源衝突**、**補全缺失的細節**以及**提升文件自身的可讀性**。本次審查與修改已成功解決了這些問題。
 
-- **`specs.md`**: 明確聚焦於 UI/UX、前端元件、網站地圖及使用者流程。其作為前端開發的「唯一、權威的開發規格來源」定位非常清晰。
-- **`openapi.yaml`**: 準確定義了後端 API 的數據契約，包含端點、請求/響應 schema、安全性與錯誤碼。
-- **對齊狀況**: **高度互補**。兩者職責劃分明確，共同涵蓋了從前端介面到後端 API 呼叫的完整需求鏈。
+## 4. 各審查維度的發現與行動
 
-**結論**: 文件定位完全符合預期，無需調整。
+以下將根據六大審查維度，逐項說明本次的發現與所採取的具體行動。
 
----
+### 4.1. 文件職責與定位 (Document Role & Positioning)
 
-## **2. 端點完整性 (Endpoint Completeness)**
+- **發現**: `specs.md` 中包含了對後端業務邏輯的重複定義，例如「資源健康判定規則」和「事件狀態機」。這違反了 `openapi.yaml` 作為 API 契約唯一真實來源 (SSOT) 的原則。
+- **行動**:
+    - **強化職責劃分**: 修改了 `specs.md` 的第 9.5, 9.6, 17.7 節。
+    - **移除重複定義**: 將 `specs.md` 中硬編碼的後端邏輯（如健康狀態判定、事件狀態機規則）移除。
+    - **改為引用**: 將上述內容替換為對 `openapi.yaml` 中對應擴展屬性 (`x-resource-status-rules`, `x-incident-lifecycle`, `x-roles`) 的引用，並明確指出 `openapi.yaml` 是唯一權威來源。
+- **成果**: 鞏固了文件的職責劃分，降低了未來因規格不同步導致的維護成本。
 
-- **對齊狀況**: **高度一致**。`specs.md` 中提到的絕大多數 API 端點，都在 `openapi.yaml` 中有對應的定義。
+### 4.2. 端點完整性與一致性 (Endpoint Completeness & Consistency)
 
-- **潛在缺口與發現**:
-    1.  **`openapi.yaml` 中存在但 `specs.md` 未提及的端點**:
-        - **端點**: `GET /api/v1/alerts`
-        - **描述**: `openapi.yaml` 定義了此端點用於獲取原始的、未經處理的「告警 (Alerts)」。而 `specs.md` 的「事件列表」功能對應的是 `GET /api/v1/incidents`，處理的是更高層級的「事件 (Incidents)」。
-        - **建議**:
-            - **釐清需求**: 確認前端是否需要一個展示原始告警的獨立介面。
-            - **補充規格**: 如果需要，應在 `specs.md` 中為「告警列表」功能補充對應的 UI/UX 規格。如果不需要，可考慮在 `openapi.yaml` 中將此端點標記為 `x-internal: true` 或移除（若無其他系統使用）。
+- **發現**:
+    1.  **命名不一致**: `specs.md` 中使用「告警規則 (Alert Rules)」，而對應的 API 路徑和標籤為 `Incident Rules`。
+    2.  **API 列表遺漏**: `specs.md` 的「容量規劃」章節遺漏了 `POST /api/v1/analyzing/capacity/execute-recommendation` 端點。
+    3.  **API 不存在**: `specs.md` 的「腳本庫」章節包含了一個不存在的 `POST /api/v1/automation/execute` 端點。
+    4.  **文件錯字**: `specs.md` 的目錄和標題中存在錯字。
+- **行動**:
+    - **統一命名**: 將 `specs.md` 中所有「告警規則」的實例修改為「事件規則」，與 API 定義保持一致。
+    - **修正錯字**: 修正了 `specs.md` 中「資源群組」的標題錯字。
+    - **同步 API 列表**: 補上了遺漏的 API 端點，並移除了不存在的端點，確保了 `specs.md` 中 API 列表的準確性。
+- **成果**: 提升了文件的準確性和一致性，避免開發者參考到錯誤或過時的資訊。
 
-    2.  **關於「維護窗口」的澄清**:
-        - **發現**: 使用者問題中提到了「維護窗口 (maintenance windows)」。
-        - **分析**: 在兩份文件中，此功能由「靜音規則 (Silences)」實現 (`/api/v1/incidents/silences`)。`specs.md` (章節 10) 和 `openapi.yaml` 均有詳細定義。
-        - **建議**: 這屬於術語統一問題。建議在 `specs.md` 的術語表中加入一行，將「維護窗口」對應到「靜音規則」，避免未來產生混淆。
+### 4.3. Schema 結構與品質 (Schema Structure & Quality)
 
-**結論**: 端點完整性極佳，僅需對 `GET /api/v1/alerts` 的用途進行澄清並在 `specs.md` 中補齊。
+- **發現**: 兩份文件在 Schema 層面的對齊度非常高。`openapi.yaml` 的結構良好，已大量使用 `$ref` 進行抽象化，且命名慣例（大駝峰式與蛇形）一致。
+- **行動**: 此維度無需進行修改。
+- **成果**: 確認了 API Schema 的高品質與高維護性。
 
----
+### 4.4. 權限與安全模型 (Permission & Security Model)
 
-## **3. 命名與描述一致性 (Naming and Description Consistency)**
+- **發現**:
+    1.  `specs.md` 中的權限映射表 (`17.7 API 端點權限映射`) 嚴重過時且不完整，遺漏了大量需要權限的端點。
+    2.  `openapi.yaml` 中對角色的描述 (`x-role-definitions`) 不如 `specs.md` 中的定義詳細。
+- **行動**:
+    - **同步角色描述**: 將 `specs.md` 中更詳細的角色職責描述更新至 `openapi.yaml` 的 `x-role-definitions` 中，使 API 契約本身更具可讀性。
+    - **重新生成權限表**: 根據 `openapi.yaml` 中權威的 `x-roles` 標籤，重新生成了一份完整、準確的權限映射表，並替換了 `specs.md` 中的舊表格。
+- **成果**: 確保了前後端對權限模型的理解完全一致，為前端實現精確的權限控制（UI Gating）提供了可靠依據。
 
-- **對齊狀況**: **非常一致**。`specs.md` 中的術語標準化規範（章節 2.5）在 `openapi.yaml` 中得到了很好的遵守。
+### 4.5. 非功能性需求 (Non-Functional Requirements)
 
-- **微小差異點**:
-    1.  **`tags` 命名**:
-        - **發現**: `openapi.yaml` 中有一個 `tag` 名為 `"Rules"`，對應 `specs.md` 中的「告警規則 (Alert Rules)」功能。
-        - **建議**: 為了更精確的對應，建議將 `openapi.yaml` 中的 `tag: Rules` 修改為 `tag: "Alert Rules"` 或 `tag: "Incident Rules"`。
+- **發現**: `specs.md` 中描述的 NFRs（國際化、無障礙、效能等）已在 `openapi.yaml` 的 `x-requirements` 屬性中被良好地契約化。
+- **行動**: 此維度無需進行修改。
+- **成果**: 確認了非功能性需求已被納入正式的 API 契約中，有助於後續的自動化驗證。
 
-    2.  **「資源目錄」 vs 「資源列表」**:
-        - **分析**: 使用者問題中提到了此項。經查證，`specs.md` 使用的是「資源列表 (Resources List)」，`openapi.yaml` 的 `tag` 是 `"Resources"`。兩者實質上是一致的。
-        - **結論**: 此處命名無問題。
+### 4.6. 文件品質與可讀性 (Documentation Quality & Readability)
 
-**結論**: 命名與描述高度對齊，僅有一個 `tag` 命名可做微調以求完美。
+- **發現**:
+    1.  `openapi.yaml` 的主要結構區塊缺乏頂層註解，對初次閱讀者不夠友好。
+    2.  部分通用 Schema（如 `BatchOperationResult`）缺乏描述和範例。
+- **行動**:
+    - **增加說明註解**: 為 `openapi.yaml` 的主要區塊（`x-*`, `tags`, `paths`, `components`）增加了繁體中文的說明註解。
+    - **補充描述與範例**: 為 `BatchOperationResult` Schema 增加了詳細的屬性描述和一個包含成功/失敗案例的 `example`。
+- **成果**: 提升了 `openapi.yaml` 的可讀性和易用性，降低了開發者的理解成本。
 
----
+## 5. 結論
 
-## **4. 權限與角色 (Permissions and Roles)**
-
-- **對齊狀況**: **堪稱典範**。`openapi.yaml` 使用 `x-roles` 擴展欄位在每個需要權限的端點上標記了所需角色。`specs.md` 則在此基礎上，生成了非常詳盡的「功能模組權限對照表」（章節 16.6）和「API 端點權限映射表」（章節 16.7）。
-
-- **實踐優點**:
-    - **契約即代碼**: 將權限要求直接寫入 API 契約，使得權限成為一個可被自動化工具驗證的項目。
-    - **單一真實來源**: 後端 (`openapi.yaml`) 定義權限，前端 (`specs.md`) 消費此定義，確保了兩端的一致性。
-
-**結論**: 權限與角色的定義與同步機制非常出色，無須修改。
-
----
-
-## **5. 結構與重複定義 (Structure and Redundancy)**
-
-- **整體結構**: **良好**。`openapi.yaml` 廣泛使用了 `$ref` 來引用共享的 `schemas` 和 `responses` (如 `ErrorResponse`, `Pagination`, `OperationResult`)，有效避免了重複定義，提升了可維護性。
-
-- **潛在優化點**:
-    1.  **`Capacity` 相關的 Schema**:
-        - **發現**: 存在兩個相似的端點和響應：
-            - `POST /api/v1/analyzing/capacity` -> `CapacityAnalysisResponse`
-            - `POST /api/v1/analyzing/capacity/forecast` -> `CapacityForecastResponse`
-        - **分析**: `CapacityAnalysisResponse` 包含了預測、建議、當前用量等多維度分析結果，而 `CapacityForecastResponse` 似乎只返回預測的時間序列數據。後者的功能是前者的子集。
-        - **建議**:
-            - **合併端點**: 考慮將 `/api/v1/analyzing/capacity/forecast` 的功能合併到 `/api/v1/analyzing/capacity` 中。可以透過一個查詢參數（如 `?mode=full|forecast_only`）來控制返回內容的詳細程度。
-            - **重構 Schema**: 如果保留兩個端點，建議對 Schema 進行重構，讓 `CapacityAnalysisResponse` 直接複用 `CapacityForecastResponse`，以減少結構上的重疊。例如：
-              ```yaml
-              CapacityAnalysisResponse:
-                type: object
-                properties:
-                  # ... other fields
-                  forecast:
-                    $ref: '#/components/schemas/CapacityForecastResponse'
-              ```
-
-**結論**: 整體結構清晰，`Capacity` 相關的 API 和 Schema 是唯一值得審視和簡化的部分。
-
----
-
-## **6. 非功能性需求 (Non-functional Requirements)**
-
-- **對齊狀況**: **完美**。`specs.md` 中定義的國際化、無障礙、效能、響應式設計等非功能性需求，在 `openapi.yaml` 中透過頂層的 `x-requirements` 擴展欄位進行了精確的標註。
-
-- **實踐優點**:
-    - **契約化 NFRs**: 將非功能性需求提升為 API 契約的一部分，確保了前後端團隊對這些重要指標有共同的認知和遵循標準。
-    - **可測試性**: 這些標註為未來建立自動化的合規性測試提供了可能性。
-
-**結論**: 非功能性需求的同步機制非常出色，是現代 API 設計的最佳實踐。
-
----
-
-## **總結與建議 (Summary and Recommendations)**
-
-這是一套非常優秀的規格與契約文件。以下是基於本次審查的具體優化建議，旨在精益求精：
-
-1.  **【建議】釐清 `GET /api/v1/alerts` 用途**: 在 `specs.md` 中補充關於「原始告警列表」的 UI 規格，或確認此 API 是否為內部使用。
-2.  **【建議】更新術語表**: 在 `specs.md` 的術語表中增加「維護窗口」等同於「靜音規則」的說明。
-3.  **【微調】統一 `openapi.yaml` 的 `tag`**: 將 `tag: Rules` 修改為 `tag: "Alert Rules"`，與 `specs.md` 的章節標題「告警規則」保持一致。
-4.  **【可選】簡化 `Capacity` API**: 審視 `POST /api/v1/analyzing/capacity` 和 `POST /api/v1/analyzing/capacity/forecast` 兩個端點，考慮將其合併或重構其響應 Schema，以提高 API 的內聚性。
+經過本次全面的審查與修改，`specs.md` 與 `openapi.yaml` 已經達到了高度對齊。文件職責更加清晰，內容一致性得到保障，API 契約的品質與可讀性也獲得了提升。這為 SRE 平台專案的「規格驅動開發」實踐奠定了堅實的基礎。
