@@ -20,6 +20,8 @@ servers:
 
 # ============================================
 # 擴展屬性 (Vendor Extensions)
+# 說明：此區塊使用 OpenAPI Vendor Extensions (x-*) 來定義標準規格外的後設資料，
+#      例如錯誤碼、角色定義、非功能性需求等，使 API 契約更加豐富與明確。
 # ============================================
 x-error-codes:
   # 集中定義錯誤碼，便於前端生成統一的錯誤處理邏輯
@@ -54,10 +56,10 @@ x-error-codes:
 
 x-role-definitions:
   # 集中定義角色，作為權限系統的 SSOT
-  super_admin: "超級管理員：擁有平台所有管理操作權限。"
-  team_manager: "團隊管理者：可管理團隊與其範圍內的資源。"
-  team_member: "團隊成員：可查看團隊資源、處理事件、執行腳本。"
-  viewer: "唯讀使用者：僅可查看儀表板與報表，無任何寫入權限。"
+  super_admin: "超級管理員：擁有系統最高權限，可以執行所有操作，包括系統級設定、用戶管理、審計日誌查看等"
+  team_manager: "團隊管理員：可以管理團隊成員、資源、事件規則、自動化腳本等團隊範圍內的資源"
+  team_member: "團隊成員：可以查看團隊資源、處理事件、執行腳本（受限），但不能進行管理級操作"
+  viewer: "唯讀用戶：僅可查看資源狀態、儀表板、報表，不能進行任何寫入操作"
 
 x-resource-status-rules:
   # 資源健康狀態的判定規則契約
@@ -164,6 +166,7 @@ x-requirements:
 
 # ============================================
 # API 標籤 (Tags)
+# 說明：用於將 API 端點分組，對應到 swagger-ui 中的不同區塊，也與 specs.md 的功能模組對應。
 # ============================================
 tags:
   - name: System - Core
@@ -215,6 +218,10 @@ tags:
   - name: System - Callbacks
     description: 用於接收其他服務（如 SRE Assistant）回調的端點
 
+# ============================================
+# API 路徑與端點 (Paths & Endpoints)
+# 說明：此區塊定義了所有可用的 API 端點、HTTP 方法、參數、請求與響應。
+# ============================================
 paths:
   # ============================================
   # System - Core
@@ -3274,7 +3281,9 @@ paths:
           $ref: "#/components/responses/Unauthorized"
 
 # ============================================
-# Components (Reusable objects)
+# 可重用元件 (Components)
+# 說明：此區塊定義了可供整個 API 規格重用的物件，如 Schemas, Parameters, Responses 等，
+#      透過 $ref 引用，以提高規格的維護性和一致性。
 # ============================================
 components:
   securitySchemes:
@@ -4303,20 +4312,35 @@ components:
 
     BatchOperationResult:
       type: object
+      description: "用於回報批次操作中每個項目的執行結果。"
       properties:
         results:
           type: array
+          description: "每個操作項目的結果列表"
           items:
             type: object
             properties:
               item_id:
                 type: string
+                description: "被操作的項目 ID"
               success:
                 type: boolean
+                description: "此項目是否操作成功"
               message:
                 type: string
+                description: "操作結果的文字訊息"
               error_code:
                 type: string
+                description: "若操作失敗，對應的錯誤碼"
+      example:
+        results:
+          - item_id: "r_1"
+            success: true
+            message: "OK"
+          - item_id: "r_2"
+            success: false
+            message: "資源正在使用中，無法刪除"
+            error_code: "RESOURCE_IN_USE"
 
     NetworkScanRequest:
       type: object

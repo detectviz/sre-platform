@@ -14,10 +14,10 @@
 - [4. 登入與登出 (Login & Logout)](#4-登入與登出-login--logout)
 - [5. 總覽儀表板 (Overview Dashboard)](#5-儀表板-dashboard)
 - [6. 資源列表 (Resources List)](#6-資源管理-resource-management)
-- [7. 資源群組 (Resource Groups)](#7-資源群組-資源-groups)
+- [7. 資源群組 (Resource Groups)](#7-資源群組-resource-groups)
 - [8. 事件列表 (Incidents List)](#8-事件列表-incidents)
 - [9. 告警列表 (Alerts List)](#9-告警列表-alerts-list)
-- [10. 告警規則 (Alert Rules)](#10-告警規則-alert-rules)
+- [10. 事件規則 (Incident Rules)](#10-事件規則-incident-rules)
 - [11. 靜音規則 (Incident Silences)](#11-靜音規則-incidents-silences)
 - [12. 容量規劃 (Capacity Planning)](#12-容量規劃頁面-capacity-planning-page)
 - [13. 腳本庫 (Automation Scripts)](#13-腳本庫-scripts)
@@ -773,7 +773,7 @@ GET /api/v1/notifications          # 獲取通知列表
 
 ---
 
-## **7. 資源群組 (資源 Groups)**
+## **7. 資源群組 (Resource Groups)**
 
 ### **7.1. 功能目標**
 管理資源的分群，支援階層（可選），並提供群組層級的狀態摘要與成員管理。
@@ -903,7 +903,7 @@ GET /api/v1/notifications          # 獲取通知列表
 
 ---
 
-## **10. 告警規則 (Alert Rules)**
+## **10. 事件規則 (Incident Rules)**
 
 ### **10.1. 功能目標**
 提供一個強大且靈活的界面，讓使用者可以定義事件觸發條件，並關聯通知管道和自動化腳本。
@@ -949,40 +949,24 @@ GET /api/v1/notifications          # 獲取通知列表
     - [ ] 規則的啟用/停用功能正常。
 
 ### **9.5. 資源健康判定規則**
-- default：
-  - critical: cpu > 90 OR memory > 95
-  - warning: cpu > 80 OR memory > 85
-  - healthy: cpu <= 80 AND memory <= 85
-- server：
-  - critical: cpu > 90 OR memory > 95 OR disk > 95
-  - warning: cpu > 80 OR memory > 85 OR disk > 90
-  - healthy: cpu <= 80 AND memory <= 85 AND disk <= 90
-- database：
-  - critical: cpu > 85 OR memory > 90 OR replication_lag_s > 10 OR connections_pct > 95
-  - warning: cpu > 75 OR memory > 85 OR replication_lag_s > 5 OR connections_pct > 90
-  - healthy: cpu <= 75 AND memory <= 85 AND replication_lag_s <= 5 AND connections_pct <= 90
-- network：
-  - critical: packet_loss_pct > 5 OR latency_ms > 200
-  - warning: packet_loss_pct > 1 OR latency_ms > 100
-  - healthy: packet_loss_pct <= 1 AND latency_ms <= 100
-- application：
-  - critical: error_rate_pct > 5 OR p95_latency_ms > 1000
-  - warning: error_rate_pct > 1 OR p95_latency_ms > 500
-  - healthy: error_rate_pct <= 1 AND p95_latency_ms <= 500
-- container：
-  - critical: cpu > 90 OR memory > 95 OR restarts_5m > 3
-  - warning: cpu > 80 OR memory > 85 OR restarts_5m > 0
-  - healthy: cpu <= 80 AND memory <= 85 AND restarts_5m == 0
-- 說明：未覆蓋的資源類型沿用 default；若後端實作中有更精細的規則，請同步至 openapi.yaml 的 vendor extensions 並更新本段。
 
-### **9.6. 事件 狀態機**
-- 狀態：new → acknowledged → resolved
-- 允許轉換與角色：
-  - new → acknowledged：team_member, team_manager, super_admin
-  - acknowledged → resolved：team_member, team_manager, super_admin
-- 對應端點：
-  - POST /api/v1/incidents/{incidentId}/acknowledge
-  - POST /api/v1/incidents/{incidentId}/resolve
+**真實來源 (Single Source of Truth):** `openapi.yaml`
+
+資源的健康狀態 (`healthy`, `warning`, `critical`) 由後端根據一組規則進行判定。這些規則的**唯一、權威的定義**位於 `openapi.yaml` 文件的 `x-resource-status-rules` 擴展屬性中。
+
+前端**不應**在本地實作此邏輯，而應直接使用從 `GET /api/v1/resources` 等 API 返回的 `status` 欄位來顯示對應的 UI。
+
+> 參考：[openapi.yaml -> x-resource-status-rules](openapi.yaml)
+
+### 9.6. 事件狀態機
+
+**真實來源 (Single Source of Truth):** `openapi.yaml`
+
+事件 (Incident) 的生命週期（狀態轉換、允許的角色、對應的 API 操作）由後端狀態機嚴格控制。其**唯一、權威的定義**位於 `openapi.yaml` 文件的 `x-incident-lifecycle` 擴展屬性中。
+
+前端 UI 應根據事件的當前 `status` 欄位來決定顯示哪些操作按鈕（例如，狀態為 `new` 時顯示「確認」按鈕）。
+
+> 參考：[openapi.yaml -> x-incident-lifecycle](openapi.yaml)
 
 ### **9.7. 權限檢查流程**
 - 後端：以 x-roles 強制校驗寫入端點
@@ -1118,9 +1102,10 @@ GET /api/v1/notifications          # 獲取通知列表
 ### **12.7. 開發規格**
 * **核心元件**: CapacityPlanningPage.tsx, CapacityAnalysisForm.tsx, CapacityForecastChart.tsx  
 * **API 端點**:
-  * `POST /api/v1/analyzing/capacity`
-  * `GET /api/v1/analyzing/capacity/reports`
-  * `GET /api/v1/analyzing/capacity/reports/{reportId}`
+  * `POST /api/v1/analyzing/capacity`: 執行容量分析與預測。
+  * `POST /api/v1/analyzing/capacity/execute-recommendation`: 根據報告建議執行自動化動作。
+  * `GET /api/v1/analyzing/capacity/reports`: 獲取歷史報告列表。
+  * `GET /api/v1/analyzing/capacity/reports/{reportId}`: 獲取單一報告詳情。
   * 備註：若 UI 以「群組」為輸入，前端應先透過 `/api/v1/resources/groups` 或 `/api/v1/resources` 解析並組裝 `resource_ids` 傳入；或待後端支援 `group_id` 參數。
 * **狀態管理**: 表單狀態為本地狀態，分析結果由 RTK Query 管理。  
 * **驗收條件**:  
@@ -1158,8 +1143,7 @@ GET /api/v1/notifications          # 獲取通知列表
     - `GET /api/v1/automation/scripts/{scriptId}`: 獲取特定腳本的詳情。
     - `PUT /api/v1/automation/scripts/{scriptId}`: 更新腳本。
     - `DELETE /api/v1/automation/scripts/{scriptId}`: 刪除腳本。
-    - `POST /api/v1/automation/scripts/{scriptId}/run`: 執行特定腳本。
-    - `POST /api/v1/automation/execute`: 通用腳本執行接口。
+    - `POST /api/v1/automation/scripts/{scriptId}/run`: 手動執行特定腳本以進行測試或干預。
 - **權限**:
     - 腳本寫入：`team_manager` 或 `super_admin`。
     - 手動執行：`team_manager`、`super_admin` 或 `team_member`。
@@ -1397,7 +1381,11 @@ GET /api/v1/notifications          # 獲取通知列表
 
 ### **17.7. API 端點權限映射 (x-roles)**
 
-> **說明**：此表格根據 `openapi.yaml` 的 `x-roles` 欄位自動生成，確保與後端權限定義完全一致。公開端點 (如 `/auth/*`) 或無特定角色限制的端點不在此表列出，其細節請參考各自的功能章節。
+**真實來源 (Single Source of Truth):** `openapi.yaml` 的 `x-roles` 屬性。
+
+> **說明**：下表旨在方便前端開發者快速查閱，其內容完全基於 `openapi.yaml` 中各端點的 `x-roles` 擴展屬性。所有權限控制的權威定義以 `openapi.yaml` 為準。在後續的交叉比對步驟中，我們將確保此表與 `openapi.yaml` 的內容完全同步。
+>
+> 參考：[openapi.yaml](openapi.yaml)
 
 | API 端點 | HTTP 方法 | 需要角色 | 操作說明 |
 | :--- | :--- | :--- | :--- |
@@ -1410,35 +1398,51 @@ GET /api/v1/notifications          # 獲取通知列表
 | `/api/v1/resources/groups/{groupId}` | PUT | `team_manager`, `super_admin` | 更新群組 |
 | `/api/v1/resources/groups/{groupId}` | DELETE | `team_manager`, `super_admin` | 刪除群組 |
 | `/api/v1/resources/groups/{groupId}/members` | POST | `team_manager`, `super_admin` | 管理群組成員 |
+| `/api/v1/incidents` | POST | `team_member`, `team_manager`, `super_admin` | 創建事件 |
+| `/api/v1/incidents/batch` | POST | `team_member`, `team_manager`, `super_admin` | 批次處理事件 |
+| `/api/v1/incidents/{incidentId}` | PUT | `team_member`, `team_manager`, `super_admin` | 更新事件 |
+| `/api/v1/incidents/{incidentId}/acknowledge` | POST | `team_member`, `team_manager`, `super_admin` | 確認事件 |
+| `/api/v1/incidents/{incidentId}/resolve` | POST | `team_member`, `team_manager`, `super_admin` | 解決事件 |
+| `/api/v1/incidents/{incidentId}/assign` | POST | `team_manager`, `super_admin` | 指派事件 |
+| `/api/v1/incidents/{incidentId}/comments` | POST | `team_member`, `team_manager`, `super_admin` | 新增事件註記 |
+| `/api/v1/incidents/generate-report` | POST | `team_member`, `team_manager`, `super_admin` | AI 生成事件報告 |
 | `/api/v1/incidents/rules` | POST | `team_manager`, `super_admin` | 創建事件規則 |
 | `/api/v1/incidents/rules/{ruleId}` | PUT | `team_manager`, `super_admin` | 更新事件規則 |
 | `/api/v1/incidents/rules/{ruleId}` | DELETE | `team_manager`, `super_admin` | 刪除事件規則 |
+| `/api/v1/incidents/rules/{ruleId}/test` | POST | `team_manager`, `super_admin` | 測試事件規則 |
+| `/api/v1/incidents/rules/{ruleId}/enable` | POST | `team_manager`, `super_admin` | 啟用事件規則 |
+| `/api/v1/incidents/rules/{ruleId}/disable` | POST | `team_manager`, `super_admin` | 停用事件規則 |
 | `/api/v1/incidents/silences` | POST | `team_manager`, `super_admin` | 創建靜音規則 |
 | `/api/v1/incidents/silences/{silenceId}` | PUT | `team_manager`, `super_admin` | 更新靜音規則 |
 | `/api/v1/incidents/silences/{silenceId}` | DELETE | `team_manager`, `super_admin` | 刪除靜音規則 |
 | `/api/v1/incidents/silences/{silenceId}/enable` | POST | `team_manager`, `super_admin` | 啟用靜音規則 |
 | `/api/v1/incidents/silences/{silenceId}/disable` | POST | `team_manager`, `super_admin` | 停用靜音規則 |
+| `/api/v1/analyzing/capacity` | POST | `team_manager`, `super_admin` | 執行容量分析 |
+| `/api/v1/analyzing/capacity/execute-recommendation`| POST | `team_manager`, `super_admin` | 執行容量規劃建議 |
+| `/api/v1/analyzing/capacity/reports` | GET | `team_manager`, `super_admin` | 獲取容量報告列表 |
+| `/api/v1/analyzing/capacity/reports/{reportId}` | GET | `team_manager`, `super_admin` | 獲取容量報告詳情 |
 | `/api/v1/automation/scripts` | POST | `team_manager`, `super_admin` | 創建腳本 |
 | `/api/v1/automation/scripts/{scriptId}` | PUT | `team_manager`, `super_admin` | 更新腳本 |
 | `/api/v1/automation/scripts/{scriptId}` | DELETE | `team_manager`, `super_admin` | 刪除腳本 |
-| `/api/v1/automation/scripts/{scriptId}/run` | POST | `team_manager`, `super_admin`, `team_member` | 手動執行腳本 |
-| `/api/v1/automation/execute` | POST | `team_manager`, `super_admin` | 執行腳本 |
+| `/api/v1/automation/scripts/{scriptId}/run` | POST | `team_member`, `team_manager`, `super_admin` | 手動執行腳本 |
 | `/api/v1/automation/schedules` | POST | `team_manager`, `super_admin` | 創建排程 |
 | `/api/v1/automation/schedules/{scheduleId}` | PUT | `team_manager`, `super_admin` | 更新排程 |
 | `/api/v1/automation/schedules/{scheduleId}` | DELETE | `team_manager`, `super_admin` | 刪除排程 |
-| `/api/v1/analyzing/capacity` | POST | `team_manager`, `super_admin` | 執行容量分析 |
-| `/api/v1/analyzing/capacity/forecast` | POST | `team_manager`, `super_admin` | 預測資源使用 |
-| `/api/v1/analyzing/capacity/reports` | GET | `team_manager`, `super_admin` | 獲取容量報告列表 |
-| `/api/v1/analyzing/capacity/reports/{reportId}` | GET | `team_manager`, `super_admin` | 獲取容量報告詳情 |
+| `/api/v1/automation/schedules/{scheduleId}/enable` | POST | `team_manager`, `super_admin` | 啟用排程 |
+| `/api/v1/automation/schedules/{scheduleId}/disable` | POST | `team_manager`, `super_admin` | 停用排程 |
 | `/api/v1/admin/users` | GET | `super_admin` | 獲取使用者列表 |
 | `/api/v1/admin/users` | POST | `super_admin` | 創建使用者 |
+| `/api/v1/admin/users/{userId}` | GET | `super_admin` | 獲取使用者詳情 |
 | `/api/v1/admin/users/{userId}` | PUT | `super_admin` | 更新使用者 |
 | `/api/v1/admin/users/{userId}` | DELETE | `super_admin` | 刪除使用者 |
 | `/api/v1/admin/teams` | GET | `team_manager`, `super_admin` | 獲取團隊列表 |
 | `/api/v1/admin/teams` | POST | `team_manager`, `super_admin` | 創建團隊 |
+| `/api/v1/admin/teams/{teamId}` | GET | `team_manager`, `super_admin` | 獲取團隊詳情 |
 | `/api/v1/admin/teams/{teamId}` | PUT | `team_manager`, `super_admin` | 更新團隊 |
 | `/api/v1/admin/teams/{teamId}` | DELETE | `team_manager`, `super_admin` | 刪除團隊 |
-| `/api/v1/admin/channels` | GET | `super_admin` | 獲取通知管道列表 |
+| `/api/v1/admin/teams/{teamId}/members` | POST | `team_manager`, `super_admin` | 管理團隊成員 |
+| `/api/v1/admin/roles` | POST | `super_admin` | 創建自定義角色 |
+| `/api/v1/admin/roles/{roleName}` | PUT | `super_admin` | 更新角色權限 |
 | `/api/v1/admin/channels` | POST | `super_admin` | 創建通知管道 |
 | `/api/v1/admin/channels/{channelId}` | PUT | `super_admin` | 更新通知管道 |
 | `/api/v1/admin/channels/{channelId}` | DELETE | `super_admin` | 刪除通知管道 |
@@ -1448,8 +1452,6 @@ GET /api/v1/notifications          # 獲取通知列表
 | `/api/v1/admin/diagnostics` | GET | `super_admin` | 獲取平台自身狀態診斷 |
 | `/api/v1/admin/audit` | GET | `super_admin` | 查詢審計日誌 |
 | `/api/v1/admin/audit/{logId}` | GET | `super_admin` | 獲取審計日誌詳情 |
-| `/api/v1/admin/roles` | POST | `super_admin` | 創建自定義角色 |
-| `/api/v1/admin/roles/{roleName}` | PUT | `super_admin` | 更新角色權限 |
 
 ### **17.8. 前端權限控制實作指引**
 
