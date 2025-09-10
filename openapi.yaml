@@ -166,7 +166,7 @@ tags:
     description: 資源群組管理
   - name: Incidents
     description: 事件管理
-  - name: Rules
+  - name: Alert Rules
     description: 事件規則
   - name: Automation
     description: 自動化
@@ -1788,11 +1788,11 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
   # ============================================
-  # Rules - 事件規則
+  # Alert Rules - 事件規則
   # ============================================
   /api/v1/incidents/rules:
     get:
-      tags: [Rules]
+      tags: [Alert Rules]
       summary: 獲取事件規則列表
       description: 獲取所有事件規則
       operationId: listAlertRules
@@ -1837,7 +1837,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     post:
-      tags: [Rules]
+      tags: [Alert Rules]
       summary: 創建事件規則
       description: 創建新的事件規則
       operationId: createAlertRule
@@ -1868,7 +1868,7 @@ paths:
 
   /api/v1/incidents/rules/{ruleId}:
     get:
-      tags: [Rules]
+      tags: [Alert Rules]
       summary: 獲取規則詳情
       description: 獲取特定事件規則的詳情
       operationId: getAlertRule
@@ -1895,7 +1895,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     put:
-      tags: [Rules]
+      tags: [Alert Rules]
       summary: 更新事件規則
       description: 更新事件規則
       operationId: updateAlertRule
@@ -1933,7 +1933,7 @@ paths:
           $ref: "#/components/responses/InternalServerError"
 
     delete:
-      tags: [Rules]
+      tags: [Alert Rules]
       summary: 刪除事件規則
       description: |
         刪除事件規則。
@@ -1962,7 +1962,7 @@ paths:
 
   /api/v1/incidents/rules/{ruleId}/test:
     post:
-      tags: [Rules]
+      tags: [Alert Rules]
       summary: 測試事件規則
       description: 測試事件規則是否正常運作
       operationId: testAlertRule
@@ -2001,7 +2001,7 @@ paths:
 
   /api/v1/incidents/rules/{ruleId}/enable:
     post:
-      tags: [Rules]
+      tags: [Alert Rules]
       summary: 啟用規則
       description: 啟用事件規則
       operationId: enableAlertRule
@@ -2034,7 +2034,7 @@ paths:
 
   /api/v1/incidents/rules/{ruleId}/disable:
     post:
-      tags: [Rules]
+      tags: [Alert Rules]
       summary: 停用規則
       description: 停用事件規則
       operationId: disableAlertRule
@@ -4044,12 +4044,20 @@ paths:
   /api/v1/analyzing/capacity:
     post:
       tags: [Capacity Planning]
-      summary: 執行容量分析
-      description: "根據歷史數據對指定資源進行容量分析與預測 (由 SRE Assistant 處理)"
+      summary: 執行容量分析與預測
+      description: "根據歷史數據對指定資源進行容量分析與預測 (由 SRE Assistant 處理)。可透過 mode 參數控制回傳內容。"
       operationId: analyzeCapacity
       security:
         - bearerAuth: []
       x-roles: [team_manager, super_admin]
+      parameters:
+        - name: mode
+          in: query
+          description: "控制回傳內容的詳細程度 (full: 完整分析, forecast_only: 僅預測數據)"
+          schema:
+            type: string
+            enum: [full, forecast_only]
+            default: full
       requestBody:
         required: true
         content:
@@ -4063,31 +4071,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CapacityAnalysisResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-
-  /api/v1/analyzing/capacity/forecast:
-    post:
-      tags: [Capacity Planning]
-      summary: 預測資源使用
-      description: "根據歷史數據預測指定資源在時間範圍內的使用趨勢"
-      operationId: forecastCapacity
-      security:
-        - bearerAuth: []
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CapacityForecastRequest"
-      responses:
-        "200":
-          description: "容量預測結果"
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CapacityForecastResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
 
@@ -4811,78 +4794,6 @@ components:
           container: 20
         by_group:
 
-    CapacityForecastRequest:
-      type: object
-      required:
-        - resource_ids
-        - metric_name
-        - forecast_period
-      properties:
-        resource_ids:
-          type: array
-          items:
-            type: string
-          description: "要預測的資源ID列表"
-        metric_name:
-          type: string
-          description: "要預測的指標名稱"
-        forecast_period:
-          type: string
-          enum: [7d, 30d, 90d]
-          description: "預測時間範圍"
-        start_time:
-          type: string
-          format: date-time
-          description: "預測開始時間（可選，預設為現在）"
-      example:
-        resource_ids: ["r_1", "r_2"]
-        metric_name: "cpu_usage"
-        forecast_period: "30d"
-
-    CapacityForecastResponse:
-      type: object
-      properties:
-        forecast_data:
-          type: array
-          items:
-            type: object
-            properties:
-              timestamp:
-                type: string
-                format: date-time
-              predicted_value:
-                type: number
-                format: float
-              confidence_interval:
-                type: object
-                properties:
-                  lower:
-                    type: number
-                    format: float
-                  upper:
-                    type: number
-                    format: float
-        recommendations:
-          type: array
-          items:
-            type: string
-          description: "容量規劃建議"
-        alert_threshold:
-          type: number
-          format: float
-          description: "警戒線閾值"
-      example:
-        forecast_data:
-          - timestamp: "2025-09-15T00:00:00Z"
-            predicted_value: 75.5
-            confidence_interval:
-              lower: 70.2
-              upper: 80.8
-        recommendations:
-          - "預計在30天內達到80%使用率"
-          - "建議增加資源容量"
-        alert_threshold: 80.0
-
     CapacityReportList:
       type: object
       properties:
@@ -5445,20 +5356,25 @@ components:
       type: object
       required:
         - resource_ids
-        - metric_type
+        - metric_name
       properties:
         resource_ids:
           type: array
           items:
             type: string
-        metric_type:
+          description: "要分析的資源ID列表"
+        metric_name:
           type: string
-          enum: [cpu, memory, disk, network]
-        forecast_days:
-          type: integer
-          default: 30
-          minimum: 7
-          maximum: 365
+          description: "要分析的指標名稱 (e.g., cpu.usage.percentage)"
+        forecast_period:
+          type: string
+          enum: [7d, 30d, 90d]
+          default: 30d
+          description: "預測時間範圍"
+        start_time:
+          type: string
+          format: date-time
+          description: "分析的歷史數據起始時間（可選，預設為過去90天）"
 
     CapacityAnalysisResponse:
       type: object
