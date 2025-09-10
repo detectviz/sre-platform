@@ -152,7 +152,13 @@ x-requirements:
     i18n_keys_required: true
   accessibility:
     wcag_level: "AA"
-    features: [keyboard_navigation, screen_reader_support, focus_indicators, aria_labels]
+    features:
+      [
+        keyboard_navigation,
+        screen_reader_support,
+        focus_indicators,
+        aria_labels,
+      ]
   performance:
     page_load_time_ms: 2000
     api_response_time_ms: 500
@@ -198,19 +204,19 @@ tags:
   - name: Automation - Executions
     description: 自動化執行日誌
   - name: Admin - Users
-    description: [管理] 使用者管理
+    description: 使用者管理
   - name: Admin - Teams
-    description: [管理] 團隊管理
+    description: 團隊管理
   - name: Admin - Roles
-    description: [管理] 角色與權限定義
+    description: 角色與權限定義
   - name: Admin - Notification Channels
-    description: [管理] 通知管道管理
+    description: 通知管道管理
   - name: Admin - Settings
-    description: [管理] 系統設定
+    description: 系統設定
   - name: Admin - Audit
-    description: [管理] 審計日誌
+    description: 審計日誌
   - name: Admin - Diagnostics
-    description: [管理] 平台診斷
+    description: 平台診斷
   - name: User - Profile
     description: 使用者個人資料與設定
   - name: User - Notifications
@@ -1917,7 +1923,11 @@ paths:
         - $ref: "#/components/parameters/SortOrderParam"
         - name: category
           in: query
-          schema: { type: string, enum: [diagnostic, remediation, maintenance, custom] }
+          schema:
+            {
+              type: string,
+              enum: [diagnostic, remediation, maintenance, custom],
+            }
       responses:
         "200":
           description: 腳本列表
@@ -2312,7 +2322,8 @@ paths:
         - $ref: "#/components/parameters/PageSizeParam"
         - name: role
           in: query
-          schema: { type: string, enum: [super_admin, team_manager, team_member] }
+          schema:
+            { type: string, enum: [super_admin, team_manager, team_member] }
         - name: team_id
           in: query
           schema: { type: string }
@@ -3045,7 +3056,11 @@ paths:
           schema: { type: string }
         - name: action
           in: query
-          schema: { type: string, enum: [create, update, delete, execute, login, logout] }
+          schema:
+            {
+              type: string,
+              enum: [create, update, delete, execute, login, logout],
+            }
         - name: resource_type
           in: query
           schema: { type: string }
@@ -5224,9 +5239,9 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Alert'
+            $ref: "#/components/schemas/Alert"
         pagination:
-          $ref: '#/components/schemas/Pagination'
+          $ref: "#/components/schemas/Pagination"
 
     # ============================================
     # Alert Rule Schemas
