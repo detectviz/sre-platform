@@ -140,7 +140,7 @@
 
     .table-wrapper .ant-table-tbody>tr>td {
       color: var(--text-secondary);
-      padding: var(--spacing-md) var(--spacing-lg);
+      padding: 16px var(--spacing-lg);
       line-height: 1.5;
       border-bottom: 1px solid var(--border-light);
     }
@@ -462,8 +462,153 @@
       background: transparent !important;
     }
 
+    /* Top N 資源使用列表表格樣式 */
+    .topn-table .ant-table-tbody>tr>td {
+      padding: 6px 8px !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    }
+
+    .topn-table .ant-table-thead>tr>th {
+      padding: 6px 8px !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .topn-table .ant-table-tbody>tr:hover>td {
+      background: rgba(255, 255, 255, 0.03) !important;
+    }
+
+    .topn-table .ant-table {
+      background: transparent !important;
+    }
+
+    .topn-table .ant-table-container {
+      background: transparent !important;
+    }
+
+    .topn-table .ant-table-content {
+      background: transparent !important;
+    }
+
+    /* 分頁樣式 */
+    .topn-table .ant-pagination {
+      margin: 12px 8px !important;
+    }
+
+    .topn-table .ant-pagination-item,
+    .topn-table .ant-pagination-prev,
+    .topn-table .ant-pagination-next,
+    .topn-table .ant-pagination-jump-prev,
+    .topn-table .ant-pagination-jump-next {
+      background-color: transparent !important;
+      border-color: transparent !important;
+      border-radius: 4px;
+    }
+
+    .topn-table .ant-pagination-item a {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .topn-table .ant-pagination-prev .ant-pagination-item-link,
+    .topn-table .ant-pagination-next .ant-pagination-item-link {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .topn-table .ant-pagination-item-active {
+      border-color: #1677ff !important;
+    }
+
+    .topn-table .ant-pagination-item-active a {
+      color: #1677ff !important;
+    }
+
+    /* Radio 按鈕樣式 */
+    .topn-radio-group .ant-radio-group {
+      border-radius: 6px;
+      background-color: rgba(38, 38, 38, 0.6);
+    }
+
+    .topn-radio-group .ant-radio-button-wrapper {
+      background-color: transparent !important;
+      border-color: transparent !important;
+      color: rgba(255, 255, 255, 0.85) !important;
+      padding: 0 16px;
+      height: 32px;
+      line-height: 32px;
+      border-right: 1px solid rgba(66, 66, 66, 0.6) !important;
+    }
+
+    .topn-radio-group .ant-radio-button-wrapper:last-child {
+      border-right: none !important;
+    }
+
+    .topn-radio-group .ant-radio-button-wrapper:not(:first-child)::before {
+      display: none;
+    }
+
+    .topn-radio-group .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
+      background-color: transparent !important;
+      border-color: #1677ff !important;
+      color: #1677ff !important;
+      border-width: 1px !important;
+      border-style: solid !important;
+      border-radius: 6px;
+    }
+
+    .topn-radio-group .ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover {
+      background-color: transparent !important;
+      color: #1677ff !important;
+    }
+
     .no-margin {
       margin: 0 !important;
+    }
+
+    /* Header controls 樣式 */
+    .header-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .header-controls h2 {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    /* 分頁樣式 */
+    .custom-pagination .ant-pagination-item,
+    .custom-pagination .ant-pagination-prev,
+    .custom-pagination .ant-pagination-next,
+    .custom-pagination .ant-pagination-jump-prev,
+    .custom-pagination .ant-pagination-jump-next {
+      background-color: transparent !important;
+      border-color: transparent !important;
+      border-radius: 4px;
+    }
+
+    .custom-pagination .ant-pagination-item a {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .custom-pagination .ant-pagination-prev .ant-pagination-item-link,
+    .custom-pagination .ant-pagination-next .ant-pagination-item-link {
+      color: rgba(255, 255, 255, 0.85) !important;
+    }
+
+    .custom-pagination .ant-pagination-item-active {
+      border-color: #1677ff !important;
+    }
+
+    .custom-pagination .ant-pagination-item-active a {
+      color: #1677ff !important;
+    }
+
+    .ant-table-pagination.ant-pagination {
+      margin: 16px 8px !important;
     }
 
 
@@ -622,29 +767,146 @@
     }
 
     /* 統計卡片樣式 */
-    .stat-card {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
-      padding: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      text-align: center;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+
+    /* 🔧 統一樣式類 - 替換重複內嵌樣式 */
+
+    /* 統一顏色樣式 */
+    .text-primary {
+      color: rgba(255, 255, 255, 0.95);
     }
 
-    .stat-card .ant-statistic-title {
-      color: rgba(255, 255, 255, 0.65);
+    .text-secondary {
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .text-tertiary {
+      color: rgba(255, 255, 255, 0.75);
+    }
+
+    .text-quaternary {
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    /* 統一間距樣式 */
+    .margin-bottom-sm {
       margin-bottom: 8px;
     }
 
-    .stat-card .ant-statistic-content {
-      color: rgba(255, 255, 255, 0.9);
+    .margin-bottom-md {
+      margin-bottom: 16px;
     }
 
-    .stat-card .ant-statistic-content-suffix {
-      color: rgba(255, 255, 255, 0.8);
+    .margin-bottom-lg {
+      margin-bottom: 24px;
+    }
+
+    /* 統一字體樣式 */
+    .font-medium {
+      font-weight: 500;
+    }
+
+    .font-semibold {
+      font-weight: 600;
+    }
+
+    .font-bold {
+      font-weight: 700;
+    }
+
+    /* 統一標題樣式 */
+    .section-title {
+      margin-bottom: 16px;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .chart-title {
+      margin-bottom: 8px;
+      color: rgba(255, 255, 255, 0.85);
+      margin-top: 0;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* 統一高度樣式 */
+    .card-height-small {
+      height: 88px;
+    }
+
+    .card-height-large {
+      height: 240px;
+    }
+
+    /* 統一內距樣式 */
+    .padding-md {
+      padding: 16px;
+    }
+
+    .padding-lg {
+      padding: 20px;
+    }
+
+    /* 卡片標題樣式 */
+    .card-title {
+      color: var(--text-tertiary);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    /* 卡片數值樣式 */
+    .card-value {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    .card-value-large {
+      font-size: 40px;
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+
+    /* 卡片描述樣式 */
+    .card-description {
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+
+    /* 卡片圖標樣式 */
+    .card-icon {
+      font-size: 32px;
+      opacity: 0.8;
+    }
+
+    .card-icon-large {
+      font-size: 36px;
+      opacity: 0.8;
+    }
+
+    .card-icon-xl {
+      font-size: 40px;
+      opacity: 0.8;
+    }
+
+    /* 卡片內容佈局 */
+    .card-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 100%;
+    }
+
+    .card-content-vertical {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
     }
 
     /* 圖表區域樣式 */
@@ -1424,16 +1686,15 @@
     /* 🎯 統一步驟式導引樣式 */
     .steps-container {
       margin-bottom: 32px;
-      padding: 0 20px;
+      padding: 24px;
       background: rgba(255, 255, 255, 0.02);
       border-radius: 12px;
-      padding: 20px;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .steps-container .steps {
       display: flex;
-      gap: 12px;
+      gap: 16px;
       position: relative;
       justify-content: space-between;
     }
@@ -1557,21 +1818,21 @@
       }
     }
 
-    /* 🎯 統一彈窗底部按鈕樣式 */
+    /* 🎯 統一彈窗底部按鈕樣式 - 8點網格系統 */
     .modal-footer,
     .modal-footer-unified {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 12px;
-      padding: 16px 0 0 0;
+      gap: 16px;
+      padding: 24px 0 0 0;
       border-top: 1px solid rgba(255, 255, 255, 0.08);
-      margin-top: 20px;
+      margin-top: 24px;
     }
 
     .modal-footer>div {
       display: flex;
-      gap: 12px;
+      gap: 16px;
       align-items: center;
     }
 
@@ -1613,44 +1874,44 @@
       transform: translateY(-1px);
     }
 
-    /* 🎯 Compact Modal Styles - 優化所有彈窗排版 */
+    /* 🎯 Compact Modal Styles - 8點網格系統優化 */
     .ant-modal .ant-modal-body {
-      padding: 16px 24px;
+      padding: 24px;
       max-height: calc(100vh - 200px);
       overflow-y: auto;
     }
 
     .ant-modal .ant-modal-footer {
-      padding: 12px 24px;
+      padding: 16px 24px;
       border-top: 1px solid var(--border-light);
     }
 
-    /* 緊湊的表單間距 */
+    /* 8點網格系統表單間距 */
     .ant-modal .ant-form-item {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .ant-modal .ant-form-item:last-child {
       margin-bottom: 0;
     }
 
-    /* 緊湊的描述列表 */
+    /* 8點網格系統描述列表 */
     .ant-modal .ant-descriptions-item {
-      padding: 8px 12px;
+      padding: 8px 16px;
     }
 
-    /* 緊湊的卡片內容 */
+    /* 8點網格系統卡片內容 */
     .ant-modal .ant-card {
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
 
     .ant-modal .ant-card-body {
-      padding: 12px 16px;
+      padding: 16px;
     }
 
-    /* 緊湊的列表項目 */
+    /* 8點網格系統列表項目 */
     .ant-modal .ant-list-item {
-      padding: 8px 12px;
+      padding: 8px 16px;
     }
 
     /* 緊湊的步驟指示器 */
@@ -1658,10 +1919,10 @@
       margin-bottom: 16px;
     }
 
-    /* 緊湊的區塊間距 */
+    /* 8點網格系統區塊間距 */
     .ant-modal .section-block {
       margin-bottom: 16px;
-      padding: 12px;
+      padding: 16px;
     }
 
     /* 滾動條美化 */
@@ -1788,8 +2049,8 @@
       color: rgba(255, 255, 255, 0.95) !important;
     }
 
-    .ant-btn.toolbar-btn-icon-only,
-    button.ant-btn.toolbar-btn-icon-only {
+    .ant-btn.toolbar-btn--icon-only,
+    button.ant-btn.toolbar-btn--icon-only {
       width: 32px !important;
       padding: 0 !important;
       border-radius: 6px !important;
@@ -1797,19 +2058,33 @@
 
     /* 通知鈴 Badge 尺寸 */
     .ant-badge .ant-badge-count {
-      min-width: 18px !important;
       height: 18px !important;
       line-height: 18px !important;
-      padding: 0 6px !important;
       border-radius: 9px !important;
       font-size: 12px !important;
       font-weight: 500 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 4px !important;
+      min-width: 18px !important;
+    }
+
+    /* 單數字 Badge - 完美圓形 */
+    .ant-badge .ant-badge-count:not(.ant-badge-multiple-words) {
+      width: 18px !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
     }
 
     .ant-badge .ant-badge-count-sm {
-      min-width: 18px !important;
       height: 18px !important;
       line-height: 18px !important;
+      padding: 0 4px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-width: 18px !important;
     }
 
     /* AI 分析按鈕 - 漸層紫色 */
@@ -1868,57 +2143,57 @@
     }
 
     /* Batch Action Buttons - 批次操作按鈕 */
-    .batch-action-btn {
+    .batch-action-button {
       height: 32px;
       padding: 0 16px;
       border-radius: 6px;
       font-weight: 500;
     }
 
-    .batch-action-btn.ant-btn-primary {
+    .batch-action-button.ant-btn-primary {
       background: #1890ff;
       border-color: #1890ff;
     }
 
-    .batch-action-btn-success {
+    .batch-action-button--success {
       background: #52c41a !important;
       border-color: #52c41a !important;
       color: white !important;
     }
 
-    .batch-action-btn-success:hover,
-    .batch-action-btn-success:focus {
+    .batch-action-button--success:hover,
+    .batch-action-button--success:focus {
       background: #73d13d !important;
       border-color: #73d13d !important;
       color: white !important;
     }
 
     /* Danger Buttons - 危險操作按鈕 */
-    .danger-btn {
+    .danger-button {
       color: var(--brand-danger);
       border-color: var(--brand-danger);
     }
 
-    .batch-action-btn.ant-btn-dangerous,
-    .batch-action-btn.danger-btn,
-    .ant-btn.batch-action-btn.danger-btn {
+    .batch-action-button.ant-btn-dangerous,
+    .batch-action-button.danger-button,
+    .ant-btn.batch-action-button.danger-button {
       background: #ff4d4f !important;
       border-color: #ff4d4f !important;
       color: white !important;
     }
 
-    .batch-action-btn.ant-btn-dangerous:hover,
-    .batch-action-btn.danger-btn:hover,
-    .ant-btn.batch-action-btn.danger-btn:hover,
-    .batch-action-btn.ant-btn-dangerous:focus,
-    .batch-action-btn.danger-btn:focus,
-    .ant-btn.batch-action-btn.danger-btn:focus {
+    .batch-action-button.ant-btn-dangerous:hover,
+    .batch-action-button.danger-button:hover,
+    .ant-btn.batch-action-button.danger-button:hover,
+    .batch-action-button.ant-btn-dangerous:focus,
+    .batch-action-button.danger-button:focus,
+    .ant-btn.batch-action-button.danger-button:focus {
       background: #ff7875 !important;
       border-color: #ff7875 !important;
       color: white !important;
     }
 
-    .danger-btn:hover {
+    .danger-button:hover {
       background: rgba(255, 77, 79, 0.1);
       border-color: var(--brand-danger);
       color: var(--brand-danger);
@@ -2016,6 +2291,13 @@
       font-size: 12px !important;
     }
 
+    /* 單數字 Badge - 完美圓形 (全域) */
+    .ant-badge-count:not(.ant-badge-multiple-words) {
+      width: 18px !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+    }
+
     /* 🎯 Button Alignment Uniformity - 按鈕對齊統一 */
 
     /* 工具欄容器對齊 */
@@ -2087,13 +2369,13 @@
     }
 
     /* 批次刪除按鈕 - outlined 樣式 */
-    .danger-btn {
+    .danger-button {
       background: transparent !important;
       border: 1px solid var(--brand-danger) !important;
       color: var(--brand-danger) !important;
     }
 
-    .danger-btn:hover {
+    .danger-button:hover {
       background: rgba(255, 77, 79, 0.1) !important;
       border-color: var(--brand-danger) !important;
       color: var(--brand-danger) !important;
@@ -2725,7 +3007,7 @@
                     boxShadow: '0 6px 24px rgba(108, 117, 125, 0.3)',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
-                  className="login-submit-btn"
+                  className="login-submit-button"
                 >
                   登入系統
                 </Button>
@@ -2748,32 +3030,372 @@
     };
 
     // --- Page Components (Enhanced and Placeholders) ---
-    const DashboardPage = ({ themeMode }) => {
+    // Top N 資源使用列表組件
+    const TopNResourceList = ({ themeMode }) => {
+      const [metric, setMetric] = useState('CPU');
+
+      // 生成趨勢數據
+      const generateTrend = () => Array.from({ length: 10 }, () => Math.random() * 100);
+
+      const data = {
+        CPU: Array.from({ length: 5 }, (_, i) => ({
+          key: i,
+          host: `web-prod-${i + 1}`,
+          value: 95 - i * 5,
+          trend: generateTrend()
+        })),
+        Mem: Array.from({ length: 5 }, (_, i) => ({
+          key: i,
+          host: `db-prod-${i + 1}`,
+          value: 92 - i * 4,
+          trend: generateTrend()
+        })),
+        Disk: Array.from({ length: 5 }, (_, i) => ({
+          key: i,
+          host: `log-server-${i + 1}`,
+          value: 88 - i * 6,
+          trend: generateTrend()
+        })),
+        Net: Array.from({ length: 5 }, (_, i) => ({
+          key: i,
+          host: `api-gateway-${i + 1}`,
+          value: 800 - i * 50,
+          trend: generateTrend()
+        })),
+      };
+
+      // 創建迷你趨勢圖選項
+      const createSparklineOption = (trendData, color) => ({
+        backgroundColor: 'transparent',
+        grid: { top: 5, bottom: 5, left: 0, right: 0 },
+        xAxis: { type: 'category', show: false, data: trendData.map((_, i) => i) },
+        yAxis: { type: 'value', show: false },
+        series: [{
+          data: trendData,
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          lineStyle: { width: 2, color }
+        }]
+      });
+
+      const columns = [
+        {
+          title: '主機',
+          dataIndex: 'host',
+          key: 'host',
+          width: '30%',
+          render: (text) => (
+            <div className="text-secondary" style={{ fontSize: '12px' }}>
+              {text}
+            </div>
+          )
+        },
+        {
+          title: '趨勢',
+          dataIndex: 'trend',
+          key: 'trend',
+          width: '30%',
+          render: (trend, record) => (
+            <div style={{ height: '30px' }}>
+              <EchartsForReact
+                option={createSparklineOption(trend, record.value > 90 ? '#ff4d4f' : '#faad14')}
+                isDark={themeMode === 'dark'}
+              />
+            </div>
+          )
+        },
+        {
+          title: '使用率',
+          dataIndex: 'value',
+          key: 'value',
+          width: '25%',
+          render: (value) => (
+            <Progress
+              percent={metric === 'Net' ? value / 10 : value}
+              showInfo={false}
+              strokeColor={value > 90 ? '#ff4d4f' : '#faad14'}
+              size="small"
+            />
+          )
+        },
+        {
+          title: '數值',
+          dataIndex: 'value',
+          key: 'num',
+          render: (value) => (
+            <div className="text-secondary" style={{ fontSize: '12px' }}>
+              {value}{metric === 'Net' ? 'Mbps' : '%'}
+            </div>
+          )
+        }
+      ];
+
+      return (
+        <div
+          className="chart-card card-height-large padding-md"
+          style={{
+            cursor: 'pointer'
+          }}
+          onClick={() => {
+            // 可以添加導航邏輯
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <Title level={5} className="chart-title" style={{ margin: 0 }}>
+              Top N 資源使用列表
+            </Title>
+            <Radio.Group
+              value={metric}
+              onChange={(e) => setMetric(e.target.value)}
+              size="small"
+              style={{ marginTop: '-4px' }}
+            >
+              <Radio.Button value="CPU">CPU</Radio.Button>
+              <Radio.Button value="Mem">記憶體</Radio.Button>
+              <Radio.Button value="Disk">磁碟</Radio.Button>
+              <Radio.Button value="Net">網路</Radio.Button>
+            </Radio.Group>
+          </div>
+          <div style={{ height: 'calc(100% - 60px)', overflow: 'auto' }}>
+            <Table
+              dataSource={data[metric]}
+              columns={columns}
+              pagination={false}
+              size="small"
+              rowKey="key"
+            />
+          </div>
+        </div>
+      );
+    };
+
+    const DashboardPage = ({ themeMode, onNavigate }) => {
+      // Top N 資源使用列表狀態
+      const [metric, setMetric] = useState('CPU');
+
+      // 生成趨勢數據 - 24小時數據
+      const generateTrend = () => Array.from({ length: 24 }, () => Math.random() * 80 + 10);
+
+      const data = {
+        CPU: Array.from({ length: 20 }, (_, i) => ({
+          key: i,
+          host: `web-prod-${i + 1}`,
+          usage: parseFloat(Math.max(15, 95 - (i * 4 * Math.random())).toFixed(2)),
+          load: (Math.random() * 3).toFixed(2),
+          trend: generateTrend()
+        })),
+        Mem: Array.from({ length: 20 }, (_, i) => ({
+          key: i,
+          host: `db-prod-${i + 1}`,
+          usage: parseFloat(Math.max(15, 92 - (i * 4 * Math.random())).toFixed(2)),
+          used: (16 * (Math.random() * 0.8 + 0.1)).toFixed(2),
+          total: 16,
+          trend: generateTrend()
+        })),
+        Disk: Array.from({ length: 20 }, (_, i) => ({
+          key: i,
+          host: `log-server-${i + 1}`,
+          usage: parseFloat(Math.max(15, 88 - (i * 4 * Math.random())).toFixed(2)),
+          readIops: Math.floor(Math.random() * 2000),
+          writeIops: Math.floor(Math.random() * 1500),
+          trend: generateTrend()
+        })),
+        Net: Array.from({ length: 20 }, (_, i) => ({
+          key: i,
+          host: `api-gateway-${i + 1}`,
+          inbound: (Math.random() * 500).toFixed(2),
+          outbound: (Math.random() * 300).toFixed(2),
+          trend: generateTrend()
+        })),
+      };
+
+      // 創建迷你趨勢圖選項
+      const createSparklineOption = (data, color) => ({
+        grid: { top: 5, bottom: 5, left: 0, right: 0 },
+        xAxis: { type: 'category', show: false },
+        yAxis: { type: 'value', show: false, min: 0, max: 100 },
+        series: [{
+          data,
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          lineStyle: { width: 2, color }
+        }]
+      });
+
+      // 通用列定義
+      const commonColumns = [
+        {
+          title: '主機',
+          dataIndex: 'host',
+          key: 'host',
+          render: (text) => (
+            <div className="text-secondary" style={{ fontSize: '12px' }}>
+              {text}
+            </div>
+          )
+        },
+        {
+          title: '當日趨勢',
+          dataIndex: 'trend',
+          key: 'trend',
+          render: (trend, record) => (
+            <div style={{ height: '30px', minWidth: '120px' }}>
+              <EchartsForReact
+                option={createSparklineOption(trend, (record.usage || record.inbound || 0) > 90 ? '#ff4d4f' : '#faad14')}
+                isDark={themeMode === 'dark'}
+              />
+            </div>
+          )
+        }
+      ];
+
+      // CPU 專用列
+      const cpuColumns = [...commonColumns,
+      {
+        title: 'CPU 使用率 (%)',
+        dataIndex: 'usage',
+        key: 'usage_percent',
+        render: (val) => `${val}%`
+      },
+      {
+        title: '使用率',
+        dataIndex: 'usage',
+        key: 'usage_bar',
+        render: (val) => (
+          <Progress
+            percent={val}
+            showInfo={false}
+            size="small"
+            strokeColor={val > 90 ? '#ff4d4f' : '#faad14'}
+          />
+        )
+      },
+      {
+        title: '平均負載 (1m)',
+        dataIndex: 'load',
+        key: 'load'
+      }
+      ];
+
+      // 記憶體專用列
+      const memColumns = [...commonColumns,
+      {
+        title: '記憶體使用率 (%)',
+        dataIndex: 'usage',
+        key: 'usage_percent',
+        render: (val) => `${val}%`
+      },
+      {
+        title: '使用率',
+        dataIndex: 'usage',
+        key: 'usage_bar',
+        render: (val) => (
+          <Progress
+            percent={val}
+            showInfo={false}
+            size="small"
+            strokeColor={val > 90 ? '#ff4d4f' : '#faad14'}
+          />
+        )
+      },
+      {
+        title: '已用/總量',
+        key: 'absolute',
+        render: (_, record) => `${record.used}GB / ${record.total}GB`
+      }
+      ];
+
+      // 磁碟專用列
+      const diskColumns = [...commonColumns,
+      {
+        title: '空間使用率 (%)',
+        dataIndex: 'usage',
+        key: 'usage_percent',
+        render: (val) => `${val}%`
+      },
+      {
+        title: '使用率',
+        dataIndex: 'usage',
+        key: 'usage_bar',
+        render: (val) => (
+          <Progress
+            percent={val}
+            showInfo={false}
+            size="small"
+            strokeColor={val > 90 ? '#ff4d4f' : '#faad14'}
+          />
+        )
+      },
+      {
+        title: '讀取 IOPS',
+        dataIndex: 'readIops',
+        key: 'readIops'
+      },
+      {
+        title: '寫入 IOPS',
+        dataIndex: 'writeIops',
+        key: 'writeIops'
+      }
+      ];
+
+      // 網路專用列
+      const netColumns = [...commonColumns,
+      {
+        title: '流入速率',
+        dataIndex: 'inbound',
+        key: 'inbound',
+        render: (val) => `${val} Mbps`
+      },
+      {
+        title: '流出速率',
+        dataIndex: 'outbound',
+        key: 'outbound',
+        render: (val) => `${val} Mbps`
+      }
+      ];
+
+      // 根據指標返回對應的列
+      const getColumns = () => {
+        switch (metric) {
+          case 'CPU': return cpuColumns;
+          case 'Mem': return memColumns;
+          case 'Disk': return diskColumns;
+          case 'Net': return netColumns;
+          default: return commonColumns;
+        }
+      };
+
       // 堆疊長條圖選項 - 資源群組狀態總覽
       const stackedBarOption = {
         tooltip: {
           trigger: 'axis',
           backgroundColor: 'rgba(0,0,0,0.8)',
           borderColor: 'rgba(255,255,255,0.2)',
-          textStyle: { color: '#fff' }
+          textStyle: { color: '#fff', fontSize: 11 }
         },
         legend: {
           data: ['健康', '警告', '嚴重'],
           top: 0,
-          textStyle: { color: 'rgba(255,255,255,0.85)' }
+          textStyle: { color: 'rgba(255,255,255,0.85)', fontSize: 10 },
+          itemGap: 6,
+          itemWidth: 10,
+          itemHeight: 6
         },
         grid: {
-          left: '5%',
-          right: '5%',
+          left: '2%',
+          right: '2%',
           bottom: '15%',
-          top: '15%'
+          top: '18%',
+          containLabel: true
         },
         xAxis: {
           type: 'category',
-          data: ['Prod Web', 'Prod DB', 'Staging', 'Dev'],
+          data: ['生產Web集群', '生產資料庫', '測試環境', '開發環境', '災備系統', '監控平台', 'API網關', '快取服務'],
           axisLabel: {
             color: 'rgba(255,255,255,0.65)',
-            fontSize: 11,
+            fontSize: 12,
             interval: 0,
             rotate: 0
           },
@@ -2781,7 +3403,7 @@
         },
         yAxis: {
           type: 'value',
-          axisLabel: { color: 'rgba(255,255,255,0.65)' },
+          axisLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 10 },
           axisLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
           splitLine: { lineStyle: { color: 'rgba(255,255,255,0.05)' } }
         },
@@ -2790,7 +3412,7 @@
             name: '健康',
             type: 'bar',
             stack: '總量',
-            data: [80, 15, 25, 18],
+            data: [85, 18, 28, 22, 75, 32, 45, 38],
             color: '#52c41a',
             barWidth: '60%'
           },
@@ -2798,14 +3420,14 @@
             name: '警告',
             type: 'bar',
             stack: '總量',
-            data: [8, 3, 3, 2],
+            data: [18, 12, 25, 8, 28, 22, 16, 14],
             color: '#faad14'
           },
           {
             name: '嚴重',
             type: 'bar',
             stack: '總量',
-            data: [2, 2, 1, 0],
+            data: [22, 8, 12, 6, 15, 10, 8, 12],
             color: '#ff4d4f'
           }
         ]
@@ -2818,30 +3440,48 @@
           formatter: '{a} <br/>{b}: {c} ({d}%)',
           backgroundColor: 'rgba(0,0,0,0.8)',
           borderColor: 'rgba(255,255,255,0.2)',
-          textStyle: { color: '#fff' }
+          textStyle: { color: '#fff', fontSize: 11 }
+        },
+        title: {
+          text: '36.9%',
+          subtext: '妥善率',
+          left: 'center',
+          top: 'center',
+          textStyle: {
+            fontSize: 24,
+            fontWeight: 'bold',
+            color: 'rgba(255,255,255,0.95)',
+            lineHeight: 0.9
+          },
+          subtextStyle: {
+            fontSize: 12,
+            color: 'rgba(255,255,255,0.7)',
+            fontWeight: 'normal'
+          },
+          itemGap: -6
         },
         series: [
           {
             name: '資源狀態',
             type: 'pie',
-            radius: ['40%', '65%'],
-            center: ['50%', '58%'],
+            radius: ['45%', '70%'],
+            center: ['50%', '50%'],
             data: [
               { value: 138, name: '健康', itemStyle: { color: '#52c41a' } },
-              { value: 16, name: '警告', itemStyle: { color: '#faad14' } },
-              { value: 5, name: '嚴重', itemStyle: { color: '#ff4d4f' } }
+              { value: 143, name: '警告', itemStyle: { color: '#faad14' } },
+              { value: 93, name: '嚴重', itemStyle: { color: '#ff4d4f' } }
             ],
             label: {
               show: true,
               formatter: '{b}: {c}',
               color: 'rgba(255,255,255,0.85)',
-              fontSize: 11,
+              fontSize: 10,
               position: 'outside'
             },
             labelLine: {
               show: true,
-              length: 15,
-              length2: 10,
+              length: 12,
+              length2: 8,
               lineStyle: {
                 color: 'rgba(255,255,255,0.3)'
               }
@@ -2936,101 +3576,191 @@
 
       return (
         <React.Fragment>
-          <Title level={2} className="page-title">總覽</Title>
-          <Paragraph className="page-subtitle" type="secondary">查看系統整體健康狀況與關鍵指標。</Paragraph>
 
-          {/* 事件統計卡 */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} lg={8}>
-              <EventStatCard
-                icon={<FireOutlined />}
-                color="#ff4d4f"
-                bgColor="#ff4d4f"
-                title="新告警"
-                value={5}
-                change={20}
-              />
-            </Col>
-            <Col xs={24} lg={8}>
-              <EventStatCard
-                icon={<ClockCircleOutlined />}
-                color="#faad14"
-                bgColor="#faad14"
-                title="處理中"
-                value={3}
-                change={-15}
-              />
-            </Col>
-            <Col xs={24} lg={8}>
-              <EventStatCard
-                icon={<CheckCircleOutlined />}
-                color="#52c41a"
-                bgColor="#52c41a"
-                title="今日已解決"
-                value={12}
-                change={8}
-              />
-            </Col>
-          </Row>
-
-          {/* 關鍵指標卡 */}
-          <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
-            <Col xs={24} lg={12}>
-              <KeyMetricCard
-                icon={<CheckCircleOutlined />}
-                iconBg="#52c41a"
-                title="資源妥善率"
-                value="96.8"
-                unit="%"
-              />
-            </Col>
-            <Col xs={24} lg={12}>
-              <KeyMetricCard
-                icon={<HddOutlined />}
-                iconBg="#1890ff"
-                title="總資源數"
-                value="159"
-                unit="台"
-              />
-            </Col>
-          </Row>
-
-          {/* 圖表卡 */}
-          <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
-            <Col xs={24} lg={12}>
-              <div
-                className="chart-card"
-                style={{
-                  height: '320px',
-                  padding: '24px'
-                }}
-              >
-                <Title level={4} style={{ marginBottom: '16px', color: 'rgba(255, 255, 255, 0.85)', marginTop: 0 }}>資源群組狀態總覽</Title>
-                <div style={{ height: 'calc(100% - 48px)' }}>
-                  <EchartsForReact option={stackedBarOption} isDark={themeMode === 'dark'} />
+          {/* 區塊 A: 告警戰情 (Alert Status) */}
+          <div style={{ marginBottom: '16px' }}>
+            <Row gutter={[16, 12]}>
+              {/* 主卡片 - 待處理告警 */}
+              <Col xs={24} sm={12} md={8} lg={8}>
+                <div
+                  className="stat-card card-height-small padding-md"
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (onNavigate) onNavigate('incident-list', { statusFilter: 'new' });
+                  }}
+                >
+                  <div className="card-content">
+                    <div>
+                      <div className="card-title">待處理告警</div>
+                      <div className="card-value" style={{ color: '#ff4d4f' }}>5</div>
+                      <div className="card-description">
+                        其中 <span style={{ color: '#ff4d4f', fontWeight: '600' }}>2</span> 嚴重
+                      </div>
+                    </div>
+                    <FireOutlined className="card-icon" style={{ color: '#ff4d4f' }} />
+                  </div>
                 </div>
-              </div>
-            </Col>
-            <Col xs={24} lg={12}>
-              <div
-                className="chart-card"
-                style={{
-                  height: '320px',
-                  padding: '24px'
-                }}
-              >
-                <Title level={4} style={{ marginBottom: '16px', color: 'rgba(255, 255, 255, 0.85)', marginTop: 0 }}>資源狀態分佈</Title>
-                <div style={{ height: 'calc(100% - 48px)' }}>
-                  <EchartsForReact option={doughnutOption} isDark={themeMode === 'dark'} />
+              </Col>
+
+              {/* 副卡片 1 - 處理中 */}
+              <Col xs={24} sm={12} md={8} lg={8}>
+                <div
+                  className="stat-card card-height-small padding-md"
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (onNavigate) onNavigate('incident-list', { statusFilter: 'acknowledged' });
+                  }}
+                >
+                  <div className="card-content">
+                    <div>
+                      <div className="card-title">處理中</div>
+                      <div className="card-value" style={{ color: '#faad14' }}>3</div>
+                      <div className="card-description" style={{ color: '#faad14' }}>
+                        ↘ 15% 較昨日
+                      </div>
+                    </div>
+                    <ClockCircleOutlined className="card-icon" style={{ color: '#faad14' }} />
+                  </div>
                 </div>
-              </div>
-            </Col>
-          </Row>
+              </Col>
+
+              {/* 副卡片 2 - 今日已解決 */}
+              <Col xs={24} sm={24} md={8} lg={8}>
+                <div
+                  className="stat-card card-height-small padding-md"
+                  style={{
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (onNavigate) onNavigate('incident-list', { statusFilter: 'resolved' });
+                  }}
+                >
+                  <div className="card-content">
+                    <div>
+                      <div className="card-title">今日已解決</div>
+                      <div className="card-value" style={{ color: '#52c41a' }}>12</div>
+                      <div className="card-description" style={{ color: '#52c41a' }}>
+                        ↗ 8% 較昨日
+                      </div>
+                    </div>
+                    <CheckCircleOutlined className="card-icon" style={{ color: '#52c41a' }} />
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </div>
+
+          {/* 區塊 B: 資源健康度與關鍵業務監控 (Resource Health & Key Business Monitoring) */}
+          <div>
+            <Row gutter={[16, 12]}>
+              {/* 左側：資源狀態分佈圖表 - 佔 1/3 */}
+              <Col xs={24} sm={24} md={8} lg={8}>
+                <div
+                  className="chart-card"
+                  style={{
+                    height: '220px',
+                    padding: '16px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (onNavigate) onNavigate('resource-list');
+                  }}
+                >
+                  <Title level={5} className="chart-title">資源數量 374 台</Title>
+                  <div style={{ height: 'calc(100% - 24px)' }}>
+                    <EchartsForReact option={doughnutOption} isDark={themeMode === 'dark'} />
+                  </div>
+                </div>
+              </Col>
+
+              {/* 右側：資源群組狀態總覽 - 佔 2/3 */}
+              <Col xs={24} sm={24} md={16} lg={16}>
+                <div
+                  className="chart-card"
+                  style={{
+                    height: '220px',
+                    padding: '16px',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    if (onNavigate) onNavigate('resource-list');
+                  }}
+                >
+                  <Title level={5} className="chart-title">資源群組狀態總覽</Title>
+                  <div style={{ height: 'calc(100% - 24px)' }}>
+                    <EchartsForReact option={stackedBarOption} isDark={themeMode === 'dark'} />
+                  </div>
+                </div>
+              </Col>
+            </Row>
+          </div>
+
+          {/* Top N 資源使用列表 */}
+          <div style={{ marginTop: '24px' }}>
+
+            {/* 工具列 */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '16px',
+              marginBottom: '16px'
+            }}>
+              <Space>
+                <Input.Search
+                  placeholder="搜尋主機名稱..."
+                  style={{ width: 250 }}
+                  allowClear
+                />
+                <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                  篩選
+                  <Badge count={1} style={{ marginLeft: 8 }} />
+                </Button>
+                <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
+                <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+                <Button type="primary" className="btn-ai-analysis" icon={<RobotOutlined />}>
+                  AI 分析
+                </Button>
+              </Space>
+              <Space>
+                <Radio.Group
+                  value={metric}
+                  onChange={(e) => setMetric(e.target.value)}
+                  size="small"
+                  className="topn-radio-group"
+                >
+                  <Radio.Button value="CPU">CPU</Radio.Button>
+                  <Radio.Button value="Mem">記憶體</Radio.Button>
+                  <Radio.Button value="Disk">磁碟</Radio.Button>
+                  <Radio.Button value="Net">網路</Radio.Button>
+                </Radio.Group>
+              </Space>
+            </div>
+            <div className="table-wrapper">
+              <Table
+                dataSource={data[metric]}
+                columns={getColumns()}
+                pagination={{
+                  pageSize: 5,
+                  size: 'small',
+                  showSizeChanger: false,
+                  className: 'custom-pagination'
+                }}
+                size="small"
+                rowKey="key"
+                className="topn-table"
+              />
+            </div>
+          </div>
         </React.Fragment>
       );
     };
 
-    const ResourceListPage = () => {
+    const ResourceListPage = ({ pageParams }) => {
       const mockGroups = [
         { id: 'g_1', name: 'Production Database' },
         { id: 'g_2', name: 'Production Web Servers' },
@@ -3144,9 +3874,23 @@
           }
         },
         { title: '類型', dataIndex: 'type', width: '15%', filters: [{ text: 'Database', value: 'database' }, { text: 'Server', value: 'server' }, { text: 'Gateway', value: 'gateway' }, { text: 'Cache', value: 'cache' },], onFilter: (value, record) => record.type.indexOf(value) === 0 },
-        { title: '操作', key: 'action', width: '10%', render: (_, record) => (<Space> <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
+        { title: '操作', key: 'action', width: '10%', render: (_, record) => (<Space size="small"> <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
       ];
-      const filteredResources = resources.filter(res => res.name.toLowerCase().includes(searchText.toLowerCase()) || res.ip_address.toLowerCase().includes(searchText.toLowerCase()));
+      // 應用預篩選和搜尋篩選
+      let filteredResources = resources;
+
+      // 預篩選邏輯 (從總覽頁面下鑽過來)
+      if (pageParams && pageParams.statusFilter) {
+        filteredResources = filteredResources.filter(res => res.status === pageParams.statusFilter);
+      }
+
+      // 搜尋篩選邏輯
+      if (searchText) {
+        filteredResources = filteredResources.filter(res =>
+          res.name.toLowerCase().includes(searchText.toLowerCase()) ||
+          res.ip_address.toLowerCase().includes(searchText.toLowerCase())
+        );
+      }
 
       // 統計資料
       const stats = {
@@ -3163,48 +3907,10 @@
           <div style={{ marginBottom: 'var(--spacing-md)' }}>
             <Title level={2} className="page-title">資源列表</Title>
             <Paragraph className="page-subtitle" type="secondary">
-              集中管理、探索與操作所有監控資源。
+              專注的資產與健康中心 - 探索、監控與維護基礎設施資源。
             </Paragraph>
           </div>
 
-          {/* 新增：統計卡片區域 */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <Col span={6}>
-              <Card className="stat-card" hoverable>
-                <Statistic
-                  title="總資源數"
-                  value={stats.total}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card className="stat-card" hoverable>
-                <Statistic
-                  title="健康資源"
-                  value={stats.healthy}
-                  valueStyle={{ color: 'var(--brand-success)' }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card className="stat-card" hoverable>
-                <Statistic
-                  title="警告資源"
-                  value={stats.warning}
-                  valueStyle={{ color: 'var(--brand-warning)' }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card className="stat-card" hoverable>
-                <Statistic
-                  title="異常資源"
-                  value={stats.critical}
-                  valueStyle={{ color: 'var(--brand-danger)' }}
-                />
-              </Card>
-            </Col>
-          </Row>
 
           {/* 工具列 */}
           <div style={{
@@ -3232,12 +3938,12 @@
               {hasSelected && (
                 <>
                   <Text type="secondary">已選擇 {selectedRowKeys.length} 項</Text>
-                  <Button type="primary" className="batch-action-btn danger-btn" danger onClick={handleBatchDelete}>
+                  <Button type="primary" className="batch-action-button danger-button" danger onClick={handleBatchDelete}>
                     批次刪除
                   </Button>
                 </>
               )}
-              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增資源
@@ -3257,12 +3963,13 @@
                   <Checkbox.Group options={mockGroups.map(g => ({ label: g.name, value: g.id }))} />
                 </div>
               </Form.Item>
-              <Form.Item style={{ textAlign: 'right' }}>
-                <Space>
+              <div className="modal-footer">
+                <div></div>
+                <div>
                   <Button onClick={handleCancel}>取消</Button>
                   <Button type="primary" htmlType="submit">確定</Button>
-                </Space>
-              </Form.Item>
+                </div>
+              </div>
             </Form>
           </Modal>
         </React.Fragment>);
@@ -3386,7 +4093,7 @@
             );
           }
         },
-        { title: '操作', key: 'action', width: '15%', render: (_, record) => (<Space> <Button type="primary" icon={<PlayCircleOutlined />}>執行</Button> <Button type="link" icon={<HistoryOutlined />} style={{ color: '#faad14' }} onClick={() => handleViewHistory(record)}>歷史</Button> <Button type="link" icon={<EditOutlined />} onClick={() => showGroupModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleGroupDelete(record.key)}>刪除</Button> </Space>) },
+        { title: '操作', key: 'action', width: '15%', render: (_, record) => (<Space size="small"> <Button type="primary" icon={<PlayCircleOutlined />}>執行</Button> <Button type="link" icon={<HistoryOutlined />} style={{ color: '#faad14' }} onClick={() => handleViewHistory(record)}>歷史</Button> <Button type="link" icon={<EditOutlined />} onClick={() => showGroupModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleGroupDelete(record.key)}>刪除</Button> </Space>) },
       ];
 
       const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchText.toLowerCase()));
@@ -3423,7 +4130,7 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showGroupModal()}>
                 新增群組
@@ -3510,12 +4217,13 @@
                   titles={['可用資源', '群組成員']}
                 />
               </Form.Item>
-              <Form.Item style={{ textAlign: 'right', marginTop: 24, marginBottom: 0 }}>
-                <Space>
+              <div className="modal-footer">
+                <div></div>
+                <div>
                   <Button onClick={handleGroupCancel}>取消</Button>
                   <Button type="primary" htmlType="submit">{editingGroup ? '更新群組' : '創建群組'}</Button>
-                </Space>
-              </Form.Item>
+                </div>
+              </div>
             </Form>
           </Modal>
 
@@ -3558,7 +4266,7 @@
             探索、組織與管理您的所有基礎設施資源。
           </Paragraph>
 
-          <Row gutter={[16, 16]}>
+          <Row gutter={[16, 12]}>
             {resourceCards.map(item => (
               <Col key={item.key} xs={24} md={12} lg={8}>
                 <Badge.Ribbon
@@ -3680,7 +4388,7 @@
             集中管理告警、事件並設定靜音規則，建立完整的事件管理流程。
           </Paragraph>
 
-          <Row gutter={[16, 16]}>
+          <Row gutter={[16, 12]}>
             {incidentCards.map(item => (
               <Col key={item.key} xs={24} md={12} lg={8}>
                 <Badge.Ribbon
@@ -3802,7 +4510,7 @@
             深入了解系統趨勢、效能瓶颈和運營數據，做出數據驅動的決策。
           </Paragraph>
 
-          <Row gutter={[16, 16]}>
+          <Row gutter={[16, 12]}>
             {analyzeCards.map(item => (
               <Col key={item.key} xs={24} md={12} lg={8}>
                 <Badge.Ribbon
@@ -3924,7 +4632,7 @@
             管理自動化腳本、排程任務與執行歷史，提升運維效率。
           </Paragraph>
 
-          <Row gutter={[16, 16]}>
+          <Row gutter={[16, 12]}>
             {automationCards.map(item => (
               <Col key={item.key} xs={24} md={12} lg={8}>
                 <Badge.Ribbon
@@ -3987,7 +4695,7 @@
       );
     };
 
-    const IncidentListPage = ({ onNavigate }) => {
+    const IncidentListPage = ({ onNavigate, pageParams }) => {
       const initialData = [
         { key: 'i_0', summary: 'Network Switch CPU High', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(1, 'minutes'), automation_id: null, assignee: null, resource_name: 'network-switch-01' },
         { key: 'i_1', summary: 'CPU high on db-prod-01', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'u_2', resource_name: 'db-prod-01' },
@@ -4155,7 +4863,7 @@
         { title: '摘要', dataIndex: 'summary', width: '30%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
         {
           title: '操作', key: 'action', width: '10%', render: (_, record) => (
-            <Space>
+            <Space size="small">
               <Tooltip title="確認事件">
                 <Button
                   type="primary" size="small"
@@ -4190,12 +4898,23 @@
         },
       ];
 
-      const filteredIncidents = searchText ? incidents.filter(inc =>
-        inc.summary.toLowerCase().includes(searchText.toLowerCase()) ||
-        inc.status.toLowerCase().includes(searchText.toLowerCase()) ||
-        (inc.assignee && inc.assignee.toLowerCase().includes(searchText.toLowerCase())) ||
-        (inc.resource_name && inc.resource_name.toLowerCase().includes(searchText.toLowerCase()))
-      ) : incidents;
+      // 應用預篩選和搜尋篩選
+      let filteredIncidents = incidents;
+
+      // 預篩選邏輯 (從總覽頁面下鑽過來)
+      if (pageParams && pageParams.statusFilter) {
+        filteredIncidents = filteredIncidents.filter(inc => inc.status === pageParams.statusFilter);
+      }
+
+      // 搜尋篩選邏輯
+      if (searchText) {
+        filteredIncidents = filteredIncidents.filter(inc =>
+          inc.summary.toLowerCase().includes(searchText.toLowerCase()) ||
+          inc.status.toLowerCase().includes(searchText.toLowerCase()) ||
+          (inc.assignee && inc.assignee.toLowerCase().includes(searchText.toLowerCase())) ||
+          (inc.resource_name && inc.resource_name.toLowerCase().includes(searchText.toLowerCase()))
+        );
+      }
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
       const rowSelection = { selectedRowKeys, onChange: onSelectChange };
       const hasSelected = selectedRowKeys.length > 0;
@@ -4216,48 +4935,10 @@
           <div style={{ marginBottom: 'var(--spacing-md)' }}>
             <Title level={2} className="page-title">告警列表</Title>
             <Paragraph className="page-subtitle" type="secondary">
-              高效的事件處理中心，集中追蹤、處理與分析所有告警事件。
+              專注的事故作戰室 - 高效處理、追蹤與解決告警事件。
             </Paragraph>
           </div>
 
-          {/* 新增：統計卡片區域 */}
-          <Row gutter={[16, 16]} style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <Col span={6}>
-              <Card className="stat-card" hoverable>
-                <Statistic
-                  title="活躍告警"
-                  value={stats.total}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card className="stat-card" hoverable>
-                <Statistic
-                  title="新告警"
-                  value={stats.new}
-                  valueStyle={{ color: 'var(--brand-primary)' }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card className="stat-card" hoverable>
-                <Statistic
-                  title="嚴重告警"
-                  value={stats.critical}
-                  valueStyle={{ color: 'var(--brand-danger)' }}
-                />
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card className="stat-card" hoverable>
-                <Statistic
-                  title="處理中"
-                  value={stats.acknowledged}
-                  valueStyle={{ color: 'var(--brand-warning)' }}
-                />
-              </Card>
-            </Col>
-          </Row>
 
           {/* 工具列 */}
           <div style={{
@@ -4286,15 +4967,15 @@
               {hasSelected && (
                 <>
                   <Text type="secondary">已選擇 {selectedRowKeys.length} 項</Text>
-                  <Button type="primary" className="batch-action-btn" onClick={() => handleBatchUpdate('acknowledged')}>
+                  <Button type="primary" className="batch-action-button" onClick={() => handleBatchUpdate('acknowledged')}>
                     批次確認
                   </Button>
-                  <Button type="primary" className="batch-action-btn batch-action-btn-success" onClick={() => handleBatchUpdate('resolved')}>
+                  <Button type="primary" className="batch-action-button batch-action-button--success" onClick={() => handleBatchUpdate('resolved')}>
                     批次解決
                   </Button>
                 </>
               )}
-              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" className="btn-ai-analysis" icon={<RobotOutlined />} onClick={() => handleAIAnalysis()}>
                 AI 分析
@@ -4837,7 +5518,7 @@
         { title: '觸發條件', dataIndex: 'conditions', width: '30%' },
         {
           title: '操作', key: 'action', width: '15%', render: (_, record) => (
-            <Space>
+            <Space size="small">
               <Button type="link" onClick={() => showModal(record)}>編輯</Button>
               <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
             </Space>
@@ -4893,12 +5574,10 @@
 
             {/* Steps Navigation */}
             <div className="steps-container" style={{
-              marginBottom: '32px',
-              padding: '0 20px'
+              marginBottom: '32px'
             }}>
               <div className="steps" style={{
                 display: 'flex',
-                gap: '12px',
                 position: 'relative'
               }}>
                 {[
@@ -5109,7 +5788,7 @@
                               </div>
                               <Form.List name={[name, 'conditions']}>
                                 {(subFields, { add: subAdd, remove: subRemove }) => (
-                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                                     {subFields.map((subField) => (
                                       <div key={subField.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px', background: 'rgba(0,0,0,0.2)', borderRadius: '6px' }}>
                                         <Form.Item {...subField} name={[subField.name, 'metric']} rules={[{ required: true }]} style={{ margin: 0, flex: 1 }}>
@@ -5291,12 +5970,12 @@
                 {/* Step 4: Automation */}
                 {currentStep === 4 && (
                   <>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
                       <div style={{ width: '4px', height: '24px', background: 'linear-gradient(135deg, #13c2c2 0%, #36cfc9 100%)', borderRadius: '2px', marginRight: '12px' }}></div>
                       <Title level={4} style={{ margin: 0, color: 'rgba(255, 255, 255, 0.9)' }}>自動化響應</Title>
                     </div>
-                    <div style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', marginBottom: '24px' }}>
-                      <Form.Item name="automation_enabled" valuePropName="checked">
+                    <div style={{ padding: '16px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px' }}>
+                      <Form.Item name="automation_enabled" valuePropName="checked" style={{ marginBottom: '12px' }}>
                         <Checkbox>啟用自動化響應</Checkbox>
                       </Form.Item>
                       <Form.Item
@@ -5305,7 +5984,7 @@
                       >
                         {({ getFieldValue }) =>
                           getFieldValue('automation_enabled') ? (
-                            <Form.Item name="automation_script" label="選擇腳本" rules={[{ required: true, message: '請選擇自動化腳本' }]}>
+                            <Form.Item name="automation_script" label="選擇腳本" rules={[{ required: true, message: '請選擇自動化腳本' }]} style={{ marginBottom: '12px' }}>
                               <Select allowClear placeholder="選擇自動化腳本" options={mockScripts.map(s => ({ label: s.name, value: s.id }))} />
                             </Form.Item>
                           ) : null
@@ -5639,7 +6318,6 @@
             {/* Steps Navigation */}
             <div className="steps-container" style={{
               marginBottom: '32px',
-              padding: '0 20px'
             }}>
               <div style={{ marginBottom: '16px', textAlign: 'center' }}>
                 <Text style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
@@ -5648,7 +6326,6 @@
               </div>
               <div className="steps" style={{
                 display: 'flex',
-                gap: '12px',
                 position: 'relative'
               }}>
                 {[
@@ -6374,7 +7051,6 @@
             {/* Steps Navigation */}
             <div className="steps-container" style={{
               marginBottom: '32px',
-              padding: '0 20px'
             }}>
               <div style={{ marginBottom: '16px', textAlign: 'center' }}>
                 <Text style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
@@ -6383,7 +7059,6 @@
               </div>
               <div className="steps" style={{
                 display: 'flex',
-                gap: '12px',
                 position: 'relative'
               }}>
                 {[
@@ -6777,7 +7452,7 @@
         { title: '描述', dataIndex: 'description', width: '30%' },
         {
           title: '操作', key: 'action', width: '10%', render: (_, record) => (
-            <Space>
+            <Space size="small">
               <Tooltip title="運行"><Button type="primary" icon={<PlayCircleOutlined />} onClick={() => handleRun(record)}>運行</Button></Tooltip>
               <Button type="link" onClick={() => showModal(record)}>編輯</Button>
               <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
@@ -6817,7 +7492,7 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增腳本
@@ -7134,7 +7809,7 @@
         },
         {
           title: '操作', key: 'action', width: '13%', render: (_, record) => (
-            <Space>
+            <Space size="small">
               <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => handleRunNow(record)}>執行</Button>
               <Button type="link" icon={<HistoryOutlined />} style={{ color: '#faad14' }} onClick={() => handleViewHistory(record)}>歷史</Button>
               <Button type="link" onClick={() => showModal(record)}>編輯</Button>
@@ -7175,7 +7850,7 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增排程
@@ -7764,7 +8439,7 @@
 
       return (
         <React.Fragment>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
             <div>
               <Title level={2} className="page-title" style={{ marginBottom: '8px', marginTop: 0 }}>容量規劃</Title>
               <Paragraph className="page-subtitle" type="secondary" style={{ margin: 0 }}>分析歷史數據，預測未來資源消耗趨勢，從被動事件轉向主動規劃。</Paragraph>
@@ -7792,7 +8467,7 @@
 
           <Spin spinning={isLoading} tip="正在進行數據分析與趨勢預測...">
             {analysisResult ? (
-              <Row gutter={[16, 16]} align="stretch">
+              <Row gutter={[16, 12]} align="stretch">
                 <Col xs={24} md={8}>
                   <div style={{ display: 'flex', flexDirection: 'column', height: '320px', gap: '16px' }}>
                     {/* 目前使用率卡片 */}
@@ -8097,7 +8772,7 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showUserModal()}>新增用戶</Button>
             </Space>
@@ -8264,40 +8939,16 @@
               </div>
 
               {/* 底部按鈕區域 */}
-              <div style={{
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                paddingTop: '20px',
-                display: 'flex',
-                justifyContent: 'flex-end',
-                gap: '12px'
-              }}>
-                <Button
-                  size="large"
-                  onClick={handleUserCancel}
-                  style={{
-                    height: '44px',
-                    borderRadius: 'var(--radius-lg)',
-                    fontWeight: '500',
-                    minWidth: '80px'
-                  }}
-                >
-                  取消
-                </Button>
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  style={{
-                    height: '44px',
-                    borderRadius: 'var(--radius-lg)',
-                    fontWeight: '500',
-                    minWidth: '80px',
-                    background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
-                    border: 'none'
-                  }}
-                >
-                  {editingUser ? '更新用戶' : '新增用戶'}
-                </Button>
+              <div className="modal-footer">
+                <div></div>
+                <div>
+                  <Button onClick={handleUserCancel}>
+                    取消
+                  </Button>
+                  <Button type="primary" htmlType="submit">
+                    {editingUser ? '更新用戶' : '新增用戶'}
+                  </Button>
+                </div>
               </div>
             </Form>
           </Modal>
@@ -8416,7 +9067,7 @@
         { title: '創建時間', dataIndex: 'createdAt', render: time => time ? time.format('YYYY-MM-DD') : '未知', sorter: (a, b) => (a.createdAt || dayjs(0)).valueOf() - (b.createdAt || dayjs(0)).valueOf() },
         {
           title: '操作', key: 'action', width: 120, render: (_, record) => (
-            <Space>
+            <Space size="small">
               <Button type="link" onClick={() => showTeamModal(record)}>編輯</Button>
               <Button type="link" danger onClick={() => handleTeamDelete(record)}>刪除</Button>
             </Space>
@@ -8463,7 +9114,7 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showTeamModal()}>新增團隊</Button>
             </Space>
@@ -8622,12 +9273,13 @@
                 )}
               </div>
 
-              <Form.Item style={{ textAlign: 'right', marginTop: 24, marginBottom: 0 }}>
-                <Space>
+              <div className="modal-footer">
+                <div></div>
+                <div>
                   <Button onClick={handleTeamCancel}>取消</Button>
                   <Button type="primary" htmlType="submit">{editingTeam ? '更新團隊' : '創建團隊'}</Button>
-                </Space>
-              </Form.Item>
+                </div>
+              </div>
             </Form>
           </Modal>
 
@@ -9047,7 +9699,7 @@
         { title: '類型', dataIndex: 'type', width: '15%' },
         { title: '最近測試結果', dataIndex: 'lastTest', width: '15%', render: lt => <Tag color={lt && lt.result === 'success' ? 'green' : 'red'}>{lt && lt.result ? lt.result.toUpperCase() : 'UNKNOWN'}</Tag> },
         { title: '最近測試時間', dataIndex: 'lastTest', width: '20%', render: lt => lt && lt.time ? lt.time.fromNow() : '未知' },
-        { title: '操作', key: 'action', width: '22%', render: (_, record) => <Space><Button type="link" className="table-action-btn" onClick={() => showModal(record)}>編輯</Button><Button type="link" danger className="table-action-btn danger-btn">刪除</Button></Space> },
+        { title: '操作', key: 'action', width: '22%', render: (_, record) => <Space size="small"><Button type="link" className="table-action-btn" onClick={() => showModal(record)}>編輯</Button><Button type="link" danger className="table-action-btn danger-button">刪除</Button></Space> },
       ];
 
       return (
@@ -9762,8 +10414,15 @@
     // --- Main App Component ---
     const MainApp = ({ themeMode, setThemeMode }) => {
       const [currentPage, setCurrentPage] = useState('dashboard');
+      const [pageParams, setPageParams] = useState({});
       const [collapsed, setCollapsed] = useState(false);
       const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+
+      // 增強的導航函數，支持參數傳遞
+      const navigateToPage = (pageKey, params = {}) => {
+        setCurrentPage(pageKey);
+        setPageParams(params);
+      };
 
       const { message } = antd.App.useApp();
 
@@ -9847,14 +10506,14 @@
 
       const PageContent = () => {
         switch (currentPage) {
-          case 'dashboard': return <DashboardPage themeMode={themeMode} />;
+          case 'dashboard': return <DashboardPage themeMode={themeMode} onNavigate={navigateToPage} />;
           case 'resources': return <ResourcesPage onNavigate={setCurrentPage} />;
           case 'incidents': return <IncidentsPage onNavigate={setCurrentPage} />;
           case 'analyzing': return <AnalyzingPage onNavigate={setCurrentPage} />;
           case 'automation': return <AutomationPage onNavigate={setCurrentPage} />;
-          case 'resource-list': return <ResourceListPage />;
+          case 'resource-list': return <ResourceListPage pageParams={pageParams} />;
           case 'resource-groups': return <ResourceGroupsPage />;
-          case 'incident-list': return <IncidentListPage onNavigate={setCurrentPage} />;
+          case 'incident-list': return <IncidentListPage onNavigate={setCurrentPage} pageParams={pageParams} />;
           case 'alerting-rules': return <AlertingRulesPage />;
           case 'silences': return <SilencesPage />;
           case 'capacity-planning': return <CapacityPlanningPage themeMode={themeMode} />;
