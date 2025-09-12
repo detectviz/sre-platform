@@ -76,6 +76,7 @@
       margin-bottom: var(--spacing-sm);
       background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
       -webkit-background-clip: text;
+      background-clip: text;
       -webkit-text-fill-color: transparent;
       letter-spacing: -0.5px;
     }
@@ -2733,7 +2734,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker } = antd;
-    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined } = icons;
+    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, LinkOutlined, MailOutlined } = icons;
     const { Title, Text, Paragraph } = Typography;
     const { TextArea } = Input;
     const { RangePicker } = DatePicker;
@@ -3915,10 +3916,10 @@
         { key: 't_3', name: '測試團隊' },
       ];
       const initialData = [
-        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'] },
-        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'] },
-        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [] },
-        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'] },
+        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'] },
+        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'] },
+        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'] },
+        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'] },
       ];
 
       const [resources, setResources] = useLocalStorageState('sre-resources', initialData);
@@ -3932,7 +3933,7 @@
 
       const showModal = (resource = null) => {
         setEditingResource(resource);
-        form.setFieldsValue(resource || { name: '', ip_address: '', type: 'server', groups: [] });
+        form.setFieldsValue(resource || { name: '', ip_address: '', type: 'server', groups: [], tags: [] });
         setIsModalOpen(true);
       };
       const handleCancel = () => { setIsModalOpen(false); setEditingResource(null); form.resetFields(); };
@@ -4008,7 +4009,29 @@
           }
         },
         { title: '類型', dataIndex: 'type', width: '15%', filters: [{ text: 'Database', value: 'database' }, { text: 'Server', value: 'server' }, { text: 'Gateway', value: 'gateway' }, { text: 'Cache', value: 'cache' },], onFilter: (value, record) => record.type.indexOf(value) === 0 },
-        { title: '操作', key: 'action', width: '10%', render: (_, record) => (<Space size="small"> <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
+        {
+          title: '標籤',
+          dataIndex: 'tags',
+          key: 'tags',
+          width: '20%',
+          render: (tags) => (
+            <Space size={[4, 4]} wrap>
+              {tags && tags.length > 0 ? tags.map(tag => {
+                // 從標籤管理系統獲取標籤顏色（這裡使用預設映射）
+                const tagColorMap = {
+                  'production': 'red',
+                  'staging': 'orange',
+                  'database': 'blue',
+                  'web-server': 'green',
+                  'high-priority': 'red',
+                  'team-alpha': 'purple'
+                };
+                return <Tag key={tag} color={tagColorMap[tag] || 'default'} size="small">{tag}</Tag>;
+              }) : <span style={{ color: 'var(--text-secondary)' }}>無標籤</span>}
+            </Space>
+          )
+        },
+        { title: '操作', key: 'action', width: '15%', render: (_, record) => (<Space size="small"> <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
       ];
       // 應用預篩選和搜尋篩選
       let filteredResources = resources;
@@ -4018,11 +4041,12 @@
         filteredResources = filteredResources.filter(res => res.status === pageParams.statusFilter);
       }
 
-      // 搜尋篩選邏輯
+      // 搜尋篩選邏輯（包含標籤搜尋）
       if (searchText) {
         filteredResources = filteredResources.filter(res =>
           res.name.toLowerCase().includes(searchText.toLowerCase()) ||
-          res.ip_address.toLowerCase().includes(searchText.toLowerCase())
+          res.ip_address.toLowerCase().includes(searchText.toLowerCase()) ||
+          (res.tags && res.tags.some(tag => tag.toLowerCase().includes(searchText.toLowerCase())))
         );
       }
 
@@ -4059,7 +4083,7 @@
           }}>
             <Space>
               <Input.Search
-                placeholder="搜尋資源名稱或 IP..."
+                placeholder="搜尋資源名稱、IP 或標籤..."
                 onChange={e => setSearchText(e.target.value)}
                 style={{ width: 300 }}
                 allowClear
@@ -4096,6 +4120,12 @@
                 <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #444', padding: '8px', borderRadius: '4px' }}>
                   <Checkbox.Group options={mockGroups.map(g => ({ label: g.name, value: g.id }))} />
                 </div>
+              </Form.Item>
+              <Form.Item name="tags" label="標籤">
+                <SmartTagInput
+                  placeholder="輸入標籤..."
+                  style={{ width: '100%' }}
+                />
               </Form.Item>
               <div className="modal-footer">
                 <div></div>
@@ -5376,6 +5406,7 @@
           key: 'rule_1',
           name: '高 CPU 使用率',
           target: 'Production Web Servers',
+          resource_tags: ['production', 'web-server'],
           conditions: {
             operator: 'AND',
             conditions: [
@@ -5390,6 +5421,7 @@
           key: 'rule_2',
           name: '資料庫延遲',
           target: 'Production Database',
+          resource_tags: ['production', 'database', 'high-priority'],
           conditions: {
             operator: 'OR',
             conditions: [
@@ -5404,6 +5436,7 @@
           key: 'rule_3',
           name: '測試環境資源監控',
           target: 'Staging Environment',
+          resource_tags: ['staging', 'team-alpha'],
           conditions: {
             operator: 'AND',
             conditions: [
@@ -5648,8 +5681,29 @@
       const columns = [
         { title: '啟用', dataIndex: 'enabled', width: '8%', render: (enabled, record) => <Switch checked={enabled} onChange={(checked) => handleToggleEnable(record.key, checked)} /> },
         { title: '規則名稱', dataIndex: 'name', width: '22%', sorter: (a, b) => a.name.localeCompare(b.name) },
-        { title: '監控對象', dataIndex: 'target', width: '25%' },
-        { title: '觸發條件', dataIndex: 'conditions', width: '30%' },
+        { title: '監控對象', dataIndex: 'target', width: '20%' },
+        {
+          title: '資源標籤',
+          dataIndex: 'resource_tags',
+          key: 'resource_tags',
+          width: '20%',
+          render: (tags) => (
+            <Space size={[4, 4]} wrap>
+              {tags && tags.length > 0 ? tags.map(tag => {
+                const tagColorMap = {
+                  'production': 'red',
+                  'staging': 'orange',
+                  'database': 'blue',
+                  'web-server': 'green',
+                  'high-priority': 'red',
+                  'team-alpha': 'purple'
+                };
+                return <Tag key={tag} color={tagColorMap[tag] || 'default'} size="small">{tag}</Tag>;
+              }) : <span style={{ color: 'var(--text-secondary)' }}>無標籤</span>}
+            </Space>
+          )
+        },
+        { title: '觸發條件', dataIndex: 'conditions', width: '25%' },
         {
           title: '操作', key: 'action', width: '15%', render: (_, record) => (
             <Space size="small">
@@ -5839,6 +5893,12 @@
                       </Form.Item>
                       <Form.Item name="description" label="描述">
                         <TextArea rows={2} placeholder="當 CPU 使用率超過 80% 時觸發告警，並自動擴展實例" />
+                      </Form.Item>
+                      <Form.Item name="resource_tags" label="監控資源標籤" tooltip="選擇要監控的資源標籤，告警規則將應用於具有這些標籤的所有資源">
+                        <SmartTagInput
+                          placeholder="選擇資源標籤..."
+                          style={{ width: '100%' }}
+                        />
                       </Form.Item>
                     </div>
                   </>
@@ -6857,7 +6917,10 @@
           timeSlot: ['02:00', '04:00'],
           validUntil: dayjs().add(6, 'month'),
           creator: 'admin',
-          matchers: [{ key: 'resource_group', op: '=', value: 'Production Database' }],
+          matchers: [
+            { key: 'resource_group', op: '=', value: 'Production Database' },
+            { key: 'resource_tag', op: '=', value: 'database' }
+          ],
           enabled: true
         },
         {
@@ -6870,7 +6933,10 @@
           timeSlot: ['22:00', '06:00'],
           validUntil: null,
           creator: 'admin',
-          matchers: [{ key: 'alert_name', op: '=', value: 'CPU high' }],
+          matchers: [
+            { key: 'alert_name', op: '=', value: 'CPU high' },
+            { key: 'resource_tag', op: '=', value: 'production' }
+          ],
           enabled: true
         },
         {
@@ -6880,7 +6946,10 @@
           type: 'once',
           timeRange: [dayjs().add(1, 'day'), dayjs().add(1, 'day').add(4, 'hour')],
           creator: 'ops_user',
-          matchers: [{ key: 'resource_name', op: '=', value: 'api-gateway' }],
+          matchers: [
+            { key: 'resource_name', op: '=', value: 'api-gateway' },
+            { key: 'resource_tag', op: '=', value: 'high-priority' }
+          ],
           enabled: true
         },
       ];
@@ -7461,6 +7530,7 @@
                                       <Select className="select-xl" placeholder="標籤">
                                         <Select.Option value="resource_name">資源名稱</Select.Option>
                                         <Select.Option value="resource_group">資源群組</Select.Option>
+                                        <Select.Option value="resource_tag">資源標籤</Select.Option>
                                         <Select.Option value="alert_name">告警名稱</Select.Option>
                                         <Select.Option value="severity">嚴重性</Select.Option>
                                         <Select.Option value="environment">環境</Select.Option>
@@ -7474,7 +7544,33 @@
                                       </Select>
                                     </Form.Item>
                                     <Form.Item {...restField} name={[name, 'value']} rules={[{ required: true }]}>
-                                      <Input placeholder="標籤值" style={{ width: 150 }} />
+                                      <Form.Item noStyle shouldUpdate>
+                                        {({ getFieldValue }) => {
+                                          const selectedKey = getFieldValue(['matchers', name, 'key']);
+
+                                          if (selectedKey === 'resource_tag') {
+                                            return (
+                                              <Select
+                                                placeholder="選擇標籤值..."
+                                                style={{ width: 150 }}
+                                                showSearch
+                                                filterOption={(input, option) =>
+                                                  (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                                                }
+                                              >
+                                                <Select.Option value="production">production</Select.Option>
+                                                <Select.Option value="staging">staging</Select.Option>
+                                                <Select.Option value="database">database</Select.Option>
+                                                <Select.Option value="web-server">web-server</Select.Option>
+                                                <Select.Option value="high-priority">high-priority</Select.Option>
+                                                <Select.Option value="team-alpha">team-alpha</Select.Option>
+                                              </Select>
+                                            );
+                                          }
+
+                                          return <Input placeholder="標籤值" style={{ width: 150 }} />;
+                                        }}
+                                      </Form.Item>
                                     </Form.Item>
                                     <MinusCircleOutlined onClick={() => remove(name)} />
                                   </Space>
@@ -8740,31 +8836,28 @@
         { key: 'u_4', name: 'Ops User', email: 'ops@example.com', teams: ['t_1', 't_3'], roles: ['team_member'], status: 'active', lastLogin: dayjs().subtract(30, 'minutes'), createdAt: dayjs().subtract(10, 'day') },
       ];
 
-      const initialTeams = [
-        { key: 't_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_devops'], createdAt: dayjs().subtract(60, 'day'), owner: 'u_2' },
-        { key: 't_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['u_3'], subscribers: ['u_2'], createdAt: dayjs().subtract(45, 'day'), owner: 'u_1' },
-        { key: 't_3', name: 'Administrators', description: '平台最高權限管理者', members: ['u_1', 'u_4'], subscribers: ['u_1', 'slack_network', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(90, 'day'), owner: 'u_1' },
-        { key: 't_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['u_3', 'email_ops'], createdAt: dayjs().subtract(20, 'day'), owner: 'u_1' },
-        { key: 't_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_devops'], createdAt: dayjs().subtract(30, 'day'), owner: 'u_2' },
-        { key: 't_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['u_1'], subscribers: ['u_1', 'slack_database'], createdAt: dayjs().subtract(40, 'day'), owner: 'u_1' },
-        { key: 't_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['u_3'], subscribers: ['u_3', 'slack_network'], createdAt: dayjs().subtract(50, 'day'), owner: 'u_3' },
-        { key: 't_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['u_4'], subscribers: ['u_4', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(35, 'day'), owner: 'u_4' },
-        { key: 't_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['u_1', 'u_2', 'u_3'], subscribers: ['u_1', 'slack_operations'], createdAt: dayjs().subtract(25, 'day'), owner: 'u_1' },
-        { key: 't_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_platform'], createdAt: dayjs().subtract(15, 'day'), owner: 'u_2' },
-      ];
-
       const [users, setUsers] = useLocalStorageState('sre-users', initialUsers);
-      const [teams] = useLocalStorageState('sre-teams', initialTeams);
       const [isUserModalOpen, setIsUserModalOpen] = useState(false);
       const [editingUser, setEditingUser] = useState(null);
       const [userSearchText, setUserSearchText] = useState('');
       const [userForm] = Form.useForm();
       const { message, modal } = antd.App.useApp();
 
-      const getTeamNames = (teamIds) => teamIds.map(id => {
-        const team = teams.find(t => t.key === id);
-        return team ? team.name : id;
-      });
+      // 团队名称映射（在UserManagementPage中定义，避免依赖外部teams）
+      const teamNameMap = {
+        't_1': 'Developers',
+        't_2': 'Viewers',
+        't_3': 'Administrators',
+        't_4': 'QA Team',
+        't_5': 'DevOps Team',
+        't_6': 'Database Team',
+        't_7': 'Network Team',
+        't_8': 'Security Team',
+        't_9': 'Operations Team',
+        't_10': 'Platform Team'
+      };
+
+      const getTeamNames = (teamIds) => teamIds.map(id => teamNameMap[id] || id);
       const getRoleNames = (roleIds) => roleIds.map(id => {
         const role = mockRoles.find(r => r.id === id);
         return role ? role.name : id;
@@ -9051,7 +9144,7 @@
                         mode="multiple"
                         placeholder="請選擇所屬團隊"
                         style={{ minHeight: '44px' }}
-                        options={teams.map(t => ({ label: t.name, value: t.key }))}
+                        options={Object.entries(teamNameMap).map(([key, name]) => ({ label: name, value: key }))}
                       />
                     </Form.Item>
                   </Col>
@@ -9104,15 +9197,7 @@
         { key: 't_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_platform'], createdAt: dayjs().subtract(15, 'day'), owner: 'u_2' },
       ];
 
-      const initialUsers = [
-        { key: 'u_1', name: 'Admin User', email: 'admin@example.com', teams: ['t_3'], roles: ['super_admin'], status: 'active', lastLogin: dayjs().subtract(1, 'day'), createdAt: dayjs().subtract(30, 'day') },
-        { key: 'u_2', name: 'Dev User', email: 'dev@example.com', teams: ['t_1'], roles: ['team_manager', 'team_member'], status: 'active', lastLogin: dayjs().subtract(2, 'hours'), createdAt: dayjs().subtract(15, 'day') },
-        { key: 'u_3', name: 'View User', email: 'view@example.com', teams: ['t_2'], roles: ['viewer'], status: 'inactive', lastLogin: dayjs().subtract(7, 'day'), createdAt: dayjs().subtract(45, 'day') },
-        { key: 'u_4', name: 'Ops User', email: 'ops@example.com', teams: ['t_1', 't_3'], roles: ['team_member'], status: 'active', lastLogin: dayjs().subtract(30, 'minutes'), createdAt: dayjs().subtract(10, 'day') },
-      ];
-
       const [teams, setTeams] = useLocalStorageState('sre-teams', initialTeams);
-      const [users] = useLocalStorageState('sre-users', initialUsers);
       const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
       const [editingTeam, setEditingTeam] = useState(null);
       const [teamSearchText, setTeamSearchText] = useState('');
@@ -9120,6 +9205,14 @@
       const [selectedSubscribers, setSelectedSubscribers] = useState([]);
       const [teamForm] = Form.useForm();
       const { message, modal } = antd.App.useApp();
+
+      // 模擬用戶資料（用於團隊管理中的成員選擇）
+      const mockUsers = [
+        { key: 'u_1', name: '王工程師', email: 'wang@example.com' },
+        { key: 'u_2', name: '陳經理', email: 'chen@example.com' },
+        { key: 'u_3', name: '李開發', email: 'li@example.com' },
+        { key: 'u_4', name: '張管理員', email: 'zhang@example.com' },
+      ];
 
       // 模擬通知訂閱者資料
       const mockSubscribers = [
@@ -9139,7 +9232,7 @@
       ];
 
       const getUserName = (userId) => {
-        const user = users.find(u => u.key === userId);
+        const user = mockUsers.find(u => u.key === userId);
         return user ? user.name : userId;
       };
 
@@ -9280,7 +9373,7 @@
                 </Col>
                 <Col span={12}>
                   <Form.Item name="owner" label="負責人" rules={[{ required: true, message: '請選擇負責人' }]}>
-                    <Select options={users.map(u => ({ label: u.name, value: u.key }))} />
+                    <Select options={mockUsers.map(u => ({ label: u.name, value: u.key }))} />
                   </Form.Item>
                 </Col>
               </Row>
@@ -9289,7 +9382,7 @@
               </Form.Item>
               <Form.Item label="團隊成員">
                 <Transfer
-                  dataSource={users.map(user => ({
+                  dataSource={mockUsers.map(user => ({
                     key: user.key,
                     title: `${user.name} (${user.email})`,
                     description: user.email,
@@ -9306,7 +9399,7 @@
                     setSelectedMembers(targetKeys);
                   }}
                   render={item => {
-                    const user = users.find(u => u.key === item.key);
+                    const user = mockUsers.find(u => u.key === item.key);
                     return (
                       <div style={{ padding: '4px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <div style={{ fontWeight: '500', color: 'rgba(255, 255, 255, 0.9)', flex: 1 }}>
@@ -9794,6 +9887,1129 @@
                   </Text>
                 )}
               </div>
+            </Form>
+          </Modal>
+        </React.Fragment>
+      );
+    };
+
+    // 智能標籤輸入組件
+    const SmartTagInput = ({ value = {}, onChange, placeholder = "輸入標籤...", style }) => {
+      const [tags] = useLocalStorageState('sre-unified-tags', []);
+      const [currentKey, setCurrentKey] = useState('');
+      const [currentValue, setCurrentValue] = useState('');
+      const [keyInputMode, setKeyInputMode] = useState(true);
+      const { message } = antd.App.useApp();
+
+      // 從統一標籤管理系統獲取 Key 選項
+      const keyOptions = tags.map(tag => ({
+        value: tag.name,
+        label: tag.displayName || tag.name,
+        description: tag.description,
+        required: tag.required,
+        valueCount: tag.values.length,
+        values: tag.values
+      }));
+
+      // 當前選中的標籤定義
+      const selectedTagDef = tags.find(tag => tag.name === currentKey);
+
+      // 生成值選項（基於標籤的預設值）
+      const getValueOptions = (keyName) => {
+        const tagDef = tags.find(tag => tag.name === keyName);
+        if (!tagDef || !tagDef.values) return [];
+
+        return tagDef.values.map(val => ({
+          value: val.value,
+          label: val.displayName || val.value,
+          color: val.color,
+          description: val.displayName,
+          usageCount: val.usageCount
+        }));
+      };
+
+      // 驗證值是否存在於標籤的預設值列表中
+      const validateValue = (keyName, inputValue) => {
+        const tagDef = tags.find(tag => tag.name === keyName);
+        if (!tagDef) return true;
+
+        // 如果標籤有預設值列表，檢查是否在列表中
+        if (tagDef.values && tagDef.values.length > 0) {
+          return tagDef.values.some(val => val.value === inputValue);
+        }
+
+        // 如果沒有預設值列表，允許任意值
+        return true;
+      };
+
+      // 處理標籤添加
+      const handleAddTag = () => {
+        if (!currentKey || !currentValue) return;
+
+        // 驗證值
+        if (!validateValue(currentKey, currentValue)) {
+          const tagDef = tags.find(tag => tag.name === currentKey);
+          if (tagDef?.values && tagDef.values.length > 0) {
+            const validValues = tagDef.values.map(val => val.value).join(', ');
+            message.error(`"${currentKey}" 的值必須是: ${validValues}`);
+          } else {
+            message.error(`"${currentKey}" 的值格式不正確`);
+          }
+          return;
+        }
+
+        // 添加標籤
+        const newTags = { ...value, [currentKey]: currentValue };
+        onChange?.(newTags);
+
+        // 重置輸入
+        setCurrentKey('');
+        setCurrentValue('');
+        setKeyInputMode(true);
+      };
+
+      // 處理標籤刪除
+      const handleRemoveTag = (key) => {
+        const newTags = { ...value };
+        delete newTags[key];
+        onChange?.(newTags);
+      };
+
+      // 處理 Key 選擇
+      const handleKeySelect = (selectedKey) => {
+        setCurrentKey(selectedKey);
+        setCurrentValue('');
+        setKeyInputMode(false);
+      };
+
+      // 處理 Key 輸入
+      const handleKeyInput = (inputKey) => {
+        setCurrentKey(inputKey);
+      };
+
+      return (
+        <div style={style}>
+          {/* 現有標籤顯示 */}
+          <div style={{ marginBottom: 8 }}>
+            <Space size={[4, 4]} wrap>
+              {Object.entries(value || {}).map(([key, val]) => {
+                const tagDef = tags.find(tag => tag.name === key);
+                const valueDef = tagDef?.values?.find(v => v.value === val);
+
+                // 使用值定義中的顏色，如果沒有則使用標籤分類的預設顏色
+                const tagColor = valueDef?.color ||
+                  (tagDef?.category === 'infrastructure' ? '#1890ff' :
+                    tagDef?.category === 'application' ? '#52c41a' :
+                      tagDef?.category === 'organization' ? '#fa8c16' :
+                        tagDef?.category === 'business' ? '#722ed1' :
+                          tagDef?.category === 'finance' ? '#eb2f96' :
+                            tagDef?.category === 'security' ? '#f5222d' : '#1890ff');
+
+                return (
+                  <Tag
+                    key={key}
+                    closable
+                    color={tagColor}
+                    onClose={() => handleRemoveTag(key)}
+                    style={{ fontWeight: 500 }}
+                  >
+                    <strong>{tagDef?.displayName || key}</strong>: {valueDef?.displayName || val}
+                  </Tag>
+                );
+              })}
+            </Space>
+          </div>
+
+          {/* 標籤輸入區域 */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            {keyInputMode ? (
+              // Key 輸入模式
+              <div style={{ flex: 1 }}>
+                <Select
+                  showSearch
+                  placeholder="選擇標籤 Key..."
+                  style={{ width: '100%' }}
+                  value={currentKey || undefined}
+                  onSelect={handleKeySelect}
+                  onSearch={handleKeyInput}
+                  filterOption={(input, option) =>
+                    option?.value?.toLowerCase().includes(input.toLowerCase()) ||
+                    option?.label?.toLowerCase().includes(input.toLowerCase())
+                  }
+                  dropdownRender={(menu) => (
+                    <div>
+                      {menu}
+                      {currentKey && !keyOptions.find(opt => opt.value === currentKey) && (
+                        <div style={{ padding: 8, borderTop: '1px solid #f0f0f0' }}>
+                          <Button
+                            type="link"
+                            size="small"
+                            onClick={() => {
+                              message.info('自定義 Key 功能需要管理員權限');
+                            }}
+                          >
+                            + 創建新 Key "{currentKey}"
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                >
+                  {keyOptions.map(option => (
+                    <Select.Option key={option.value} value={option.value} label={option.label}>
+                      <div>
+                        <div style={{ fontWeight: 500 }}>
+                          {option.label}
+                          {option.required && <Tag size="small" color="red" style={{ marginLeft: 4 }}>必填</Tag>}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                          {option.description}
+                        </div>
+                      </div>
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+            ) : (
+              // 值輸入模式
+              <div style={{ flex: 1, display: 'flex', gap: 8 }}>
+                <Select
+                  disabled
+                  value={selectedKeyDef?.displayName || currentKey}
+                  style={{ width: 150 }}
+                />
+                <div style={{ flex: 1 }}>
+                  {selectedTagDef?.values && selectedTagDef.values.length > 0 ? (
+                    <Select
+                      placeholder="選擇值..."
+                      value={currentValue || undefined}
+                      onChange={setCurrentValue}
+                      style={{ width: '100%' }}
+                      showSearch
+                      filterOption={(input, option) =>
+                        option?.label?.toLowerCase().includes(input.toLowerCase()) ||
+                        option?.value?.toLowerCase().includes(input.toLowerCase())
+                      }
+                    >
+                      {getValueOptions(currentKey).map(option => (
+                        <Select.Option key={option.value} value={option.value} label={option.label}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <Tag color={option.color} style={{ margin: 0 }}>
+                                {option.value}
+                              </Tag>
+                              <span>{option.description}</span>
+                            </div>
+                            <Text type="secondary" style={{ fontSize: '11px' }}>
+                              {option.usageCount} 次使用
+                            </Text>
+                          </div>
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input
+                      placeholder="輸入標籤值..."
+                      value={currentValue}
+                      onChange={(e) => setCurrentValue(e.target.value)}
+                      onPressEnter={handleAddTag}
+                    />
+                  )}
+                </div>
+                <Button
+                  type="primary"
+                  size="small"
+                  onClick={handleAddTag}
+                  disabled={!currentKey || !currentValue}
+                >
+                  添加
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() => {
+                    setKeyInputMode(true);
+                    setCurrentKey('');
+                    setCurrentValue('');
+                  }}
+                >
+                  取消
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Key 描述和提示 */}
+          {selectedTagDef && !keyInputMode && (
+            <div style={{ marginTop: 4, fontSize: '12px', color: 'var(--text-secondary)' }}>
+              {selectedTagDef.description}
+              {selectedTagDef.values && selectedTagDef.values.length > 0 && (
+                <div>
+                  可選值: {selectedTagDef.values.slice(0, 3).map(val => val.value).join(', ')}
+                  {selectedTagDef.values.length > 3 && '...等'}
+                  {` (${selectedTagDef.values.length} 個)`}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      );
+    };
+
+
+    // 標籤 Key 管理頁面
+    // 統一標籤管理頁面 - 同時管理標籤名稱和值
+    const TagKeyManagementPage = () => {
+      // 標籤分類
+      const tagCategories = [
+        { id: 'infrastructure', name: '基礎設施', color: '#1890ff', description: '服務器、網絡、存儲等基礎設施相關標籤' },
+        { id: 'application', name: '應用程序', color: '#52c41a', description: '應用服務、微服務等應用相關標籤' },
+        { id: 'organization', name: '組織結構', color: '#fa8c16', description: '團隊、部門、責任人等組織相關標籤' },
+        { id: 'business', name: '業務屬性', color: '#722ed1', description: '項目、產品線、客戶等業務相關標籤' },
+        { id: 'finance', name: '成本管理', color: '#eb2f96', description: '成本中心、預算、計費等財務相關標籤' },
+        { id: 'security', name: '安全合規', color: '#f5222d', description: '安全等級、合規要求等安全相關標籤' }
+      ];
+
+      // 預設的統一標籤數據（包含name和values）
+      const initialTags = [
+        {
+          id: 't_1',
+          name: 'environment',
+          displayName: '環境',
+          description: '部署環境標識，用於區分不同的運行環境',
+          category: 'infrastructure',
+          required: true,
+          values: [
+            { id: 'env_prod', value: 'production', displayName: '生產環境', color: '#f5222d', usageCount: 45, createdAt: dayjs().subtract(30, 'day') },
+            { id: 'env_stage', value: 'staging', displayName: '預發環境', color: '#fa8c16', usageCount: 32, createdAt: dayjs().subtract(25, 'day') },
+            { id: 'env_dev', value: 'development', displayName: '開發環境', color: '#52c41a', usageCount: 28, createdAt: dayjs().subtract(20, 'day') },
+            { id: 'env_test', value: 'testing', displayName: '測試環境', color: '#1890ff', usageCount: 15, createdAt: dayjs().subtract(15, 'day') }
+          ],
+          totalUsage: 120,
+          createdAt: dayjs().subtract(30, 'day'),
+          updatedAt: dayjs().subtract(5, 'day')
+        },
+        {
+          id: 't_2',
+          name: 'team',
+          displayName: '負責團隊',
+          description: '資源或服務的責任團隊',
+          category: 'organization',
+          required: false,
+          values: [
+            { id: 'team_fe', value: 'frontend', displayName: '前端團隊', color: '#722ed1', usageCount: 25, createdAt: dayjs().subtract(20, 'day') },
+            { id: 'team_be', value: 'backend', displayName: '後端團隊', color: '#52c41a', usageCount: 35, createdAt: dayjs().subtract(18, 'day') },
+            { id: 'team_ops', value: 'devops', displayName: 'DevOps 團隊', color: '#1890ff', usageCount: 18, createdAt: dayjs().subtract(15, 'day') },
+            { id: 'team_qa', value: 'qa', displayName: 'QA 團隊', color: '#fa8c16', usageCount: 12, createdAt: dayjs().subtract(12, 'day') },
+            { id: 'team_data', value: 'data', displayName: '數據團隊', color: '#13c2c2', usageCount: 8, createdAt: dayjs().subtract(10, 'day') }
+          ],
+          totalUsage: 98,
+          createdAt: dayjs().subtract(25, 'day'),
+          updatedAt: dayjs().subtract(3, 'day')
+        },
+        {
+          id: 't_3',
+          name: 'priority',
+          displayName: '優先級',
+          description: '資源或告警的優先級別',
+          category: 'business',
+          required: false,
+          values: [
+            { id: 'pri_crit', value: 'critical', displayName: '緊急', color: '#f5222d', usageCount: 8, createdAt: dayjs().subtract(15, 'day') },
+            { id: 'pri_high', value: 'high', displayName: '高', color: '#fa8c16', usageCount: 22, createdAt: dayjs().subtract(12, 'day') },
+            { id: 'pri_med', value: 'medium', displayName: '中', color: '#1890ff', usageCount: 45, createdAt: dayjs().subtract(10, 'day') },
+            { id: 'pri_low', value: 'low', displayName: '低', color: '#52c41a', usageCount: 31, createdAt: dayjs().subtract(8, 'day') }
+          ],
+          totalUsage: 106,
+          createdAt: dayjs().subtract(15, 'day'),
+          updatedAt: dayjs().subtract(2, 'day')
+        },
+        {
+          id: 't_4',
+          name: 'security-level',
+          displayName: '安全等級',
+          description: '資源的安全分級，用於訪問控制',
+          category: 'security',
+          required: true,
+          values: [
+            { id: 'sec_pub', value: 'public', displayName: '公開', color: '#52c41a', usageCount: 45, createdAt: dayjs().subtract(35, 'day') },
+            { id: 'sec_int', value: 'internal', displayName: '內部', color: '#1890ff', usageCount: 38, createdAt: dayjs().subtract(30, 'day') },
+            { id: 'sec_conf', value: 'confidential', displayName: '機密', color: '#fa8c16', usageCount: 25, createdAt: dayjs().subtract(25, 'day') },
+            { id: 'sec_rest', value: 'restricted', displayName: '限制', color: '#f5222d', usageCount: 12, createdAt: dayjs().subtract(20, 'day') }
+          ],
+          totalUsage: 120,
+          createdAt: dayjs().subtract(35, 'day'),
+          updatedAt: dayjs().subtract(7, 'day')
+        },
+        {
+          id: 't_5',
+          name: 'service-type',
+          displayName: '服務類型',
+          description: '應用或服務的類型分類',
+          category: 'application',
+          required: false,
+          values: [
+            { id: 'svc_web', value: 'web-server', displayName: 'Web 服務器', color: '#52c41a', usageCount: 32, createdAt: dayjs().subtract(25, 'day') },
+            { id: 'svc_db', value: 'database', displayName: '數據庫', color: '#1890ff', usageCount: 28, createdAt: dayjs().subtract(22, 'day') },
+            { id: 'svc_cache', value: 'cache', displayName: '緩存服務', color: '#fa8c16', usageCount: 15, createdAt: dayjs().subtract(18, 'day') },
+            { id: 'svc_lb', value: 'load-balancer', displayName: '負載均衡器', color: '#722ed1', usageCount: 12, createdAt: dayjs().subtract(15, 'day') },
+            { id: 'svc_api', value: 'api-gateway', displayName: 'API 網關', color: '#13c2c2', usageCount: 8, createdAt: dayjs().subtract(12, 'day') }
+          ],
+          totalUsage: 95,
+          createdAt: dayjs().subtract(28, 'day'),
+          updatedAt: dayjs().subtract(4, 'day')
+        }
+      ];
+
+      const [tags, setTags] = useLocalStorageState('sre-unified-tags', initialTags);
+      const [selectedCategory, setSelectedCategory] = React.useState('all');
+      const [searchText, setSearchText] = React.useState('');
+      const [isTagModalOpen, setIsTagModalOpen] = React.useState(false);
+      const [isValueModalOpen, setIsValueModalOpen] = React.useState(false);
+      const [editingTag, setEditingTag] = React.useState(null);
+      const [editingValue, setEditingValue] = React.useState(null);
+      const [selectedTagForValue, setSelectedTagForValue] = React.useState(null);
+      const [expandedRows, setExpandedRows] = React.useState([]);
+      const [tagForm] = Form.useForm();
+      const [valueForm] = Form.useForm();
+
+      // 計算統計信息
+      const tagStats = React.useMemo(() => {
+        const totalTags = tags.length;
+        const totalValues = tags.reduce((sum, tag) => sum + tag.values.length, 0);
+        const totalUsage = tags.reduce((sum, tag) => sum + tag.totalUsage, 0);
+        const byCategory = tagCategories.map(cat => ({
+          ...cat,
+          count: tags.filter(tag => tag.category === cat.id).length
+        }));
+
+        return { totalTags, totalValues, totalUsage, byCategory };
+      }, [tags]);
+
+      // 過濾數據
+      const filteredTags = React.useMemo(() => {
+        return tags.filter(tag => {
+          const matchesCategory = selectedCategory === 'all' || tag.category === selectedCategory;
+          const matchesSearch = searchText === '' ||
+            tag.name.toLowerCase().includes(searchText.toLowerCase()) ||
+            tag.displayName.toLowerCase().includes(searchText.toLowerCase()) ||
+            tag.description.toLowerCase().includes(searchText.toLowerCase()) ||
+            tag.values.some(val =>
+              val.value.toLowerCase().includes(searchText.toLowerCase()) ||
+              val.displayName.toLowerCase().includes(searchText.toLowerCase())
+            );
+          return matchesCategory && matchesSearch;
+        });
+      }, [tags, selectedCategory, searchText]);
+
+      // 標籤管理函數
+      const handleCreateTag = () => {
+        setEditingTag(null);
+        tagForm.resetFields();
+        setIsTagModalOpen(true);
+      };
+
+      const handleEditTag = (record) => {
+        setEditingTag(record);
+        tagForm.setFieldsValue(record);
+        setIsTagModalOpen(true);
+      };
+
+      const handleDeleteTag = (id) => {
+        setTags(prev => prev.filter(item => item.id !== id));
+      };
+
+      const handleTagSubmit = (values) => {
+        if (editingTag) {
+          // 編輯現有標籤
+          setTags(prev => prev.map(item =>
+            item.id === editingTag.id
+              ? { ...item, ...values, updatedAt: dayjs() }
+              : item
+          ));
+        } else {
+          // 新增標籤
+          const newTag = {
+            ...values,
+            id: `t_${Date.now()}`,
+            values: [],
+            totalUsage: 0,
+            createdAt: dayjs(),
+            updatedAt: dayjs()
+          };
+          setTags(prev => [...prev, newTag]);
+        }
+        setIsTagModalOpen(false);
+        tagForm.resetFields();
+      };
+
+      const handleTagCancel = () => {
+        setIsTagModalOpen(false);
+        tagForm.resetFields();
+        setEditingTag(null);
+      };
+
+      // 值管理函數
+      const handleCreateValue = (tag) => {
+        setSelectedTagForValue(tag);
+        setEditingValue(null);
+        valueForm.resetFields();
+        setIsValueModalOpen(true);
+      };
+
+      const handleEditValue = (tag, value) => {
+        setSelectedTagForValue(tag);
+        setEditingValue(value);
+        valueForm.setFieldsValue(value);
+        setIsValueModalOpen(true);
+      };
+
+      const handleDeleteValue = (tagId, valueId) => {
+        setTags(prev => prev.map(tag =>
+          tag.id === tagId
+            ? {
+              ...tag,
+              values: tag.values.filter(val => val.id !== valueId),
+              totalUsage: tag.values.filter(val => val.id !== valueId).reduce((sum, val) => sum + val.usageCount, 0),
+              updatedAt: dayjs()
+            }
+            : tag
+        ));
+      };
+
+      const handleValueSubmit = (values) => {
+        const processedValue = {
+          ...values,
+          id: editingValue ? editingValue.id : `val_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          usageCount: editingValue ? editingValue.usageCount : 0,
+          createdAt: editingValue ? editingValue.createdAt : dayjs()
+        };
+
+        setTags(prev => prev.map(tag => {
+          if (tag.id === selectedTagForValue.id) {
+            const updatedValues = editingValue
+              ? tag.values.map(val => val.id === editingValue.id ? processedValue : val)
+              : [...tag.values, processedValue];
+
+            return {
+              ...tag,
+              values: updatedValues,
+              totalUsage: updatedValues.reduce((sum, val) => sum + val.usageCount, 0),
+              updatedAt: dayjs()
+            };
+          }
+          return tag;
+        }));
+
+        setIsValueModalOpen(false);
+        valueForm.resetFields();
+        setEditingValue(null);
+        setSelectedTagForValue(null);
+      };
+
+      const handleValueCancel = () => {
+        setIsValueModalOpen(false);
+        valueForm.resetFields();
+        setEditingValue(null);
+        setSelectedTagForValue(null);
+      };
+
+      // 表格欄位
+      const columns = [
+        {
+          title: 'Key 名稱',
+          dataIndex: 'name',
+          key: 'name',
+          width: '15%',
+          render: (name, record) => (
+            <div>
+              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
+                {name}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                {record.displayName}
+              </div>
+            </div>
+          ),
+        },
+        {
+          title: '分類',
+          dataIndex: 'category',
+          key: 'category',
+          width: '12%',
+          render: (category) => {
+            const cat = categories.find(c => c.id === category);
+            return (
+              <Tag color={cat?.color}>
+                {cat?.name}
+              </Tag>
+            );
+          },
+        },
+        {
+          title: '描述',
+          dataIndex: 'description',
+          key: 'description',
+          width: '25%',
+          ellipsis: true,
+        },
+        {
+          title: '值類型',
+          dataIndex: 'valueType',
+          key: 'valueType',
+          width: '12%',
+          render: (valueType, record) => {
+            const type = valueTypes.find(vt => vt.id === valueType);
+            return (
+              <div>
+                <Tag color={valueType === 'enum' ? 'blue' : valueType === 'pattern' ? 'orange' : 'default'}>
+                  {type?.name}
+                </Tag>
+                {valueType === 'enum' && record.enumOptions && (
+                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>
+                    {record.enumOptions.slice(0, 3).join(', ')}
+                    {record.enumOptions.length > 3 && '...'}
+                  </div>
+                )}
+              </div>
+            );
+          },
+        },
+        {
+          title: '必填',
+          dataIndex: 'required',
+          key: 'required',
+          width: '8%',
+          render: (required) => (
+            required ? <Tag color="red">必填</Tag> : <Tag>選填</Tag>
+          ),
+        },
+        {
+          title: '使用次數',
+          dataIndex: 'usageCount',
+          key: 'usageCount',
+          width: '10%',
+          sorter: (a, b) => a.usageCount - b.usageCount,
+          render: (count) => (
+            <Badge count={count} showZero style={{ backgroundColor: count > 0 ? '#52c41a' : '#d9d9d9' }} />
+          ),
+        },
+        {
+          title: '創建者',
+          dataIndex: 'createdBy',
+          key: 'createdBy',
+          width: '10%',
+          render: (createdBy) => (
+            <Tag color={createdBy === 'system' ? 'gold' : 'default'} size="small">
+              {createdBy}
+            </Tag>
+          ),
+        },
+        {
+          title: '操作',
+          key: 'action',
+          width: '8%',
+          render: (_, record) => (
+            <Space>
+              <Button
+                type="link"
+                size="small"
+                icon={<EditOutlined />}
+                onClick={() => handleEdit(record)}
+              >
+                編輯
+              </Button>
+              {record.createdBy !== 'system' && (
+                <Button
+                  type="link"
+                  size="small"
+                  danger
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDelete(record)}
+                >
+                  刪除
+                </Button>
+              )}
+            </Space>
+          ),
+        },
+      ];
+
+      return (
+        <React.Fragment>
+          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <Title level={2} className="page-title">統一標籤管理</Title>
+            <Paragraph className="page-subtitle" type="secondary">
+              統一管理標籤名稱和對應的值，提供結構化的標籤系統管理體驗。
+            </Paragraph>
+          </div>
+
+          {/* 統計卡片 */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <Col span={6}>
+              <Card size="small" style={{ textAlign: 'center' }}>
+                <Statistic
+                  title="標籤數量"
+                  value={tagStats.totalTags}
+                  prefix={<TagsOutlined />}
+                  valueStyle={{ color: '#1890ff' }}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" style={{ textAlign: 'center' }}>
+                <Statistic
+                  title="標籤值總數"
+                  value={tagStats.totalValues}
+                  prefix={<AppstoreOutlined />}
+                  valueStyle={{ color: '#52c41a' }}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" style={{ textAlign: 'center' }}>
+                <Statistic
+                  title="總使用次數"
+                  value={tagStats.totalUsage}
+                  prefix={<LinkOutlined />}
+                  valueStyle={{ color: '#fa8c16' }}
+                />
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card size="small" style={{ textAlign: 'center' }}>
+                <Statistic
+                  title="平均值數量"
+                  value={tagStats.totalTags > 0 ? (tagStats.totalValues / tagStats.totalTags).toFixed(1) : 0}
+                  prefix={<BarChartOutlined />}
+                  valueStyle={{ color: '#722ed1' }}
+                />
+              </Card>
+            </Col>
+          </Row>
+
+          {/* 分類篩選和操作工具列 */}
+          <Card style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <Row justify="space-between" align="middle">
+              <Col>
+                <Space wrap>
+                  <Button
+                    type={selectedCategory === 'all' ? 'primary' : 'default'}
+                    size="small"
+                    onClick={() => setSelectedCategory('all')}
+                  >
+                    全部 ({tagStats.totalTags})
+                  </Button>
+                  {tagStats.byCategory.map(cat => (
+                    <Button
+                      key={cat.id}
+                      type={selectedCategory === cat.id ? 'primary' : 'default'}
+                      size="small"
+                      onClick={() => setSelectedCategory(cat.id)}
+                    >
+                      {cat.name} ({cat.count})
+                    </Button>
+                  ))}
+                </Space>
+              </Col>
+              <Col>
+                <Space>
+                  <Input.Search
+                    placeholder="搜尋標籤名稱或值..."
+                    allowClear
+                    style={{ width: 250 }}
+                    value={searchText}
+                    onChange={(e) => setSearchText(e.target.value)}
+                  />
+                  <Button
+                    type="primary"
+                    icon={<PlusOutlined />}
+                    onClick={handleCreateTag}
+                  >
+                    新增標籤
+                  </Button>
+                </Space>
+              </Col>
+            </Row>
+          </Card>
+
+          {/* 統一標籤表格 */}
+          <Card>
+            <Table
+              columns={[
+                {
+                  title: '標籤名稱',
+                  dataIndex: 'name',
+                  key: 'name',
+                  sorter: (a, b) => a.name.localeCompare(b.name),
+                  render: (text, record) => (
+                    <div>
+                      <Text strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{text}</Text>
+                      <br />
+                      <Text type="secondary" style={{ fontSize: '12px' }}>{record.displayName}</Text>
+                    </div>
+                  ),
+                },
+                {
+                  title: '描述',
+                  dataIndex: 'description',
+                  key: 'description',
+                  ellipsis: { showTitle: false },
+                  render: (text) => (
+                    <Tooltip title={text}>
+                      <Text style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{text}</Text>
+                    </Tooltip>
+                  ),
+                },
+                {
+                  title: '分類',
+                  dataIndex: 'category',
+                  key: 'category',
+                  filters: tagCategories.map(cat => ({ text: cat.name, value: cat.id })),
+                  onFilter: (value, record) => record.category === value,
+                  render: (category) => {
+                    const cat = tagCategories.find(c => c.id === category);
+                    return cat ? (
+                      <Tag color={cat.color} style={{ border: 'none' }}>
+                        {cat.name}
+                      </Tag>
+                    ) : null;
+                  },
+                },
+                {
+                  title: '值數量',
+                  key: 'valueCount',
+                  width: 100,
+                  sorter: (a, b) => a.values.length - b.values.length,
+                  render: (_, record) => (
+                    <Text style={{ color: '#1890ff' }}>
+                      {record.values.length} 個值
+                    </Text>
+                  ),
+                },
+                {
+                  title: '必填',
+                  dataIndex: 'required',
+                  key: 'required',
+                  width: 80,
+                  filters: [
+                    { text: '必填', value: true },
+                    { text: '選填', value: false },
+                  ],
+                  onFilter: (value, record) => record.required === value,
+                  render: (required) => (
+                    <Tag color={required ? 'red' : 'default'}>
+                      {required ? '必填' : '選填'}
+                    </Tag>
+                  ),
+                },
+                {
+                  title: '總使用次數',
+                  dataIndex: 'totalUsage',
+                  key: 'totalUsage',
+                  width: 120,
+                  sorter: (a, b) => a.totalUsage - b.totalUsage,
+                  render: (count) => (
+                    <Text style={{ color: count > 50 ? '#52c41a' : count > 10 ? '#fa8c16' : 'rgba(255, 255, 255, 0.7)' }}>
+                      {count.toLocaleString()}
+                    </Text>
+                  ),
+                },
+                {
+                  title: '操作',
+                  key: 'action',
+                  width: 200,
+                  render: (_, record) => (
+                    <Space size="small">
+                      <Button
+                        type="link"
+                        size="small"
+                        icon={<PlusOutlined />}
+                        onClick={() => handleCreateValue(record)}
+                        style={{ color: '#52c41a' }}
+                      >
+                        新增值
+                      </Button>
+                      <Button
+                        type="link"
+                        size="small"
+                        icon={<EditOutlined />}
+                        onClick={() => handleEditTag(record)}
+                        style={{ color: '#1890ff' }}
+                      >
+                        編輯
+                      </Button>
+                      <Button
+                        type="link"
+                        size="small"
+                        danger
+                        icon={<DeleteOutlined />}
+                        onClick={() => handleDeleteTag(record.id)}
+                        style={{ color: '#ff4d4f' }}
+                      >
+                        刪除
+                      </Button>
+                    </Space>
+                  ),
+                },
+              ]}
+              dataSource={filteredTags}
+              rowKey="id"
+              expandable={{
+                expandedRowKeys: expandedRows,
+                onExpandedRowsChange: setExpandedRows,
+                expandedRowRender: (record) => (
+                  <div style={{ margin: 0 }}>
+                    <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text strong style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
+                        標籤值列表 ({record.values.length} 個)
+                      </Text>
+                      <Button
+                        size="small"
+                        type="primary"
+                        ghost
+                        icon={<PlusOutlined />}
+                        onClick={() => handleCreateValue(record)}
+                      >
+                        新增值
+                      </Button>
+                    </div>
+                    <Row gutter={[12, 12]}>
+                      {record.values.map(value => (
+                        <Col key={value.id} span={8}>
+                          <Card
+                            size="small"
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.04)',
+                              border: '1px solid rgba(255, 255, 255, 0.1)'
+                            }}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                              <Tag color={value.color} style={{ margin: 0 }}>
+                                {value.value}
+                              </Tag>
+                              <Space size="small">
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  icon={<EditOutlined />}
+                                  onClick={() => handleEditValue(record, value)}
+                                  style={{ color: '#1890ff' }}
+                                />
+                                <Button
+                                  type="text"
+                                  size="small"
+                                  icon={<DeleteOutlined />}
+                                  onClick={() => handleDeleteValue(record.id, value.id)}
+                                  style={{ color: '#ff4d4f' }}
+                                />
+                              </Space>
+                            </div>
+                            <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                              {value.displayName}
+                            </div>
+                            <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '4px' }}>
+                              使用次數: {value.usageCount}
+                            </div>
+                          </Card>
+                        </Col>
+                      ))}
+                      {record.values.length === 0 && (
+                        <Col span={24}>
+                          <Empty
+                            description="暫無標籤值"
+                            style={{ margin: '20px 0' }}
+                            image={Empty.PRESENTED_IMAGE_SIMPLE}
+                          >
+                            <Button type="primary" icon={<PlusOutlined />} onClick={() => handleCreateValue(record)}>
+                              新增第一個值
+                            </Button>
+                          </Empty>
+                        </Col>
+                      )}
+                    </Row>
+                  </div>
+                )
+              }}
+              pagination={{
+                total: filteredTags.length,
+                pageSize: 10,
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
+              }}
+              locale={{ emptyText: '暫無標籤資料' }}
+              size="middle"
+            />
+          </Card>
+
+          {/* 新增/編輯標籤彈窗 */}
+          <Modal
+            title={editingTag ? '編輯標籤' : '新增標籤'}
+            open={isTagModalOpen}
+            onCancel={handleTagCancel}
+            footer={null}
+            width={600}
+          >
+            <Form
+              form={tagForm}
+              layout="vertical"
+              onFinish={handleTagSubmit}
+              autoComplete="off"
+            >
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label="標籤名稱"
+                    name="name"
+                    rules={[
+                      { required: true, message: '請輸入標籤名稱' },
+                      { pattern: /^[a-z][a-z0-9_-]*$/, message: '只能包含小寫字母、數字、下劃線和連字符，且須以字母開頭' },
+                      { max: 50, message: '標籤名稱不能超過50個字符' }
+                    ]}
+                  >
+                    <Input placeholder="例如：environment, team" />
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    label="顯示名稱"
+                    name="displayName"
+                    rules={[
+                      { required: true, message: '請輸入顯示名稱' },
+                      { max: 100, message: '顯示名稱不能超過100個字符' }
+                    ]}
+                  >
+                    <Input placeholder="例如：環境, 團隊" />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Row gutter={16}>
+                <Col span={12}>
+                  <Form.Item
+                    label="分類"
+                    name="category"
+                    rules={[{ required: true, message: '請選擇分類' }]}
+                  >
+                    <Select placeholder="選擇標籤分類">
+                      {tagCategories.map(cat => (
+                        <Select.Option key={cat.id} value={cat.id}>
+                          <Tag color={cat.color} style={{ margin: 0 }}>
+                            {cat.name}
+                          </Tag>
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item
+                    name="required"
+                    valuePropName="checked"
+                  >
+                    <Checkbox>必填標籤</Checkbox>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item
+                label="描述"
+                name="description"
+                rules={[
+                  { required: true, message: '請輸入描述' },
+                  { max: 500, message: '描述不能超過500個字符' }
+                ]}
+              >
+                <Input.TextArea
+                  rows={3}
+                  placeholder="請詳細描述此標籤的用途和使用場景..."
+                  showCount
+                  maxLength={500}
+                />
+              </Form.Item>
+
+              <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+                <Space>
+                  <Button onClick={handleTagCancel}>
+                    取消
+                  </Button>
+                  <Button type="primary" htmlType="submit">
+                    {editingTag ? '更新' : '創建'}
+                  </Button>
+                </Space>
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          {/* 新增/編輯標籤值彈窗 */}
+          <Modal
+            title={`${editingValue ? '編輯' : '新增'}標籤值${selectedTagForValue ? ` - ${selectedTagForValue.displayName}` : ''}`}
+            open={isValueModalOpen}
+            onCancel={handleValueCancel}
+            footer={null}
+            width={500}
+          >
+            <Form
+              form={valueForm}
+              layout="vertical"
+              onFinish={handleValueSubmit}
+              autoComplete="off"
+            >
+              <Row gutter={16}>
+                <Col span={14}>
+                  <Form.Item
+                    label="標籤值"
+                    name="value"
+                    rules={[
+                      { required: true, message: '請輸入標籤值' },
+                      { pattern: /^[a-zA-Z0-9_-]+$/, message: '只能包含字母、數字、下劃線和連字符' },
+                      { max: 50, message: '標籤值不能超過50個字符' }
+                    ]}
+                  >
+                    <Input placeholder="例如：production, frontend" />
+                  </Form.Item>
+                </Col>
+                <Col span={10}>
+                  <Form.Item
+                    label="顏色"
+                    name="color"
+                    rules={[{ required: true, message: '請選擇顏色' }]}
+                  >
+                    <Select placeholder="選擇顏色">
+                      {['#f5222d', '#fa541c', '#fa8c16', '#faad14', '#fadb14', '#a0d911', '#52c41a', '#13c2c2', '#1890ff', '#2f54eb', '#722ed1', '#eb2f96'].map(color => (
+                        <Select.Option key={color} value={color}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{ width: '16px', height: '16px', backgroundColor: color, borderRadius: '2px' }}></div>
+                            <span>{color}</span>
+                          </div>
+                        </Select.Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item
+                label="顯示名稱"
+                name="displayName"
+                rules={[
+                  { required: true, message: '請輸入顯示名稱' },
+                  { max: 100, message: '顯示名稱不能超過100個字符' }
+                ]}
+              >
+                <Input placeholder="例如：生產環境, 前端團隊" />
+              </Form.Item>
+
+              <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+                <Space>
+                  <Button onClick={handleValueCancel}>
+                    取消
+                  </Button>
+                  <Button type="primary" htmlType="submit">
+                    {editingValue ? '更新' : '創建'}
+                  </Button>
+                </Space>
+              </Form.Item>
             </Form>
           </Modal>
         </React.Fragment>
@@ -10624,7 +11840,15 @@
           getItem('執行日誌', 'executions'),
         ]),
         { type: 'divider' },
-        getItem('管理', 'administration', <SettingOutlined />),
+        getItem('管理', 'administration', <SettingOutlined />, [
+          getItem('用戶管理', 'user-management'),
+          getItem('團隊管理', 'team-management'),
+          getItem('角色管理', 'role-management'),
+          getItem('統一標籤管理', 'tag-key-management'),
+          getItem('通知通道', 'notification-channels'),
+          getItem('系統設定', 'system-settings'),
+          getItem('平台診斷', 'platform-diagnostics'),
+        ]),
       ];
 
       useEffect(() => {
@@ -10666,6 +11890,7 @@
           case 'user-management': return <UserManagementPage />;
           case 'team-management': return <TeamManagementPage />;
           case 'role-management': return <RoleManagementPage />;
+          case 'tag-key-management': return <TagKeyManagementPage />;
           case 'notification-strategies': return <NotificationStrategiesPage />;
           case 'notification-channels': return <NotificationChannelsPage />;
           case 'system-settings': return <SystemSettingsPage />;
