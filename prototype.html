@@ -3034,8 +3034,40 @@
     const TopNResourceList = ({ themeMode }) => {
       const [metric, setMetric] = useState('CPU');
 
-      // 生成趨勢數據
-      const generateTrend = () => Array.from({ length: 10 }, () => Math.random() * 100);
+      // 生成趨勢數據 - 增強版隨機波動
+      const generateTrend = () => {
+        const baseValue = 55; // 基準值
+        const trendDirection = Math.random() > 0.5 ? 1 : -1; // 上升或下降趨勢
+        const volatility = 25; // 波動性
+
+        let currentValue = baseValue;
+        const trend = [];
+
+        for (let i = 0; i < 12; i++) {
+          // 添加趨勢方向的影響
+          const trendInfluence = trendDirection * (i / 12) * 15;
+
+          // 添加隨機波動
+          const randomChange = (Math.random() - 0.5) * volatility;
+
+          // 添加一些週期性變化（模擬一天中的波動）
+          const periodicChange = Math.sin(i * Math.PI / 6) * 8;
+
+          currentValue = Math.max(8, Math.min(98,
+            baseValue + trendInfluence + randomChange + periodicChange
+          ));
+
+          // 添加平滑過渡
+          if (i > 0) {
+            const prevValue = trend[i - 1];
+            currentValue = prevValue * 0.6 + currentValue * 0.4;
+          }
+
+          trend.push(Math.round(currentValue));
+        }
+
+        return trend;
+      };
 
       const data = {
         CPU: Array.from({ length: 5 }, (_, i) => ({
@@ -3064,20 +3096,70 @@
         })),
       };
 
-      // 創建迷你趨勢圖選項
-      const createSparklineOption = (trendData, color) => ({
-        backgroundColor: 'transparent',
-        grid: { top: 5, bottom: 5, left: 0, right: 0 },
-        xAxis: { type: 'category', show: false, data: trendData.map((_, i) => i) },
-        yAxis: { type: 'value', show: false },
-        series: [{
-          data: trendData,
-          type: 'line',
-          smooth: true,
-          showSymbol: false,
-          lineStyle: { width: 2, color }
-        }]
-      });
+      // 創建迷你趨勢圖選項 - 增強版
+      const createSparklineOption = (trendData, color, currentValue = 0) => {
+        // 根據數值決定狀態
+        const status = currentValue > 90 ? 'critical' :
+          currentValue > 75 ? 'warning' : 'normal';
+
+        return {
+          backgroundColor: 'transparent',
+          grid: { top: 3, bottom: 3, left: 2, right: 2 },
+
+          // 添加輕微的背景色調指示狀態
+          graphic: status !== 'normal' ? {
+            type: 'rect',
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            style: {
+              fill: status === 'critical' ? 'rgba(255, 77, 79, 0.08)' :
+                'rgba(250, 173, 20, 0.08)',
+              borderRadius: 2
+            }
+          } : undefined,
+
+          xAxis: {
+            type: 'category',
+            show: false,
+            data: trendData.map((_, i) => i)
+          },
+          yAxis: {
+            type: 'value',
+            show: false,
+            min: 'dataMin',
+            max: 'dataMax'
+          },
+          series: [{
+            data: trendData,
+            type: 'line',
+            smooth: false,
+            showSymbol: false,
+            lineStyle: {
+              width: 1.5,
+              color: color,
+              shadowColor: color,
+              shadowBlur: 1
+            },
+            // 添加輕微的區域填充
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0, y: 0, x2: 0, y2: 1,
+                colorStops: [{
+                  offset: 0, color: `${color}15`
+                }, {
+                  offset: 1, color: `${color}05`
+                }]
+              }
+            },
+            // 添加動畫效果
+            animationDuration: 800,
+            animationEasing: 'cubicOut'
+          }]
+        };
+      };
 
       const columns = [
         {
@@ -3099,7 +3181,7 @@
           render: (trend, record) => (
             <div style={{ height: '30px' }}>
               <EchartsForReact
-                option={createSparklineOption(trend, record.value > 90 ? '#ff4d4f' : '#faad14')}
+                option={createSparklineOption(trend, record.value > 90 ? '#ff4d4f' : '#faad14', record.value)}
                 isDark={themeMode === 'dark'}
               />
             </div>
@@ -3210,19 +3292,70 @@
         })),
       };
 
-      // 創建迷你趨勢圖選項
-      const createSparklineOption = (data, color) => ({
-        grid: { top: 5, bottom: 5, left: 0, right: 0 },
-        xAxis: { type: 'category', show: false },
-        yAxis: { type: 'value', show: false, min: 0, max: 100 },
-        series: [{
-          data,
-          type: 'line',
-          smooth: true,
-          showSymbol: false,
-          lineStyle: { width: 2, color }
-        }]
-      });
+      // 創建迷你趨勢圖選項 - 增強版
+      const createSparklineOption = (data, color, currentValue = 0) => {
+        // 根據數值決定狀態
+        const status = currentValue > 90 ? 'critical' :
+          currentValue > 75 ? 'warning' : 'normal';
+
+        return {
+          backgroundColor: 'transparent',
+          grid: { top: 3, bottom: 3, left: 2, right: 2 },
+
+          // 添加輕微的背景色調指示狀態
+          graphic: status !== 'normal' ? {
+            type: 'rect',
+            left: 0,
+            top: 0,
+            right: 0,
+            bottom: 0,
+            style: {
+              fill: status === 'critical' ? 'rgba(255, 77, 79, 0.08)' :
+                'rgba(250, 173, 20, 0.08)',
+              borderRadius: 2
+            }
+          } : undefined,
+
+          xAxis: {
+            type: 'category',
+            show: false,
+            data: data.map((_, i) => i)
+          },
+          yAxis: {
+            type: 'value',
+            show: false,
+            min: 'dataMin',
+            max: 'dataMax'
+          },
+          series: [{
+            data,
+            type: 'line',
+            smooth: false,
+            showSymbol: false,
+            lineStyle: {
+              width: 1.5,
+              color: color,
+              shadowColor: color,
+              shadowBlur: 1
+            },
+            // 添加輕微的區域填充
+            areaStyle: {
+              color: {
+                type: 'linear',
+                x: 0, y: 0, x2: 0, y2: 1,
+                colorStops: [{
+                  offset: 0, color: `${color}15`
+                }, {
+                  offset: 1, color: `${color}05`
+                }]
+              }
+            },
+            // 添加動畫效果
+            animationDuration: 800,
+            animationEasing: 'cubicOut'
+          }]
+        };
+      };
 
       // 通用列定義
       const commonColumns = [
@@ -3230,8 +3363,9 @@
           title: '主機',
           dataIndex: 'host',
           key: 'host',
+          width: '200px',
           render: (text) => (
-            <div className="text-secondary" style={{ fontSize: '12px' }}>
+            <div className="text-secondary" style={{ fontSize: '14px' }}>
               {text}
             </div>
           )
@@ -3243,7 +3377,7 @@
           render: (trend, record) => (
             <div style={{ height: '30px', minWidth: '120px' }}>
               <EchartsForReact
-                option={createSparklineOption(trend, (record.usage || record.inbound || 0) > 90 ? '#ff4d4f' : '#faad14')}
+                option={createSparklineOption(trend, (record.usage || record.inbound || 0) > 90 ? '#ff4d4f' : '#faad14', (record.usage || record.inbound || 0))}
                 isDark={themeMode === 'dark'}
               />
             </div>
@@ -3378,10 +3512,10 @@
         legend: {
           data: ['健康', '警告', '嚴重'],
           top: 0,
-          textStyle: { color: 'rgba(255,255,255,0.85)', fontSize: 10 },
-          itemGap: 6,
-          itemWidth: 10,
-          itemHeight: 6
+          textStyle: { color: 'rgba(255,255,255,0.85)', fontSize: 12 },
+          itemGap: 8,
+          itemWidth: 12,
+          itemHeight: 8
         },
         grid: {
           left: '2%',
@@ -3451,7 +3585,7 @@
             fontSize: 24,
             fontWeight: 'bold',
             color: 'rgba(255,255,255,0.95)',
-            lineHeight: 0.9
+            lineHeight: 0.6
           },
           subtextStyle: {
             fontSize: 12,
@@ -3464,7 +3598,7 @@
           {
             name: '資源狀態',
             type: 'pie',
-            radius: ['45%', '70%'],
+            radius: ['50%', '85%'],
             center: ['50%', '50%'],
             data: [
               { value: 138, name: '健康', itemStyle: { color: '#52c41a' } },
@@ -3475,7 +3609,7 @@
               show: true,
               formatter: '{b}: {c}',
               color: 'rgba(255,255,255,0.85)',
-              fontSize: 10,
+              fontSize: 12,
               position: 'outside'
             },
             labelLine: {
