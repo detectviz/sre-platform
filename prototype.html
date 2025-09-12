@@ -29,13 +29,13 @@
       --brand-warning: #FFB84D;
       --brand-danger: #FF6B6B;
       --brand-info: #B794F6;
-      
+
       /* 文字層級系統 */
       --text-primary: rgba(255, 255, 255, 0.95);
       --text-secondary: rgba(255, 255, 255, 0.85);
       --text-tertiary: rgba(255, 255, 255, 0.65);
       --text-quaternary: rgba(255, 255, 255, 0.45);
-      
+
       /* 背景層級系統 */
       --bg-page: #0A0B0E;
       --bg-container: #141519;
@@ -43,12 +43,12 @@
       --bg-overlay: #23262F;
       --bg-hover: rgba(74, 144, 255, 0.08);
       --bg-active: rgba(74, 144, 255, 0.16);
-      
+
       /* 邊框系統 */
       --border-base: rgba(255, 255, 255, 0.12);
       --border-light: rgba(255, 255, 255, 0.08);
       --border-focus: var(--brand-primary);
-      
+
       /* 間距系統 */
       --spacing-xs: 4px;
       --spacing-sm: 8px;
@@ -56,13 +56,13 @@
       --spacing-lg: 16px;
       --spacing-xl: 24px;
       --spacing-2xl: 32px;
-      
+
       /* 圓角系統 */
       --radius-sm: 6px;
       --radius-md: 8px;
       --radius-lg: 12px;
       --radius-xl: 16px;
-      
+
       /* 陰影系統 */
       --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.24);
       --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.32);
@@ -133,7 +133,7 @@
     .table-wrapper .ant-table-tbody>tr {
       transition: all 0.2s ease;
     }
-    
+
     .table-wrapper .ant-table-tbody>tr:hover>td {
       background: var(--bg-hover);
     }
@@ -399,9 +399,20 @@
     }
 
     @keyframes pulse {
-      0% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.6; transform: scale(0.8); }
-      100% { opacity: 1; transform: scale(1); }
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(0.8);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
     }
 
     /* 狀態標籤颜色 */
@@ -680,36 +691,53 @@
 
     /* 登入頁面樣式 */
     .login-page {
-      background: linear-gradient(135deg, #161719 0%, #202226 100%) !important;
+      background: linear-gradient(135deg, #0a0b0d 0%, #161719 50%, #0a0b0d 100%) !important;
       background-attachment: fixed !important;
     }
 
-    .login-page .ant-input {
-      background: rgba(255, 255, 255, 0.05) !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      border-radius: 8px !important;
-      color: rgba(255, 255, 255, 0.9) !important;
+    .login-page .ant-input,
+    .login-page .ant-input-password {
+      background: var(--bg-container) !important;
+      border: 1px solid var(--border-light) !important;
+      border-radius: var(--radius-lg) !important;
+      color: var(--text-primary) !important;
+      transition: all 0.3s ease !important;
     }
 
-    .login-page .ant-input::placeholder {
-      color: rgba(255, 255, 255, 0.4) !important;
+    .login-page .ant-input::placeholder,
+    .login-page .ant-input-password .ant-input::placeholder {
+      color: var(--text-tertiary) !important;
+    }
+
+    .login-page .ant-input:hover,
+    .login-page .ant-input-password:hover {
+      border-color: var(--border-hover) !important;
     }
 
     .login-page .ant-input:focus,
-    .login-page .ant-input-focused {
-      border: 1px solid #1890ff !important;
-      border-radius: 8px !important;
-      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
-    }
-
-    .login-page .ant-input-password {
-      background: rgba(255, 255, 255, 0.05) !important;
-      border: 1px solid rgba(255, 255, 255, 0.1) !important;
-      border-radius: 8px !important;
+    .login-page .ant-input-focused,
+    .login-page .ant-input-password:focus-within {
+      border-color: var(--brand-primary) !important;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
     }
 
     .login-page .ant-form-item-label>label {
-      color: rgba(255, 255, 255, 0.85) !important;
+      color: var(--text-primary) !important;
+      font-weight: 600 !important;
+    }
+
+    .login-page .ant-checkbox-wrapper {
+      color: var(--text-secondary) !important;
+    }
+
+    .login-page .login-submit-btn:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 8px 32px rgba(108, 117, 125, 0.4) !important;
+    }
+
+    .login-page .login-submit-btn:active {
+      transform: translateY(0) !important;
+      box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3) !important;
     }
 
     /* 使用者團隊容器樣式 */
@@ -723,41 +751,141 @@
 
     /* 角色列表容器樣式 */
     .role-list-container {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
       height: fit-content;
+      box-shadow: var(--shadow-sm);
     }
 
     .role-list-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 16px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border-light);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
 
     .role-list-content {
-      padding: 8px;
-      max-height: 400px;
+      padding: var(--spacing-md);
+      max-height: 500px;
       overflow-y: auto;
+    }
+
+    /* 角色列表項目樣式 */
+    .role-list-item:hover {
+      background: var(--bg-hover) !important;
+      border: 1px solid var(--border-base) !important;
+    }
+
+    .role-list-item.ant-list-item {
+      border: none !important;
     }
 
     /* 角色權限容器樣式 */
     .role-permissions-container {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
       height: fit-content;
+      box-shadow: var(--shadow-sm);
     }
 
     .role-permissions-header {
-      padding: 16px 20px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: var(--spacing-lg) var(--spacing-xl);
+      border-bottom: 1px solid var(--border-light);
+      background: var(--bg-elevated);
+      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     }
 
     .role-permissions-content {
-      padding: 16px 20px;
+      padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    /* 權限樹樣式優化 */
+    .role-permissions-container .ant-tree .ant-tree-treenode {
+      padding: 4px 0;
+    }
+
+    .role-permissions-container .ant-tree .ant-tree-node-content-wrapper {
+      color: var(--text-primary) !important;
+      padding: 2px 4px;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+    }
+
+    .role-permissions-container .ant-tree .ant-tree-node-content-wrapper:hover {
+      background: var(--bg-hover) !important;
+    }
+
+    .role-permissions-container .ant-tree .ant-tree-checkbox {
+      margin-right: 8px;
+    }
+
+    /* 修復彈窗關閉按鈕與滾動條重疊問題 */
+    .ant-modal .ant-modal-close {
+      top: 16px !important;
+      right: 24px !important;
+      z-index: 1050 !important;
+      width: 32px !important;
+      height: 32px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      background: rgba(0, 0, 0, 0.6) !important;
+      border-radius: 50% !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .ant-modal .ant-modal-close:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      transform: scale(1.1) !important;
+    }
+
+    .ant-modal .ant-modal-close-x {
+      width: 16px !important;
+      height: 16px !important;
+      font-size: 16px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      color: var(--text-primary) !important;
+    }
+
+    /* 彈窗內容區域調整，避免與關閉按鈕重疊 */
+    .ant-modal-content {
+      padding-top: 24px !important;
+      position: relative !important;
+    }
+
+    .ant-modal-body {
+      padding: 24px !important;
+      max-height: 70vh !important;
+      overflow-y: auto !important;
+      /* 為滾動條留出空間 */
+      padding-right: 32px !important;
+      margin-right: -8px !important;
+    }
+
+    /* 自定義滾動條樣式 */
+    .ant-modal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .ant-modal-body::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 4px;
+    }
+
+    .ant-modal-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    .ant-modal-body::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.3);
     }
 
     /* Transfer 組件樣式優化 */
@@ -1203,6 +1331,7 @@
         opacity: 0;
         transform: translateX(-50%) translateY(20px);
       }
+
       to {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
@@ -1292,67 +1421,259 @@
       box-shadow: 0 0 25px rgba(24, 144, 255, 0.5);
     }
 
+    /* 🎯 統一步驟式導引樣式 */
+    .steps-container {
+      margin-bottom: 32px;
+      padding: 0 20px;
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .steps-container .steps {
+      display: flex;
+      gap: 12px;
+      position: relative;
+      justify-content: space-between;
+    }
+
+    .step-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      position: relative;
+      z-index: 1;
+      transition: all 0.2s ease;
+    }
+
+    .step-indicator {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      background: rgba(32, 34, 38, 0.8);
+      backdrop-filter: blur(20px);
+      position: relative;
+      z-index: 2;
+    }
+
+    .step-indicator.active {
+      background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+      border: 3px solid #1890ff;
+      box-shadow: 0 0 25px rgba(24, 144, 255, 0.6), 0 0 50px rgba(24, 144, 255, 0.3);
+      transform: scale(1.15);
+      color: #ffffff;
+    }
+
+    .step-indicator.completed {
+      background: linear-gradient(135deg, #52c41a 0%, #95de64 100%);
+      border: 3px solid #52c41a;
+      box-shadow: 0 0 20px rgba(82, 196, 26, 0.5);
+      color: #ffffff;
+    }
+
+    .step-indicator.completed::after {
+      content: '✓';
+      position: absolute;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .step-label {
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      color: rgba(255, 255, 255, 0.8);
+      transition: all 0.2s ease;
+      line-height: 1.2;
+      margin-top: 4px;
+    }
+
+    .step-item:hover .step-label,
+    .step-item.active .step-label {
+      color: #ffffff;
+      transform: translateY(-2px);
+    }
+
+    .step-item:hover .step-indicator {
+      transform: scale(1.05);
+      border-color: rgba(255, 255, 255, 0.6);
+    }
+
+    .step-connector {
+      position: absolute;
+      top: 24px;
+      left: 60px;
+      right: calc(-100% + 60px);
+      height: 3px;
+      background: linear-gradient(90deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+      z-index: 1;
+      border-radius: 2px;
+    }
+
+    .step-connector.completed {
+      background: linear-gradient(90deg, #52c41a, #1890ff);
+    }
+
+    .step-progress {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #52c41a 0%, #1890ff 100%);
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 2px;
+    }
+
+    .modal-header {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+
+    .step-content {
+      animation: fadeInUp 0.3s ease-in;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* 🎯 統一彈窗底部按鈕樣式 */
+    .modal-footer,
+    .modal-footer-unified {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 0 0 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      margin-top: 20px;
+    }
+
+    .modal-footer>div {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .modal-footer .ant-btn,
+    .modal-footer-unified .ant-btn,
+    .modal-footer-btn {
+      height: 36px;
+      padding: 0 20px;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .modal-footer .ant-btn-default,
+    .modal-footer-unified .ant-btn-default {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    .modal-footer .ant-btn-default:hover,
+    .modal-footer-unified .ant-btn-default:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #fff;
+    }
+
+    .modal-footer .ant-btn-primary,
+    .modal-footer-unified .ant-btn-primary {
+      background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+      border: none;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+    }
+
+    .modal-footer .ant-btn-primary:hover,
+    .modal-footer-unified .ant-btn-primary:hover {
+      background: linear-gradient(135deg, #40a9ff 0%, #1890ff 100%);
+      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
     /* 🎯 Compact Modal Styles - 優化所有彈窗排版 */
     .ant-modal .ant-modal-body {
       padding: 16px 24px;
       max-height: calc(100vh - 200px);
       overflow-y: auto;
     }
-    
+
     .ant-modal .ant-modal-footer {
       padding: 12px 24px;
       border-top: 1px solid var(--border-light);
     }
-    
+
     /* 緊湊的表單間距 */
     .ant-modal .ant-form-item {
       margin-bottom: 12px;
     }
-    
+
     .ant-modal .ant-form-item:last-child {
       margin-bottom: 0;
     }
-    
+
     /* 緊湊的描述列表 */
     .ant-modal .ant-descriptions-item {
       padding: 8px 12px;
     }
-    
+
     /* 緊湊的卡片內容 */
     .ant-modal .ant-card {
       margin-bottom: 12px;
     }
-    
+
     .ant-modal .ant-card-body {
       padding: 12px 16px;
     }
-    
+
     /* 緊湊的列表項目 */
     .ant-modal .ant-list-item {
       padding: 8px 12px;
     }
-    
+
     /* 緊湊的步驟指示器 */
     .ant-modal .ant-steps {
       margin-bottom: 16px;
     }
-    
+
     /* 緊湊的區塊間距 */
     .ant-modal .section-block {
       margin-bottom: 16px;
       padding: 12px;
     }
-    
+
     /* 滾動條美化 */
     .ant-modal .ant-modal-body::-webkit-scrollbar {
       width: 6px;
     }
-    
+
     .ant-modal .ant-modal-body::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.2);
       border-radius: 3px;
     }
-    
+
     .ant-modal .ant-modal-body::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.3);
     }
@@ -1369,13 +1690,13 @@
       position: relative;
       overflow: hidden;
     }
-    
+
     .stat-card:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.15);
       border-color: rgba(255, 255, 255, 0.16);
     }
-    
+
     .stat-card::before {
       content: '';
       position: absolute;
@@ -1387,15 +1708,15 @@
       opacity: 0;
       transition: opacity 0.3s ease;
     }
-    
+
     .stat-card:hover::before {
       opacity: 1;
     }
-    
+
     .stat-card .ant-card-body {
       padding: 20px 24px;
     }
-    
+
     .stat-card .ant-statistic-title {
       color: var(--text-tertiary);
       font-size: 13px;
@@ -1404,24 +1725,24 @@
       text-transform: uppercase;
       margin-bottom: 8px;
     }
-    
+
     .stat-card .ant-statistic-content {
       color: var(--text-primary);
     }
-    
+
     .stat-card .ant-statistic-content-value {
       font-size: 32px;
       font-weight: 600;
       line-height: 1.2;
     }
-    
+
     .stat-card .ant-statistic-content-suffix {
       font-size: 16px;
       font-weight: 400;
       margin-left: 4px;
       opacity: 0.7;
     }
-    
+
     /* 特殊卡片樣式 - 圖表背景卡片 */
     .chart-card {
       background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.03) 100%);
@@ -1432,7 +1753,7 @@
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
       transition: all 0.3s ease;
     }
-    
+
     .chart-card:hover {
       border-color: rgba(255, 255, 255, 0.15);
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
@@ -1446,7 +1767,7 @@
       font-weight: 500;
       border-radius: var(--radius-base);
     }
-    
+
     /* Toolbar Buttons - 工具列按鈕 */
     .ant-btn.toolbar-btn,
     button.ant-btn.toolbar-btn {
@@ -1457,7 +1778,7 @@
       color: rgba(255, 255, 255, 0.85) !important;
       padding: 0 12px !important;
     }
-    
+
     .ant-btn.toolbar-btn:hover,
     button.ant-btn.toolbar-btn:hover,
     .ant-btn.toolbar-btn:focus,
@@ -1466,7 +1787,7 @@
       border-color: rgba(255, 255, 255, 0.3) !important;
       color: rgba(255, 255, 255, 0.95) !important;
     }
-    
+
     .ant-btn.toolbar-btn-icon-only,
     button.ant-btn.toolbar-btn-icon-only {
       width: 32px !important;
@@ -1524,46 +1845,85 @@
       color: white !important;
       border: none !important;
     }
-    
+
     /* Table Action Buttons - 表格操作按鈕 */
     .table-action-btn {
       height: 24px;
       padding: 0 8px;
       font-size: 13px;
     }
-    
+
     .table-action-icon-btn {
       width: 28px;
       height: 28px;
       padding: 0;
       border-radius: var(--radius-sm);
     }
-    
+
     /* Modal Footer Buttons - 彈窗底部按鈕 */
     .modal-footer-btn {
       height: 32px;
       min-width: 80px;
       font-weight: 500;
     }
-    
+
     /* Batch Action Buttons - 批次操作按鈕 */
     .batch-action-btn {
       height: 32px;
       padding: 0 16px;
+      border-radius: 6px;
+      font-weight: 500;
     }
-    
+
+    .batch-action-btn.ant-btn-primary {
+      background: #1890ff;
+      border-color: #1890ff;
+    }
+
+    .batch-action-btn-success {
+      background: #52c41a !important;
+      border-color: #52c41a !important;
+      color: white !important;
+    }
+
+    .batch-action-btn-success:hover,
+    .batch-action-btn-success:focus {
+      background: #73d13d !important;
+      border-color: #73d13d !important;
+      color: white !important;
+    }
+
     /* Danger Buttons - 危險操作按鈕 */
     .danger-btn {
       color: var(--brand-danger);
       border-color: var(--brand-danger);
     }
-    
+
+    .batch-action-btn.ant-btn-dangerous,
+    .batch-action-btn.danger-btn,
+    .ant-btn.batch-action-btn.danger-btn {
+      background: #ff4d4f !important;
+      border-color: #ff4d4f !important;
+      color: white !important;
+    }
+
+    .batch-action-btn.ant-btn-dangerous:hover,
+    .batch-action-btn.danger-btn:hover,
+    .ant-btn.batch-action-btn.danger-btn:hover,
+    .batch-action-btn.ant-btn-dangerous:focus,
+    .batch-action-btn.danger-btn:focus,
+    .ant-btn.batch-action-btn.danger-btn:focus {
+      background: #ff7875 !important;
+      border-color: #ff7875 !important;
+      color: white !important;
+    }
+
     .danger-btn:hover {
       background: rgba(255, 77, 79, 0.1);
       border-color: var(--brand-danger);
       color: var(--brand-danger);
     }
-    
+
     /* Icon Button Tooltips - 圖標按鈕提示 */
     .icon-btn-wrapper {
       display: inline-block;
@@ -1574,11 +1934,11 @@
       padding: 12px !important;
       min-height: auto !important;
     }
-    
+
     .compact-nav-item .nav-item-content {
       padding: 0 !important;
     }
-    
+
     .compact-nav-item .nav-item-icon {
       width: 36px;
       height: 36px;
@@ -1586,29 +1946,29 @@
       align-items: center;
       justify-content: center;
     }
-    
+
     .compact-nav-item .nav-item-title {
       margin-bottom: 2px !important;
       font-size: 14px !important;
       line-height: 1.2 !important;
     }
-    
+
     .compact-nav-item .nav-item-description {
       margin-bottom: 0 !important;
       font-size: 12px !important;
       line-height: 1.3 !important;
     }
-    
+
     /* 🎯 Admin Navigation Items - 管理中心導航項目 */
     .admin-nav-item {
       min-height: 120px;
     }
-    
+
     .admin-nav-item .nav-item-content {
       padding: 0 !important;
       height: 100%;
     }
-    
+
     .admin-nav-item .nav-item-icon {
       width: 40px;
       height: 40px;
@@ -1616,7 +1976,7 @@
       align-items: center;
       justify-content: center;
     }
-    
+
     .admin-nav-item:hover .nav-item-icon {
       background: rgba(24, 144, 255, 0.15) !important;
     }
@@ -1627,20 +1987,20 @@
       border-radius: var(--radius-lg);
       overflow: hidden;
     }
-    
+
     .notification-dropdown .notification-item:hover {
       background: linear-gradient(135deg, rgba(24, 144, 255, 0.08) 0%, rgba(24, 144, 255, 0.04) 100%) !important;
     }
-    
+
     .notification-dropdown ::-webkit-scrollbar {
       width: 6px;
     }
-    
+
     .notification-dropdown ::-webkit-scrollbar-thumb {
       background: rgba(255, 255, 255, 0.15);
       border-radius: 3px;
     }
-    
+
     .notification-dropdown ::-webkit-scrollbar-thumb:hover {
       background: rgba(255, 255, 255, 0.25);
     }
@@ -1657,7 +2017,7 @@
     }
 
     /* 🎯 Button Alignment Uniformity - 按鈕對齊統一 */
-    
+
     /* 工具欄容器對齊 */
     .toolbar,
     .page-toolbar,
@@ -1708,7 +2068,7 @@
     }
 
     /* 🎯 Unified Button Styles - 統一按鈕樣式 */
-    
+
     /* 統一刪除按鈕樣式 */
     .ant-btn[danger],
     .ant-btn.ant-btn-dangerous,
@@ -1732,7 +2092,7 @@
       border: 1px solid var(--brand-danger) !important;
       color: var(--brand-danger) !important;
     }
-    
+
     .danger-btn:hover {
       background: rgba(255, 77, 79, 0.1) !important;
       border-color: var(--brand-danger) !important;
@@ -1761,7 +2121,7 @@
     .ant-table-tbody .ant-btn.ant-btn-link.ant-btn-dangerous {
       color: var(--brand-danger) !important;
     }
-    
+
     .ant-table-tbody .ant-btn.ant-btn-link.ant-btn-dangerous:hover {
       color: #ff4d4f !important;
       background: rgba(255, 107, 107, 0.1) !important;
@@ -1995,23 +2355,23 @@
     .user-menu-trigger:hover {
       background: rgba(255, 255, 255, 0.08) !important;
     }
-    
+
     .user-dropdown-menu .ant-dropdown-menu {
       background: var(--bg-elevated);
       border: 1px solid var(--border-light);
       box-shadow: var(--shadow-2xl);
     }
-    
+
     .user-dropdown-menu .ant-dropdown-menu-item {
       border-radius: var(--radius-sm);
       margin: 2px 0;
       transition: all 0.2s ease;
     }
-    
+
     .user-dropdown-menu .ant-dropdown-menu-item:hover {
       background: linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.05) 100%);
     }
-    
+
     .user-dropdown-menu .ant-dropdown-menu-item-divider {
       background: var(--border-light);
       margin: 4px 0;
@@ -2019,24 +2379,34 @@
 
     /* 🎯 Login Page Styles - 登入頁面樣式 */
     @keyframes float {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      33% { transform: translate(-30px, -30px) scale(0.96); }
-      66% { transform: translate(30px, -20px) scale(1.04); }
+
+      0%,
+      100% {
+        transform: translate(0, 0) scale(1);
+      }
+
+      33% {
+        transform: translate(-30px, -30px) scale(0.96);
+      }
+
+      66% {
+        transform: translate(30px, -20px) scale(1.04);
+      }
     }
-    
+
     .login-card .ant-input-affix-wrapper {
       background: rgba(255, 255, 255, 0.05) !important;
       border: 1px solid rgba(255, 255, 255, 0.1) !important;
       border-radius: 8px !important;
       transition: all 0.3s ease;
     }
-    
+
     .login-card .ant-input-affix-wrapper:hover {
       border: 1px solid rgba(255, 255, 255, 0.2) !important;
       background: rgba(255, 255, 255, 0.08) !important;
       border-radius: 8px !important;
     }
-    
+
     .login-card .ant-input-affix-wrapper-focused,
     .login-card .ant-input-affix-wrapper:focus-within {
       border: 1px solid var(--brand-primary) !important;
@@ -2044,17 +2414,17 @@
       border-radius: 8px !important;
       box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2) !important;
     }
-    
+
     .login-card .ant-input {
       background: transparent !important;
       border: none !important;
       color: var(--text-primary) !important;
     }
-    
+
     .login-card .ant-input::placeholder {
       color: var(--text-tertiary) !important;
     }
-    
+
     /* 額外確保沒有雙框線 */
     .login-card .ant-input-affix-wrapper,
     .login-card .ant-input-affix-wrapper:hover,
@@ -2063,12 +2433,12 @@
       outline: none !important;
       box-sizing: border-box !important;
     }
-    
+
     .login-submit-btn:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(22, 104, 220, 0.4) !important;
     }
-    
+
     .login-submit-btn:active {
       transform: translateY(0);
     }
@@ -2174,7 +2544,7 @@
           alignItems: 'center',
           justifyContent: 'center',
           height: '100vh',
-          background: 'linear-gradient(135deg, #0d1117 0%, #161b22 50%, #0d1117 100%)',
+          background: 'linear-gradient(135deg, #0a0b0d 0%, #161719 50%, #0a0b0d 100%)',
           backgroundAttachment: 'fixed',
           position: 'relative',
           overflow: 'hidden'
@@ -2200,46 +2570,60 @@
             animation: 'float 25s ease-in-out infinite reverse',
             pointerEvents: 'none'
           }} />
-          
+
           <Card
             className="login-card"
             style={{
-              width: 360,
-              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.04) 100%)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
+              width: 400,
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-light)',
               borderRadius: 'var(--radius-xl)',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)'
+              boxShadow: '0 24px 80px rgba(0, 0, 0, 0.6), 0 8px 32px rgba(0, 0, 0, 0.4)',
+              backdropFilter: 'blur(24px) saturate(200%)',
+              WebkitBackdropFilter: 'blur(24px) saturate(200%)'
             }}
             bodyStyle={{
-              padding: '24px',
+              padding: '32px',
               background: 'transparent'
             }}
           >
-            <div style={{ textAlign: 'center', marginBottom: 28 }}>
-              <div style={{ 
-                marginBottom: 16,
+            <div style={{ textAlign: 'center', marginBottom: 32 }}>
+              <div style={{
+                marginBottom: 20,
                 position: 'relative',
                 display: 'inline-block'
               }}>
-                <DeploymentUnitOutlined style={{
-                  fontSize: '48px',
-                  color: 'var(--text-primary)'
-                }} />
+                <div style={{
+                  width: '56px',
+                  height: '56px',
+                  borderRadius: '16px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto',
+                  boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)'
+                }}>
+                  <DeploymentUnitOutlined style={{
+                    fontSize: '28px',
+                    color: 'white'
+                  }} />
+                </div>
               </div>
               <Title level={2} style={{
                 color: 'var(--text-primary)',
                 margin: '0 0 8px 0',
                 fontWeight: '700',
-                fontSize: '24px'
+                fontSize: '28px',
+                letterSpacing: '-0.5px'
               }}>
                 SRE Platform
               </Title>
               <Text style={{
                 color: 'var(--text-secondary)',
-                fontSize: '13px',
-                display: 'block'
+                fontSize: '14px',
+                display: 'block',
+                fontWeight: '500'
               }}>
                 智慧化系統可靠性管理平台
               </Text>
@@ -2254,8 +2638,8 @@
             >
               <Form.Item
                 label={
-                  <span style={{ 
-                    color: 'var(--text-primary)', 
+                  <span style={{
+                    color: 'var(--text-primary)',
                     fontSize: '13px',
                     fontWeight: '600'
                   }}>
@@ -2270,11 +2654,12 @@
                   size="large"
                   prefix={<UserOutlined style={{ color: 'var(--text-tertiary)' }} />}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 'var(--radius-md)',
-                    height: '44px',
-                    fontSize: '15px'
+                    background: 'var(--bg-container)',
+                    border: '1px solid var(--border-light)',
+                    borderRadius: 'var(--radius-lg)',
+                    height: '48px',
+                    fontSize: '15px',
+                    color: 'var(--text-primary)'
                   }}
                   placeholder="請輸入帳號"
                   autoComplete="username"
@@ -2282,8 +2667,8 @@
               </Form.Item>
               <Form.Item
                 label={
-                  <span style={{ 
-                    color: 'var(--text-primary)', 
+                  <span style={{
+                    color: 'var(--text-primary)',
                     fontSize: '13px',
                     fontWeight: '600'
                   }}>
@@ -2298,11 +2683,12 @@
                   size="large"
                   prefix={<LockOutlined style={{ color: 'var(--text-tertiary)' }} />}
                   style={{
-                    background: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 'var(--radius-md)',
-                    height: '44px',
-                    fontSize: '15px'
+                    background: 'var(--bg-container)',
+                    border: '1px solid var(--border-light)',
+                    borderRadius: 'var(--radius-lg)',
+                    height: '48px',
+                    fontSize: '15px',
+                    color: 'var(--text-primary)'
                   }}
                   placeholder="請輸入密碼"
                   autoComplete="current-password"
@@ -2313,8 +2699,8 @@
                   <Checkbox style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>
                     記住我
                   </Checkbox>
-                  <Button type="link" style={{ 
-                    color: 'var(--brand-primary)', 
+                  <Button type="link" style={{
+                    color: 'var(--brand-primary)',
                     fontSize: '13px',
                     padding: 0,
                     height: 'auto'
@@ -2325,31 +2711,32 @@
               </Form.Item>
               <Form.Item style={{ marginTop: 24, marginBottom: 12 }}>
                 <Button
+                  type="primary"
                   htmlType="submit"
                   block
                   size="large"
                   style={{
-                    height: '48px',
+                    height: '52px',
                     fontSize: '16px',
                     fontWeight: '600',
-                    borderRadius: 'var(--radius-md)',
-                    background: 'linear-gradient(135deg, #1668dc 0%, #1890ff 100%)',
+                    borderRadius: 'var(--radius-lg)',
+                    background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
                     border: 'none',
-                    boxShadow: '0 4px 16px rgba(22, 104, 220, 0.3)',
-                    transition: 'all 0.3s ease'
+                    boxShadow: '0 6px 24px rgba(108, 117, 125, 0.3)',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                   }}
                   className="login-submit-btn"
                 >
                   登入系統
                 </Button>
               </Form.Item>
-              <div style={{ 
-                textAlign: 'center', 
+              <div style={{
+                textAlign: 'center',
                 marginTop: '8px'
               }}>
-                <Text style={{ 
-                  color: 'var(--text-tertiary)', 
-                  fontSize: '12px' 
+                <Text style={{
+                  color: 'var(--text-tertiary)',
+                  fontSize: '12px'
                 }}>
                   測試帳號：admin / admin
                 </Text>
@@ -2472,19 +2859,19 @@
 
       // 事件統計卡片 - 優化後的設計
       const EventStatCard = ({ icon, color, bgColor, title, value, change }) => (
-        <Card 
+        <Card
           className="stat-card"
           style={{
             height: '140px'
           }}
           hoverable
         >
-          <div style={{ 
-            position: 'absolute', 
-            top: -30, 
-            right: -30, 
-            width: 100, 
-            height: 100, 
+          <div style={{
+            position: 'absolute',
+            top: -30,
+            right: -30,
+            width: 100,
+            height: 100,
             background: `radial-gradient(circle, ${bgColor}20 0%, transparent 70%)`,
             borderRadius: '50%'
           }} />
@@ -2516,7 +2903,7 @@
 
       // 關鍵指標卡片 - 左側圓形圖示
       const KeyMetricCard = ({ icon, iconBg, title, value, unit }) => (
-        <Card 
+        <Card
           className="stat-card"
           style={{
             height: '120px'
@@ -2611,8 +2998,8 @@
           {/* 圖表卡 */}
           <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
             <Col xs={24} lg={12}>
-              <div 
-                className="chart-card" 
+              <div
+                className="chart-card"
                 style={{
                   height: '320px',
                   padding: '24px'
@@ -2625,8 +3012,8 @@
               </div>
             </Col>
             <Col xs={24} lg={12}>
-              <div 
-                className="chart-card" 
+              <div
+                className="chart-card"
                 style={{
                   height: '320px',
                   padding: '24px'
@@ -2727,16 +3114,16 @@
       };
 
       const columns = [
-        { 
-          title: '狀態', 
-          dataIndex: 'status', 
-          width: '10%', 
+        {
+          title: '狀態',
+          dataIndex: 'status',
+          width: '10%',
           filters: [
-            { text: 'Healthy', value: 'healthy' }, 
-            { text: 'Warning', value: 'warning' }, 
+            { text: 'Healthy', value: 'healthy' },
+            { text: 'Warning', value: 'warning' },
             { text: 'Critical', value: 'critical' }
-          ], 
-          onFilter: (value, record) => record.status && record.status.indexOf(value) === 0, 
+          ],
+          onFilter: (value, record) => record.status && record.status.indexOf(value) === 0,
           render: (status) => (
             <span className={`status-badge status-${status || 'unknown'}`}>
               {status ? status.toUpperCase() : 'UNKNOWN'}
@@ -2757,7 +3144,7 @@
           }
         },
         { title: '類型', dataIndex: 'type', width: '15%', filters: [{ text: 'Database', value: 'database' }, { text: 'Server', value: 'server' }, { text: 'Gateway', value: 'gateway' }, { text: 'Cache', value: 'cache' },], onFilter: (value, record) => record.type.indexOf(value) === 0 },
-        { title: '操作', key: 'action', width: '10%', render: (_, record) => (<Space> <Button type="link" onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
+        { title: '操作', key: 'action', width: '10%', render: (_, record) => (<Space> <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
       ];
       const filteredResources = resources.filter(res => res.name.toLowerCase().includes(searchText.toLowerCase()) || res.ip_address.toLowerCase().includes(searchText.toLowerCase()));
 
@@ -2784,7 +3171,7 @@
           <Row gutter={[16, 16]} style={{ marginBottom: 'var(--spacing-xl)' }}>
             <Col span={6}>
               <Card className="stat-card" hoverable>
-                <Statistic 
+                <Statistic
                   title="總資源數"
                   value={stats.total}
                 />
@@ -2792,7 +3179,7 @@
             </Col>
             <Col span={6}>
               <Card className="stat-card" hoverable>
-                <Statistic 
+                <Statistic
                   title="健康資源"
                   value={stats.healthy}
                   valueStyle={{ color: 'var(--brand-success)' }}
@@ -2801,7 +3188,7 @@
             </Col>
             <Col span={6}>
               <Card className="stat-card" hoverable>
-                <Statistic 
+                <Statistic
                   title="警告資源"
                   value={stats.warning}
                   valueStyle={{ color: 'var(--brand-warning)' }}
@@ -2810,7 +3197,7 @@
             </Col>
             <Col span={6}>
               <Card className="stat-card" hoverable>
-                <Statistic 
+                <Statistic
                   title="異常資源"
                   value={stats.critical}
                   valueStyle={{ color: 'var(--brand-danger)' }}
@@ -2820,10 +3207,10 @@
           </Row>
 
           {/* 工具列 */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             marginBottom: 'var(--spacing-lg)',
             padding: 'var(--spacing-lg)',
             background: 'var(--bg-elevated)',
@@ -2831,9 +3218,9 @@
             border: '1px solid var(--border-light)'
           }}>
             <Space>
-              <Input.Search 
-                placeholder="搜尋資源名稱或 IP..." 
-                onChange={e => setSearchText(e.target.value)} 
+              <Input.Search
+                placeholder="搜尋資源名稱或 IP..."
+                onChange={e => setSearchText(e.target.value)}
                 style={{ width: 300 }}
                 allowClear
               />
@@ -2845,14 +3232,14 @@
               {hasSelected && (
                 <>
                   <Text type="secondary">已選擇 {selectedRowKeys.length} 項</Text>
-                  <Button className="batch-action-btn danger-btn" danger onClick={handleBatchDelete}>
+                  <Button type="primary" className="batch-action-btn danger-btn" danger onClick={handleBatchDelete}>
                     批次刪除
                   </Button>
                 </>
               )}
               <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
-              <Button type="primary" className="btn-primary-action" icon={<PlusOutlined />} onClick={() => showModal()}>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增資源
               </Button>
             </Space>
@@ -2870,7 +3257,12 @@
                   <Checkbox.Group options={mockGroups.map(g => ({ label: g.name, value: g.id }))} />
                 </div>
               </Form.Item>
-              <Form.Item style={{ textAlign: 'right' }}> <Button className="modal-footer-btn" onClick={handleCancel}>取消</Button> <Button type="primary" className="modal-footer-btn" htmlType="submit">確定</Button> </Form.Item>
+              <Form.Item style={{ textAlign: 'right' }}>
+                <Space>
+                  <Button onClick={handleCancel}>取消</Button>
+                  <Button type="primary" htmlType="submit">確定</Button>
+                </Space>
+              </Form.Item>
             </Form>
           </Modal>
         </React.Fragment>);
@@ -2965,6 +3357,11 @@
         });
       };
 
+      const handleViewHistory = (record) => {
+        message.info(`查看群組「${record.name}」的操作歷史`);
+        // 這裡可以跳轉到相關的歷史記錄頁面
+      };
+
 
       const getTeamName = (teamKey) => {
         if (!teamKey) return '-';
@@ -2989,21 +3386,50 @@
             );
           }
         },
-        { title: '操作', key: 'action', width: '15%', render: (_, record) => (<Space> <Button type="primary" size="small" icon={<PlayCircleOutlined />}>執行</Button> <Button size="small" icon={<HistoryOutlined />} style={{ color: '#faad14', borderColor: '#faad14' }}>歷史</Button> <Button size="small" icon={<EditOutlined />} onClick={() => showGroupModal(record)}>編輯</Button> <Button size="small" danger icon={<DeleteOutlined />} onClick={() => handleGroupDelete(record.key)}>刪除</Button> </Space>) },
+        { title: '操作', key: 'action', width: '15%', render: (_, record) => (<Space> <Button type="primary" icon={<PlayCircleOutlined />}>執行</Button> <Button type="link" icon={<HistoryOutlined />} style={{ color: '#faad14' }} onClick={() => handleViewHistory(record)}>歷史</Button> <Button type="link" icon={<EditOutlined />} onClick={() => showGroupModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleGroupDelete(record.key)}>刪除</Button> </Space>) },
       ];
 
       const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchText.toLowerCase()));
 
       return (
         <React.Fragment>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <Title level={2} className="page-title no-margin">資源群組</Title>
+          <div style={{ marginBottom: 'var(--spacing-md)' }}>
+            <Title level={2} className="page-title">資源群組</Title>
+            <Paragraph className="page-subtitle" type="secondary">
+              管理資源的分群，支援階層，並提供群組層級的狀態摘要與成員管理。
+            </Paragraph>
+          </div>
+
+          {/* 工具列 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--spacing-lg)',
+            padding: 'var(--spacing-lg)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-light)'
+          }}>
             <Space>
-              <Input.Search placeholder="搜尋群組名稱" onChange={e => setSearchText(e.target.value)} className="search-input" />
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => showGroupModal()}>新增群組</Button>
+              <Input.Search
+                placeholder="搜尋群組名稱或描述..."
+                onChange={e => setSearchText(e.target.value)}
+                style={{ width: 300 }}
+                allowClear
+              />
+              <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                篩選
+              </Button>
+            </Space>
+            <Space>
+              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showGroupModal()}>
+                新增群組
+              </Button>
             </Space>
           </div>
-          <Paragraph className="page-subtitle" type="secondary">管理資源的分群，支援階層，並提供群組層級的狀態摘要與成員管理。</Paragraph>
           <div className="table-wrapper">
             {
               filteredGroups.length > 0 ?
@@ -3085,8 +3511,10 @@
                 />
               </Form.Item>
               <Form.Item style={{ textAlign: 'right', marginTop: 24, marginBottom: 0 }}>
-                <Button onClick={handleGroupCancel}>取消</Button>
-                <Button type="primary" htmlType="submit">{editingGroup ? '更新群組' : '創建群組'}</Button>
+                <Space>
+                  <Button onClick={handleGroupCancel}>取消</Button>
+                  <Button type="primary" htmlType="submit">{editingGroup ? '更新群組' : '創建群組'}</Button>
+                </Space>
               </Form.Item>
             </Form>
           </Modal>
@@ -3129,22 +3557,22 @@
           <Paragraph className="page-subtitle" type="secondary">
             探索、組織與管理您的所有基礎設施資源。
           </Paragraph>
-          
+
           <Row gutter={[16, 16]}>
             {resourceCards.map(item => (
               <Col key={item.key} xs={24} md={12} lg={8}>
-                <Badge.Ribbon 
-                  text="即將推出" 
+                <Badge.Ribbon
+                  text="即將推出"
                   style={{ display: !item.enabled ? 'block' : 'none' }}
                 >
-                  <div 
+                  <div
                     className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
                     onClick={() => item.enabled && onNavigate(item.key)}
                     style={{ height: '100%' }}
                   >
                     <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '12px', width: '100%' }}>
-                        <div className="nav-item-icon" style={{ 
+                        <div className="nav-item-icon" style={{
                           background: 'rgba(95, 207, 128, 0.1)',
                           padding: '12px',
                           borderRadius: 'var(--radius-md)',
@@ -3161,14 +3589,14 @@
                         </div>
                       </div>
                       {item.features && (
-                        <div style={{ 
-                          display: 'flex', 
-                          gap: '8px', 
+                        <div style={{
+                          display: 'flex',
+                          gap: '8px',
                           flexWrap: 'wrap',
                           marginTop: '8px'
                         }}>
                           {item.features.map((feature, idx) => (
-                            <Tag 
+                            <Tag
                               key={idx}
                               style={{
                                 background: 'rgba(255, 255, 255, 0.08)',
@@ -3251,22 +3679,22 @@
           <Paragraph className="page-subtitle" type="secondary">
             集中管理告警、事件並設定靜音規則，建立完整的事件管理流程。
           </Paragraph>
-          
+
           <Row gutter={[16, 16]}>
             {incidentCards.map(item => (
               <Col key={item.key} xs={24} md={12} lg={8}>
-                <Badge.Ribbon 
-                  text="即將推出" 
+                <Badge.Ribbon
+                  text="即將推出"
                   style={{ display: !item.enabled ? 'block' : 'none' }}
                 >
-                  <div 
+                  <div
                     className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
                     onClick={() => item.enabled && onNavigate(item.key)}
                     style={{ height: '100%' }}
                   >
                     <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '12px', width: '100%' }}>
-                        <div className="nav-item-icon" style={{ 
+                        <div className="nav-item-icon" style={{
                           background: 'rgba(255, 184, 77, 0.1)',
                           padding: '12px',
                           borderRadius: 'var(--radius-md)',
@@ -3283,14 +3711,14 @@
                         </div>
                       </div>
                       {item.features && (
-                        <div style={{ 
-                          display: 'flex', 
-                          gap: '8px', 
+                        <div style={{
+                          display: 'flex',
+                          gap: '8px',
                           flexWrap: 'wrap',
                           marginTop: '8px'
                         }}>
                           {item.features.map((feature, idx) => (
-                            <Tag 
+                            <Tag
                               key={idx}
                               style={{
                                 background: 'rgba(255, 255, 255, 0.08)',
@@ -3373,22 +3801,22 @@
           <Paragraph className="page-subtitle" type="secondary">
             深入了解系統趨勢、效能瓶颈和運營數據，做出數據驅動的決策。
           </Paragraph>
-          
+
           <Row gutter={[16, 16]}>
             {analyzeCards.map(item => (
               <Col key={item.key} xs={24} md={12} lg={8}>
-                <Badge.Ribbon 
-                  text="即將推出" 
+                <Badge.Ribbon
+                  text="即將推出"
                   style={{ display: !item.enabled ? 'block' : 'none' }}
                 >
-                  <div 
-                    className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`} 
+                  <div
+                    className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
                     onClick={() => item.enabled && onNavigate(item.key)}
                     style={{ height: '100%' }}
                   >
                     <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '12px', width: '100%' }}>
-                        <div className="nav-item-icon" style={{ 
+                        <div className="nav-item-icon" style={{
                           background: 'rgba(74, 144, 255, 0.1)',
                           padding: '12px',
                           borderRadius: 'var(--radius-md)',
@@ -3405,14 +3833,14 @@
                         </div>
                       </div>
                       {item.features && (
-                        <div style={{ 
-                          display: 'flex', 
-                          gap: '8px', 
+                        <div style={{
+                          display: 'flex',
+                          gap: '8px',
                           flexWrap: 'wrap',
                           marginTop: '8px'
                         }}>
                           {item.features.map((feature, idx) => (
-                            <Tag 
+                            <Tag
                               key={idx}
                               style={{
                                 background: 'rgba(255, 255, 255, 0.08)',
@@ -3495,22 +3923,22 @@
           <Paragraph className="page-subtitle" type="secondary">
             管理自動化腳本、排程任務與執行歷史，提升運維效率。
           </Paragraph>
-          
+
           <Row gutter={[16, 16]}>
             {automationCards.map(item => (
               <Col key={item.key} xs={24} md={12} lg={8}>
-                <Badge.Ribbon 
-                  text="即將推出" 
+                <Badge.Ribbon
+                  text="即將推出"
                   style={{ display: !item.enabled ? 'block' : 'none' }}
                 >
-                  <div 
+                  <div
                     className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
                     onClick={() => item.enabled && onNavigate(item.key)}
                     style={{ height: '100%' }}
                   >
                     <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                       <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '12px', width: '100%' }}>
-                        <div className="nav-item-icon" style={{ 
+                        <div className="nav-item-icon" style={{
                           background: 'rgba(183, 148, 246, 0.1)',
                           padding: '12px',
                           borderRadius: 'var(--radius-md)',
@@ -3527,14 +3955,14 @@
                         </div>
                       </div>
                       {item.features && (
-                        <div style={{ 
-                          display: 'flex', 
-                          gap: '8px', 
+                        <div style={{
+                          display: 'flex',
+                          gap: '8px',
                           flexWrap: 'wrap',
                           marginTop: '8px'
                         }}>
                           {item.features.map((feature, idx) => (
-                            <Tag 
+                            <Tag
                               key={idx}
                               style={{
                                 background: 'rgba(255, 255, 255, 0.08)',
@@ -3681,16 +4109,16 @@
 
       const columns = [
         {
-          title: '狀態', 
-          dataIndex: 'status', 
-          width: '10%', 
+          title: '狀態',
+          dataIndex: 'status',
+          width: '10%',
           filters: [
-            { text: 'New', value: 'new' }, 
-            { text: 'Acknowledged', value: 'acknowledged' }, 
-            { text: 'Resolved', value: 'resolved' }, 
+            { text: 'New', value: 'new' },
+            { text: 'Acknowledged', value: 'acknowledged' },
+            { text: 'Resolved', value: 'resolved' },
             { text: 'Silenced', value: 'silenced' }
-          ], 
-          onFilter: (v, r) => r.status && r.status.includes(v), 
+          ],
+          onFilter: (v, r) => r.status && r.status.includes(v),
           render: (status) => {
             const statusText = {
               new: 'NEW',
@@ -3705,16 +4133,16 @@
             );
           }
         },
-        { 
-          title: '嚴重性', 
-          dataIndex: 'severity', 
-          width: '10%', 
-          sorter: (a, b) => a.severity.localeCompare(b.severity), 
+        {
+          title: '嚴重性',
+          dataIndex: 'severity',
+          width: '10%',
+          sorter: (a, b) => a.severity.localeCompare(b.severity),
           filters: [
-            { text: 'Critical', value: 'critical' }, 
+            { text: 'Critical', value: 'critical' },
             { text: 'Warning', value: 'warning' }
-          ], 
-          onFilter: (v, r) => r.severity && r.severity.includes(v), 
+          ],
+          onFilter: (v, r) => r.severity && r.severity.includes(v),
           render: (severity) => (
             <span className={`status-badge status-${severity}`}>
               {severity ? severity.toUpperCase() : 'UNKNOWN'}
@@ -3796,7 +4224,7 @@
           <Row gutter={[16, 16]} style={{ marginBottom: 'var(--spacing-xl)' }}>
             <Col span={6}>
               <Card className="stat-card" hoverable>
-                <Statistic 
+                <Statistic
                   title="活躍告警"
                   value={stats.total}
                 />
@@ -3804,7 +4232,7 @@
             </Col>
             <Col span={6}>
               <Card className="stat-card" hoverable>
-                <Statistic 
+                <Statistic
                   title="新告警"
                   value={stats.new}
                   valueStyle={{ color: 'var(--brand-primary)' }}
@@ -3813,7 +4241,7 @@
             </Col>
             <Col span={6}>
               <Card className="stat-card" hoverable>
-                <Statistic 
+                <Statistic
                   title="嚴重告警"
                   value={stats.critical}
                   valueStyle={{ color: 'var(--brand-danger)' }}
@@ -3822,7 +4250,7 @@
             </Col>
             <Col span={6}>
               <Card className="stat-card" hoverable>
-                <Statistic 
+                <Statistic
                   title="處理中"
                   value={stats.acknowledged}
                   valueStyle={{ color: 'var(--brand-warning)' }}
@@ -3832,10 +4260,10 @@
           </Row>
 
           {/* 工具列 */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
             marginBottom: 'var(--spacing-lg)',
             padding: 'var(--spacing-lg)',
             background: 'var(--bg-elevated)',
@@ -3843,9 +4271,9 @@
             border: '1px solid var(--border-light)'
           }}>
             <Space>
-              <Input.Search 
-                placeholder="搜尋事件摘要、資源或處理人..." 
-                onChange={e => setSearchText(e.target.value)} 
+              <Input.Search
+                placeholder="搜尋事件摘要、資源或處理人..."
+                onChange={e => setSearchText(e.target.value)}
                 style={{ width: 300 }}
                 allowClear
               />
@@ -3861,7 +4289,7 @@
                   <Button type="primary" className="batch-action-btn" onClick={() => handleBatchUpdate('acknowledged')}>
                     批次確認
                   </Button>
-                  <Button className="batch-action-btn" onClick={() => handleBatchUpdate('resolved')}>
+                  <Button type="primary" className="batch-action-btn batch-action-btn-success" onClick={() => handleBatchUpdate('resolved')}>
                     批次解決
                   </Button>
                 </>
@@ -4519,12 +4947,7 @@
                       >
                         {isCompleted ? '✓' : icon}
                       </div>
-                      <span style={{
-                        fontSize: '13px',
-                        color: isActive ? '#1890ff' : isCompleted ? '#52a853' : 'rgba(255, 255, 255, 0.6)',
-                        fontWeight: isActive ? '500' : '400',
-                        transition: 'all 0.3s ease'
-                      }}>
+                      <span className="step-label">
                         {label}
                       </span>
                     </div>
@@ -4922,33 +5345,23 @@
               </div>
 
               {/* Footer Buttons */}
-              <div className="modal-footer" style={{
-                marginTop: '32px',
-                paddingTop: '24px',
-                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
+              <div className="modal-footer">
                 <div>
                   {currentStep > 1 && (
                     <Button
-                      className="modal-footer-btn"
                       onClick={() => setCurrentStep(currentStep - 1)}
-                      style={{ marginRight: '8px' }}
                     >
                       上一步
                     </Button>
                   )}
                 </div>
                 <div>
-                  <Button className="modal-footer-btn" onClick={handleCancel} style={{ marginRight: '8px' }}>
+                  <Button onClick={handleCancel}>
                     取消
                   </Button>
                   {currentStep < 4 ? (
                     <Button
                       type="primary"
-                      className="modal-footer-btn"
                       onClick={() => setCurrentStep(currentStep + 1)}
                     >
                       下一步
@@ -4956,7 +5369,6 @@
                   ) : (
                     <Button
                       type="primary"
-                      className="modal-footer-btn"
                       onClick={() => form.submit()}
                     >
                       儲存規則
@@ -5127,12 +5539,31 @@
         });
       };
 
+      const handleToggleEnabled = (strategyKey, enabled) => {
+        setStrategies(strategies.map(strategy =>
+          strategy.key === strategyKey
+            ? { ...strategy, enabled }
+            : strategy
+        ));
+        message.success(`通知策略已${enabled ? '啟用' : '停用'}`);
+      };
+
       const columns = [
+        {
+          title: '啟用',
+          dataIndex: 'enabled',
+          width: '8%',
+          render: (enabled, record) => (
+            <Switch
+              checked={enabled}
+              onChange={(checked) => handleToggleEnabled(record.key, checked)}
+            />
+          )
+        },
         { title: '策略名稱', dataIndex: 'name', sorter: (a, b) => a.name.localeCompare(b.name) },
         { title: '資源群組', dataIndex: 'resourceGroup', render: rg => rg?.name, sorter: (a, b) => a.resourceGroup?.name.localeCompare(b.resourceGroup?.name) },
         { title: '負責團隊', dataIndex: 'team', render: team => team?.name, sorter: (a, b) => a.team?.name.localeCompare(b.team?.name) },
         { title: '通知管道數', dataIndex: 'channels', render: channels => channels?.length || 0, sorter: (a, b) => (a.channels?.length || 0) - (b.channels?.length || 0) },
-        { title: '狀態', dataIndex: 'enabled', render: enabled => <Tag color={enabled ? 'green' : 'red'}>{enabled ? '啟用' : '停用'}</Tag> },
         {
           title: '操作',
           key: 'action',
@@ -5177,65 +5608,225 @@
 
           {/* 新增/編輯通知策略模態框 */}
           <Modal
-            title={editingStrategy ? '編輯通知策略' : '新增通知策略'}
+            title={null}
             open={isModalOpen}
             onCancel={handleCancel}
-            width={800}
-            footer={[
-              <Button key="back" onClick={handleCancel}>
-                取消
-              </Button>,
-              <Button
-                key="submit"
-                type="primary"
-                onClick={handleCreateStrategy}
-                disabled={!selectedResourceGroup || !selectedTeam || selectedChannels.length === 0}
-              >
-                {editingStrategy ? '更新策略' : '建立策略'}
-              </Button>
-            ]}
+            width={900}
+            footer={null}
+            centered
+            className="notification-strategy-modal"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(200, 200, 200, 0.02) 100%)',
+              borderRadius: '12px'
+            }}
           >
-            <div style={{ padding: '16px 0' }}>
-              {/* 步驟指示器 */}
-              <div style={{ marginBottom: '24px' }}>
-                <Steps current={currentStep - 1} size="small">
-                  <Steps.Step title="選擇資源群組" description="決定監控範圍" />
-                  <Steps.Step title="設定通知管道" description="選擇負責團隊和管道" />
-                  <Steps.Step title="新增匹配條件" description="設定額外過濾條件" />
-                </Steps>
+            {/* Modal Header */}
+            <div className="modal-header" style={{
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              paddingBottom: '20px',
+              marginBottom: '20px'
+            }}>
+              <Title level={3} style={{ margin: 0, color: 'var(--text-primary)' }}>
+                {editingStrategy ? '編輯通知策略' : '新增通知策略'}
+              </Title>
+              <Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 8 }}>
+                {currentStep === 1 && '選擇資源群組，決定監控範圍'}
+                {currentStep === 2 && '設定通知管道，選擇負責團隊和管道'}
+                {currentStep === 3 && '新增匹配條件，設定額外過濾條件'}
+              </Paragraph>
+            </div>
+
+            {/* Steps Navigation */}
+            <div className="steps-container" style={{
+              marginBottom: '32px',
+              padding: '0 20px'
+            }}>
+              <div style={{ marginBottom: '16px', textAlign: 'center' }}>
+                <Text style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+                  💡 點擊任一步驟即可直接跳轉編輯
+                </Text>
               </div>
+              <div className="steps" style={{
+                display: 'flex',
+                gap: '12px',
+                position: 'relative'
+              }}>
+                {[
+                  { step: 1, label: '選擇資源群組', icon: '🎯', subtitle: '決定監控範圍' },
+                  { step: 2, label: '設定通知管道', icon: '👥', subtitle: '選擇負責團隊和管道' },
+                  { step: 3, label: '新增匹配條件', icon: '⚙️', subtitle: '設定額外過濾條件' }
+                ].map(({ step, label, icon, subtitle }) => {
+                  const isActive = currentStep === step;
+                  const isCompleted = currentStep > step;
+
+                  return (
+                    <div
+                      key={step}
+                      className="step-item"
+                      onClick={() => setCurrentStep(step)}
+                      style={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '8px',
+                        cursor: 'pointer',
+                        position: 'relative',
+                        zIndex: 1
+                      }}
+                    >
+                      <div
+                        className="step-indicator"
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '50%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: isActive ? 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)' :
+                            isCompleted ? 'rgba(52, 168, 83, 0.9)' : 'rgba(255, 255, 255, 0.08)',
+                          border: `2px solid ${isActive ? 'transparent' :
+                            isCompleted ? 'rgba(52, 168, 83, 0.6)' : 'rgba(255, 255, 255, 0.2)'
+                            }`,
+                          fontSize: '20px',
+                          transition: 'all 0.3s ease',
+                          boxShadow: isActive ? '0 0 20px rgba(24, 144, 255, 0.4)' : 'none'
+                        }}
+                      >
+                        {isCompleted ? '✓' : step}
+                      </div>
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{
+                          fontSize: '13px',
+                          color: isActive ? '#1890ff' : isCompleted ? '#52a853' : 'rgba(255, 255, 255, 0.85)',
+                          fontWeight: isActive ? '600' : '500',
+                          transition: 'all 0.3s ease',
+                          marginBottom: '2px'
+                        }}>
+                          {label}
+                        </div>
+                        <div style={{
+                          fontSize: '11px',
+                          color: 'rgba(255, 255, 255, 0.5)',
+                          lineHeight: '1.2'
+                        }}>
+                          {subtitle}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                {/* Progress line */}
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '25px',
+                    left: '25px',
+                    right: '25px',
+                    height: '2px',
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    zIndex: 0
+                  }}
+                >
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      height: '100%',
+                      width: `${((currentStep - 1) / 2) * 100}%`,
+                      background: 'linear-gradient(90deg, #52a853 0%, #1890ff 100%)',
+                      transition: 'width 0.3s ease'
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Step Content Container */}
+            <div className="step-content" style={{
+              minHeight: '400px',
+              position: 'relative',
+              overflow: 'hidden',
+              padding: '24px 0'
+            }}>
 
               {/* 第1步：選擇資源群組 */}
               {currentStep === 1 && (
-                <div>
-                  <div style={{ marginBottom: '16px' }}>
-                    <Text strong style={{ fontSize: '16px', color: 'rgba(255, 255, 255, 0.9)' }}>
-                      第一步：選擇您關心的範圍
-                    </Text>
+                <div style={{ padding: '0 20px' }}>
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(200, 200, 200, 0.02) 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '12px',
+                    padding: '24px',
+                    marginBottom: '24px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                      <div style={{
+                        width: '8px',
+                        height: '32px',
+                        background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+                        borderRadius: '4px',
+                        marginRight: '12px'
+                      }} />
+                      <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
+                        第一步：選擇您關心的範圍
+                      </Title>
+                    </div>
+
+                    <Row gutter={[24, 16]}>
+                      <Col span={24}>
+                        <Form.Item
+                          label={<span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>資源群組</span>}
+                          rules={[{ required: true, message: '請選擇資源群組' }]}
+                        >
+                          <Select
+                            placeholder="請選擇一個資源群組..."
+                            style={{
+                              width: '100%',
+                              height: '48px'
+                            }}
+                            value={selectedResourceGroup?.key}
+                            onChange={handleResourceGroupSelect}
+                          >
+                            {mockResourceGroups.map(rg => (
+                              <Select.Option key={rg.key} value={rg.key}>
+                                <div style={{ padding: '4px 0' }}>
+                                  <div style={{
+                                    fontWeight: '500',
+                                    fontSize: '14px',
+                                    color: 'var(--text-primary)',
+                                    lineHeight: '1.4',
+                                    marginBottom: '2px'
+                                  }}>
+                                    {rg.name}
+                                  </div>
+                                  <div style={{
+                                    fontSize: '12px',
+                                    color: 'var(--text-tertiary)',
+                                    lineHeight: '1.3'
+                                  }}>
+                                    {rg.description}
+                                  </div>
+                                </div>
+                              </Select.Option>
+                            ))}
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                      <Col span={24}>
+                        <Form.Item label={<span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>策略名稱</span>}>
+                          <Input
+                            placeholder="自動生成或自訂名稱"
+                            style={{ height: '48px' }}
+                            value={strategyName}
+                            onChange={e => setStrategyName(e.target.value)}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
                   </div>
-
-                  <Form.Item label="資源群組" rules={[{ required: true, message: '請選擇資源群組' }]}>
-                    <Select
-                      placeholder="請選擇一個資源群組..."
-                      style={{ width: '100%' }}
-                      value={selectedResourceGroup?.key}
-                      onChange={handleResourceGroupSelect}
-                    >
-                      {mockResourceGroups.map(rg => (
-                        <Select.Option key={rg.key} value={rg.key}>
-                          {rg.name} - {rg.description}
-                        </Select.Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-
-                  <Form.Item label="策略名稱">
-                    <Input
-                      placeholder="自動生成或自訂名稱"
-                      value={strategyName}
-                      onChange={e => setStrategyName(e.target.value)}
-                    />
-                  </Form.Item>
                 </div>
               )}
 
@@ -5391,35 +5982,51 @@
                 </div>
               )}
 
-              {/* 步驟導航 */}
-              <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  {currentStep > 1 && (
-                    <Button onClick={() => setCurrentStep(currentStep - 1)}>
-                      上一步
-                    </Button>
-                  )}
-                </div>
-                <div>
-                  {currentStep < 3 && (
-                    <Button
-                      type="primary"
-                      onClick={() => {
-                        if (currentStep === 1 && !selectedResourceGroup) {
-                          message.warning('請先選擇資源群組');
-                          return;
-                        }
-                        if (currentStep === 2 && (!selectedTeam || selectedChannels.length === 0)) {
-                          message.warning('請選擇負責團隊和通知管道');
-                          return;
-                        }
-                        setCurrentStep(currentStep + 1);
-                      }}
-                    >
-                      下一步
-                    </Button>
-                  )}
-                </div>
+            </div>
+
+            {/* 底部按鈕區域 */}
+            <div className="modal-footer">
+              <div>
+                {currentStep > 1 && (
+                  <Button
+                    onClick={() => setCurrentStep(currentStep - 1)}
+                  >
+                    上一步
+                  </Button>
+                )}
+              </div>
+              <div>
+                <Button
+                  onClick={handleCancel}
+                >
+                  取消
+                </Button>
+                {currentStep < 3 && (
+                  <Button
+                    type="primary"
+                    onClick={() => {
+                      if (currentStep === 1 && !selectedResourceGroup) {
+                        message.warning('請先選擇資源群組');
+                        return;
+                      }
+                      if (currentStep === 2 && (!selectedTeam || selectedChannels.length === 0)) {
+                        message.warning('請選擇負責團隊和通知管道');
+                        return;
+                      }
+                      setCurrentStep(currentStep + 1);
+                    }}
+                  >
+                    下一步
+                  </Button>
+                )}
+                {currentStep === 3 && (
+                  <Button
+                    type="primary"
+                    onClick={handleCreateStrategy}
+                  >
+                    {editingStrategy ? '更新策略' : '建立策略'}
+                  </Button>
+                )}
               </div>
             </div>
           </Modal>
@@ -5824,12 +6431,7 @@
                       >
                         {isCompleted ? '✓' : icon}
                       </div>
-                      <span style={{
-                        fontSize: '13px',
-                        color: isActive ? '#1890ff' : isCompleted ? '#52a853' : 'rgba(255, 255, 255, 0.6)',
-                        fontWeight: isActive ? '500' : '400',
-                        transition: 'all 0.3s ease'
-                      }}>
+                      <span className="step-label">
                         {label}
                       </span>
                     </div>
@@ -6094,39 +6696,30 @@
             </Form>
 
             {/* Footer Buttons */}
-            <div className="modal-footer" style={{
-              marginTop: '32px',
-              paddingTop: '24px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center'
-            }}>
+            <div className="modal-footer">
               <div>
                 {currentStep > 0 && (
                   <Button
-                    className="btn btn--ghost"
                     onClick={() => setCurrentStep(currentStep - 1)}
-                    style={{ marginRight: '8px' }}
                   >
                     上一步
                   </Button>
                 )}
               </div>
               <div>
-                <Button className="btn btn--ghost" onClick={handleCancel} style={{ marginRight: '8px' }}>
+                <Button onClick={handleCancel}>
                   取消
                 </Button>
                 {currentStep < 2 ? (
                   <Button
-                    className="btn btn--primary"
+                    type="primary"
                     onClick={() => setCurrentStep(currentStep + 1)}
                   >
                     下一步
                   </Button>
                 ) : (
                   <Button
-                    className="btn btn--primary"
+                    type="primary"
                     onClick={() => form.submit()}
                   >
                     儲存規則
@@ -6195,11 +6788,42 @@
 
       return (
         <React.Fragment>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <Title level={2} className="page-title no-margin">腳本庫</Title>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增腳本</Button>
+          <div style={{ marginBottom: 'var(--spacing-md)' }}>
+            <Title level={2} className="page-title">腳本庫</Title>
+            <Paragraph className="page-subtitle" type="secondary">
+              提供自動化腳本的開發與管理界面。
+            </Paragraph>
           </div>
-          <Paragraph className="page-subtitle" type="secondary">提供自動化腳本的開發與管理界面。</Paragraph>
+
+          {/* 工具列 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--spacing-lg)',
+            padding: 'var(--spacing-lg)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-light)'
+          }}>
+            <Space>
+              <Input.Search
+                placeholder="搜尋腳本名稱或描述..."
+                style={{ width: 300 }}
+                allowClear
+              />
+              <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                篩選
+              </Button>
+            </Space>
+            <Space>
+              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
+                新增腳本
+              </Button>
+            </Space>
+          </div>
           <div className="table-wrapper">
             {
               scripts.length > 0 ?
@@ -6213,10 +6837,12 @@
             title={editingScript ? '編輯腳本' : '新增腳本'}
             open={isModalOpen}
             onCancel={handleCancel}
-            footer={[
-              <Button key="cancel" onClick={handleCancel}>取消</Button>,
-              <Button key="submit" type="primary" onClick={() => form.submit()}>儲存</Button>
-            ]}
+            footer={
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <Button key="cancel" onClick={handleCancel}>取消</Button>
+                <Button key="submit" type="primary" onClick={() => form.submit()}>儲存</Button>
+              </div>
+            }
           >
             <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
               <Form.Item name="name" label="腳本名稱" rules={[{ required: true }]}>
@@ -6510,7 +7136,7 @@
           title: '操作', key: 'action', width: '13%', render: (_, record) => (
             <Space>
               <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => handleRunNow(record)}>執行</Button>
-              <Button type="link" icon={<HistoryOutlined />} onClick={() => handleViewHistory(record)}>歷史</Button>
+              <Button type="link" icon={<HistoryOutlined />} style={{ color: '#faad14' }} onClick={() => handleViewHistory(record)}>歷史</Button>
               <Button type="link" onClick={() => showModal(record)}>編輯</Button>
               <Button type="link" danger>刪除</Button>
             </Space>
@@ -6520,11 +7146,42 @@
 
       return (
         <React.Fragment>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <Title level={2} className="page-title no-margin">排程管理</Title>
-            <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增排程</Button>
+          <div style={{ marginBottom: 'var(--spacing-md)' }}>
+            <Title level={2} className="page-title">排程管理</Title>
+            <Paragraph className="page-subtitle" type="secondary">
+              提供對定時執行任務的完整管理界面。
+            </Paragraph>
           </div>
-          <Paragraph className="page-subtitle" type="secondary">提供對定時執行任務的完整管理界面。</Paragraph>
+
+          {/* 工具列 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--spacing-lg)',
+            padding: 'var(--spacing-lg)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-light)'
+          }}>
+            <Space>
+              <Input.Search
+                placeholder="搜尋排程名稱或描述..."
+                style={{ width: 300 }}
+                allowClear
+              />
+              <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                篩選
+              </Button>
+            </Space>
+            <Space>
+              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
+                新增排程
+              </Button>
+            </Space>
+          </div>
           <div className="table-wrapper">
             {
               schedules.length > 0 ?
@@ -6538,29 +7195,33 @@
             title={editingSchedule ? '編輯排程' : '新增排程'}
             open={isModalOpen}
             onCancel={handleCancel}
-            footer={[
-              <Button key="cancel" onClick={handleCancel}>取消</Button>,
-              <Button key="submit" type="primary" onClick={() => form.submit()}>儲存</Button>
-            ]}
+            width={600}
+            bodyStyle={{ maxHeight: '70vh', overflowY: 'auto' }}
+            footer={
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <Button key="cancel" onClick={handleCancel}>取消</Button>
+                <Button key="submit" type="primary" onClick={() => form.submit()}>儲存</Button>
+              </div>
+            }
           >
-            <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 16 }}>
-              <Form.Item name="name" label="任務名稱" rules={[{ required: true }]} style={{ marginBottom: 12 }}><Input /></Form.Item>
-              <Form.Item name="description" label="描述" style={{ marginBottom: 12 }}><TextArea rows={2} /></Form.Item>
-              <Form.Item name="scriptId" label="執行腳本" rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+            <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 8 }}>
+              <Form.Item name="name" label="任務名稱" rules={[{ required: true }]} style={{ marginBottom: 8 }}><Input /></Form.Item>
+              <Form.Item name="description" label="描述" style={{ marginBottom: 8 }}><TextArea rows={2} /></Form.Item>
+              <Form.Item name="scriptId" label="執行腳本" rules={[{ required: true }]} style={{ marginBottom: 8 }}>
                 <Select showSearch options={scripts.map(s => ({ label: s.name, value: s.key }))} />
               </Form.Item>
-              <Form.Item name="target_resources" label="目標資源" style={{ marginBottom: 16 }}>
+              <Form.Item name="target_resources" label="目標資源" style={{ marginBottom: 10 }}>
                 <Select mode="multiple" allowClear showSearch options={mockResources.map(r => ({ label: r.name, value: r.key }))} />
               </Form.Item>
               {/* 人性化排程器 */}
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+              <div style={{ marginBottom: 10 }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                   <div className="severity-indicator severity-warning"></div>
                   <Title level={5} style={{ margin: 0, color: 'rgba(255, 255, 255, 0.9)' }}>排程設定</Title>
                 </div>
-                <Card size="small" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                <Card size="small" style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '8px 12px' }}>
                   {/* 模式切换 */}
-                  <div style={{ marginBottom: 12 }}>
+                  <div style={{ marginBottom: 8 }}>
                     <Radio.Group value={scheduleMode} onChange={e => setScheduleMode(e.target.value)} size="small">
                       <Radio.Button value="simple">簡易模式</Radio.Button>
                       <Radio.Button value="advanced">進階模式</Radio.Button>
@@ -6570,7 +7231,7 @@
                   {scheduleMode === 'simple' ? (
                     <div>
                       {/* 频率选择 */}
-                      <Form.Item label="執行頻率" style={{ marginBottom: 12 }}>
+                      <Form.Item label="執行頻率" style={{ marginBottom: 8 }}>
                         <Select value={frequency} onChange={setFrequency} style={{ width: 200 }}>
                           <Select.Option value="minute">每分鐘</Select.Option>
                           <Select.Option value="hourly">每小時</Select.Option>
@@ -6582,25 +7243,25 @@
 
                       {/* 动态显示的配置项 */}
                       {frequency === 'minute' && (
-                        <Form.Item name="minuteInterval" label="間隔分鐘" rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                        <Form.Item name="minuteInterval" label="間隔分鐘" rules={[{ required: true }]} style={{ marginBottom: 8 }}>
                           <InputNumber min={1} max={59} addonAfter="分鐘" style={{ width: 150 }} />
                         </Form.Item>
                       )}
 
                       {frequency === 'hourly' && (
-                        <Form.Item name="scheduleTime" label="執行時間" rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                        <Form.Item name="scheduleTime" label="執行時間" rules={[{ required: true }]} style={{ marginBottom: 8 }}>
                           <TimePicker format="mm" style={{ width: 150 }} placeholder="選擇分鐘" />
                         </Form.Item>
                       )}
 
                       {(frequency === 'daily' || frequency === 'weekly' || frequency === 'monthly') && (
-                        <Form.Item name="scheduleTime" label="執行時間" rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                        <Form.Item name="scheduleTime" label="執行時間" rules={[{ required: true }]} style={{ marginBottom: 8 }}>
                           <TimePicker format="HH:mm" style={{ width: 150 }} />
                         </Form.Item>
                       )}
 
                       {frequency === 'weekly' && (
-                        <Form.Item label="選擇星期" style={{ marginTop: 6, marginBottom: 12 }}>
+                        <Form.Item label="選擇星期" style={{ marginTop: 4, marginBottom: 8 }}>
                           <Checkbox.Group
                             value={selectedWeekdays}
                             onChange={setSelectedWeekdays}
@@ -6618,14 +7279,14 @@
                       )}
 
                       {frequency === 'monthly' && (
-                        <Form.Item name="monthlyDay" label="每月幾號" rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                        <Form.Item name="monthlyDay" label="每月幾號" rules={[{ required: true }]} style={{ marginBottom: 8 }}>
                           <InputNumber min={1} max={31} addonAfter="日" style={{ width: 150 }} />
                         </Form.Item>
                       )}
 
                       {/* 人类可读的描述 */}
-                      <div style={{ marginTop: 12, padding: '8px 12px', background: 'rgba(24, 144, 255, 0.1)', borderRadius: '4px', border: '1px solid rgba(24, 144, 255, 0.3)' }}>
-                        <Text style={{ color: '#1890ff', fontWeight: 'bold', fontSize: '13px' }}>
+                      <div style={{ marginTop: 8, padding: '6px 10px', background: 'rgba(24, 144, 255, 0.1)', borderRadius: '4px', border: '1px solid rgba(24, 144, 255, 0.3)' }}>
+                        <Text style={{ color: '#1890ff', fontWeight: 'bold', fontSize: '12px' }}>
                           📅 {getHumanReadableDescription()}
                         </Text>
                       </div>
@@ -6653,29 +7314,29 @@
                 </Card>
               </div>
               {selectedScript && selectedScript.params && selectedScript.params.length > 0 && (
-                <div style={{ marginBottom: 24 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
                     <div className="severity-indicator severity-success"></div>
                     <Title level={5} style={{ margin: 0, color: 'rgba(255, 255, 255, 0.9)' }}>
                       腳本參數設定
                     </Title>
-                    <Text style={{ marginLeft: 8, fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                    <Text style={{ marginLeft: 8, fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
                       ({selectedScript.name})
                     </Text>
                   </div>
-                  <Card size="small" style={{ background: 'rgba(0, 34, 43, 0.3)', border: '1px solid rgba(0, 255, 128, 0.2)' }}>
-                    <div style={{ marginBottom: 12 }}>
-                      <Text style={{ color: 'rgba(0, 255, 128, 0.8)', fontSize: '12px' }}>
+                  <Card size="small" style={{ background: 'rgba(0, 34, 43, 0.3)', border: '1px solid rgba(0, 255, 128, 0.2)', padding: '8px 12px' }}>
+                    <div style={{ marginBottom: 8 }}>
+                      <Text style={{ color: 'rgba(0, 255, 128, 0.8)', fontSize: '11px' }}>
                         💡 這些參數將傳遞給腳本執行，請根據實際需求填寫
                       </Text>
                     </div>
                     {selectedScript.params.map(p => (
-                      <div key={p.name} style={{ marginBottom: 16 }}>
+                      <div key={p.name} style={{ marginBottom: 10 }}>
                         <Form.Item
                           name={['params', p.name]}
                           label={
-                            <Space>
-                              <span>{p.label}</span>
+                            <Space size={4}>
+                              <span style={{ fontSize: '13px' }}>{p.label}</span>
                               {p.type === 'number' && <Tag size="small" color="blue">數字</Tag>}
                               {p.type === 'string' && <Tag size="small" color="green">文字</Tag>}
                               {p.type === 'boolean' && <Tag size="small" color="orange">布林</Tag>}
@@ -6683,6 +7344,7 @@
                           }
                           rules={[{ required: true, message: `請輸入${p.label}` }]}
                           tooltip={p.description || `設定 ${p.label} 參數`}
+                          style={{ marginBottom: 8 }}
                         >
                           {p.type === 'number' ? (
                             <InputNumber
@@ -6702,7 +7364,7 @@
                           )}
                         </Form.Item>
                         {p.description && (
-                          <Text style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)', display: 'block', marginTop: -8, marginBottom: 8 }}>
+                          <Text style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', display: 'block', marginTop: -6, marginBottom: 6 }}>
                             {p.description}
                           </Text>
                         )}
@@ -7407,18 +8069,39 @@
 
       return (
         <React.Fragment>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <Title level={2} className="page-title no-margin">人員管理</Title>
+          <div style={{ marginBottom: 'var(--spacing-md)' }}>
+            <Title level={2} className="page-title">人員管理</Title>
+            <Paragraph className="page-subtitle" type="secondary">管理平台的所有使用者帳號與權限角色。</Paragraph>
+          </div>
+
+          {/* 工具列 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--spacing-lg)',
+            padding: 'var(--spacing-lg)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-light)'
+          }}>
             <Space>
               <Input.Search
                 placeholder="搜尋用戶姓名或電子郵件"
                 onChange={e => setUserSearchText(e.target.value)}
                 style={{ width: 300 }}
+                allowClear
               />
+              <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                篩選
+              </Button>
+            </Space>
+            <Space>
+              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showUserModal()}>新增用戶</Button>
             </Space>
           </div>
-          <Paragraph className="page-subtitle" type="secondary">管理平台的所有使用者帳號與權限角色。</Paragraph>
           <div className="table-wrapper">
             <Table
               dataSource={filteredUsers}
@@ -7431,29 +8114,191 @@
 
           {/* 用戶編輯模態框 */}
           <Modal
-            title={editingUser ? '編輯用戶' : '新增用戶'}
+            title={null}
             open={isUserModalOpen}
             onCancel={handleUserCancel}
             footer={null}
-            width={600}
+            width={700}
+            centered
+            className="user-edit-modal"
+            style={{
+              background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(200, 200, 200, 0.02) 100%)',
+              borderRadius: '12px'
+            }}
           >
-            <Form form={userForm} layout="vertical" onFinish={handleUserFinish} style={{ marginTop: 24 }}>
-              <Form.Item name="name" label="用戶姓名" rules={[{ required: true, message: '請輸入用戶姓名' }]}>
-                <Input />
-              </Form.Item>
-              <Form.Item name="email" label="電子郵件" rules={[{ required: true, message: '請輸入電子郵件' }, { type: 'email', message: '請輸入有效的電子郵件地址' }]}>
-                <Input />
-              </Form.Item>
-              <Form.Item name="teams" label="所屬團隊">
-                <Select mode="multiple" options={teams.map(t => ({ label: t.name, value: t.key }))} />
-              </Form.Item>
-              <Form.Item name="roles" label="角色" rules={[{ required: true, message: '請選擇至少一個角色' }]}>
-                <Select mode="multiple" options={mockRoles.map(r => ({ label: r.name, value: r.id }))} />
-              </Form.Item>
-              <Form.Item style={{ textAlign: 'right', marginBottom: 0 }}>
-                <Button onClick={handleUserCancel}>取消</Button>
-                <Button type="primary" htmlType="submit">確定</Button>
-              </Form.Item>
+            {/* Modal Header */}
+            <div className="modal-header" style={{
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              paddingBottom: '20px',
+              marginBottom: '24px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px'
+                }}>
+                  👤
+                </div>
+                <div>
+                  <Title level={3} style={{ margin: 0, color: 'var(--text-primary)' }}>
+                    {editingUser ? '編輯用戶' : '新增用戶'}
+                  </Title>
+                  <Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 4, fontSize: '13px' }}>
+                    {editingUser ? '修改用戶基本資訊與權限設定' : '建立新用戶並設定基本資訊與權限'}
+                  </Paragraph>
+                </div>
+              </div>
+            </div>
+
+            <Form form={userForm} layout="vertical" onFinish={handleUserFinish}>
+              {/* 基本資訊區塊 */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(200, 200, 200, 0.02) 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                  <div style={{
+                    width: '6px',
+                    height: '24px',
+                    background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+                    borderRadius: '3px',
+                    marginRight: '12px'
+                  }} />
+                  <Title level={5} style={{ margin: 0, color: 'var(--text-primary)', fontWeight: '600' }}>
+                    基本資訊
+                  </Title>
+                </div>
+
+                <Row gutter={[24, 16]}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="name"
+                      label={<span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>用戶姓名</span>}
+                      rules={[{ required: true, message: '請輸入用戶姓名' }]}
+                    >
+                      <Input
+                        placeholder="請輸入用戶姓名"
+                        style={{ height: '44px' }}
+                        prefix={<UserOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="email"
+                      label={<span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>電子郵件</span>}
+                      rules={[
+                        { required: true, message: '請輸入電子郵件' },
+                        { type: 'email', message: '請輸入有效的電子郵件地址' }
+                      ]}
+                    >
+                      <Input
+                        placeholder="請輸入電子郵件地址"
+                        style={{ height: '44px' }}
+                        prefix={<MailOutlined style={{ color: 'var(--text-tertiary)' }} />}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* 權限設定區塊 */}
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(200, 200, 200, 0.02) 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '24px',
+                marginBottom: '24px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+                  <div style={{
+                    width: '6px',
+                    height: '24px',
+                    background: 'linear-gradient(135deg, #52c41a 0%, #389e0d 100%)',
+                    borderRadius: '3px',
+                    marginRight: '12px'
+                  }} />
+                  <Title level={5} style={{ margin: 0, color: 'var(--text-primary)', fontWeight: '600' }}>
+                    權限設定
+                  </Title>
+                </div>
+
+                <Row gutter={[24, 16]}>
+                  <Col span={12}>
+                    <Form.Item
+                      name="teams"
+                      label={<span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>所屬團隊</span>}
+                    >
+                      <Select
+                        mode="multiple"
+                        placeholder="請選擇所屬團隊"
+                        style={{ minHeight: '44px' }}
+                        options={teams.map(t => ({ label: t.name, value: t.key }))}
+                      />
+                    </Form.Item>
+                  </Col>
+                  <Col span={12}>
+                    <Form.Item
+                      name="roles"
+                      label={<span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>角色</span>}
+                      rules={[{ required: true, message: '請選擇至少一個角色' }]}
+                    >
+                      <Select
+                        mode="multiple"
+                        placeholder="請選擇用戶角色"
+                        style={{ minHeight: '44px' }}
+                        options={mockRoles.map(r => ({ label: r.name, value: r.id }))}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </div>
+
+              {/* 底部按鈕區域 */}
+              <div style={{
+                borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+                paddingTop: '20px',
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: '12px'
+              }}>
+                <Button
+                  size="large"
+                  onClick={handleUserCancel}
+                  style={{
+                    height: '44px',
+                    borderRadius: 'var(--radius-lg)',
+                    fontWeight: '500',
+                    minWidth: '80px'
+                  }}
+                >
+                  取消
+                </Button>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  size="large"
+                  style={{
+                    height: '44px',
+                    borderRadius: 'var(--radius-lg)',
+                    fontWeight: '500',
+                    minWidth: '80px',
+                    background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
+                    border: 'none'
+                  }}
+                >
+                  {editingUser ? '更新用戶' : '新增用戶'}
+                </Button>
+              </div>
             </Form>
           </Modal>
         </React.Fragment >
@@ -7590,18 +8435,39 @@
 
       return (
         <React.Fragment>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <Title level={2} className="page-title no-margin">團隊管理</Title>
+          <div style={{ marginBottom: 'var(--spacing-md)' }}>
+            <Title level={2} className="page-title">團隊管理</Title>
+            <Paragraph className="page-subtitle" type="secondary">管理團隊結構與成員配置。</Paragraph>
+          </div>
+
+          {/* 工具列 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--spacing-lg)',
+            padding: 'var(--spacing-lg)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-light)'
+          }}>
             <Space>
               <Input.Search
                 placeholder="搜尋團隊名稱或描述"
                 onChange={e => setTeamSearchText(e.target.value)}
                 style={{ width: 300 }}
+                allowClear
               />
+              <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                篩選
+              </Button>
+            </Space>
+            <Space>
+              <Button className="toolbar-btn toolbar-btn-icon-only" icon={<ReloadOutlined />} />
+              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showTeamModal()}>新增團隊</Button>
             </Space>
           </div>
-          <Paragraph className="page-subtitle" type="secondary">管理團隊結構與成員配置。</Paragraph>
           <div className="table-wrapper">
             <Table
               dataSource={filteredTeams}
@@ -7757,8 +8623,10 @@
               </div>
 
               <Form.Item style={{ textAlign: 'right', marginTop: 24, marginBottom: 0 }}>
-                <Button onClick={handleTeamCancel}>取消</Button>
-                <Button type="primary" htmlType="submit">{editingTeam ? '更新團隊' : '創建團隊'}</Button>
+                <Space>
+                  <Button onClick={handleTeamCancel}>取消</Button>
+                  <Button type="primary" htmlType="submit">{editingTeam ? '更新團隊' : '創建團隊'}</Button>
+                </Space>
               </Form.Item>
             </Form>
           </Modal>
@@ -7843,21 +8711,24 @@
 
       return (
         <React.Fragment>
-          <Title level={2} className="page-title">角色管理</Title>
-          <Paragraph className="page-subtitle" type="secondary">為 super_admin 提供一個管理系統角色與其權限的界面。</Paragraph>
-          <Row gutter={16}>
-            <Col span={6}>
+          <div style={{ marginBottom: 'var(--spacing-md)' }}>
+            <Title level={2} className="page-title">角色管理</Title>
+            <Paragraph className="page-subtitle" type="secondary">為 super_admin 提供一個管理系統角色與其權限的界面。</Paragraph>
+          </div>
+          <Row gutter={24}>
+            <Col span={8}>
               <div className="role-list-container">
                 <div className="role-list-header">
-                  <Title level={5} style={{ margin: 0, color: 'rgba(255, 255, 255, 0.85)' }}>角色列表</Title>
+                  <Title level={5} style={{ margin: 0, color: 'var(--text-primary)', fontWeight: 600 }}>角色列表</Title>
                   <Button
                     type="primary"
                     size="small"
+                    icon={<PlusOutlined />}
                     onClick={handleCreateRole}
+                    className="toolbar-btn"
                     style={{
-                      background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
-                      border: 'none',
-                      borderRadius: '6px',
+                      height: '28px',
+                      fontSize: '12px',
                       fontWeight: '500'
                     }}
                   >
@@ -7868,35 +8739,132 @@
                   <List
                     dataSource={roles}
                     renderItem={item => (
-                      <List.Item key={item.key} onClick={() => handleSelectRole(item.key)} style={{ cursor: 'pointer', background: selectedRoleKey === item.key ? 'rgba(255,255,255,0.1)' : 'transparent', padding: '8px 16px', borderRadius: '4px' }}>
-                        {item.name}
+                      <List.Item
+                        key={item.key}
+                        onClick={() => handleSelectRole(item.key)}
+                        style={{
+                          cursor: 'pointer',
+                          background: selectedRoleKey === item.key ? 'var(--bg-active)' : 'transparent',
+                          padding: '12px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          margin: '4px 0',
+                          border: selectedRoleKey === item.key ? '1px solid var(--brand-primary)' : '1px solid transparent',
+                          transition: 'all 0.2s ease'
+                        }}
+                        className="role-list-item"
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                          <span style={{
+                            color: 'var(--text-primary)',
+                            fontWeight: selectedRoleKey === item.key ? '600' : '400',
+                            fontSize: '14px'
+                          }}>
+                            {item.name}
+                          </span>
+                          {item.isBuiltIn && (
+                            <Tag size="small" color="orange" style={{ fontSize: '10px', padding: '0 4px' }}>
+                              內建
+                            </Tag>
+                          )}
+                        </div>
                       </List.Item>
                     )}
                   />
                 </div>
               </div>
             </Col>
-            <Col span={18}>
-              {selectedRole && (
+            <Col span={16}>
+              {selectedRole ? (
                 <div className="role-permissions-container">
                   <div className="role-permissions-header">
-                    <Space>
-                      <span>{selectedRole.name}</span>
-                      <Tag color={selectedRole.isBuiltIn ? 'red' : 'blue'}>{selectedRole.isBuiltIn ? '內建角色' : '自定義角色'}</Tag>
-                    </Space>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Space size="middle">
+                        <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
+                          {selectedRole.name}
+                        </Title>
+                        <Tag
+                          color={selectedRole.isBuiltIn ? 'red' : 'blue'}
+                          style={{
+                            fontSize: '12px',
+                            fontWeight: '500',
+                            borderRadius: 'var(--radius-md)'
+                          }}
+                        >
+                          {selectedRole.isBuiltIn ? '內建角色' : '自定義角色'}
+                        </Tag>
+                      </Space>
+                      {selectedRole.isBuiltIn && (
+                        <Text type="secondary" style={{ fontSize: '12px' }}>
+                          內建角色權限無法修改
+                        </Text>
+                      )}
+                    </div>
                   </div>
                   <div className="role-permissions-content">
-                    <Title level={5}>權限設定</Title>
-                    <Tree
-                      checkable
-                      treeData={permissionTreeData}
-                      checkedKeys={checkedKeys}
-                      onCheck={onCheck}
-                      disabled={selectedRole.isBuiltIn}
-                      defaultExpandAll
-                    />
-                    {!selectedRole.isBuiltIn && <Button type="primary" onClick={handleSave} style={{ marginTop: '16px' }}>儲存變更</Button>}
+                    <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+                      <Title level={5} style={{
+                        color: 'var(--text-primary)',
+                        marginBottom: 'var(--spacing-md)',
+                        fontWeight: 600
+                      }}>
+                        權限設定
+                      </Title>
+                      <div style={{
+                        background: 'var(--bg-container)',
+                        border: '1px solid var(--border-light)',
+                        borderRadius: 'var(--radius-lg)',
+                        padding: 'var(--spacing-lg)',
+                        maxHeight: '400px',
+                        overflowY: 'auto'
+                      }}>
+                        <Tree
+                          checkable
+                          treeData={permissionTreeData}
+                          checkedKeys={checkedKeys}
+                          onCheck={onCheck}
+                          disabled={selectedRole.isBuiltIn}
+                          defaultExpandAll
+                          style={{
+                            background: 'transparent',
+                            color: 'var(--text-primary)'
+                          }}
+                        />
+                      </div>
+                    </div>
+                    {!selectedRole.isBuiltIn && (
+                      <div style={{ textAlign: 'right' }}>
+                        <Button
+                          type="primary"
+                          onClick={handleSave}
+                          size="large"
+                          style={{
+                            height: '40px',
+                            borderRadius: 'var(--radius-lg)',
+                            fontWeight: '500'
+                          }}
+                        >
+                          儲存變更
+                        </Button>
+                      </div>
+                    )}
                   </div>
+                </div>
+              ) : (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '400px',
+                  background: 'var(--bg-elevated)',
+                  border: '1px solid var(--border-light)',
+                  borderRadius: 'var(--radius-lg)',
+                  flexDirection: 'column',
+                  gap: 'var(--spacing-md)'
+                }}>
+                  <UserOutlined style={{ fontSize: '48px', color: 'var(--text-tertiary)' }} />
+                  <Text type="secondary" style={{ fontSize: '16px' }}>
+                    請從左側選擇一個角色以查看和編輯權限
+                  </Text>
                 </div>
               )}
             </Col>
@@ -8093,11 +9061,13 @@
             <Table columns={columns} dataSource={channels} rowKey="key" className="transparent-bg" />
           </div>
           <Modal title={editingChannel ? "編輯通知管道" : "新增通知管道"} open={isModalOpen} onCancel={handleCancel}
-            footer={[
-              <Button key="back" className="modal-footer-btn" onClick={handleCancel}>取消</Button>,
-              <Button key="test" className="modal-footer-btn" onClick={handleTest}>發送測試</Button>,
-              <Button key="submit" type="primary" className="modal-footer-btn" onClick={() => form.submit()}>儲存</Button>
-            ]}
+            footer={
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                <Button key="back" onClick={handleCancel}>取消</Button>
+                <Button key="test" onClick={handleTest}>發送測試</Button>
+                <Button key="submit" type="primary" onClick={() => form.submit()}>儲存</Button>
+              </div>
+            }
           >
             <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
               <Form.Item name="name" label="名稱" rules={[{ required: true }]}><Input /></Form.Item>
@@ -8394,13 +9364,13 @@
     const PlaceholderPage = ({ title, subtitle, icon }) => {
       return (
         <React.Fragment>
-          <div style={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            justifyContent: 'center', 
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
             height: '60vh',
-            textAlign: 'center' 
+            textAlign: 'center'
           }}>
             <div style={{
               fontSize: '64px',
@@ -8409,16 +9379,16 @@
             }}>
               {icon || <FileTextOutlined />}
             </div>
-            <Title level={2} style={{ 
+            <Title level={2} style={{
               color: 'var(--text-secondary)',
-              marginBottom: 'var(--spacing-md)' 
+              marginBottom: 'var(--spacing-md)'
             }}>
               {title}
             </Title>
-            <Paragraph style={{ 
+            <Paragraph style={{
               color: 'var(--text-tertiary)',
               fontSize: '16px',
-              maxWidth: '600px' 
+              maxWidth: '600px'
             }}>
               {subtitle || '此功能正在開發中，即將推出。'}
             </Paragraph>
@@ -8566,13 +9536,13 @@
           <Paragraph className="page-subtitle" type="secondary">
             管理平台級別的設定、存取控制與維運狀態。
           </Paragraph>
-          
+
           {/* 分組顯示管理功能 */}
           <div style={{ marginTop: '12px' }}>
             {/* 存取控制組 */}
             <div style={{ marginBottom: '20px' }}>
-              <Title level={5} style={{ 
-                color: 'var(--text-secondary)', 
+              <Title level={5} style={{
+                color: 'var(--text-secondary)',
                 fontWeight: '500',
                 marginBottom: '8px',
                 fontSize: '14px'
@@ -8582,18 +9552,18 @@
               <Row gutter={[12, 12]}>
                 {adminCards.filter(item => item.category === '存取控制').map(item => (
                   <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon 
-                      text="即將推出" 
+                    <Badge.Ribbon
+                      text="即將推出"
                       style={{ display: !item.enabled ? 'block' : 'none' }}
                     >
-                      <div 
+                      <div
                         className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
                         onClick={() => item.enabled && onNavigate(item.key)}
                         style={{ height: '100%' }}
                       >
                         <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{ 
+                            <div className="nav-item-icon" style={{
                               background: 'rgba(24, 144, 255, 0.1)',
                               padding: '8px',
                               borderRadius: 'var(--radius-md)',
@@ -8610,14 +9580,14 @@
                             </div>
                           </div>
                           {item.features && (
-                            <div style={{ 
-                              display: 'flex', 
-                              gap: '6px', 
+                            <div style={{
+                              display: 'flex',
+                              gap: '6px',
                               flexWrap: 'wrap',
                               marginTop: '6px'
                             }}>
                               {item.features.map((feature, idx) => (
-                                <Tag 
+                                <Tag
                                   key={idx}
                                   style={{
                                     background: 'rgba(255, 255, 255, 0.08)',
@@ -8645,8 +9615,8 @@
 
             {/* 平台設定組 */}
             <div style={{ marginBottom: '20px' }}>
-              <Title level={5} style={{ 
-                color: 'var(--text-secondary)', 
+              <Title level={5} style={{
+                color: 'var(--text-secondary)',
                 fontWeight: '500',
                 marginBottom: '8px',
                 fontSize: '14px'
@@ -8656,18 +9626,18 @@
               <Row gutter={[12, 12]}>
                 {adminCards.filter(item => item.category === '平台設定').map(item => (
                   <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon 
-                      text="即將推出" 
+                    <Badge.Ribbon
+                      text="即將推出"
                       style={{ display: !item.enabled ? 'block' : 'none' }}
                     >
-                      <div 
+                      <div
                         className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
                         onClick={() => item.enabled && onNavigate(item.key)}
                         style={{ height: '100%' }}
                       >
                         <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{ 
+                            <div className="nav-item-icon" style={{
                               background: 'rgba(24, 144, 255, 0.1)',
                               padding: '8px',
                               borderRadius: 'var(--radius-md)',
@@ -8684,14 +9654,14 @@
                             </div>
                           </div>
                           {item.features && (
-                            <div style={{ 
-                              display: 'flex', 
-                              gap: '8px', 
+                            <div style={{
+                              display: 'flex',
+                              gap: '8px',
                               flexWrap: 'wrap',
                               marginTop: '8px'
                             }}>
                               {item.features.map((feature, idx) => (
-                                <Tag 
+                                <Tag
                                   key={idx}
                                   style={{
                                     background: 'rgba(255, 255, 255, 0.08)',
@@ -8716,8 +9686,8 @@
 
             {/* 平台維運組 */}
             <div>
-              <Title level={5} style={{ 
-                color: 'var(--text-secondary)', 
+              <Title level={5} style={{
+                color: 'var(--text-secondary)',
                 fontWeight: '500',
                 marginBottom: '8px',
                 fontSize: '14px'
@@ -8727,18 +9697,18 @@
               <Row gutter={[12, 12]}>
                 {adminCards.filter(item => item.category === '平台維運').map(item => (
                   <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon 
-                      text="即將推出" 
+                    <Badge.Ribbon
+                      text="即將推出"
                       style={{ display: !item.enabled ? 'block' : 'none' }}
                     >
-                      <div 
+                      <div
                         className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
                         onClick={() => item.enabled && onNavigate(item.key)}
                         style={{ height: '100%' }}
                       >
                         <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{ 
+                            <div className="nav-item-icon" style={{
                               background: 'rgba(24, 144, 255, 0.1)',
                               padding: '8px',
                               borderRadius: 'var(--radius-md)',
@@ -8755,14 +9725,14 @@
                             </div>
                           </div>
                           {item.features && (
-                            <div style={{ 
-                              display: 'flex', 
-                              gap: '4px', 
+                            <div style={{
+                              display: 'flex',
+                              gap: '4px',
                               flexWrap: 'wrap',
                               marginTop: '4px'
                             }}>
                               {item.features.map((feature, idx) => (
-                                <Tag 
+                                <Tag
                                   key={idx}
                                   style={{
                                     background: 'rgba(255, 255, 255, 0.08)',
@@ -8845,22 +9815,22 @@
       };
       const sideMenuItems = [
         getItem('事件', 'incidents', <HistoryOutlined />, [
-          getItem('告警列表', 'incident-list'), 
-          getItem('告警規則', 'alerting-rules'), 
+          getItem('告警列表', 'incident-list'),
+          getItem('告警規則', 'alerting-rules'),
           getItem('靜音規則', 'silences'),
-        ]), 
+        ]),
         getItem('資源', 'resources', <HddOutlined />, [
-          getItem('資源列表', 'resource-list'), 
+          getItem('資源列表', 'resource-list'),
           getItem('資源群組', 'resource-groups'),
-        ]), 
-        { type: 'divider' }, 
-        getItem('分析', 'analyzing', <BarChartOutlined />), 
+        ]),
+        { type: 'divider' },
+        getItem('分析', 'analyzing', <BarChartOutlined />),
         getItem('自動化', 'automation', <CodeOutlined />, [
-          getItem('腳本庫', 'scripts'), 
-          getItem('排程管理', 'schedules'), 
+          getItem('腳本庫', 'scripts'),
+          getItem('排程管理', 'schedules'),
           getItem('執行日誌', 'executions'),
-        ]), 
-        { type: 'divider' }, 
+        ]),
+        { type: 'divider' },
         getItem('管理', 'administration', <SettingOutlined />),
       ];
 
@@ -8923,8 +9893,8 @@
           }
         }
         const adminPageMap = { 'user-management': '人員管理', 'team-management': '團隊管理', 'role-management': '角色管理', 'notification-strategies': '通知策略', 'notification-channels': '通知管道', 'system-settings': '系統設定', diagnostics: '平台診斷', 'audit-logs': '審計日誌', profile: '個人資料' };
-        const analyzePageMap = { 
-          'performance-insights': '效能洞察', 
+        const analyzePageMap = {
+          'performance-insights': '效能洞察',
           'cost-analysis': '成本分析',
           'incident-trends': '事件趨勢',
           'mttr-analysis': 'MTTR 分析',
@@ -8962,29 +9932,29 @@
           ),
           style: { cursor: 'default' }
         },
-        { 
-          key: 'profile', 
+        {
+          key: 'profile',
           label: (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <UserOutlined />
               <span>個人資料</span>
             </div>
           ),
-          onClick: () => setCurrentPage('profile') 
+          onClick: () => setCurrentPage('profile')
         },
-        { 
-          key: 'help', 
+        {
+          key: 'help',
           label: (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <QuestionCircleOutlined />
               <span>幫助中心</span>
             </div>
           ),
-          onClick: () => message.info('開啟幫助中心') 
+          onClick: () => message.info('開啟幫助中心')
         },
         { type: 'divider' },
-        { 
-          key: 'logout', 
+        {
+          key: 'logout',
           label: (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <LogoutOutlined style={{ color: 'var(--brand-danger)' }} />
@@ -9031,7 +10001,7 @@
         };
 
         const content = (
-          <div className="notification-dropdown" style={{ 
+          <div className="notification-dropdown" style={{
             width: 380,
             maxHeight: '520px',
             overflow: 'hidden',
@@ -9040,7 +10010,7 @@
             boxShadow: 'var(--shadow-2xl)'
           }}>
             {/* 標題區 */}
-            <div style={{ 
+            <div style={{
               padding: '12px 16px',
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.05) 100%)',
               borderBottom: '1px solid var(--border-light)',
@@ -9051,9 +10021,9 @@
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <div style={{ 
-                    width: '32px', 
-                    height: '32px', 
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
                     borderRadius: 'var(--radius-md)',
                     background: 'linear-gradient(135deg, rgba(24, 144, 255, 0.2) 0%, rgba(24, 144, 255, 0.1) 100%)',
                     display: 'flex',
@@ -9070,11 +10040,11 @@
                   </div>
                 </div>
                 {unreadCount > 0 && (
-                  <Button 
-                    type="text" 
-                    size="small" 
+                  <Button
+                    type="text"
+                    size="small"
                     onClick={handleMarkAllAsRead}
-                    style={{ 
+                    style={{
                       color: 'var(--brand-primary)',
                       fontSize: '13px',
                       fontWeight: '500'
@@ -9085,26 +10055,26 @@
                 )}
               </div>
             </div>
-            
+
             {/* 通知列表 */}
-            <div style={{ 
-              maxHeight: '420px', 
+            <div style={{
+              maxHeight: '420px',
               overflowY: 'auto',
               overflowX: 'hidden'
             }}>
               <List
                 dataSource={notifications}
                 renderItem={item => (
-                  <List.Item 
+                  <List.Item
                     onClick={() => {
                       if (!item.read) {
-                        setNotifications(notifications.map(n => 
+                        setNotifications(notifications.map(n =>
                           n.id === item.id ? { ...n, read: true } : n
                         ));
                       }
                       message.info(`跳轉至 ${item.title} 相關頁面`);
-                    }} 
-                    style={{ 
+                    }}
+                    style={{
                       cursor: 'pointer',
                       padding: '12px 16px',
                       borderBottom: '1px solid var(--border-light)',
@@ -9116,9 +10086,9 @@
                     <List.Item.Meta
                       avatar={
                         <div style={{ position: 'relative' }}>
-                          <Avatar 
-                            icon={getNotificationIcon(item.type, item.severity)} 
-                            style={{ 
+                          <Avatar
+                            icon={getNotificationIcon(item.type, item.severity)}
+                            style={{
                               backgroundColor: `${getNotificationColor(item.severity)}15`,
                               color: getNotificationColor(item.severity),
                               border: `1px solid ${getNotificationColor(item.severity)}30`,
@@ -9143,7 +10113,7 @@
                       }
                       title={
                         <div style={{ marginBottom: '2px' }}>
-                          <span style={{ 
+                          <span style={{
                             fontWeight: item.read ? '400' : '600',
                             color: item.read ? 'var(--text-secondary)' : 'var(--text-primary)',
                             fontSize: '14px',
@@ -9155,7 +10125,7 @@
                       }
                       description={
                         <div>
-                          <div style={{ 
+                          <div style={{
                             color: item.read ? 'var(--text-tertiary)' : 'var(--text-secondary)',
                             fontSize: '13px',
                             marginBottom: '4px',
@@ -9163,35 +10133,35 @@
                           }}>
                             {item.description}
                           </div>
-                          <div style={{ 
+                          <div style={{
                             color: 'var(--text-tertiary)',
                             fontSize: '12px',
                             fontWeight: '500'
                           }}>
-                          {item.time.fromNow()}
+                            {item.time.fromNow()}
+                          </div>
                         </div>
-                      </div>
-                    }
-                  />
-                </List.Item>
-              )}
-            />
+                      }
+                    />
+                  </List.Item>
+                )}
+              />
             </div>
-            
+
             {/* 底部操作 */}
-            <div style={{ 
+            <div style={{
               padding: '12px',
               textAlign: 'center',
               borderTop: '1px solid var(--border-light)',
               background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.03) 100%)'
             }}>
-              <Button 
-                type="link" 
+              <Button
+                type="link"
                 onClick={() => {
                   setCurrentPage('notifications');
                   message.info("導向通知管理頁面");
                 }}
-                style={{ 
+                style={{
                   color: 'var(--brand-primary)',
                   fontWeight: '500'
                 }}
@@ -9201,11 +10171,11 @@
             </div>
           </div>
         );
-        
+
         return (
-          <Popover 
-            content={content} 
-            trigger="click" 
+          <Popover
+            content={content}
+            trigger="click"
             placement="bottomRight"
             overlayClassName="notification-popover"
           >
@@ -9219,11 +10189,11 @@
                 gap: '4px'
               }}
             >
-              <Badge count={unreadCount} offset={[-2, 2]} style={{ 
+              <Badge count={unreadCount} offset={[-2, 2]} style={{
                 '--ant-badge-height': '18px',
                 '--ant-badge-dot-size': '8px'
               }}>
-                <BellOutlined style={{ 
+                <BellOutlined style={{
                   fontSize: '18px',
                   color: 'var(--text-secondary)'
                 }} />
@@ -9271,9 +10241,42 @@
       return (
         <Layout style={{ minHeight: '100vh' }}>
           <Layout.Sider trigger={null} collapsible collapsed={collapsed} width={220}>
-            <div style={{ height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', gap: '10px' }} onClick={() => setCurrentPage('dashboard')}>
-              <DeploymentUnitOutlined style={{ fontSize: '24px', color: '#8a2be2' }} />
-              {!collapsed && <Title level={4} style={{ margin: 0 }}>SRE Platform</Title>}
+            <div style={{
+              height: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              cursor: 'pointer',
+              gap: '10px',
+              padding: '0 16px',
+              transition: 'all 0.3s ease'
+            }} onClick={() => setCurrentPage('dashboard')}>
+              <div style={{
+                width: '30px',
+                height: '30px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderRadius: '6px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 16px rgba(102, 126, 234, 0.3)',
+                transition: 'all 0.3s ease'
+              }}>
+                <DeploymentUnitOutlined style={{
+                  fontSize: '18px',
+                  color: 'white',
+                  transition: 'all 0.3s ease'
+                }} />
+              </div>
+              {!collapsed && (
+                <Title level={4} style={{
+                  margin: 0,
+                  color: 'var(--text-primary)',
+                  fontWeight: '600',
+                  fontSize: '18px',
+                  letterSpacing: '-0.3px'
+                }}>SRE Platform</Title>
+              )}
             </div>
             <Menu
               theme="dark"
@@ -9307,8 +10310,8 @@
               <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
                 <Input prefix={<SearchOutlined />} placeholder="Search... (Ctrl+K)" style={{ width: 250 }} onClick={() => setIsSearchModalOpen(true)} readOnly />
                 <NotificationCenter />
-                <Dropdown 
-                  menu={{ 
+                <Dropdown
+                  menu={{
                     items: userMenuItems,
                     style: {
                       minWidth: 200,
@@ -9319,10 +10322,10 @@
                   placement="bottomRight"
                   overlayClassName="user-dropdown-menu"
                 >
-                  <Button 
-                    type="text" 
-                    style={{ 
-                      display: 'flex', 
+                  <Button
+                    type="text"
+                    style={{
+                      display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
                       padding: '4px 12px',
@@ -9332,24 +10335,24 @@
                     }}
                     className="user-menu-trigger"
                   >
-                    <Avatar 
-                      size={28} 
-                      icon={<UserOutlined />} 
-                      style={{ 
+                    <Avatar
+                      size={28}
+                      icon={<UserOutlined />}
+                      style={{
                         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                         fontSize: '14px'
                       }}
                     />
-                    <span style={{ 
-                      color: 'var(--text-primary)', 
+                    <span style={{
+                      color: 'var(--text-primary)',
                       fontWeight: '500',
                       fontSize: '14px'
                     }}>
                       admin
                     </span>
-                    <DownOutlined style={{ 
-                      fontSize: '10px', 
-                      color: 'var(--text-secondary)' 
+                    <DownOutlined style={{
+                      fontSize: '10px',
+                      color: 'var(--text-secondary)'
                     }} />
                   </Button>
                 </Dropdown>
