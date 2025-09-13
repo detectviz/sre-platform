@@ -463,6 +463,25 @@
       background: transparent !important;
     }
 
+    /* 高亮行樣式 */
+    .highlighted-row {
+      background: rgba(24, 144, 255, 0.1) !important;
+      border-left: 3px solid #1890ff !important;
+      animation: highlight-fade 3s ease-out;
+    }
+
+    @keyframes highlight-fade {
+      0% {
+        background: rgba(24, 144, 255, 0.3) !important;
+        border-left-color: #40a9ff !important;
+      }
+
+      100% {
+        background: rgba(24, 144, 255, 0.1) !important;
+        border-left-color: #1890ff !important;
+      }
+    }
+
     /* Top N 資源使用列表表格樣式 */
     .topn-table .ant-table-tbody>tr>td {
       padding: 6px 8px !important;
@@ -2734,7 +2753,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker } = antd;
-    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, LinkOutlined, MailOutlined } = icons;
+    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined } = icons;
     const { Title, Text, Paragraph } = Typography;
     const { TextArea } = Input;
     const { RangePicker } = DatePicker;
@@ -3168,7 +3187,12 @@
           key: 'host',
           width: '30%',
           render: (text) => (
-            <div className="text-secondary" style={{ fontSize: '12px' }}>
+            <div className="text-secondary" style={{ fontSize: '12px', cursor: 'pointer' }} onClick={() => {
+              // 切换到列表模式并筛选该主机
+              setViewMode('list');
+              setSearchText(text);
+              setHighlightedResource(text);
+            }}>
               {text}
             </div>
           )
@@ -3230,7 +3254,7 @@
       );
 
       return (
-        <Card title={titleContent} style={{ height: '100%', display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 16px 16px' }}>
+        <Card title={titleContent} style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 16px 16px' }}>
           <div style={{ height: '100%', overflow: 'auto' }}>
             <Table
               dataSource={data[metric]}
@@ -3244,25 +3268,109 @@
       );
     };
 
-    const AIInsightSummary = () => (
-      <div style={{
-        marginTop: '24px',
-        background: 'linear-gradient(135deg, rgba(118, 75, 162, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%)',
-        border: '1px solid rgba(118, 75, 162, 0.2)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--spacing-xl)',
-        backdropFilter: 'blur(10px)',
-        boxShadow: 'var(--shadow-md)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 'var(--spacing-md)' }}>
-          <RobotOutlined style={{ fontSize: '24px', color: 'var(--brand-info)' }} />
-          <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>AI Insight: 過去 24 小時摘要</Title>
+    const AIInsightSummary = ({ onNavigate }) => {
+      const [isRefreshing, setIsRefreshing] = useState(false);
+      const [insightContent, setInsightContent] = useState('整體系統穩定，但觀察到 Production Web Servers 的 CPU 使用率在高峰時段有 15% 的增長，接近警戒線。資料庫延遲平穩，無明顯異常。建議關注 web-prod-03 主機的日誌，該主機出現了數次響應緩慢的情況。');
+
+      // 刷新AI分析的函數
+      const handleRefresh = async () => {
+        setIsRefreshing(true);
+        try {
+          // 模擬AI重新分析過程
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // 模擬不同的AI分析結果
+          const analysisVariants = [
+            '整體系統穩定，但觀察到 Production Web Servers 的 CPU 使用率在高峰時段有 15% 的增長，接近警戒線。資料庫延遲平穩，無明顯異常。建議關注 web-prod-03 主機的日誌，該主機出現了數次響應緩慢的情況。',
+            '系統運行良好，所有核心服務表現正常。檢測到 資料庫 連接池使用率略有上升，但仍在安全範圍內。建議在下次維護窗口期間優化 Production Web Servers 的負載分配策略。',
+            '發現潛在的性能瓶頸：web-prod-03 主機的磁盤I/O使用率持續偏高，可能影響整體響應時間。資料庫查詢性能良好，但建議增加對 Production Web Servers 集群的監控頻率。',
+            '系統整體健康，但注意到網絡延遲略有波動。Production Web Servers 負載均衡運行穩定，資料庫性能優異。建議在繁忙時段增加 web-prod-03 的資源配置以提升整體服務質量。'
+          ];
+
+          const randomAnalysis = analysisVariants[Math.floor(Math.random() * analysisVariants.length)];
+          setInsightContent(randomAnalysis);
+
+          message.success('AI 分析已更新');
+        } catch (error) {
+          message.error('重新生成分析失敗');
+        } finally {
+          setIsRefreshing(false);
+        }
+      };
+
+      // 渲染實體連結的函數
+      const renderEntityLinkedText = (text) => {
+        const entityPatterns = [
+          { pattern: /Production Web Servers/g, type: 'resource-group', param: 'Production Web Servers' },
+          { pattern: /web-prod-03/g, type: 'resource', param: 'web-prod-03' },
+          { pattern: /資料庫/g, type: 'service', param: '資料庫' }
+        ];
+
+        let result = text;
+        entityPatterns.forEach(({ pattern, type, param }) => {
+          result = result.replace(pattern, (match) => {
+            let href = '#';
+            let color = '#1890ff';
+
+            switch (type) {
+              case 'resource-group':
+                href = `/resource-list?group=${encodeURIComponent(param)}`;
+                color = '#52c41a';
+                break;
+              case 'resource':
+                href = `/resource-detail/${param}`;
+                color = '#faad14';
+                break;
+              case 'service':
+                href = `/service-dashboard/${param}`;
+                color = '#722ed1';
+                break;
+            }
+
+            return `<a href="${href}" style="color: ${color}; text-decoration: underline; cursor: pointer; font-weight: 600;" onclick="event.preventDefault(); return false;">${match}</a>`;
+          });
+        });
+
+        return <span dangerouslySetInnerHTML={{ __html: result }} />;
+      };
+
+      return (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+          border: '2px solid rgba(114, 46, 209, 0.6)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--spacing-lg)',
+          backdropFilter: 'blur(10px)',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          margin: '0 0 16px 0'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--spacing-md)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <RobotOutlined style={{ fontSize: '24px', color: '#722ed1' }} />
+              <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>AI 每日簡報</Title>
+            </div>
+            <Tooltip title="重新生成分析">
+              <Avatar
+                size={28}
+                shape="square"
+                icon={<ReloadOutlined spin={isRefreshing} />}
+                onClick={handleRefresh}
+                style={{
+                  background: 'linear-gradient(135deg, #722ed1 0%, #9c4dcc 100%)',
+                  fontSize: '14px',
+                  cursor: isRefreshing ? 'not-allowed' : 'pointer',
+                  opacity: isRefreshing ? 0.6 : 1,
+                  transition: 'all 0.2s ease'
+                }}
+              />
+            </Tooltip>
+          </div>
+          <Paragraph style={{ margin: 0, lineHeight: 1.7, color: 'var(--text-secondary)', fontSize: '14px' }}>
+            {renderEntityLinkedText(insightContent)}
+          </Paragraph>
         </div>
-        <Paragraph style={{ margin: 0, lineHeight: 1.7, color: 'var(--text-secondary)' }}>
-          整體系統穩定，但觀察到 <strong>Production Web Servers</strong> 的 CPU 使用率在高峰時段有 <strong>15%</strong> 的增長，接近警戒線。資料庫延遲平穩，無明顯異常。建議關注 <strong>web-prod-03</strong> 主機的日誌，該主機出現了數次響應緩慢的情況。
-        </Paragraph>
-      </div>
-    );
+      );
+    };
 
     const DashboardPage = ({ themeMode, onNavigate }) => {
       // This component is now much cleaner.
@@ -3275,6 +3383,13 @@
           backgroundColor: 'rgba(0,0,0,0.8)',
           borderColor: 'rgba(255,255,255,0.2)',
           textStyle: { color: '#fff', fontSize: 11 }
+        },
+        // 添加點擊事件處理
+        onClick: function (params) {
+          if (onNavigate && params.name) {
+            // 跳轉到資源列表頁面，並帶上群組篩選參數
+            onNavigate('resource-list', { groupFilter: params.name });
+          }
         },
         legend: {
           data: ['健康', '警告', '嚴重'],
@@ -3334,68 +3449,104 @@
         ]
       };
 
-      // 環圈圖選項 - 資源狀態分佈
-      const doughnutOption = {
+      // 服務健康度熱力圖選項 - 四大黃金信號監控
+      const serviceHealthHeatmapOption = {
         tooltip: {
-          trigger: 'item',
-          formatter: '{a} <br/>{b}: {c} ({d}%)',
+          position: 'top',
           backgroundColor: 'rgba(0,0,0,0.8)',
           borderColor: 'rgba(255,255,255,0.2)',
-          textStyle: { color: '#fff', fontSize: 11 }
+          textStyle: { color: '#fff', fontSize: 11 },
+          formatter: function (params) {
+            const services = ['使用者認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'];
+            const signals = ['延遲 (Latency)', '流量 (Traffic)', '錯誤 (Errors)', '飽和度 (Saturation)'];
+            const service = services[params.data[1]];
+            const signal = signals[params.data[0]];
+            const statusText = params.data[2] === 0 ? '健康' : params.data[2] === 1 ? '警告' : '嚴重';
+            return `${service}<br/>${signal}: ${statusText}`;
+          }
         },
-        title: {
-          text: '36.9%',
-          subtext: '妥善率',
+        // 添加點擊事件處理
+        onClick: function (params) {
+          if (onNavigate && params.data) {
+            const services = ['使用者認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'];
+            const signals = ['延遲', '流量', '錯誤', '飽和度'];
+            const service = services[params.data[1]];
+            const signal = signals[params.data[0]];
+            // 跳轉到該服務的專屬儀表板
+            onNavigate('service-dashboard', { service: service, signal: signal });
+          }
+        },
+        grid: {
+          height: '60%',
+          top: '5%',
+          left: '20%',
+          bottom: '30%'
+        },
+        xAxis: {
+          type: 'category',
+          data: ['延遲', '流量', '錯誤', '飽和度'],
+          splitArea: {
+            show: true
+          },
+          axisLabel: {
+            color: 'rgba(255,255,255,0.85)',
+            fontSize: 11
+          }
+        },
+        yAxis: {
+          type: 'category',
+          data: ['使用者認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'],
+          splitArea: {
+            show: true
+          },
+          axisLabel: {
+            color: 'rgba(255,255,255,0.85)',
+            fontSize: 11
+          }
+        },
+        visualMap: {
+          min: 0,
+          max: 2,
+          type: 'piecewise',
+          pieces: [
+            { min: 0, max: 0, color: '#52c41a', label: '健康' },
+            { min: 1, max: 1, color: '#faad14', label: '警告' },
+            { min: 2, max: 2, color: '#ff4d4f', label: '嚴重' }
+          ],
+          orient: 'horizontal',
           left: 'center',
-          top: 'center',
+          bottom: '12%',
+          itemWidth: 20,
+          itemHeight: 15,
+          textGap: 8,
+          itemGap: 15,
           textStyle: {
-            fontSize: 24,
-            fontWeight: 'bold',
-            color: 'rgba(255,255,255,0.95)',
-            lineHeight: 0.6
-          },
-          subtextStyle: {
-            fontSize: 12,
-            color: 'rgba(255,255,255,0.7)',
-            fontWeight: 'normal'
-          },
-          itemGap: -6
+            color: 'rgba(255,255,255,0.9)',
+            fontSize: 13,
+            fontWeight: 500
+          }
         },
-        series: [
-          {
-            name: '資源狀態',
-            type: 'pie',
-            radius: ['50%', '85%'],
-            center: ['50%', '50%'],
-            data: [
-              { value: 138, name: '健康', itemStyle: { color: '#52c41a' } },
-              { value: 143, name: '警告', itemStyle: { color: '#faad14' } },
-              { value: 93, name: '嚴重', itemStyle: { color: '#ff4d4f' } }
-            ],
-            label: {
-              show: true,
-              formatter: '{b}: {c}',
-              color: 'rgba(255,255,255,0.85)',
-              fontSize: 12,
-              position: 'outside'
-            },
-            labelLine: {
-              show: true,
-              length: 12,
-              length2: 8,
-              lineStyle: {
-                color: 'rgba(255,255,255,0.3)'
-              }
-            },
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowOffsetX: 0,
-                shadowColor: 'rgba(0, 0, 0, 0.5)'
-              }
+        series: [{
+          name: '服務健康度',
+          type: 'heatmap',
+          data: [
+            [0, 0, 0], [1, 0, 0], [2, 0, 1], [3, 0, 0],  // 使用者認證
+            [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 1],  // 訂單系統
+            [0, 2, 1], [1, 2, 0], [2, 2, 2], [3, 2, 0],  // 支付閘道
+            [0, 3, 0], [1, 3, 0], [2, 3, 0], [3, 3, 0],  // 通知服務
+            [0, 4, 0], [1, 4, 1], [2, 4, 0], [3, 4, 0],  // 資料分析
+            [0, 5, 0], [1, 5, 0], [2, 5, 0], [3, 5, 1]   // 檔案儲存
+          ],
+          label: {
+            show: false
+          },
+          emphasis: {
+            itemStyle: {
+              shadowBlur: 10,
+              shadowColor: 'rgba(0, 0, 0, 0.5)'
             }
           }
-        ]
+        }]
       };
 
       return (
@@ -3472,10 +3623,13 @@
             </Row>
           </div>
 
+          {/* AI 作戰參謀每日簡報 */}
+          <AIInsightSummary onNavigate={onNavigate} />
+
           {/* 區塊 B: 資源健康度與關鍵業務監控 (Resource Health & Key Business Monitoring) */}
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
             <Row gutter={[16, 12]} style={{ flexGrow: 1 }}>
-              {/* 左側：資源狀態分佈圖表 - 佔 1/3 */}
+              {/* 左側：服務健康度熱力圖 - 佔 1/3 */}
               <Col xs={24} sm={24} md={8} lg={8} style={{ display: 'flex' }}>
                 <div
                   className="chart-card"
@@ -3490,9 +3644,9 @@
                     if (onNavigate) onNavigate('resource-list');
                   }}
                 >
-                  <Title level={5} className="chart-title">資源數量 374 台</Title>
+                  <Title level={5} className="chart-title">服務/業務健康度總覽</Title>
                   <div style={{ flexGrow: 1 }}>
-                    <EchartsForReact option={doughnutOption} isDark={themeMode === 'dark'} />
+                    <EchartsForReact option={serviceHealthHeatmapOption} isDark={themeMode === 'dark'} />
                   </div>
                 </div>
               </Col>
@@ -3521,13 +3675,13 @@
             </Row>
           </div>
 
-          <AIInsightSummary />
-
         </div>
       );
     };
 
     const ResourceListPage = ({ pageParams, themeMode, onNavigate }) => {
+      const [viewMode, setViewMode] = useState('dashboard'); // 視圖模式 state
+
       const AttentionRequiredList = ({ onNavigate }) => {
         const attentionResources = resources
           .filter(r => r.status === 'warning' || r.status === 'critical')
@@ -3555,7 +3709,11 @@
             dataIndex: 'name',
             key: 'name',
             width: '45%',
-            render: (text, record) => <a onClick={() => message.info(`Navigating to details for ${text}`)}>{text}</a>
+            render: (text, record) => <a onClick={() => {
+              setViewMode('list');
+              setSearchText(text);
+              setHighlightedResource(text);
+            }}>{text}</a>
           },
           {
             title: '告警',
@@ -3594,39 +3752,88 @@
       };
       const ResourceHealthHeatmap = ({ themeMode }) => {
         const heatmapData = {
-          groups: ['DB Prod', 'Web Prod', 'API GW', 'Cache', 'Staging', 'Monitoring'],
+          groups: ['Monitoring', 'Staging', 'Cache', 'API GW', 'Web Prod', 'DB Prod'],
           resources: ['Host-01', 'Host-02', 'Host-03', 'Host-04', 'Host-05', 'Host-06', 'Host-07', 'Host-08'],
           health: [
-            [0, 0, 0], [0, 1, 0], [0, 2, 1], [0, 3, 0], [0, 4, 2], [0, 5, 0], [0, 6, 0], [0, 7, 1],
-            [1, 0, 1], [1, 1, 0], [1, 2, 0], [1, 3, 0], [1, 4, 0], [1, 5, 1], [1, 6, 0], [1, 7, 0],
-            [2, 0, 2], [2, 1, 2], [2, 2, 1], [2, 3, 0], [2, 4, 0], [2, 5, 0], [2, 6, 0], [2, 7, 0],
-            [3, 0, 0], [3, 1, 0], [3, 2, 0], [3, 3, 0], [3, 4, 0], [3, 5, 0], [3, 6, 0], [3, 7, 0],
-            [4, 0, 1], [4, 1, 1], [4, 2, 0], [4, 3, 0], [4, 4, 1], [4, 5, 0], [4, 6, 0], [4, 7, 0],
-            [5, 0, 0], [5, 1, 0], [5, 2, 0], [5, 3, 0], [5, 4, 0], [5, 5, 0], [5, 6, 0], [5, 7, 0],
-          ].map(item => [item[1], item[0], item[2]]) // ECharts heatmap data format is [x, y, value]
+            // DB Prod (index 0 in groups)
+            [0, 5, 1], [1, 5, 2], [2, 5, 2], [3, 5, 1], [4, 5, 0], [5, 5, 1], [6, 5, 0], [7, 5, 1],
+            // Web Prod (index 1 in groups)
+            [0, 4, 0], [1, 4, 0], [2, 4, 1], [3, 4, 0], [4, 4, 0], [5, 4, 0], [6, 4, 0], [7, 4, 0],
+            // API GW (index 2 in groups)
+            [0, 3, 2], [1, 3, 2], [2, 3, 1], [3, 3, 0], [4, 3, 0], [5, 3, 0], [6, 3, 0], [7, 3, 0],
+            // Cache (index 3 in groups)
+            [0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0], [4, 2, 0], [5, 2, 0], [6, 2, 0], [7, 2, 0],
+            // Staging (index 4 in groups)
+            [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0], [4, 1, 0], [5, 1, 0], [6, 1, 0], [7, 1, 0],
+            // Monitoring (index 5 in groups)
+            [0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0], [4, 0, 0], [5, 0, 0], [6, 0, 0], [7, 0, 0]
+          ]
         };
 
         const heatmapOption = {
           tooltip: {
             position: 'top',
             formatter: function (params) {
-              return `${heatmapData.resources[params.value[0]]} @ ${heatmapData.groups[params.value[1]]}<br/>Status: <strong>${['Healthy', 'Warning', 'Critical'][params.value[2]]}</strong>`;
+              return `${heatmapData.resources[params.value[0]]} @ ${heatmapData.groups[params.value[1]]}<br/>Status: <strong>${['健康', '警告', '嚴重'][params.value[2]]}</strong>`;
             },
             backgroundColor: 'rgba(0,0,0,0.85)',
             borderColor: 'rgba(255,255,255,0.2)',
             textStyle: { color: '#fff' }
           },
-          grid: { height: '75%', top: '5%', left: '12%', right: '5%', bottom: '20%' },
-          xAxis: { type: 'category', data: heatmapData.resources, splitArea: { show: false }, axisLabel: { interval: 0, rotate: 30, color: 'rgba(255,255,255,0.7)' } },
-          yAxis: { type: 'category', data: heatmapData.groups, splitArea: { show: false }, axisLabel: { color: 'rgba(255,255,255,0.7)' } },
+          grid: { height: '70%', top: '8%', left: '15%', right: '5%', bottom: '22%' },
+          xAxis: {
+            type: 'category',
+            data: heatmapData.resources,
+            splitArea: { show: false },
+            axisLabel: {
+              interval: 0,
+              rotate: 0,
+              color: themeMode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)',
+              fontSize: 12,
+              fontWeight: 'normal'
+            },
+            axisLine: {
+              lineStyle: {
+                color: themeMode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+              }
+            }
+          },
+          yAxis: {
+            type: 'category',
+            data: heatmapData.groups,
+            splitArea: { show: false },
+            axisLabel: {
+              color: themeMode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)',
+              fontSize: 12,
+              fontWeight: 'normal'
+            },
+            axisLine: {
+              lineStyle: {
+                color: themeMode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
+              }
+            }
+          },
           visualMap: {
             min: 0, max: 2, calculable: false, show: false,
             inRange: { color: ['#52c41a', '#faad14', '#ff4d4f'] } // Healthy, Warning, Critical
           },
           series: [{
-            name: 'Resource Health', type: 'heatmap', data: heatmapData.health,
+            name: 'Resource Health',
+            type: 'heatmap',
+            data: heatmapData.health,
             label: { show: false },
-            emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+            itemStyle: {
+              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+              borderWidth: 1
+            },
+            emphasis: {
+              itemStyle: {
+                shadowBlur: 10,
+                shadowColor: 'rgba(0, 0, 0, 0.5)',
+                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
+                borderWidth: 2
+              }
+            }
           }]
         };
 
@@ -3688,9 +3895,22 @@
       const [editingResource, setEditingResource] = useState(null);
       const [searchText, setSearchText] = useState('');
       const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+      const [highlightedResource, setHighlightedResource] = useState('');
       const [form] = Form.useForm();
       const { message, modal } = antd.App.useApp();
       const confirmDelete = useDeleteConfirm();
+
+      // 当搜索文本改变时清除高亮状态
+      useEffect(() => {
+        if (searchText && highlightedResource) {
+          // 如果搜索文本不包含高亮资源名，则清除高亮
+          const lowerSearch = searchText.toLowerCase();
+          const lowerHighlight = highlightedResource.toLowerCase();
+          if (!lowerHighlight.includes(lowerSearch) && !lowerSearch.includes(lowerHighlight)) {
+            setHighlightedResource('');
+          }
+        }
+      }, [searchText, highlightedResource]);
 
       const showModal = (resource = null) => {
         setEditingResource(resource);
@@ -3704,7 +3924,7 @@
           setResources(resources.map(res => res.key === editingResource.key ? { ...res, ...values, status } : res));
           message.success('資源更新成功');
         } else {
-          const newResource = { ...values, key: `r_${Date.now()}`, status: 'unknown' };
+          const newResource = { ...values, key: `r_${Date.now()}`, status: 'unknown', trend: generateTrend() };
           setResources([newResource, ...resources]);
           message.success('資源新增成功');
         }
@@ -3742,10 +3962,10 @@
       const createSparklineOption = (trendData) => ({
         backgroundColor: 'transparent',
         grid: { top: 4, bottom: 4, left: 2, right: 2 },
-        xAxis: { type: 'category', show: false, data: trendData.map((_, i) => i) },
+        xAxis: { type: 'category', show: false, data: (trendData || []).map((_, i) => i) },
         yAxis: { type: 'value', show: false, min: 'dataMin', max: 'dataMax' },
         series: [{
-          data: trendData,
+          data: trendData || [],
           type: 'line',
           smooth: true,
           showSymbol: false,
@@ -3809,17 +4029,29 @@
           width: '15%',
           render: (tags) => (
             <Space size={[4, 4]} wrap>
-              {tags && tags.length > 0 ? tags.map(tag => {
-                const tagColorMap = {
-                  'production': 'red',
-                  'staging': 'orange',
-                  'database': 'blue',
-                  'web-server': 'green',
-                  'high-priority': 'red',
-                  'team-alpha': 'purple'
-                };
-                return <Tag key={tag} color={tagColorMap[tag] || 'default'} size="small">{tag}</Tag>;
-              }) : <span style={{ color: 'var(--text-secondary)' }}>無標籤</span>}
+              {tags && (
+                Array.isArray(tags) && tags.length > 0 ? tags.map(tag => {
+                  const tagColorMap = {
+                    'production': 'red',
+                    'staging': 'orange',
+                    'database': 'blue',
+                    'web-server': 'green',
+                    'high-priority': 'red',
+                    'team-alpha': 'purple'
+                  };
+                  return <Tag key={tag} color={tagColorMap[tag] || 'default'} size="small">{tag}</Tag>;
+                }) : !Array.isArray(tags) && Object.keys(tags).length > 0 ? Object.entries(tags).map(([key, value]) => {
+                  const tagColorMap = {
+                    'production': 'red',
+                    'staging': 'orange',
+                    'database': 'blue',
+                    'web-server': 'green',
+                    'high-priority': 'red',
+                    'team-alpha': 'purple'
+                  };
+                  return <Tag key={key} color={tagColorMap[key] || 'default'} size="small">{key}:{value}</Tag>;
+                }) : <span style={{ color: 'var(--text-secondary)' }}>無標籤</span>
+              )}
             </Space>
           )
         },
@@ -3872,7 +4104,11 @@
         filteredResources = filteredResources.filter(res =>
           res.name.toLowerCase().includes(searchText.toLowerCase()) ||
           res.ip_address.toLowerCase().includes(searchText.toLowerCase()) ||
-          (res.tags && res.tags.some(tag => tag.toLowerCase().includes(searchText.toLowerCase())))
+          (res.tags && (
+            Array.isArray(res.tags) ?
+              res.tags.some(tag => tag.toLowerCase().includes(searchText.toLowerCase())) :
+              Object.keys(res.tags).some(key => key.toLowerCase().includes(searchText.toLowerCase()) || res.tags[key].toLowerCase().includes(searchText.toLowerCase()))
+          ))
         );
       }
 
@@ -3889,7 +4125,6 @@
         const kpiData = {
           total: 374,
           health: { healthy: 138, warning: 143, critical: 93 },
-          cloud: { aws: 250, gcp: 124 },
           os: { linux: 350, windows: 24 }
         };
 
@@ -3929,6 +4164,7 @@
         );
 
         return (
+          // 註解：卡片元件，用於顯示資源總覽
           <Card title="資源總覽" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, display: 'flex', alignItems: 'stretch' }}>
             <Row gutter={[16, 16]} style={{ width: '100%' }}>
               <Col span={12}>
@@ -3937,6 +4173,14 @@
                 </StatBox>
               </Col>
               <Col span={12}>
+                <StatBox>
+                  <Statistic title="作業系統分佈" value={kpiData.os.linux} suffix="Linux" />
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                    Windows: {kpiData.os.windows}
+                  </div>
+                </StatBox>
+              </Col>
+              <Col span={24}>
                 <StatBox style={{ display: 'flex', alignItems: 'center' }}>
                   <div style={{ flex: 1 }}>
                     <Statistic title="健康狀態" value={kpiData.health.healthy} suffix="健康" />
@@ -3949,113 +4193,224 @@
                   </div>
                 </StatBox>
               </Col>
-              <Col span={12}>
-                <StatBox>
-                  <Statistic title="雲服務商分佈" value={kpiData.cloud.aws} suffix="AWS" />
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                    GCP: {kpiData.cloud.gcp}
-                  </div>
-                </StatBox>
-              </Col>
-              <Col span={12}>
-                <StatBox>
-                  <Statistic title="作業系統分佈" value={kpiData.os.linux} suffix="Linux" />
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                    Windows: {kpiData.os.windows}
-                  </div>
-                </StatBox>
-              </Col>
             </Row>
           </Card>
         );
       };
 
-      return (
-        <React.Fragment>
-          {/* 頁面標題和工具列 */}
-          <div style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <Title level={2} className="page-title" style={{ margin: 0 }}>資源列表</Title>
-              <Paragraph className="page-subtitle" type="secondary" style={{ margin: '4px 0 0 0' }}>
-                指揮中心儀表板 - 無需滾動即可掌握全局狀態。
-              </Paragraph>
-            </div>
-            <Space>
-              <Input.Search
-                placeholder="搜尋資源..."
-                style={{ width: 250 }}
-                allowClear
-              />
-              <Button className="toolbar-btn" icon={<FilterOutlined />}>篩選</Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增資源</Button>
-            </Space>
-          </div>
+      // DashboardView 重新設計 - 扁平化資訊卡片
+      const DashboardView = () => {
+        // 計算需要關注的資源數量
+        const attentionResources = resources
+          .filter(r => r.status === 'warning' || r.status === 'critical');
 
-          {/* 2x2 Grid Layout */}
-          <div style={{ height: 'calc(100vh - 48px - 48px - 80px)', display: 'flex', flexDirection: 'column' }}>
-            <Row gutter={[16, 16]} style={{ flex: 1 }}>
-              {/* Top-Left Quadrant */}
-              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
-                <ResourceOverviewKPIs themeMode={themeMode} />
+        return (
+          <div style={{ height: 'calc(100vh - 48px - 48px - 100px)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* 第一行：資源統計概覽 */}
+            <Row gutter={[16, 16]}>
+              <Col span={6}>
+                <Card style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
+                  <Statistic
+                    title="總資源數"
+                    value={374}
+                    prefix={<HddOutlined style={{ color: 'var(--brand-primary)' }} />}
+                    valueStyle={{ color: 'var(--text-primary)', fontSize: '28px' }}
+                  />
+                </Card>
               </Col>
-              {/* Top-Right Quadrant */}
+              <Col span={6}>
+                <Card style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
+                  <Statistic
+                    title="健康狀態"
+                    value={138}
+                    suffix="健康"
+                    prefix={<CheckCircleOutlined style={{ color: 'var(--status-success)' }} />}
+                    valueStyle={{ color: 'var(--status-success)', fontSize: '28px' }}
+                  />
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                    143 警告, 93 嚴重
+                  </div>
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
+                  <Statistic
+                    title="作業系統"
+                    value={350}
+                    suffix="Linux"
+                    prefix={<BuildOutlined style={{ color: 'var(--brand-info)' }} />}
+                    valueStyle={{ color: 'var(--text-primary)', fontSize: '28px' }}
+                  />
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                    Windows: 24
+                  </div>
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
+                  <Statistic
+                    title="需要關注"
+                    value={attentionResources.length}
+                    suffix="項"
+                    prefix={<AlertOutlined style={{ color: 'var(--status-warning)' }} />}
+                    valueStyle={{ color: 'var(--status-warning)', fontSize: '28px' }}
+                  />
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                    需立即處理
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+
+            {/* 第二行：詳細資料視圖 */}
+            <Row gutter={[16, 16]} style={{ height: '300px' }}>
               <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
                 <TopNResourceList themeMode={themeMode} />
               </Col>
-            </Row>
-            <Row gutter={[16, 16]} style={{ flex: 1, marginTop: '16px' }}>
-              {/* Bottom-Left Quadrant */}
               <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
+                <Card title="需關注的資源列表" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, padding: '16px' }}>
+                  <Table
+                    columns={[
+                      {
+                        title: '狀態',
+                        dataIndex: 'status',
+                        key: 'status',
+                        width: '30%',
+                        render: (status) => (
+                          <span className={`status-badge status-${status}`}>
+                            {status.toUpperCase()}
+                          </span>
+                        )
+                      },
+                      {
+                        title: '資源名稱',
+                        dataIndex: 'name',
+                        key: 'name',
+                        width: '45%',
+                        render: (text, record) => <a onClick={() => {
+                          setViewMode('list');
+                          setSearchText(text);
+                          setHighlightedResource(text);
+                        }}>{text}</a>
+                      },
+                      {
+                        title: '告警',
+                        dataIndex: 'alarms',
+                        key: 'alarms',
+                        width: '25%',
+                        render: (alarms, record) => {
+                          if (!alarms || alarms.length === 0) {
+                            return <Text type="secondary">-</Text>;
+                          }
+                          const highestSeverity = alarms.some(a => a.severity === 'critical') ? 'critical' : 'warning';
+                          const color = highestSeverity === 'critical' ? 'red' : 'orange';
+                          return (
+                            <Tag color={color} onClick={() => onNavigate && onNavigate('incident-list', { resourceFilter: record.name })} style={{ cursor: 'pointer' }}>
+                              {alarms.length} 則
+                            </Tag>
+                          );
+                        }
+                      }
+                    ]}
+                    dataSource={attentionResources}
+                    pagination={false}
+                    size="small"
+                    style={{ backgroundColor: 'transparent' }}
+                    className="transparent-bg"
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            {/* 第三行：資源健康度熱力圖 */}
+            <Row gutter={[16, 16]} style={{ height: '450px' }}>
+              <Col span={24} style={{ display: 'flex', flexDirection: 'column' }}>
                 <ResourceHealthHeatmap themeMode={themeMode} />
               </Col>
-              {/* Bottom-Right Quadrant */}
-              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
-                <AttentionRequiredList onNavigate={onNavigate} />
-              </Col>
             </Row>
           </div>
+        );
+      };
 
-          {/* 詳細資源列表工具欄和表格 */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: 'var(--spacing-lg)',
-            padding: 'var(--spacing-lg)',
-            background: 'var(--bg-elevated)',
-            borderRadius: 'var(--radius-lg)',
-            border: '1px solid var(--border-light)'
-          }}>
-            <Space>
-              <Input.Search
-                placeholder="搜尋資源名稱、IP 或標籤..."
-                onChange={e => setSearchText(e.target.value)}
-                style={{ width: 300 }}
-                allowClear
-              />
-              <Button className="toolbar-btn" icon={<FilterOutlined />}>
-                篩選
-              </Button>
-            </Space>
-            <Space>
-              {hasSelected && (
-                <>
-                  <Text type="secondary">已選擇 {selectedRowKeys.length} 項</Text>
-                  <Button type="primary" className="batch-action-button danger-button" danger onClick={handleBatchDelete}>
-                    批次刪除
-                  </Button>
-                </>
-              )}
-              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
-              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
-            </Space>
+      const ListView = () => (
+        <div className="table-wrapper" style={{ marginTop: 0 }}>
+          {resources.length > 0 ? (
+            <Table
+              rowSelection={rowSelection}
+              columns={columns}
+              dataSource={filteredResources}
+              rowKey="key"
+              className="transparent-bg"
+              rowClassName={(record) => record.name === highlightedResource ? 'highlighted-row' : ''}
+            />
+          ) : (
+            <Empty description="尚無任何資源">
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增資源</Button>
+            </Empty>
+          )}
+        </div>
+      );
+
+      return (
+        <React.Fragment>
+          {/* 頁面標題列 */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+            <Title level={2} className="page-title" style={{ margin: 0 }}>資源列表</Title>
+            <Radio.Group value={viewMode} onChange={(e) => setViewMode(e.target.value)}>
+              <Radio.Button value="dashboard"><AppstoreOutlined /> 儀表板</Radio.Button>
+              <Radio.Button value="list"><BarsOutlined /> 列表管理</Radio.Button>
+            </Radio.Group>
           </div>
 
-          <div className="table-wrapper" style={{ marginTop: 'var(--spacing-lg)' }}>
-            {resources.length > 0 ? <Table rowSelection={rowSelection} columns={columns} dataSource={filteredResources} rowKey="key" className="transparent-bg" /> : <Empty description="尚無任何資源"> <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增資源</Button> </Empty>}
-          </div>
+          {/* 工具列 - 僅在列表視圖顯示 */}
+          {viewMode === 'list' && (
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 'var(--spacing-lg)',
+              padding: 'var(--spacing-lg)',
+              background: 'var(--bg-elevated)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--border-light)'
+            }}>
+              <Space>
+                <Input.Search
+                  placeholder="搜尋資源名稱、IP 或標籤..."
+                  value={searchText}
+                  onChange={e => setSearchText(e.target.value)}
+                  style={{ width: 300 }}
+                  allowClear
+                />
+                <Button className="toolbar-btn" icon={<FilterOutlined />}>篩選</Button>
+              </Space>
+              <Space>
+                <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
+                <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增資源</Button>
+              </Space>
+            </div>
+          )}
 
-          {/* Modal remains unchanged for now */}
+          {/* 主內容區條件渲染 */}
+          {viewMode === 'dashboard' ? <DashboardView /> : <ListView />}
+
+          {/* 批次操作浮動工具列 (僅在列表視圖且有選中項目時顯示) */}
+          {viewMode === 'list' && hasSelected && (
+            <div className="batch-actions-floating">
+              <div className="batch-info">
+                <CheckCircleOutlined style={{ color: 'var(--brand-primary)' }} />
+                <span>已選擇 <span className="batch-count">{selectedRowKeys.length}</span> 項</span>
+              </div>
+              <Space>
+                <Button className="batch-action-button">批次設定標籤</Button>
+                <Button className="batch-action-button danger-button" onClick={handleBatchDelete}>批次刪除</Button>
+              </Space>
+              <Button type="text" icon={<CloseOutlined />} onClick={() => setSelectedRowKeys([])} />
+            </div>
+          )}
+
+          {/* Modal */}
           <Modal title={editingResource ? '編輯資源' : '新增資源'} open={isModalOpen} onCancel={handleCancel} footer={null}>
             <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
               <Form.Item name="name" label="資源名稱" rules={[{ required: true }]}><Input /></Form.Item>
@@ -4081,7 +4436,8 @@
               </div>
             </Form>
           </Modal>
-        </React.Fragment>);
+        </React.Fragment>
+      );
     };
 
     const ResourceGroupsPage = () => {
@@ -4806,13 +5162,16 @@
 
     const IncidentListPage = ({ onNavigate, pageParams }) => {
       const initialData = [
-        { key: 'i_0', summary: 'Network Switch CPU High', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(1, 'minutes'), automation_id: null, assignee: null, resource_name: 'network-switch-01' },
-        { key: 'i_1', summary: 'CPU high on db-prod-01', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'u_2', resource_name: 'db-prod-01' },
-        { key: 'i_2', summary: 'Disk space low on web-prod-02', severity: 'warning', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'hour'), automation_id: 'e_1', assignee: null, resource_name: 'web-prod-02' },
-        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'u_4', resource_name: 'api-gateway-prod' },
-        { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'u_1', resource_name: 'prometheus-server' },
-        { key: 'i_5', summary: '記憶體使用率過高 - staging', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(15, 'minutes'), automation_id: null, assignee: null, resource_name: 'web-staging-01' },
-        { key: 'i_6', summary: 'Cache Redis Memory Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(30, 'minutes'), automation_id: null, assignee: null, resource_name: 'cache-redis-prod' },
+        { key: 'i_0', summary: 'Network Switch CPU High', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(1, 'minutes'), automation_id: null, assignee: null, resource_name: 'network-switch-01', service: '網路基礎設施', business_impact: '高', storm_group: null },
+        { key: 'i_1', summary: 'CPU high on db-prod-01', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'u_2', resource_name: 'db-prod-01', service: '資料庫服務', business_impact: '高', storm_group: null },
+        { key: 'i_2', summary: 'Disk space low on web-prod-02', severity: 'warning', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'hour'), automation_id: 'e_1', assignee: null, resource_name: 'web-prod-02', service: 'Web應用', business_impact: '中', storm_group: null },
+        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'u_4', resource_name: 'api-gateway-prod', service: 'API閘道', business_impact: '高', storm_group: null },
+        { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'u_1', resource_name: 'prometheus-server', service: '監控系統', business_impact: '中', storm_group: null },
+        { key: 'i_5', summary: '記憶體使用率過高 - staging', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(15, 'minutes'), automation_id: null, assignee: null, resource_name: 'web-staging-01', service: 'Web應用', business_impact: '低', storm_group: null },
+        { key: 'i_6', summary: 'Cache Redis Memory Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(30, 'minutes'), automation_id: null, assignee: null, resource_name: 'cache-redis-prod', service: '快取服務', business_impact: '高', storm_group: null },
+        { key: 'i_7', summary: 'Web Server 503 Errors', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'web-prod-03', service: 'Web應用', business_impact: '高', storm_group: 'storm_1' },
+        { key: 'i_8', summary: 'Load Balancer High Traffic', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(3, 'minutes'), automation_id: null, assignee: null, resource_name: 'lb-prod-01', service: '負載平衡', business_impact: '中', storm_group: 'storm_1' },
+        { key: 'i_9', summary: 'Database Connection Pool Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'db-pool-01', service: '資料庫服務', business_impact: '高', storm_group: 'storm_1' },
       ];
       const [incidents, setIncidents] = useLocalStorageState('sre-incidents-v2', initialData);
       const [searchText, setSearchText] = useState('');
@@ -4823,6 +5182,11 @@
       const [silenceIncident, setSilenceIncident] = useState(null);
       const [silenceDuration, setSilenceDuration] = useState(1);
       const { message, modal } = antd.App.useApp();
+      const [isAIAnalysisModalOpen, setIsAIAnalysisModalOpen] = useState(false);
+      const [analyzedIncidents, setAnalyzedIncidents] = useState([]);
+      const [quickFilters, setQuickFilters] = useState({
+        new: false
+      });
 
       const handleStatusChange = (keys, newStatus) => {
         const actionText = newStatus === 'acknowledged' ? '確認' : '解決';
@@ -4851,18 +5215,19 @@
           message.warning('請先選擇要分析的事件');
           return;
         }
+        const incidentsToAnalyze = incidents.filter(incident => keysToAnalyze.includes(incident.key));
+        setAnalyzedIncidents(incidentsToAnalyze);
+        setIsAIAnalysisModalOpen(true);
+      };
 
-        message.loading({ content: `AI 正在分析 ${keysToAnalyze.length} 個事件...`, key: 'ai-analysis' });
-        setTimeout(() => {
-          const analyzedEvents = incidents.filter(incident => keysToAnalyze.includes(incident.key));
-          const analysisResults = analyzedEvents.map(event => `${event.summary} - 建議立即處理`).join('; ');
-
-          message.success({
-            content: `AI 分析完成：${analysisResults}`,
-            key: 'ai-analysis',
-            duration: 6
-          });
-        }, 2000);
+      // 處理快速篩選
+      const handleQuickFilter = (filterType) => {
+        setQuickFilters(prev => {
+          const newFilters = { ...prev };
+          // 切換當前篩選器
+          newFilters[filterType] = !newFilters[filterType];
+          return newFilters;
+        });
       };
 
       const showDetailModal = (record) => {
@@ -4928,7 +5293,7 @@
         {
           title: '狀態',
           dataIndex: 'status',
-          width: '10%',
+          width: '8%',
           filters: [
             { text: 'New', value: 'new' },
             { text: 'Acknowledged', value: 'acknowledged' },
@@ -4936,13 +5301,29 @@
             { text: 'Silenced', value: 'silenced' }
           ],
           onFilter: (v, r) => r.status && r.status.includes(v),
-          render: (status) => {
+          render: (status, record) => {
             const statusText = {
               new: 'NEW',
               acknowledged: 'ACK',
               resolved: 'RESOLVED',
               silenced: 'SILENCED'
             };
+
+            // 顯示告警風暴標籤
+            if (record.storm_group) {
+              const stormCount = incidents.filter(i => i.storm_group === record.storm_group).length;
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <Tag color="orange" size="small" style={{ margin: 0, fontSize: '10px' }}>
+                    風暴 ({stormCount})
+                  </Tag>
+                  <span className={`status-badge status-${status}`}>
+                    {statusText[status] || 'UNKNOWN'}
+                  </span>
+                </div>
+              );
+            }
+
             return (
               <span className={`status-badge status-${status}`}>
                 {statusText[status] || 'UNKNOWN'}
@@ -4951,9 +5332,38 @@
           }
         },
         {
+          title: '關聯服務',
+          dataIndex: 'service',
+          width: '12%',
+          filters: [
+            { text: '資料庫服務', value: '資料庫服務' },
+            { text: 'Web應用', value: 'Web應用' },
+            { text: 'API閘道', value: 'API閘道' },
+            { text: '快取服務', value: '快取服務' },
+            { text: '監控系統', value: '監控系統' },
+            { text: '網路基礎設施', value: '網路基礎設施' },
+            { text: '負載平衡', value: '負載平衡' }
+          ],
+          onFilter: (v, r) => r.service && r.service.includes(v),
+          render: (service, record) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <Tag color="blue" size="small" style={{ margin: 0 }}>{service}</Tag>
+              {record.business_impact && (
+                <Tag
+                  color={record.business_impact === '高' ? 'red' : record.business_impact === '中' ? 'orange' : 'green'}
+                  size="small"
+                  style={{ margin: 0, fontSize: '10px' }}
+                >
+                  影響: {record.business_impact}
+                </Tag>
+              )}
+            </div>
+          )
+        },
+        {
           title: '嚴重性',
           dataIndex: 'severity',
-          width: '10%',
+          width: '8%',
           sorter: (a, b) => a.severity.localeCompare(b.severity),
           filters: [
             { text: 'Critical', value: 'critical' },
@@ -4966,12 +5376,12 @@
             </span>
           )
         },
-        { title: '觸發時間', dataIndex: 'created_at', width: '15%', sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(), render: time => <span title={time ? time.format('YYYY-MM-DD HH:mm:ss') : ''}>{time ? time.fromNow() : '-'}</span> },
-        { title: '資源名稱', dataIndex: 'resource_name', width: '15%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
-        { title: '處理人', dataIndex: 'assignee', width: '12%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: (assignee) => assignee || '-' },
-        { title: '摘要', dataIndex: 'summary', width: '30%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
+        { title: '觸發時間', dataIndex: 'created_at', width: '12%', sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(), render: time => <span title={time ? time.format('YYYY-MM-DD HH:mm:ss') : ''}>{time ? time.fromNow() : '-'}</span> },
+        { title: '資源名稱', dataIndex: 'resource_name', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
+        { title: '處理人', dataIndex: 'assignee', width: '10%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: (assignee) => assignee || '-' },
+        { title: '摘要', dataIndex: 'summary', width: '25%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
         {
-          title: '操作', key: 'action', width: '10%', render: (_, record) => (
+          title: '操作', key: 'action', width: '11%', render: (_, record) => (
             <Space size="small">
               <Tooltip title="確認事件">
                 <Button
@@ -5015,13 +5425,19 @@
         filteredIncidents = filteredIncidents.filter(inc => inc.status === pageParams.statusFilter);
       }
 
+      // 快速篩選邏輯
+      if (quickFilters.new) {
+        filteredIncidents = filteredIncidents.filter(inc => inc.status === 'new');
+      }
+
       // 搜尋篩選邏輯
       if (searchText) {
         filteredIncidents = filteredIncidents.filter(inc =>
           inc.summary.toLowerCase().includes(searchText.toLowerCase()) ||
           inc.status.toLowerCase().includes(searchText.toLowerCase()) ||
           (inc.assignee && inc.assignee.toLowerCase().includes(searchText.toLowerCase())) ||
-          (inc.resource_name && inc.resource_name.toLowerCase().includes(searchText.toLowerCase()))
+          (inc.resource_name && inc.resource_name.toLowerCase().includes(searchText.toLowerCase())) ||
+          (inc.service && inc.service.toLowerCase().includes(searchText.toLowerCase()))
         );
       }
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
@@ -5071,6 +5487,15 @@
                 篩選
                 <Badge count={2} style={{ marginLeft: 8 }} />
               </Button>
+              {/* 快速篩選按鈕 */}
+              <Button
+                className={`toolbar-btn ${quickFilters.new ? 'ant-btn-primary' : ''}`}
+                type={quickFilters.new ? 'primary' : 'default'}
+                onClick={() => handleQuickFilter('new')}
+                style={{ backgroundColor: quickFilters.new ? '#faad14' : undefined }}
+              >
+                未確認 (NEW)
+              </Button>
             </Space>
             <Space>
               {hasSelected && (
@@ -5107,7 +5532,7 @@
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                 <Button className="modal-footer-btn" onClick={() => setIsDetailModalOpen(false)}>關閉</Button>
                 <Button type="primary" className="modal-footer-btn" disabled={currentIncident && currentIncident.status !== 'new'} onClick={() => { handleStatusChange([currentIncident.key], 'acknowledged') }}>確認收到 (Ack)</Button>
-                <Button type="primary" className="modal-footer-btn" icon={<RobotOutlined />} onClick={() => handleAIAnalysis()}>AI 分析</Button>
+                <Button type="primary" className="btn-ai-analysis modal-footer-btn" icon={<RobotOutlined />} onClick={() => handleAIAnalysis([currentIncident.key])}>AI 分析</Button>
               </div>
             }
             width={800}
@@ -5135,11 +5560,42 @@
                   </div>
                   <Descriptions bordered column={1} size="small" className="compact-descriptions">
                     <Descriptions.Item label="摘要">{currentIncident.summary}</Descriptions.Item>
+                    <Descriptions.Item label="關聯服務">
+                      <Tag color="blue">{currentIncident.service}</Tag>
+                      {currentIncident.business_impact && (
+                        <Tag
+                          color={currentIncident.business_impact === '高' ? 'red' : currentIncident.business_impact === '中' ? 'orange' : 'green'}
+                          style={{ marginLeft: '8px' }}
+                        >
+                          業務影響: {currentIncident.business_impact}
+                        </Tag>
+                      )}
+                    </Descriptions.Item>
                     <Descriptions.Item label="嚴重性"><Tag color={currentIncident.severity === 'critical' ? 'red' : 'orange'}>{currentIncident.severity ? currentIncident.severity.toUpperCase() : 'UNKNOWN'}</Tag></Descriptions.Item>
                     <Descriptions.Item label="狀態">{currentIncident.status ? currentIncident.status.toUpperCase() : 'UNKNOWN'}</Descriptions.Item>
                     <Descriptions.Item label="來源">{currentIncident.source}</Descriptions.Item>
                     <Descriptions.Item label="觸發時間">{currentIncident.created_at ? currentIncident.created_at.format('YYYY-MM-DD HH:mm:ss') : '-'}</Descriptions.Item>
-                    <Descriptions.Item label="資源名稱">{currentIncident.resource_name || '-'}</Descriptions.Item>
+                    <Descriptions.Item label="資源名稱">
+                      <span style={{ marginRight: '8px' }}>{currentIncident.resource_name || '-'}</span>
+                      <Button size="small" type="link" style={{ padding: 0, height: 'auto' }}>
+                        前往儀表板
+                      </Button>
+                    </Descriptions.Item>
+                    {currentIncident.storm_group && (
+                      <Descriptions.Item label="告警風暴">
+                        <Tag color="orange">風暴群組: {currentIncident.storm_group}</Tag>
+                        <Button size="small" type="link" style={{ padding: '0 4px', height: 'auto', marginLeft: '8px' }}>
+                          查看相關告警
+                        </Button>
+                      </Descriptions.Item>
+                    )}
+                    <Descriptions.Item label="快速操作">
+                      <Space>
+                        <Button size="small" type="primary" icon={<BarChartOutlined />}>
+                          資源監控
+                        </Button>
+                      </Space>
+                    </Descriptions.Item>
                   </Descriptions>
                 </div>
 
@@ -5163,25 +5619,69 @@
                       <div className="timeline-dot timeline-dot-completed"></div>
                       <div className="timeline-content">
                         <div className="timeline-title">事件建立</div>
-                        <div className="timeline-description">{currentIncident.created_at ? currentIncident.created_at.format('MM-DD HH:mm') : '未知時間'}</div>
+                        <div className="timeline-description">由 {currentIncident.source} 觸發</div>
+                        <div className="timeline-time">{currentIncident.created_at ? currentIncident.created_at.format('MM-DD HH:mm:ss') : '未知時間'}</div>
                       </div>
                     </div>
-                    <div className="timeline-item">
-                      <div className="timeline-dot timeline-dot-current"></div>
-                      <div className="timeline-content">
-                        <div className="timeline-title">事件確認</div>
-                        <div className="timeline-description">等待確認</div>
+                    {currentIncident.status === 'acknowledged' && (
+                      <div className="timeline-item">
+                        <div className="timeline-dot timeline-dot-completed"></div>
+                        <div className="timeline-content">
+                          <div className="timeline-title">事件確認</div>
+                          <div className="timeline-description">已由 {currentIncident.assignee || '系統'} 確認</div>
+                          <div className="timeline-time">{currentIncident.created_at ? currentIncident.created_at.add(2, 'minute').format('MM-DD HH:mm:ss') : ''}</div>
+                        </div>
                       </div>
-                    </div>
-                    <div className="timeline-item">
-                      <div className="timeline-dot timeline-dot-default"></div>
-                      <div className="timeline-content">
-                        <div className="timeline-title">事件解決</div>
-                        <div className="timeline-description">待處理</div>
+                    )}
+                    {currentIncident.status === 'new' && (
+                      <div className="timeline-item">
+                        <div className="timeline-dot timeline-dot-current"></div>
+                        <div className="timeline-content">
+                          <div className="timeline-title">等待確認</div>
+                          <div className="timeline-description">尚未確認，請指派負責人</div>
+                        </div>
                       </div>
-                    </div>
+                    )}
+                    {currentIncident.status === 'acknowledged' && (
+                      <div className="timeline-item">
+                        <div className="timeline-dot timeline-dot-current"></div>
+                        <div className="timeline-content">
+                          <div className="timeline-title">調查中</div>
+                          <div className="timeline-description">正在分析和處理問題</div>
+                        </div>
+                      </div>
+                    )}
+                    {currentIncident.automation_id && (
+                      <div className="timeline-item">
+                        <div className="timeline-dot timeline-dot-completed"></div>
+                        <div className="timeline-content">
+                          <div className="timeline-title">自動化執行</div>
+                          <div className="timeline-description">執行腳本 {currentIncident.automation_id}</div>
+                          <div className="timeline-time">{currentIncident.created_at ? currentIncident.created_at.add(1, 'minute').format('MM-DD HH:mm:ss') : ''}</div>
+                        </div>
+                      </div>
+                    )}
+                    {currentIncident.status === 'resolved' && (
+                      <div className="timeline-item">
+                        <div className="timeline-dot timeline-dot-completed"></div>
+                        <div className="timeline-content">
+                          <div className="timeline-title">事件解決</div>
+                          <div className="timeline-description">問題已修復並驗證</div>
+                          <div className="timeline-time">{currentIncident.created_at ? currentIncident.created_at.add(15, 'minute').format('MM-DD HH:mm:ss') : ''}</div>
+                        </div>
+                      </div>
+                    )}
+                    {currentIncident.status !== 'resolved' && (
+                      <div className="timeline-item">
+                        <div className="timeline-dot timeline-dot-default"></div>
+                        <div className="timeline-content">
+                          <div className="timeline-title">事件解決</div>
+                          <div className="timeline-description">待處理</div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <div style={{ marginTop: '8px' }}>
+                  <div style={{ marginTop: '16px', paddingTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.1)' }}>
                     <TextArea
                       rows={2}
                       placeholder="新增處理紀錄..."
@@ -5190,10 +5690,11 @@
                         border: '1px solid rgba(255, 255, 255, 0.2)',
                         color: 'rgba(255, 255, 255, 0.9)',
                         borderRadius: '4px',
-                        fontSize: '13px'
+                        fontSize: '13px',
+                        marginBottom: '12px'
                       }}
                     />
-                    <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()} style={{ marginTop: '6px', height: '28px', fontSize: '13px' }}>新增紀錄</Button>
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()} style={{ height: '32px', fontSize: '13px', display: 'block' }}>新增紀錄</Button>
                   </div>
                 </div>
 
@@ -5215,10 +5716,44 @@
                   <List
                     size="small"
                     bordered
-                    dataSource={['API latency over 500ms']}
+                    dataSource={[
+                      { summary: 'API latency over 500ms', time: '3 分鐘前觸發', status: 'ACK', severity: 'warning' },
+                      { summary: 'Database slow query detected', time: '5 分鐘前觸發', status: 'NEW', severity: 'warning' },
+                      { summary: 'Load balancer health check failed', time: '2 分鐘前觸發', status: 'NEW', severity: 'critical' }
+                    ]}
                     renderItem={(item) => (
-                      <List.Item style={{ color: 'rgba(255, 255, 255, 0.85)', background: 'rgba(255, 255, 255, 0.02)' }}>
-                        {item}
+                      <List.Item style={{
+                        color: 'rgba(255, 255, 255, 0.85)',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        padding: '8px 12px'
+                      }}>
+                        <div style={{ width: '100%' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: '500' }}>{item.summary}</span>
+                            <Tag
+                              color={item.severity === 'critical' ? 'red' : 'orange'}
+                              size="small"
+                              style={{ fontSize: '10px' }}
+                            >
+                              {item.severity.toUpperCase()}
+                            </Tag>
+                          </div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{
+                              fontSize: '12px',
+                              color: 'rgba(255, 255, 255, 0.6)'
+                            }}>
+                              {item.time}
+                            </span>
+                            <Tag
+                              color={item.status === 'ACK' ? 'orange' : 'blue'}
+                              size="small"
+                              style={{ fontSize: '10px' }}
+                            >
+                              狀態: {item.status}
+                            </Tag>
+                          </div>
+                        </div>
                       </List.Item>
                     )}
                   />
@@ -5249,6 +5784,12 @@
               </div>
             )}
           </Modal>
+
+          <AIAnalysisModal
+            open={isAIAnalysisModalOpen}
+            onClose={() => setIsAIAnalysisModalOpen(false)}
+            incidents={analyzedIncidents}
+          />
 
           {/* 靜音模態框 */}
           <Modal
@@ -5328,6 +5869,255 @@
             </div>
           </Modal>
         </React.Fragment >
+      );
+    };
+
+    const AIAnalysisModal = ({ open, onClose, incidents }) => {
+      const [isLoading, setIsLoading] = useState(true);
+      const [analysisResult, setAnalysisResult] = useState(null);
+
+      // 實體連結渲染函數
+      const renderEntityLinkedText = (text) => {
+        const entityPatterns = [
+          { pattern: /'([^']+)' 服務/g, type: 'service' },
+          { pattern: /([a-zA-Z-]+\d+(?:-[a-zA-Z]+)*)/g, type: 'resource' },
+          { pattern: /用戶([^。，\s]+)功能/g, type: 'business' },
+          { pattern: /用戶數據庫/g, type: 'database' }
+        ];
+
+        let result = text;
+        let linkIndex = 0;
+
+        entityPatterns.forEach(({ pattern, type }) => {
+          result = result.replace(pattern, (match, p1) => {
+            const entityName = p1 || match;
+            const linkId = `entity-link-${linkIndex++}`;
+
+            let href = '#';
+            let color = 'blue';
+
+            switch (type) {
+              case 'service':
+                href = `/dashboard/service/${entityName}`;
+                color = 'green';
+                break;
+              case 'resource':
+                href = `/dashboard/resource/${entityName}`;
+                color = 'orange';
+                break;
+              case 'business':
+                href = `/dashboard/business/${entityName}`;
+                color = 'purple';
+                break;
+              case 'database':
+                href = `/dashboard/database/user-database`;
+                color = 'blue';
+                break;
+            }
+
+            return `<a href="${href}" style="color: var(--brand-${color}); text-decoration: underline; cursor: pointer;" onclick="window.open('${href}', '_blank'); return false;">${match}</a>`;
+          });
+        });
+
+        return <span dangerouslySetInnerHTML={{ __html: result }} />;
+      };
+
+      // 執行操作的處理函數
+      const handleActionClick = (recommendation) => {
+        switch (recommendation.type) {
+          case 'restart':
+            Modal.confirm({
+              title: '確認重啟服務',
+              content: `您確定要重啟 ${recommendation.service} 服務嗎？`,
+              okText: '確認重啟',
+              cancelText: '取消',
+              onOk: () => {
+                message.success(`正在重啟 ${recommendation.service} 服務...`);
+              }
+            });
+            break;
+          case 'rollback':
+            window.open(`/deployment/rollback/${recommendation.service}`, '_blank');
+            break;
+          case 'logs':
+            window.open(`/logs/search?resource=${recommendation.resource}`, '_blank');
+            break;
+          case 'scale':
+            window.open(`/scaling/configure/${recommendation.service}`, '_blank');
+            break;
+          default:
+            message.info('正在執行操作...');
+        }
+      };
+
+      useEffect(() => {
+        if (open) {
+          setIsLoading(true);
+          setAnalysisResult(null);
+          // Simulate AI analysis delay
+          const timer = setTimeout(() => {
+            // Mocked analysis result
+            const rootCause = "根本原因很可能在於 'user-authentication' 服務中的內存洩漏，導致下游服務的連鎖故障。";
+            const impact = "對用戶登錄和註冊功能造成嚴重影響。用戶數據庫可能存在數據不一致的風險。";
+            const recommendations = [
+              {
+                text: "立即重啟 'user-authentication' 服務",
+                type: "restart",
+                service: "user-authentication",
+                urgent: true
+              },
+              {
+                text: "回滾 'user-authentication' 服務的最新部署",
+                type: "rollback",
+                service: "user-authentication",
+                urgent: false
+              },
+              {
+                text: "檢查 db-prod-01 日誌",
+                type: "logs",
+                resource: "db-prod-01",
+                urgent: false
+              },
+              {
+                text: "增加 'user-authentication' 服務的內存分配",
+                type: "scale",
+                service: "user-authentication",
+                urgent: false
+              }
+            ];
+            const confidence = 85; // AI分析信心度
+            const analyzedEvents = incidents.map(inc => ({
+              ...inc,
+              analyzed: true
+            }));
+            setAnalysisResult({ rootCause, impact, recommendations, confidence, analyzedEvents });
+            setIsLoading(false);
+          }, 1500);
+          return () => clearTimeout(timer);
+        }
+      }, [open, incidents]);
+
+      return (
+        <Modal
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <RobotOutlined style={{ color: 'var(--brand-info)' }} />
+              <Title level={4} style={{ margin: 0 }}>AI 告警分析報告</Title>
+            </div>
+          }
+          open={open}
+          onCancel={onClose}
+          footer={[
+            <Button
+              key="ack"
+              type="default"
+              icon={<CheckOutlined />}
+              onClick={() => {
+                message.success('已確認收到分析報告');
+                onClose();
+              }}
+            >
+              確認收到 (Ack)
+            </Button>,
+            <Button key="close" onClick={onClose}>關閉</Button>
+          ]}
+          width={800}
+          centered
+        >
+          <Spin spinning={isLoading} tip="AI 引擎正在分析中，請稍候...">
+            {analysisResult ? (
+              <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div className="modal-section">
+                  <Title level={5} className="section-title">
+                    分析事件 ({incidents.length})
+                    {incidents.length > 3 && (
+                      <Tag color="blue" size="small" style={{ marginLeft: '8px' }}>
+                        批量分析
+                      </Tag>
+                    )}
+                  </Title>
+                  <List
+                    size="small"
+                    dataSource={incidents.slice(0, 3)}
+                    renderItem={item => (
+                      <List.Item>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                          <span>{item.summary}</span>
+                          <Tag color={
+                            item.severity === 'critical' ? 'red' :
+                              item.severity === 'major' ? 'orange' :
+                                item.severity === 'minor' ? 'green' : 'blue'
+                          } size="small">
+                            {item.severity.toUpperCase()}
+                          </Tag>
+                        </div>
+                      </List.Item>
+                    )}
+                  />
+                  {incidents.length > 3 && (
+                    <Typography.Text type="secondary" style={{ fontSize: '12px', marginTop: '8px', display: 'block' }}>
+                      + 另外 {incidents.length - 3} 個事件已納入分析範圍
+                    </Typography.Text>
+                  )}
+                </div>
+                <div className="modal-section">
+                  <Title level={5} className="section-title">
+                    根本原因分析 (RCA)
+                    <Tag color="blue" style={{ marginLeft: '8px', fontSize: '12px' }}>
+                      信心度: {analysisResult.confidence}%
+                    </Tag>
+                  </Title>
+                  <Paragraph>{renderEntityLinkedText(analysisResult.rootCause)}</Paragraph>
+                </div>
+                <div className="modal-section">
+                  <Title level={5} className="section-title">影響範圍評估</Title>
+                  <Paragraph>{renderEntityLinkedText(analysisResult.impact)}</Paragraph>
+                </div>
+                <div className="modal-section">
+                  <Title level={5} className="section-title">建議操作</Title>
+                  <List
+                    size="small"
+                    dataSource={analysisResult.recommendations}
+                    renderItem={item => (
+                      <List.Item>
+                        <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+                            <BulbOutlined style={{
+                              color: item.urgent ? 'var(--status-critical)' : 'var(--brand-primary)',
+                              marginRight: '8px'
+                            }} />
+                            <span style={{ flex: 1 }}>{item.text}</span>
+                            {item.urgent && (
+                              <Tag color="red" size="small" style={{ marginLeft: '8px' }}>
+                                緊急
+                              </Tag>
+                            )}
+                          </div>
+                          <Button
+                            type={item.urgent ? "primary" : "default"}
+                            size="small"
+                            danger={item.urgent}
+                            style={{ marginLeft: '12px', minWidth: '80px' }}
+                            onClick={() => handleActionClick(item)}
+                          >
+                            {item.type === 'restart' ? '重啟' :
+                              item.type === 'rollback' ? '回滾' :
+                                item.type === 'logs' ? '查看日誌' :
+                                  item.type === 'scale' ? '擴展' : '執行'}
+                          </Button>
+                        </div>
+                      </List.Item>
+                    )}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div style={{ height: '350px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {/* Placeholder while loading */}
+              </div>
+            )}
+          </Spin>
+        </Modal>
       );
     };
 
@@ -5634,7 +6424,7 @@
           width: '20%',
           render: (tags) => (
             <Space size={[4, 4]} wrap>
-              {tags && tags.length > 0 ? tags.map(tag => {
+              {tags && Array.isArray(tags) && tags.length > 0 ? tags.map(tag => {
                 const tagColorMap = {
                   'production': 'red',
                   'staging': 'orange',
@@ -10020,7 +10810,7 @@
               <div style={{ flex: 1, display: 'flex', gap: 8 }}>
                 <Select
                   disabled
-                  value={selectedKeyDef?.displayName || currentKey}
+                  value={selectedTagDef?.displayName || currentKey}
                   style={{ width: 150 }}
                 />
                 <div style={{ flex: 1 }}>
@@ -10467,27 +11257,21 @@
           title: '操作',
           key: 'action',
           width: '12%',
-          render: (_, record) => (
-            <Space size="small">
-              <Button
-                type="link"
-                size="small"
-                icon={<EditOutlined />}
-                onClick={() => handleEditTag(record)}
-              >
-                編輯
-              </Button>
-              <Button
-                type="link"
-                size="small"
-                danger
-                icon={<DeleteOutlined />}
-                onClick={() => handleDeleteTag(record.id)}
-              >
-                刪除
-              </Button>
-            </Space>
-          ),
+          render: (_, record) => {
+            const menu = (
+              <Menu>
+                <Menu.Item key="add-value" icon={<PlusOutlined />} onClick={() => handleCreateValue(record)} />
+                <Menu.Item key="edit" icon={<EditOutlined />} onClick={() => handleEditTag(record)} />
+                <Menu.Item key="delete" icon={<DeleteOutlined />} danger onClick={() => handleDeleteTag(record.id)} />
+              </Menu>
+            );
+
+            return (
+              <Dropdown overlay={menu} trigger={['click']}>
+                <Button type="link" icon={<DownOutlined />} />
+              </Dropdown>
+            );
+          },
         },
       ];
 
@@ -10590,214 +11374,211 @@
           </Card>
 
           {/* 標籤表格 */}
-          <Card>
-            <Table
-              columns={[
-                {
-                  title: '標籤名稱',
-                  dataIndex: 'name',
-                  key: 'name',
-                  sorter: (a, b) => a.name.localeCompare(b.name),
-                  render: (text, record) => (
-                    <div>
-                      <Text strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{text}</Text>
-                      <br />
-                      <Text type="secondary" style={{ fontSize: '12px' }}>{record.displayName}</Text>
-                    </div>
-                  ),
-                },
-                {
-                  title: '描述',
-                  dataIndex: 'description',
-                  key: 'description',
-                  ellipsis: { showTitle: false },
-                  render: (text) => (
-                    <Tooltip title={text}>
-                      <Text style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{text}</Text>
-                    </Tooltip>
-                  ),
-                },
-                {
-                  title: '分類',
-                  dataIndex: 'category',
-                  key: 'category',
-                  filters: tagCategories.map(cat => ({ text: cat.name, value: cat.id })),
-                  onFilter: (value, record) => record.category === value,
-                  render: (category) => {
-                    const cat = tagCategories.find(c => c.id === category);
-                    return cat ? (
-                      <Tag color={cat.color} style={{ border: 'none' }}>
-                        {cat.name}
-                      </Tag>
-                    ) : null;
-                  },
-                },
-                {
-                  title: '值數量',
-                  key: 'valueCount',
-                  width: 100,
-                  sorter: (a, b) => a.values.length - b.values.length,
-                  render: (_, record) => (
-                    <Text style={{ color: '#1890ff' }}>
-                      {record.values.length} 個值
-                    </Text>
-                  ),
-                },
-                {
-                  title: '必填',
-                  dataIndex: 'required',
-                  key: 'required',
-                  width: 80,
-                  filters: [
-                    { text: '必填', value: true },
-                    { text: '選填', value: false },
-                  ],
-                  onFilter: (value, record) => record.required === value,
-                  render: (required) => (
-                    <Tag color={required ? 'red' : 'default'}>
-                      {required ? '必填' : '選填'}
-                    </Tag>
-                  ),
-                },
-                {
-                  title: '總使用次數',
-                  dataIndex: 'totalUsage',
-                  key: 'totalUsage',
-                  width: 120,
-                  sorter: (a, b) => a.totalUsage - b.totalUsage,
-                  render: (count) => (
-                    <Text style={{ color: count > 50 ? '#52c41a' : count > 10 ? '#fa8c16' : 'rgba(255, 255, 255, 0.7)' }}>
-                      {count.toLocaleString()}
-                    </Text>
-                  ),
-                },
-                {
-                  title: '操作',
-                  key: 'action',
-                  width: 200,
-                  render: (_, record) => (
-                    <Space size="small">
-                      <Button
-                        type="link"
-                        size="small"
-                        icon={<PlusOutlined />}
-                        onClick={() => handleCreateValue(record)}
-                        style={{ color: '#52c41a' }}
-                      >
-                        新增值
-                      </Button>
-                      <Button
-                        type="link"
-                        size="small"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditTag(record)}
-                        style={{ color: '#1890ff' }}
-                      >
-                        編輯
-                      </Button>
-                      <Button
-                        type="link"
-                        size="small"
-                        danger
-                        icon={<DeleteOutlined />}
-                        onClick={() => handleDeleteTag(record.id)}
-                        style={{ color: '#ff4d4f' }}
-                      >
-                        刪除
-                      </Button>
-                    </Space>
-                  ),
-                },
-              ]}
-              dataSource={filteredTags}
-              rowKey="id"
-              expandable={{
-                expandedRowKeys: expandedRows,
-                onExpandedRowsChange: setExpandedRows,
-                expandedRowRender: (record) => (
-                  <div style={{ margin: 0 }}>
-                    <div style={{ marginBottom: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Text strong style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
-                        標籤值列表 ({record.values.length} 個)
-                      </Text>
-                      <Button
-                        size="small"
-                        type="primary"
-                        ghost
-                        icon={<PlusOutlined />}
-                        onClick={() => handleCreateValue(record)}
-                      >
-                        新增值
-                      </Button>
-                    </div>
-                    <Row gutter={[12, 12]}>
-                      {record.values.map(value => (
-                        <Col key={value.id} span={8}>
-                          <Card
-                            size="small"
-                            style={{
-                              background: 'rgba(255, 255, 255, 0.04)',
-                              border: '1px solid rgba(255, 255, 255, 0.1)'
-                            }}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                              <Tag color={value.color} style={{ margin: 0 }}>
-                                {value.value}
-                              </Tag>
-                              <Space size="small">
-                                <Button
-                                  type="text"
-                                  size="small"
-                                  icon={<EditOutlined />}
-                                  onClick={() => handleEditValue(record, value)}
-                                  style={{ color: '#1890ff' }}
-                                />
-                                <Button
-                                  type="text"
-                                  size="small"
-                                  icon={<DeleteOutlined />}
-                                  onClick={() => handleDeleteValue(record.id, value.id)}
-                                  style={{ color: '#ff4d4f' }}
-                                />
-                              </Space>
-                            </div>
-                            <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>
-                              {value.displayName}
-                            </div>
-                            <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '4px' }}>
-                              使用次數: {value.usageCount}
-                            </div>
-                          </Card>
-                        </Col>
-                      ))}
-                      {record.values.length === 0 && (
-                        <Col span={24}>
-                          <Empty
-                            description="暫無標籤值"
-                            style={{ margin: '20px 0' }}
-                            image={Empty.PRESENTED_IMAGE_SIMPLE}
-                          >
-                            <Button type="primary" icon={<PlusOutlined />} onClick={() => handleCreateValue(record)}>
-                              新增第一個值
+          <div className="table-wrapper">
+            {
+              filteredTags.length > 0 ?
+                <Table
+                  columns={[
+                    {
+                      title: '標籤名稱',
+                      dataIndex: 'name',
+                      key: 'name',
+                      width: 150,
+                      sorter: (a, b) => a.name.localeCompare(b.name),
+                      render: (text, record) => (
+                        <div>
+                          <Text strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{text}</Text>
+                          <br />
+                          <Text type="secondary" style={{ fontSize: '12px' }}>{record.displayName}</Text>
+                        </div>
+                      ),
+                    },
+                    {
+                      title: '分類',
+                      dataIndex: 'category',
+                      key: 'category',
+                      width: 90,
+                      filters: tagCategories.map(cat => ({ text: cat.name, value: cat.id })),
+                      onFilter: (value, record) => record.category === value,
+                      render: (category) => {
+                        const cat = tagCategories.find(c => c.id === category);
+                        return cat ? (
+                          <Tag color={cat.color} style={{ border: 'none' }}>
+                            {cat.name}
+                          </Tag>
+                        ) : null;
+                      },
+                    },
+                    {
+                      title: '值數量',
+                      key: 'valueCount',
+                      width: 100,
+                      sorter: (a, b) => a.values.length - b.values.length,
+                      render: (_, record) => (
+                        <Text style={{ color: '#1890ff' }}>
+                          {record.values.length} 個值
+                        </Text>
+                      ),
+                    },
+                    {
+                      title: '必填',
+                      dataIndex: 'required',
+                      key: 'required',
+                      width: 80,
+                      filters: [
+                        { text: '必填', value: true },
+                        { text: '選填', value: false },
+                      ],
+                      onFilter: (value, record) => record.required === value,
+                      render: (required) => (
+                        <Tag color={required ? 'red' : 'default'}>
+                          {required ? '必填' : '選填'}
+                        </Tag>
+                      ),
+                    },
+                    {
+                      title: '總使用次數',
+                      dataIndex: 'totalUsage',
+                      key: 'totalUsage',
+                      width: 120,
+                      sorter: (a, b) => a.totalUsage - b.totalUsage,
+                      render: (count) => (
+                        <Text style={{ color: count > 50 ? '#52c41a' : count > 10 ? '#fa8c16' : 'rgba(255, 255, 255, 0.7)' }}>
+                          {count.toLocaleString()}
+                        </Text>
+                      ),
+                    },
+                    {
+                      title: '描述',
+                      dataIndex: 'description',
+                      key: 'description',
+                      ellipsis: { showTitle: false },
+                      render: (text) => (
+                        <Tooltip title={text}>
+                          <Text style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{text}</Text>
+                        </Tooltip>
+                      ),
+                    },
+                    {
+                      title: '操作',
+                      key: 'action',
+                      width: 280,
+                      render: (_, record) => (
+                        <Space size="small">
+                          <Tooltip title="新增值">
+                            <Button
+                              type="primary"
+                              icon={<PlusOutlined />}
+                              onClick={() => handleCreateValue(record)}
+                            >
+                              新增值
                             </Button>
-                          </Empty>
-                        </Col>
-                      )}
-                    </Row>
-                  </div>
-                )
-              }}
-              pagination={{
-                total: filteredTags.length,
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
-              }}
-              locale={{ emptyText: '暫無標籤資料' }}
-              size="middle"
-            />
-          </Card>
+                          </Tooltip>
+                          <Button
+                            type="link"
+                            icon={<EditOutlined />}
+                            onClick={() => handleEditTag(record)}
+                          >
+                            編輯
+                          </Button>
+                          <Button
+                            type="link"
+                            danger
+                            icon={<DeleteOutlined />}
+                            onClick={() => handleDeleteTag(record.id)}
+                          >
+                            刪除
+                          </Button>
+                        </Space>
+                      ),
+                    },
+                  ]}
+                  dataSource={filteredTags}
+                  rowKey="id"
+                  expandable={{
+                    expandedRowKeys: expandedRows,
+                    onExpandedRowsChange: setExpandedRows,
+                    expandedRowRender: (record) => (
+                      <div style={{ margin: 0 }}>
+                        <div style={{ marginBottom: '12px' }}>
+                          <Text strong style={{ color: 'rgba(255, 255, 255, 0.85)' }}>
+                            標籤值列表 ({record.values.length} 個)
+                          </Text>
+                        </div>
+                        <Row gutter={[12, 12]}>
+                          {record.values.map(value => (
+                            <Col key={value.id} span={8}>
+                              <Card
+                                size="small"
+                                style={{
+                                  background: 'rgba(255, 255, 255, 0.04)',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                                  <Tag color={value.color} style={{ margin: 0 }}>
+                                    {value.value}
+                                  </Tag>
+                                  <Space size="small">
+                                    <Button
+                                      type="link"
+                                      icon={<EditOutlined />}
+                                      onClick={() => handleEditValue(record, value)}
+                                    >
+                                      編輯
+                                    </Button>
+                                    <Button
+                                      type="link"
+                                      danger
+                                      icon={<DeleteOutlined />}
+                                      onClick={() => handleDeleteValue(record.id, value.id)}
+                                    >
+                                      刪除
+                                    </Button>
+                                  </Space>
+                                </div>
+                                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)' }}>
+                                  {value.displayName}
+                                </div>
+                                <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '4px' }}>
+                                  使用次數: {value.usageCount}
+                                </div>
+                              </Card>
+                            </Col>
+                          ))}
+                          {record.values.length === 0 && (
+                            <Col span={24}>
+                              <Empty
+                                description="暫無標籤值"
+                                style={{ margin: '20px 0' }}
+                                image={Empty.PRESENTED_IMAGE_SIMPLE}
+                              >
+                                <Button type="primary" icon={<PlusOutlined />} onClick={() => handleCreateValue(record)}>
+                                  新增第一個值
+                                </Button>
+                              </Empty>
+                            </Col>
+                          )}
+                        </Row>
+                      </div>
+                    )
+                  }}
+                  pagination={{
+                    total: filteredTags.length,
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
+                  }}
+                  locale={{ emptyText: '暫無標籤資料' }}
+                  size="middle"
+                  className="transparent-bg"
+                /> :
+                <Empty description="尚無任何標籤">
+                  <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateTag}>立即新增標籤</Button>
+                </Empty>
+            }
+          </div>
 
           {/* 新增/編輯標籤彈窗 */}
           <Modal
