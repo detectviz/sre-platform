@@ -1,0 +1,352 @@
+{
+  "users": [
+    {
+      "id": "user_1",
+      "username": "admin",
+      "email": "admin@sre-platform.com",
+      "full_name": "系統管理員",
+      "role": "admin",
+      "team_id": "team_1",
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "user_2",
+      "username": "operator",
+      "email": "operator@sre-platform.com",
+      "full_name": "運維人員",
+      "role": "operator",
+      "team_id": "team_2",
+      "created_at": "2023-01-02T00:00:00Z",
+      "updated_at": "2023-01-02T00:00:00Z"
+    },
+    {
+      "id": "user_3",
+      "username": "viewer",
+      "email": "viewer@sre-platform.com",
+      "full_name": "觀察員",
+      "role": "viewer",
+      "team_id": "team_3",
+      "created_at": "2023-01-03T00:00:00Z",
+      "updated_at": "2023-01-03T00:00:00Z"
+    }
+  ],
+  "teams": [
+    {
+      "id": "team_1",
+      "name": "管理團隊",
+      "description": "負責平台管理的團隊",
+      "members": [
+        "user_1"
+      ],
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "team_2",
+      "name": "運維團隊",
+      "description": "負責系統運維的團隊",
+      "members": [
+        "user_2"
+      ],
+      "created_at": "2023-01-02T00:00:00Z",
+      "updated_at": "2023-01-02T00:00:00Z"
+    },
+    {
+      "id": "team_3",
+      "name": "觀察團隊",
+      "description": "僅有檢視權限的團隊",
+      "members": [
+        "user_3"
+      ],
+      "created_at": "2023-01-03T00:00:00Z",
+      "updated_at": "2023-01-03T00:00:00Z"
+    }
+  ],
+  "roles": [
+    {
+      "id": "role_1",
+      "name": "管理員",
+      "description": "系統管理員角色",
+      "permissions": [
+        "read",
+        "write",
+        "delete",
+        "admin"
+      ],
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "role_2",
+      "name": "運維人員",
+      "description": "系統運維角色",
+      "permissions": [
+        "read",
+        "write"
+      ],
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "role_3",
+      "name": "觀察員",
+      "description": "只讀角色",
+      "permissions": [
+        "read"
+      ],
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    }
+  ],
+  "resources": [
+    {
+      "id": "resource_1",
+      "name": "db-prod-01",
+      "type": "database",
+      "status": "healthy",
+      "ip_address": "10.0.0.10",
+      "groups": [
+        "group_1"
+      ],
+      "tags": [
+        "production",
+        "database",
+        "high-priority"
+      ],
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "resource_2",
+      "name": "web-prod-02",
+      "type": "server",
+      "status": "warning",
+      "ip_address": "10.0.0.21",
+      "groups": [
+        "group_2"
+      ],
+      "tags": [
+        "production",
+        "web-server"
+      ],
+      "created_at": "2023-01-02T00:00:00Z",
+      "updated_at": "2023-01-02T00:00:00Z"
+    },
+    {
+      "id": "resource_3",
+      "name": "api-gateway-prod",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "10.0.0.35",
+      "groups": [],
+      "tags": [
+        "production",
+        "high-priority"
+      ],
+      "created_at": "2023-01-03T00:00:00Z",
+      "updated_at": "2023-01-03T00:00:00Z"
+    },
+    {
+      "id": "resource_4",
+      "name": "cache-redis-prod",
+      "type": "cache",
+      "status": "healthy",
+      "ip_address": "10.0.0.40",
+      "groups": [
+        "group_1",
+        "group_2"
+      ],
+      "tags": [
+        "production",
+        "database"
+      ],
+      "created_at": "2023-01-04T00:00:00Z",
+      "updated_at": "2023-01-04T00:00:00Z"
+    }
+  ],
+  "resource_groups": [
+    {
+      "id": "group_1",
+      "name": "Production Database",
+      "description": "生產環境資料庫資源",
+      "resources": [
+        "resource_1",
+        "resource_4"
+      ],
+      "responsible_team": "team_1",
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "group_2",
+      "name": "Production Web Servers",
+      "description": "生產環境Web服務資源",
+      "resources": [
+        "resource_2",
+        "resource_4"
+      ],
+      "responsible_team": "team_2",
+      "created_at": "2023-01-02T00:00:00Z",
+      "updated_at": "2023-01-02T00:00:00Z"
+    }
+  ],
+  "incidents": [
+    {
+      "id": "incident_1",
+      "summary": "CPU high on db-prod-01",
+      "severity": "critical",
+      "status": "new",
+      "resource_name": "db-prod-01",
+      "service": "資料庫服務",
+      "assignee": null,
+      "created_at": "2023-01-01T10:00:00Z",
+      "updated_at": "2023-01-01T10:00:00Z"
+    },
+    {
+      "id": "incident_2",
+      "summary": "Disk space low on web-prod-02",
+      "severity": "warning",
+      "status": "acknowledged",
+      "resource_name": "web-prod-02",
+      "service": "Web應用",
+      "assignee": "user_2",
+      "created_at": "2023-01-01T08:00:00Z",
+      "updated_at": "2023-01-01T09:00:00Z"
+    },
+    {
+      "id": "incident_3",
+      "summary": "API latency over 500ms",
+      "severity": "warning",
+      "status": "resolved",
+      "resource_name": "api-gateway-prod",
+      "service": "API閘道",
+      "assignee": "user_1",
+      "created_at": "2022-12-30T10:00:00Z",
+      "updated_at": "2022-12-30T11:00:00Z"
+    }
+  ],
+  "alerting_rules": [
+    {
+      "id": "rule_1",
+      "name": "CPU 使用率過高",
+      "description": "監控 CPU 使用率是否超過 80%",
+      "enabled": true,
+      "condition": "cpu_usage > 80",
+      "resource_group": "group_1",
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "rule_2",
+      "name": "記憶體使用率過高",
+      "description": "監控記憶體使用率是否超過 85%",
+      "enabled": true,
+      "condition": "memory_usage > 85",
+      "resource_group": "group_2",
+      "created_at": "2023-01-02T00:00:00Z",
+      "updated_at": "2023-01-02T00:00:00Z"
+    }
+  ],
+  "silences": [
+    {
+      "id": "silence_1",
+      "name": "計劃維護",
+      "description": "計劃性系統維護",
+      "start_time": "2023-01-02T02:00:00Z",
+      "end_time": "2023-01-02T04:00:00Z",
+      "matchers": [
+        {
+          "key": "resource_name",
+          "operator": "=",
+          "value": "db-prod-01"
+        }
+      ],
+      "created_by": "user_1",
+      "created_at": "2023-01-01T00:00:00Z"
+    }
+  ],
+  "scripts": [
+    {
+      "id": "script_1",
+      "name": "資料庫備份腳本",
+      "description": "每日資料庫備份腳本",
+      "content": "#!/bin/bash\necho 'Backup started'\nsleep 2\necho 'Backup completed'",
+      "params": [
+        {
+          "name": "backup_path",
+          "type": "string",
+          "description": "備份路徑"
+        }
+      ],
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "script_2",
+      "name": "清理臨時文件",
+      "description": "清理系統臨時文件",
+      "content": "#!/bin/bash\necho 'Cleaning temporary files'\nsleep 1\necho 'Cleanup completed'",
+      "params": [],
+      "created_at": "2023-01-02T00:00:00Z",
+      "updated_at": "2023-01-02T00:00:00Z"
+    }
+  ],
+  "schedules": [
+    {
+      "id": "schedule_1",
+      "name": "每日資料庫備份",
+      "cron": "0 2 * * *",
+      "script_id": "script_1",
+      "enabled": true,
+      "last_run": "2023-01-01T02:00:00Z",
+      "last_status": "success",
+      "created_at": "2023-01-01T00:00:00Z",
+      "updated_at": "2023-01-01T00:00:00Z"
+    },
+    {
+      "id": "schedule_2",
+      "name": "每小時清理臨時文件",
+      "cron": "0 * * * *",
+      "script_id": "script_2",
+      "enabled": false,
+      "last_run": "2023-01-01T09:00:00Z",
+      "last_status": "failed",
+      "created_at": "2023-01-02T00:00:00Z",
+      "updated_at": "2023-01-02T00:00:00Z"
+    }
+  ],
+  "executions": [
+    {
+      "id": "execution_1",
+      "script_id": "script_1",
+      "script_name": "資料庫備份腳本",
+      "status": "success",
+      "start_time": "2023-01-01T02:00:00Z",
+      "end_time": "2023-01-01T02:02:00Z",
+      "output": "Backup started\nBackup completed"
+    },
+    {
+      "id": "execution_2",
+      "script_id": "script_2",
+      "script_name": "清理臨時文件",
+      "status": "failed",
+      "start_time": "2023-01-01T09:00:00Z",
+      "end_time": "2023-01-01T09:01:00Z",
+      "output": "Cleaning temporary files\nError: Permission denied",
+      "error": "Permission denied"
+    }
+  ],
+  "dashboard_stats": {
+    "alerts": {
+      "pending": 5,
+      "acknowledged": 3,
+      "resolved": 12
+    },
+    "resources": {
+      "healthy": 25,
+      "warning": 3,
+      "critical": 2
+    }
+  }
+}

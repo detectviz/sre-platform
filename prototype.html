@@ -3049,6 +3049,52 @@
       );
     };
 
+    const AiRiskForecast = ({ onNavigate }) => {
+      const riskData = [
+        { id: 'risk-1', resourceName: 'web-prod-01', metricName: 'CPU Usage', metricType: 'usage', timeToExhaust: 7, unit: '天' },
+        { id: 'risk-2', resourceName: 'db-prod-01', metricName: 'Memory Usage', metricType: 'usage', timeToExhaust: 14, unit: '天' },
+        { id: 'risk-3', resourceName: 'api-gateway-01', metricName: 'Latency', metricType: 'latency', timeToExhaust: 20, unit: '天' },
+        { id: 'risk-4', resourceName: 'log-server-01', metricName: 'Disk Space', metricType: 'storage', timeToExhaust: 30, unit: '天' },
+      ];
+
+      const getIcon = (metricType) => {
+        switch (metricType) {
+          case 'storage':
+            return <HddOutlined style={{ color: 'var(--brand-info)' }} />;
+          case 'usage':
+            return <DashboardOutlined style={{ color: 'var(--brand-success)' }} />;
+          case 'latency':
+            return <FieldTimeOutlined style={{ color: 'var(--brand-warning)' }} />;
+          default:
+            return <QuestionCircleOutlined />;
+        }
+      };
+
+      return (
+        <Card title="AI 資源洞察：風險預測" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 16px 16px' }}>
+          <List
+            itemLayout="horizontal"
+            dataSource={riskData}
+            renderItem={item => (
+              <List.Item
+                actions={[<Button type="link" onClick={() => onNavigate('resource-list', { searchText: item.resourceName, highlightedResource: item.resourceName })}>查看</Button>]}
+              >
+                <List.Item.Meta
+                  avatar={<Avatar size="large" icon={getIcon(item.metricType)} style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />}
+                  title={<a onClick={() => onNavigate('resource-list', { searchText: item.resourceName, highlightedResource: item.resourceName })}>{item.resourceName}</a>}
+                  description={
+                    <span>
+                      {item.metricName} 預計在 <strong style={{ color: item.timeToExhaust < 15 ? 'var(--brand-danger)' : 'var(--brand-warning)' }}>{item.timeToExhaust} {item.unit}</strong> 後達到閾值
+                    </span>
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        </Card>
+      );
+    };
+
     // --- Page Components (Enhanced and Placeholders) ---
     const TopNResourceList = ({ themeMode }) => {
       const [metric, setMetric] = useState('CPU');
@@ -3185,7 +3231,7 @@
           title: '主機',
           dataIndex: 'host',
           key: 'host',
-          width: '30%',
+          width: '25%',
           render: (text) => (
             <div className="text-secondary" style={{ fontSize: '12px', cursor: 'pointer' }} onClick={() => {
               // 切换到列表模式并筛选该主机
@@ -3198,14 +3244,32 @@
           )
         },
         {
-          title: '趨勢',
+          title: '資源趨勢 (24H)',
           dataIndex: 'trend',
           key: 'trend',
-          width: '30%',
+          width: '18%',
           render: (trend, record) => (
             <div style={{ height: '30px' }}>
               <EchartsForReact
-                option={createSparklineOption(trend, record.value > 90 ? '#ff4d4f' : '#faad14', record.value)}
+                option={{
+                  backgroundColor: 'transparent',
+                  grid: { top: 4, bottom: 4, left: 2, right: 2 },
+                  xAxis: { type: 'category', show: false, data: (trend || []).map((_, i) => i) },
+                  yAxis: { type: 'value', show: false, min: 'dataMin', max: 'dataMax' },
+                  series: [{
+                    data: trend || [],
+                    type: 'line',
+                    smooth: true,
+                    showSymbol: false,
+                    lineStyle: { width: 2, color: '#6395f9' },
+                    areaStyle: {
+                      color: {
+                        type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+                        colorStops: [{ offset: 0, color: '#6395f94D' }, { offset: 1, color: '#6395f91A' }]
+                      }
+                    }
+                  }]
+                }}
                 isDark={themeMode === 'dark'}
               />
             </div>
@@ -3215,7 +3279,7 @@
           title: '使用率',
           dataIndex: 'value',
           key: 'value',
-          width: '25%',
+          width: '20%',
           render: (value) => (
             <Progress
               percent={metric === 'Net' ? value / 10 : value}
@@ -3229,6 +3293,7 @@
           title: '數值',
           dataIndex: 'value',
           key: 'num',
+          width: '10%',
           render: (value) => (
             <div className="text-secondary" style={{ fontSize: '12px' }}>
               {value}{metric === 'Net' ? 'Mbps' : '%'}
@@ -3679,170 +3744,189 @@
       );
     };
 
-    const ResourceListPage = ({ pageParams, themeMode, onNavigate }) => {
-      const [viewMode, setViewMode] = useState('dashboard'); // 視圖模式 state
-
-      const AttentionRequiredList = ({ onNavigate }) => {
-        const attentionResources = resources
-          .filter(r => r.status === 'warning' || r.status === 'critical')
-          .sort((a, b) => {
-            // Sort critical items first
-            if (a.status === 'critical' && b.status !== 'critical') return -1;
-            if (a.status !== 'critical' && b.status === 'critical') return 1;
-            return 0;
-          });
-
-        const columns = [
-          {
-            title: '狀態',
-            dataIndex: 'status',
-            key: 'status',
-            width: '30%',
-            render: (status) => (
-              <span className={`status-badge status-${status}`}>
-                {status.toUpperCase()}
-              </span>
-            )
-          },
-          {
-            title: '資源名稱',
-            dataIndex: 'name',
-            key: 'name',
-            width: '45%',
-            render: (text, record) => <a onClick={() => {
-              setViewMode('list');
-              setSearchText(text);
-              setHighlightedResource(text);
-            }}>{text}</a>
-          },
-          {
-            title: '告警',
-            dataIndex: 'alarms',
-            key: 'alarms',
-            width: '25%',
-            render: (alarms, record) => {
-              if (!alarms || alarms.length === 0) {
-                return <Text type="secondary">-</Text>;
-              }
-              const highestSeverity = alarms.some(a => a.severity === 'critical') ? 'critical' : 'warning';
-              const color = highestSeverity === 'critical' ? 'red' : 'orange';
-
-              return (
-                <Tag color={color} onClick={() => onNavigate && onNavigate('incident-list', { resourceFilter: record.name })} style={{ cursor: 'pointer' }}>
-                  {alarms.length} 則
-                </Tag>
-              );
-            }
+    const ResourceOverviewPage = ({ themeMode, onNavigate }) => {
+      // Data and state logic migrated from the original component
+      const generateTrend = () => {
+        const baseValue = 55;
+        const trendDirection = Math.random() > 0.5 ? 1 : -1;
+        const volatility = 25;
+        let currentValue = baseValue;
+        const trend = [];
+        for (let i = 0; i < 12; i++) {
+          const trendInfluence = trendDirection * (i / 12) * 15;
+          const randomChange = (Math.random() - 0.5) * volatility;
+          const periodicChange = Math.sin(i * Math.PI / 6) * 8;
+          currentValue = Math.max(8, Math.min(98, baseValue + trendInfluence + randomChange + periodicChange));
+          if (i > 0) {
+            const prevValue = trend[i - 1];
+            currentValue = prevValue * 0.6 + currentValue * 0.4;
           }
-        ];
-
-        return (
-          <Card title="需關注的資源列表" style={{ height: '100%', display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 16px 16px' }}>
-            <div style={{ height: '100%', overflow: 'auto' }}>
-              <Table
-                dataSource={attentionResources}
-                columns={columns}
-                pagination={false}
-                size="small"
-                rowKey="key"
-              />
-            </div>
-          </Card>
-        );
+          trend.push(Math.round(currentValue));
+        }
+        return trend;
       };
-      const ResourceHealthHeatmap = ({ themeMode }) => {
-        const heatmapData = {
-          groups: ['Monitoring', 'Staging', 'Cache', 'API GW', 'Web Prod', 'DB Prod'],
-          resources: ['Host-01', 'Host-02', 'Host-03', 'Host-04', 'Host-05', 'Host-06', 'Host-07', 'Host-08'],
-          health: [
-            // DB Prod (index 0 in groups)
-            [0, 5, 1], [1, 5, 2], [2, 5, 2], [3, 5, 1], [4, 5, 0], [5, 5, 1], [6, 5, 0], [7, 5, 1],
-            // Web Prod (index 1 in groups)
-            [0, 4, 0], [1, 4, 0], [2, 4, 1], [3, 4, 0], [4, 4, 0], [5, 4, 0], [6, 4, 0], [7, 4, 0],
-            // API GW (index 2 in groups)
-            [0, 3, 2], [1, 3, 2], [2, 3, 1], [3, 3, 0], [4, 3, 0], [5, 3, 0], [6, 3, 0], [7, 3, 0],
-            // Cache (index 3 in groups)
-            [0, 2, 0], [1, 2, 0], [2, 2, 0], [3, 2, 0], [4, 2, 0], [5, 2, 0], [6, 2, 0], [7, 2, 0],
-            // Staging (index 4 in groups)
-            [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 0], [4, 1, 0], [5, 1, 0], [6, 1, 0], [7, 1, 0],
-            // Monitoring (index 5 in groups)
-            [0, 0, 0], [1, 0, 0], [2, 0, 0], [3, 0, 0], [4, 0, 0], [5, 0, 0], [6, 0, 0], [7, 0, 0]
-          ]
-        };
 
-        const heatmapOption = {
-          tooltip: {
-            position: 'top',
-            formatter: function (params) {
-              return `${heatmapData.resources[params.value[0]]} @ ${heatmapData.groups[params.value[1]]}<br/>Status: <strong>${['健康', '警告', '嚴重'][params.value[2]]}</strong>`;
-            },
-            backgroundColor: 'rgba(0,0,0,0.85)',
-            borderColor: 'rgba(255,255,255,0.2)',
-            textStyle: { color: '#fff' }
-          },
-          grid: { height: '70%', top: '8%', left: '15%', right: '5%', bottom: '22%' },
-          xAxis: {
-            type: 'category',
-            data: heatmapData.resources,
-            splitArea: { show: false },
-            axisLabel: {
-              interval: 0,
-              rotate: 0,
-              color: themeMode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)',
-              fontSize: 12,
-              fontWeight: 'normal'
-            },
-            axisLine: {
-              lineStyle: {
-                color: themeMode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-              }
-            }
-          },
-          yAxis: {
-            type: 'category',
-            data: heatmapData.groups,
-            splitArea: { show: false },
-            axisLabel: {
-              color: themeMode === 'dark' ? 'rgba(255,255,255,0.85)' : 'rgba(0,0,0,0.85)',
-              fontSize: 12,
-              fontWeight: 'normal'
-            },
-            axisLine: {
-              lineStyle: {
-                color: themeMode === 'dark' ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.15)'
-              }
-            }
-          },
-          visualMap: {
-            min: 0, max: 2, calculable: false, show: false,
-            inRange: { color: ['#52c41a', '#faad14', '#ff4d4f'] } // Healthy, Warning, Critical
-          },
-          series: [{
-            name: 'Resource Health',
-            type: 'heatmap',
-            data: heatmapData.health,
-            label: { show: false },
-            itemStyle: {
-              borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-              borderWidth: 1
-            },
-            emphasis: {
-              itemStyle: {
-                shadowBlur: 10,
-                shadowColor: 'rgba(0, 0, 0, 0.5)',
-                borderColor: themeMode === 'dark' ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                borderWidth: 2
-              }
-            }
-          }]
-        };
+      const initialData = [
+        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'], trend: generateTrend(), alarms: [] },
+        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'], trend: generateTrend(), alarms: [{ severity: 'warning', summary: 'Disk space is over 85%' }] },
+        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'], trend: generateTrend(), alarms: [{ severity: 'critical', summary: 'API latency > 2s' }, { severity: 'warning', summary: '5xx error rate > 5%' }] },
+        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'], trend: generateTrend(), alarms: [] },
+      ];
 
-        return (
-          <Card title="資源健康度熱力圖" style={{ height: '100%', display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '16px' }}>
-            <EchartsForReact option={heatmapOption} isDark={themeMode === 'dark'} />
-          </Card>
-        );
+      const [resources, setResources] = useLocalStorageState('sre-resources-v3', initialData);
+
+      // Click handler for attention list, navigates to list page with filter
+      const handleAttentionClick = (resourceName) => {
+        onNavigate('resource-list', { searchText: resourceName, highlightedResource: resourceName });
       };
+
+      const attentionResources = resources
+        .filter(r => r.status === 'warning' || r.status === 'critical')
+        .sort((a, b) => {
+          if (a.status === 'critical' && b.status !== 'critical') return -1;
+          if (a.status !== 'critical' && b.status === 'critical') return 1;
+          return 0;
+        });
+
+      return (
+        <React.Fragment>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+            <Title level={2} className="page-title" style={{ margin: 0 }}>資源總覽</Title>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
+            {/* Row 1: Statistic Cards */}
+            <Row gutter={[16, 16]}>
+              <Col span={6}>
+                <Card hoverable onClick={() => onNavigate('resource-list')} style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
+                  <Statistic
+                    title="總資源數"
+                    value={374}
+                    prefix={<HddOutlined style={{ color: 'var(--brand-primary)' }} />}
+                    valueStyle={{ color: 'var(--text-primary)', fontSize: '28px' }}
+                  />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card hoverable style={{ height: '120px' }} bodyStyle={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <div onClick={() => onNavigate('resource-list', { statusFilter: 'healthy' })} style={{ textAlign: 'center', cursor: 'pointer' }}>
+                    <Statistic
+                      title="健康狀態"
+                      value={138}
+                      suffix="健康"
+                      prefix={<CheckCircleOutlined style={{ color: 'var(--brand-success)' }} />}
+                      valueStyle={{ color: 'var(--brand-success)', fontSize: '28px' }}
+                    />
+                  </div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px', textAlign: 'center' }}>
+                    <a onClick={() => onNavigate('resource-list', { statusFilter: 'warning' })} style={{ color: 'var(--brand-warning)' }}>143 警告</a>, <a onClick={() => onNavigate('resource-list', { statusFilter: 'critical' })} style={{ color: 'var(--brand-danger)' }}>93 嚴重</a>
+                  </div>
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card hoverable onClick={() => onNavigate('resource-list')} style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
+                  <Statistic
+                    title="作業系統"
+                    value={350}
+                    suffix="Linux"
+                    prefix={<BuildOutlined style={{ color: 'var(--brand-info)' }} />}
+                    valueStyle={{ color: 'var(--text-primary)', fontSize: '28px' }}
+                  />
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                    Windows: 24
+                  </div>
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card hoverable onClick={() => onNavigate('resource-list', { attention: true })} style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
+                  <Statistic
+                    title="需要關注"
+                    value={attentionResources.length}
+                    suffix="項"
+                    prefix={<AlertOutlined style={{ color: 'var(--brand-warning)' }} />}
+                    valueStyle={{ color: 'var(--brand-warning)', fontSize: '28px' }}
+                  />
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                    需立即處理
+                  </div>
+                </Card>
+              </Col>
+            </Row>
+
+            {/* Row 2: Top N List and Attention List */}
+            <Row gutter={[16, 16]}>
+              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
+                <TopNResourceList themeMode={themeMode} />
+              </Col>
+              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
+                <Card title="需關注的資源列表" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, padding: '16px' }}>
+                  <Table
+                    columns={[
+                      {
+                        title: '狀態',
+                        dataIndex: 'status',
+                        key: 'status',
+                        width: '30%',
+                        render: (status) => (
+                          <span className={`status-badge status-${status}`}>
+                            {status.toUpperCase()}
+                          </span>
+                        )
+                      },
+                      {
+                        title: '資源名稱',
+                        dataIndex: 'name',
+                        key: 'name',
+                        width: '45%',
+                        render: (text, record) => <a onClick={() => handleAttentionClick(text)}>{text}</a>
+                      },
+                      {
+                        title: '告警',
+                        dataIndex: 'alarms',
+                        key: 'alarms',
+                        width: '25%',
+                        render: (alarms, record) => {
+                          if (!alarms || alarms.length === 0) {
+                            return <Text type="secondary">-</Text>;
+                          }
+                          const highestSeverity = alarms.some(a => a.severity === 'critical') ? 'critical' : 'warning';
+                          const color = highestSeverity === 'critical' ? 'red' : 'orange';
+                          return (
+                            <Tag color={color} onClick={() => onNavigate && onNavigate('incident-list', { resourceFilter: record.name })} style={{ cursor: 'pointer' }}>
+                              {alarms.length} 則
+                            </Tag>
+                          );
+                        }
+                      }
+                    ]}
+                    dataSource={attentionResources}
+                    pagination={false}
+                    size="small"
+                    style={{ backgroundColor: 'transparent' }}
+                    className="transparent-bg"
+                  />
+                </Card>
+              </Col>
+            </Row>
+
+            {/* Row 3: AI Risk Forecast */}
+            <Row gutter={[16, 16]}>
+              <Col span={24}>
+                <AiRiskForecast onNavigate={onNavigate} />
+              </Col>
+            </Row>
+
+          </div>
+        </React.Fragment>
+      );
+    };
+
+    const ResourceListPage = ({ pageParams, themeMode, onNavigate }) => {
+      const [viewMode, setViewMode] = useState('list'); // 預設改為 list
+
+      // AttentionRequiredList 已移至 ResourceOverviewPage
+      // const AttentionRequiredList = ...
+
       const mockGroups = [
         { id: 'g_1', name: 'Production Database' },
         { id: 'g_2', name: 'Production Web Servers' },
@@ -4098,6 +4182,9 @@
       if (pageParams && pageParams.statusFilter) {
         filteredResources = filteredResources.filter(res => res.status === pageParams.statusFilter);
       }
+      if (pageParams && pageParams.attention) {
+        filteredResources = filteredResources.filter(res => res.status === 'warning' || res.status === 'critical');
+      }
 
       // 搜尋篩選邏輯（包含標籤搜尋）
       if (searchText) {
@@ -4199,139 +4286,6 @@
       };
 
       // DashboardView 重新設計 - 扁平化資訊卡片
-      const DashboardView = () => {
-        // 計算需要關注的資源數量
-        const attentionResources = resources
-          .filter(r => r.status === 'warning' || r.status === 'critical');
-
-        return (
-          <div style={{ height: 'calc(100vh - 48px - 48px - 100px)', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {/* 第一行：資源統計概覽 */}
-            <Row gutter={[16, 16]}>
-              <Col span={6}>
-                <Card style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
-                  <Statistic
-                    title="總資源數"
-                    value={374}
-                    prefix={<HddOutlined style={{ color: 'var(--brand-primary)' }} />}
-                    valueStyle={{ color: 'var(--text-primary)', fontSize: '28px' }}
-                  />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
-                  <Statistic
-                    title="健康狀態"
-                    value={138}
-                    suffix="健康"
-                    prefix={<CheckCircleOutlined style={{ color: 'var(--status-success)' }} />}
-                    valueStyle={{ color: 'var(--status-success)', fontSize: '28px' }}
-                  />
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                    143 警告, 93 嚴重
-                  </div>
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
-                  <Statistic
-                    title="作業系統"
-                    value={350}
-                    suffix="Linux"
-                    prefix={<BuildOutlined style={{ color: 'var(--brand-info)' }} />}
-                    valueStyle={{ color: 'var(--text-primary)', fontSize: '28px' }}
-                  />
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                    Windows: 24
-                  </div>
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
-                  <Statistic
-                    title="需要關注"
-                    value={attentionResources.length}
-                    suffix="項"
-                    prefix={<AlertOutlined style={{ color: 'var(--status-warning)' }} />}
-                    valueStyle={{ color: 'var(--status-warning)', fontSize: '28px' }}
-                  />
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                    需立即處理
-                  </div>
-                </Card>
-              </Col>
-            </Row>
-
-            {/* 第二行：詳細資料視圖 */}
-            <Row gutter={[16, 16]} style={{ height: '300px' }}>
-              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
-                <TopNResourceList themeMode={themeMode} />
-              </Col>
-              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
-                <Card title="需關注的資源列表" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, padding: '16px' }}>
-                  <Table
-                    columns={[
-                      {
-                        title: '狀態',
-                        dataIndex: 'status',
-                        key: 'status',
-                        width: '30%',
-                        render: (status) => (
-                          <span className={`status-badge status-${status}`}>
-                            {status.toUpperCase()}
-                          </span>
-                        )
-                      },
-                      {
-                        title: '資源名稱',
-                        dataIndex: 'name',
-                        key: 'name',
-                        width: '45%',
-                        render: (text, record) => <a onClick={() => {
-                          setViewMode('list');
-                          setSearchText(text);
-                          setHighlightedResource(text);
-                        }}>{text}</a>
-                      },
-                      {
-                        title: '告警',
-                        dataIndex: 'alarms',
-                        key: 'alarms',
-                        width: '25%',
-                        render: (alarms, record) => {
-                          if (!alarms || alarms.length === 0) {
-                            return <Text type="secondary">-</Text>;
-                          }
-                          const highestSeverity = alarms.some(a => a.severity === 'critical') ? 'critical' : 'warning';
-                          const color = highestSeverity === 'critical' ? 'red' : 'orange';
-                          return (
-                            <Tag color={color} onClick={() => onNavigate && onNavigate('incident-list', { resourceFilter: record.name })} style={{ cursor: 'pointer' }}>
-                              {alarms.length} 則
-                            </Tag>
-                          );
-                        }
-                      }
-                    ]}
-                    dataSource={attentionResources}
-                    pagination={false}
-                    size="small"
-                    style={{ backgroundColor: 'transparent' }}
-                    className="transparent-bg"
-                  />
-                </Card>
-              </Col>
-            </Row>
-
-            {/* 第三行：資源健康度熱力圖 */}
-            <Row gutter={[16, 16]} style={{ height: '450px' }}>
-              <Col span={24} style={{ display: 'flex', flexDirection: 'column' }}>
-                <ResourceHealthHeatmap themeMode={themeMode} />
-              </Col>
-            </Row>
-          </div>
-        );
-      };
-
       const ListView = () => (
         <div className="table-wrapper" style={{ marginTop: 0 }}>
           {resources.length > 0 ? (
@@ -4356,10 +4310,6 @@
           {/* 頁面標題列 */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
             <Title level={2} className="page-title" style={{ margin: 0 }}>資源列表</Title>
-            <Radio.Group value={viewMode} onChange={(e) => setViewMode(e.target.value)}>
-              <Radio.Button value="dashboard"><AppstoreOutlined /> 儀表板</Radio.Button>
-              <Radio.Button value="list"><BarsOutlined /> 列表管理</Radio.Button>
-            </Radio.Group>
           </div>
 
           {/* 工具列 - 僅在列表視圖顯示 */}
@@ -4698,6 +4648,14 @@
 
     const ResourcesPage = ({ onNavigate }) => {
       const resourceCards = [
+        {
+          key: 'resource-overview',
+          icon: <DashboardOutlined />,
+          title: '資源總覽',
+          description: '以儀表板形式提供所有資源的健康狀況與關鍵指標概覽。',
+          features: ['健康度熱力圖', '關鍵指標', 'AI 洞察'],
+          enabled: true
+        },
         {
           key: 'resource-list',
           icon: <HddOutlined />,
@@ -12578,6 +12536,7 @@
           getItem('靜音規則', 'silences'),
         ]),
         getItem('資源', 'resources', <HddOutlined />, [
+          getItem('資源總覽', 'resource-overview'),
           getItem('資源列表', 'resource-list'),
           getItem('資源群組', 'resource-groups'),
         ]),
@@ -12618,6 +12577,7 @@
           case 'incidents': return <IncidentsPage onNavigate={setCurrentPage} />;
           case 'analyzing': return <AnalyzingPage onNavigate={setCurrentPage} />;
           case 'automation': return <AutomationPage onNavigate={setCurrentPage} />;
+          case 'resource-overview': return <ResourceOverviewPage themeMode={themeMode} onNavigate={navigateToPage} />;
           case 'resource-list': return <ResourceListPage pageParams={pageParams} themeMode={themeMode} onNavigate={navigateToPage} />;
           case 'resource-groups': return <ResourceGroupsPage />;
           case 'incident-list': return <IncidentListPage onNavigate={setCurrentPage} pageParams={pageParams} />;
