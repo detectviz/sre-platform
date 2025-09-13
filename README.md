@@ -2,6 +2,13 @@
 
 這是一個基於 React、TypeScript 和 Ant Design 的 SRE 平台前端項目，實現了 specs.md 中定義的所有功能頁面。
 
+## 互動原型體驗
+
+我們提供了一個功能完整的互動原型，讓您無需安裝即可體驗平台的核心功能：
+
+🌟 **[立即體驗 Live Demo](https://detectviz.github.io/sre-platform-frontend/prototype.html)**
+
+
 ## 技術棧
 
 - React 18
