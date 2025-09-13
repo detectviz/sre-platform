@@ -3031,7 +3031,6 @@
     };
 
     // --- Page Components (Enhanced and Placeholders) ---
-    // Top N 資源使用列表組件
     const TopNResourceList = ({ themeMode }) => {
       const [metric, setMetric] = useState('CPU');
 
@@ -3214,33 +3213,25 @@
         }
       ];
 
+      const titleContent = (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <span>Top N 資源使用列表</span>
+          <Radio.Group
+            value={metric}
+            onChange={(e) => setMetric(e.target.value)}
+            size="small"
+          >
+            <Radio.Button value="CPU">CPU</Radio.Button>
+            <Radio.Button value="Mem">記憶體</Radio.Button>
+            <Radio.Button value="Disk">磁碟</Radio.Button>
+            <Radio.Button value="Net">網路</Radio.Button>
+          </Radio.Group>
+        </div>
+      );
+
       return (
-        <div
-          className="chart-card card-height-large padding-md"
-          style={{
-            cursor: 'pointer'
-          }}
-          onClick={() => {
-            // 可以添加導航邏輯
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <Title level={5} className="chart-title" style={{ margin: 0 }}>
-              Top N 資源使用列表
-            </Title>
-            <Radio.Group
-              value={metric}
-              onChange={(e) => setMetric(e.target.value)}
-              size="small"
-              style={{ marginTop: '-4px' }}
-            >
-              <Radio.Button value="CPU">CPU</Radio.Button>
-              <Radio.Button value="Mem">記憶體</Radio.Button>
-              <Radio.Button value="Disk">磁碟</Radio.Button>
-              <Radio.Button value="Net">網路</Radio.Button>
-            </Radio.Group>
-          </div>
-          <div style={{ height: 'calc(100% - 60px)', overflow: 'auto' }}>
+        <Card title={titleContent} style={{ height: '100%', display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 16px 16px' }}>
+          <div style={{ height: '100%', overflow: 'auto' }}>
             <Table
               dataSource={data[metric]}
               columns={columns}
@@ -3249,258 +3240,33 @@
               rowKey="key"
             />
           </div>
-        </div>
+        </Card>
       );
     };
 
+    const AIInsightSummary = () => (
+      <div style={{
+        marginTop: '24px',
+        background: 'linear-gradient(135deg, rgba(118, 75, 162, 0.1) 0%, rgba(102, 126, 234, 0.1) 100%)',
+        border: '1px solid rgba(118, 75, 162, 0.2)',
+        borderRadius: 'var(--radius-lg)',
+        padding: 'var(--spacing-xl)',
+        backdropFilter: 'blur(10px)',
+        boxShadow: 'var(--shadow-md)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: 'var(--spacing-md)' }}>
+          <RobotOutlined style={{ fontSize: '24px', color: 'var(--brand-info)' }} />
+          <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>AI Insight: 過去 24 小時摘要</Title>
+        </div>
+        <Paragraph style={{ margin: 0, lineHeight: 1.7, color: 'var(--text-secondary)' }}>
+          整體系統穩定，但觀察到 <strong>Production Web Servers</strong> 的 CPU 使用率在高峰時段有 <strong>15%</strong> 的增長，接近警戒線。資料庫延遲平穩，無明顯異常。建議關注 <strong>web-prod-03</strong> 主機的日誌，該主機出現了數次響應緩慢的情況。
+        </Paragraph>
+      </div>
+    );
+
     const DashboardPage = ({ themeMode, onNavigate }) => {
-      // Top N 資源使用列表狀態
-      const [metric, setMetric] = useState('CPU');
-
-      // 生成趨勢數據 - 24小時數據
-      const generateTrend = () => Array.from({ length: 24 }, () => Math.random() * 80 + 10);
-
-      const data = {
-        CPU: Array.from({ length: 20 }, (_, i) => ({
-          key: i,
-          host: `web-prod-${i + 1}`,
-          usage: parseFloat(Math.max(15, 95 - (i * 4 * Math.random())).toFixed(2)),
-          load: (Math.random() * 3).toFixed(2),
-          trend: generateTrend()
-        })),
-        Mem: Array.from({ length: 20 }, (_, i) => ({
-          key: i,
-          host: `db-prod-${i + 1}`,
-          usage: parseFloat(Math.max(15, 92 - (i * 4 * Math.random())).toFixed(2)),
-          used: (16 * (Math.random() * 0.8 + 0.1)).toFixed(2),
-          total: 16,
-          trend: generateTrend()
-        })),
-        Disk: Array.from({ length: 20 }, (_, i) => ({
-          key: i,
-          host: `log-server-${i + 1}`,
-          usage: parseFloat(Math.max(15, 88 - (i * 4 * Math.random())).toFixed(2)),
-          readIops: Math.floor(Math.random() * 2000),
-          writeIops: Math.floor(Math.random() * 1500),
-          trend: generateTrend()
-        })),
-        Net: Array.from({ length: 20 }, (_, i) => ({
-          key: i,
-          host: `api-gateway-${i + 1}`,
-          inbound: (Math.random() * 500).toFixed(2),
-          outbound: (Math.random() * 300).toFixed(2),
-          trend: generateTrend()
-        })),
-      };
-
-      // 創建迷你趨勢圖選項 - 增強版
-      const createSparklineOption = (data, color, currentValue = 0) => {
-        // 根據數值決定狀態
-        const status = currentValue > 90 ? 'critical' :
-          currentValue > 75 ? 'warning' : 'normal';
-
-        return {
-          backgroundColor: 'transparent',
-          grid: { top: 3, bottom: 3, left: 2, right: 2 },
-
-          // 添加輕微的背景色調指示狀態
-          graphic: status !== 'normal' ? {
-            type: 'rect',
-            left: 0,
-            top: 0,
-            right: 0,
-            bottom: 0,
-            style: {
-              fill: status === 'critical' ? 'rgba(255, 77, 79, 0.08)' :
-                'rgba(250, 173, 20, 0.08)',
-              borderRadius: 2
-            }
-          } : undefined,
-
-          xAxis: {
-            type: 'category',
-            show: false,
-            data: data.map((_, i) => i)
-          },
-          yAxis: {
-            type: 'value',
-            show: false,
-            min: 'dataMin',
-            max: 'dataMax'
-          },
-          series: [{
-            data,
-            type: 'line',
-            smooth: false,
-            showSymbol: false,
-            lineStyle: {
-              width: 1.5,
-              color: color,
-              shadowColor: color,
-              shadowBlur: 1
-            },
-            // 添加輕微的區域填充
-            areaStyle: {
-              color: {
-                type: 'linear',
-                x: 0, y: 0, x2: 0, y2: 1,
-                colorStops: [{
-                  offset: 0, color: `${color}15`
-                }, {
-                  offset: 1, color: `${color}05`
-                }]
-              }
-            },
-            // 添加動畫效果
-            animationDuration: 800,
-            animationEasing: 'cubicOut'
-          }]
-        };
-      };
-
-      // 通用列定義
-      const commonColumns = [
-        {
-          title: '主機',
-          dataIndex: 'host',
-          key: 'host',
-          width: '200px',
-          render: (text) => (
-            <div className="text-secondary" style={{ fontSize: '14px' }}>
-              {text}
-            </div>
-          )
-        },
-        {
-          title: '當日趨勢',
-          dataIndex: 'trend',
-          key: 'trend',
-          render: (trend, record) => (
-            <div style={{ height: '30px', minWidth: '120px' }}>
-              <EchartsForReact
-                option={createSparklineOption(trend, (record.usage || record.inbound || 0) > 90 ? '#ff4d4f' : '#faad14', (record.usage || record.inbound || 0))}
-                isDark={themeMode === 'dark'}
-              />
-            </div>
-          )
-        }
-      ];
-
-      // CPU 專用列
-      const cpuColumns = [...commonColumns,
-      {
-        title: 'CPU 使用率 (%)',
-        dataIndex: 'usage',
-        key: 'usage_percent',
-        render: (val) => `${val}%`
-      },
-      {
-        title: '使用率',
-        dataIndex: 'usage',
-        key: 'usage_bar',
-        render: (val) => (
-          <Progress
-            percent={val}
-            showInfo={false}
-            size="small"
-            strokeColor={val > 90 ? '#ff4d4f' : '#faad14'}
-          />
-        )
-      },
-      {
-        title: '平均負載 (1m)',
-        dataIndex: 'load',
-        key: 'load'
-      }
-      ];
-
-      // 記憶體專用列
-      const memColumns = [...commonColumns,
-      {
-        title: '記憶體使用率 (%)',
-        dataIndex: 'usage',
-        key: 'usage_percent',
-        render: (val) => `${val}%`
-      },
-      {
-        title: '使用率',
-        dataIndex: 'usage',
-        key: 'usage_bar',
-        render: (val) => (
-          <Progress
-            percent={val}
-            showInfo={false}
-            size="small"
-            strokeColor={val > 90 ? '#ff4d4f' : '#faad14'}
-          />
-        )
-      },
-      {
-        title: '已用/總量',
-        key: 'absolute',
-        render: (_, record) => `${record.used}GB / ${record.total}GB`
-      }
-      ];
-
-      // 磁碟專用列
-      const diskColumns = [...commonColumns,
-      {
-        title: '空間使用率 (%)',
-        dataIndex: 'usage',
-        key: 'usage_percent',
-        render: (val) => `${val}%`
-      },
-      {
-        title: '使用率',
-        dataIndex: 'usage',
-        key: 'usage_bar',
-        render: (val) => (
-          <Progress
-            percent={val}
-            showInfo={false}
-            size="small"
-            strokeColor={val > 90 ? '#ff4d4f' : '#faad14'}
-          />
-        )
-      },
-      {
-        title: '讀取 IOPS',
-        dataIndex: 'readIops',
-        key: 'readIops'
-      },
-      {
-        title: '寫入 IOPS',
-        dataIndex: 'writeIops',
-        key: 'writeIops'
-      }
-      ];
-
-      // 網路專用列
-      const netColumns = [...commonColumns,
-      {
-        title: '流入速率',
-        dataIndex: 'inbound',
-        key: 'inbound',
-        render: (val) => `${val} Mbps`
-      },
-      {
-        title: '流出速率',
-        dataIndex: 'outbound',
-        key: 'outbound',
-        render: (val) => `${val} Mbps`
-      }
-      ];
-
-      // 根據指標返回對應的列
-      const getColumns = () => {
-        switch (metric) {
-          case 'CPU': return cpuColumns;
-          case 'Mem': return memColumns;
-          case 'Disk': return diskColumns;
-          case 'Net': return netColumns;
-          default: return commonColumns;
-        }
-      };
+      // This component is now much cleaner.
+      // All the logic for TopNResourceList has been moved to that component.
 
       // 堆疊長條圖選項 - 資源群組狀態總覽
       const stackedBarOption = {
@@ -3632,85 +3398,8 @@
         ]
       };
 
-      // 事件統計卡片 - 優化後的設計
-      const EventStatCard = ({ icon, color, bgColor, title, value, change }) => (
-        <Card
-          className="stat-card"
-          style={{
-            height: '140px'
-          }}
-          hoverable
-        >
-          <div style={{
-            position: 'absolute',
-            top: -30,
-            right: -30,
-            width: 100,
-            height: 100,
-            background: `radial-gradient(circle, ${bgColor}20 0%, transparent 70%)`,
-            borderRadius: '50%'
-          }} />
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '100%', position: 'relative' }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ color: 'var(--text-tertiary)', fontSize: '12px', marginBottom: 'var(--spacing-sm)', fontWeight: '500', textTransform: 'uppercase', letterSpacing: '0.5px' }}>{title}</div>
-              <div style={{ color: 'var(--text-primary)', fontSize: '32px', fontWeight: '600', marginBottom: 'var(--spacing-xs)', lineHeight: '1' }}>{value}</div>
-              <div style={{ display: 'flex', alignItems: 'center', fontSize: '12px', gap: 'var(--spacing-xs)' }}>
-                <span style={{
-                  color: change > 0 ? 'var(--brand-danger)' : 'var(--brand-success)',
-                  fontWeight: '500',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}>
-                  {change > 0 ? '↗' : '↘'} {Math.abs(change)}%
-                </span>
-                <span style={{ color: 'var(--text-quaternary)' }}>較昨日</span>
-              </div>
-            </div>
-            <div style={{
-              fontSize: '40px',
-              color: color,
-              opacity: 0.8
-            }}>{icon}</div>
-          </div>
-        </Card>
-      );
-
-      // 關鍵指標卡片 - 左側圓形圖示
-      const KeyMetricCard = ({ icon, iconBg, title, value, unit }) => (
-        <Card
-          className="stat-card"
-          style={{
-            height: '120px'
-          }}
-          hoverable
-        >
-          <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-            <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              background: iconBg,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginRight: '16px',
-              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.3)'
-            }}>
-              <div style={{ fontSize: '24px', color: '#fff' }}>{icon}</div>
-            </div>
-            <div>
-              <div style={{ color: 'rgba(255, 255, 255, 0.75)', fontSize: '14px', marginBottom: '6px', fontWeight: '500' }}>{title}</div>
-              <div style={{ color: 'rgba(255, 255, 255, 0.95)', fontSize: '28px', fontWeight: 'bold', lineHeight: '1' }}>
-                {value}{unit && <span style={{ fontSize: '18px', marginLeft: '2px', opacity: 0.8 }}>{unit}</span>}
-              </div>
-            </div>
-          </div>
-        </Card>
-      );
-
       return (
-        <React.Fragment>
+        <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 48px - 48px)' }}>
 
           {/* 區塊 A: 告警戰情 (Alert Status) */}
           <div style={{ marginBottom: '16px' }}>
@@ -3718,23 +3407,21 @@
               {/* 主卡片 - 待處理告警 */}
               <Col xs={24} sm={12} md={8} lg={8}>
                 <div
-                  className="stat-card card-height-small padding-md"
-                  style={{
-                    cursor: 'pointer'
-                  }}
+                  className="stat-card padding-md"
+                  style={{ height: '120px', cursor: 'pointer' }}
                   onClick={() => {
                     if (onNavigate) onNavigate('incident-list', { statusFilter: 'new' });
                   }}
                 >
                   <div className="card-content">
                     <div>
-                      <div className="card-title">待處理告警</div>
-                      <div className="card-value" style={{ color: '#ff4d4f' }}>5</div>
+                      <div className="card-title" style={{ fontSize: '14px' }}>待處理告警</div>
+                      <div className="card-value" style={{ color: '#ff4d4f', fontSize: '40px' }}>5</div>
                       <div className="card-description">
                         其中 <span style={{ color: '#ff4d4f', fontWeight: '600' }}>2</span> 嚴重
                       </div>
                     </div>
-                    <FireOutlined className="card-icon" style={{ color: '#ff4d4f' }} />
+                    <FireOutlined className="card-icon" style={{ color: '#ff4d4f', fontSize: '36px' }} />
                   </div>
                 </div>
               </Col>
@@ -3742,23 +3429,21 @@
               {/* 副卡片 1 - 處理中 */}
               <Col xs={24} sm={12} md={8} lg={8}>
                 <div
-                  className="stat-card card-height-small padding-md"
-                  style={{
-                    cursor: 'pointer'
-                  }}
+                  className="stat-card padding-md"
+                  style={{ height: '120px', cursor: 'pointer' }}
                   onClick={() => {
                     if (onNavigate) onNavigate('incident-list', { statusFilter: 'acknowledged' });
                   }}
                 >
                   <div className="card-content">
                     <div>
-                      <div className="card-title">處理中</div>
-                      <div className="card-value" style={{ color: '#faad14' }}>3</div>
+                      <div className="card-title" style={{ fontSize: '14px' }}>處理中</div>
+                      <div className="card-value" style={{ color: '#faad14', fontSize: '40px' }}>3</div>
                       <div className="card-description" style={{ color: '#faad14' }}>
                         ↘ 15% 較昨日
                       </div>
                     </div>
-                    <ClockCircleOutlined className="card-icon" style={{ color: '#faad14' }} />
+                    <ClockCircleOutlined className="card-icon" style={{ color: '#faad14', fontSize: '36px' }} />
                   </div>
                 </div>
               </Col>
@@ -3766,23 +3451,21 @@
               {/* 副卡片 2 - 今日已解決 */}
               <Col xs={24} sm={24} md={8} lg={8}>
                 <div
-                  className="stat-card card-height-small padding-md"
-                  style={{
-                    cursor: 'pointer'
-                  }}
+                  className="stat-card padding-md"
+                  style={{ height: '120px', cursor: 'pointer' }}
                   onClick={() => {
                     if (onNavigate) onNavigate('incident-list', { statusFilter: 'resolved' });
                   }}
                 >
                   <div className="card-content">
                     <div>
-                      <div className="card-title">今日已解決</div>
-                      <div className="card-value" style={{ color: '#52c41a' }}>12</div>
+                      <div className="card-title" style={{ fontSize: '14px' }}>今日已解決</div>
+                      <div className="card-value" style={{ color: '#52c41a', fontSize: '40px' }}>12</div>
                       <div className="card-description" style={{ color: '#52c41a' }}>
                         ↗ 8% 較昨日
                       </div>
                     </div>
-                    <CheckCircleOutlined className="card-icon" style={{ color: '#52c41a' }} />
+                    <CheckCircleOutlined className="card-icon" style={{ color: '#52c41a', fontSize: '36px' }} />
                   </div>
                 </div>
               </Col>
@@ -3790,43 +3473,47 @@
           </div>
 
           {/* 區塊 B: 資源健康度與關鍵業務監控 (Resource Health & Key Business Monitoring) */}
-          <div>
-            <Row gutter={[16, 12]}>
+          <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+            <Row gutter={[16, 12]} style={{ flexGrow: 1 }}>
               {/* 左側：資源狀態分佈圖表 - 佔 1/3 */}
-              <Col xs={24} sm={24} md={8} lg={8}>
+              <Col xs={24} sm={24} md={8} lg={8} style={{ display: 'flex' }}>
                 <div
                   className="chart-card"
                   style={{
-                    height: '220px',
+                    width: '100%',
                     padding: '16px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                   onClick={() => {
                     if (onNavigate) onNavigate('resource-list');
                   }}
                 >
                   <Title level={5} className="chart-title">資源數量 374 台</Title>
-                  <div style={{ height: 'calc(100% - 24px)' }}>
+                  <div style={{ flexGrow: 1 }}>
                     <EchartsForReact option={doughnutOption} isDark={themeMode === 'dark'} />
                   </div>
                 </div>
               </Col>
 
               {/* 右側：資源群組狀態總覽 - 佔 2/3 */}
-              <Col xs={24} sm={24} md={16} lg={16}>
+              <Col xs={24} sm={24} md={16} lg={16} style={{ display: 'flex' }}>
                 <div
                   className="chart-card"
                   style={{
-                    height: '220px',
+                    width: '100%',
                     padding: '16px',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    display: 'flex',
+                    flexDirection: 'column'
                   }}
                   onClick={() => {
                     if (onNavigate) onNavigate('resource-list');
                   }}
                 >
                   <Title level={5} className="chart-title">資源群組狀態總覽</Title>
-                  <div style={{ height: 'calc(100% - 24px)' }}>
+                  <div style={{ flexGrow: 1 }}>
                     <EchartsForReact option={stackedBarOption} isDark={themeMode === 'dark'} />
                   </div>
                 </div>
@@ -3834,68 +3521,121 @@
             </Row>
           </div>
 
-          {/* Top N 資源使用列表 */}
-          <div style={{ marginTop: '24px' }}>
+          <AIInsightSummary />
 
-            {/* 工具列 */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginTop: '16px',
-              marginBottom: '16px'
-            }}>
-              <Space>
-                <Input.Search
-                  placeholder="搜尋主機名稱..."
-                  style={{ width: 250 }}
-                  allowClear
-                />
-                <Button className="toolbar-btn" icon={<FilterOutlined />}>
-                  篩選
-                  <Badge count={1} style={{ marginLeft: 8 }} />
-                </Button>
-                <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
-                <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
-                <Button type="primary" className="btn-ai-analysis" icon={<RobotOutlined />}>
-                  AI 分析
-                </Button>
-              </Space>
-              <Space>
-                <Radio.Group
-                  value={metric}
-                  onChange={(e) => setMetric(e.target.value)}
-                  size="small"
-                  className="topn-radio-group"
-                >
-                  <Radio.Button value="CPU">CPU</Radio.Button>
-                  <Radio.Button value="Mem">記憶體</Radio.Button>
-                  <Radio.Button value="Disk">磁碟</Radio.Button>
-                  <Radio.Button value="Net">網路</Radio.Button>
-                </Radio.Group>
-              </Space>
-            </div>
-            <div className="table-wrapper">
-              <Table
-                dataSource={data[metric]}
-                columns={getColumns()}
-                pagination={{
-                  pageSize: 5,
-                  size: 'small',
-                  showSizeChanger: false,
-                  className: 'custom-pagination'
-                }}
-                size="small"
-                rowKey="key"
-                className="topn-table"
-              />
-            </div>
-          </div>
-        </React.Fragment>
+        </div>
       );
     };
 
-    const ResourceListPage = ({ pageParams }) => {
+    const ResourceListPage = ({ pageParams, themeMode, onNavigate }) => {
+      const AttentionRequiredList = ({ onNavigate }) => {
+        const attentionResources = resources
+          .filter(r => r.status === 'warning' || r.status === 'critical')
+          .sort((a, b) => {
+            // Sort critical items first
+            if (a.status === 'critical' && b.status !== 'critical') return -1;
+            if (a.status !== 'critical' && b.status === 'critical') return 1;
+            return 0;
+          });
+
+        const columns = [
+          {
+            title: '狀態',
+            dataIndex: 'status',
+            key: 'status',
+            width: '30%',
+            render: (status) => (
+              <span className={`status-badge status-${status}`}>
+                {status.toUpperCase()}
+              </span>
+            )
+          },
+          {
+            title: '資源名稱',
+            dataIndex: 'name',
+            key: 'name',
+            width: '45%',
+            render: (text, record) => <a onClick={() => message.info(`Navigating to details for ${text}`)}>{text}</a>
+          },
+          {
+            title: '告警',
+            dataIndex: 'alarms',
+            key: 'alarms',
+            width: '25%',
+            render: (alarms, record) => {
+              if (!alarms || alarms.length === 0) {
+                return <Text type="secondary">-</Text>;
+              }
+              const highestSeverity = alarms.some(a => a.severity === 'critical') ? 'critical' : 'warning';
+              const color = highestSeverity === 'critical' ? 'red' : 'orange';
+
+              return (
+                <Tag color={color} onClick={() => onNavigate && onNavigate('incident-list', { resourceFilter: record.name })} style={{ cursor: 'pointer' }}>
+                  {alarms.length} 則
+                </Tag>
+              );
+            }
+          }
+        ];
+
+        return (
+          <Card title="需關注的資源列表" style={{ height: '100%', display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 16px 16px' }}>
+            <div style={{ height: '100%', overflow: 'auto' }}>
+              <Table
+                dataSource={attentionResources}
+                columns={columns}
+                pagination={false}
+                size="small"
+                rowKey="key"
+              />
+            </div>
+          </Card>
+        );
+      };
+      const ResourceHealthHeatmap = ({ themeMode }) => {
+        const heatmapData = {
+          groups: ['DB Prod', 'Web Prod', 'API GW', 'Cache', 'Staging', 'Monitoring'],
+          resources: ['Host-01', 'Host-02', 'Host-03', 'Host-04', 'Host-05', 'Host-06', 'Host-07', 'Host-08'],
+          health: [
+            [0, 0, 0], [0, 1, 0], [0, 2, 1], [0, 3, 0], [0, 4, 2], [0, 5, 0], [0, 6, 0], [0, 7, 1],
+            [1, 0, 1], [1, 1, 0], [1, 2, 0], [1, 3, 0], [1, 4, 0], [1, 5, 1], [1, 6, 0], [1, 7, 0],
+            [2, 0, 2], [2, 1, 2], [2, 2, 1], [2, 3, 0], [2, 4, 0], [2, 5, 0], [2, 6, 0], [2, 7, 0],
+            [3, 0, 0], [3, 1, 0], [3, 2, 0], [3, 3, 0], [3, 4, 0], [3, 5, 0], [3, 6, 0], [3, 7, 0],
+            [4, 0, 1], [4, 1, 1], [4, 2, 0], [4, 3, 0], [4, 4, 1], [4, 5, 0], [4, 6, 0], [4, 7, 0],
+            [5, 0, 0], [5, 1, 0], [5, 2, 0], [5, 3, 0], [5, 4, 0], [5, 5, 0], [5, 6, 0], [5, 7, 0],
+          ].map(item => [item[1], item[0], item[2]]) // ECharts heatmap data format is [x, y, value]
+        };
+
+        const heatmapOption = {
+          tooltip: {
+            position: 'top',
+            formatter: function (params) {
+              return `${heatmapData.resources[params.value[0]]} @ ${heatmapData.groups[params.value[1]]}<br/>Status: <strong>${['Healthy', 'Warning', 'Critical'][params.value[2]]}</strong>`;
+            },
+            backgroundColor: 'rgba(0,0,0,0.85)',
+            borderColor: 'rgba(255,255,255,0.2)',
+            textStyle: { color: '#fff' }
+          },
+          grid: { height: '75%', top: '5%', left: '12%', right: '5%', bottom: '20%' },
+          xAxis: { type: 'category', data: heatmapData.resources, splitArea: { show: false }, axisLabel: { interval: 0, rotate: 30, color: 'rgba(255,255,255,0.7)' } },
+          yAxis: { type: 'category', data: heatmapData.groups, splitArea: { show: false }, axisLabel: { color: 'rgba(255,255,255,0.7)' } },
+          visualMap: {
+            min: 0, max: 2, calculable: false, show: false,
+            inRange: { color: ['#52c41a', '#faad14', '#ff4d4f'] } // Healthy, Warning, Critical
+          },
+          series: [{
+            name: 'Resource Health', type: 'heatmap', data: heatmapData.health,
+            label: { show: false },
+            emphasis: { itemStyle: { shadowBlur: 10, shadowColor: 'rgba(0, 0, 0, 0.5)' } }
+          }]
+        };
+
+        return (
+          <Card title="資源健康度熱力圖" style={{ height: '100%', display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '16px' }}>
+            <EchartsForReact option={heatmapOption} isDark={themeMode === 'dark'} />
+          </Card>
+        );
+      };
       const mockGroups = [
         { id: 'g_1', name: 'Production Database' },
         { id: 'g_2', name: 'Production Web Servers' },
@@ -3915,14 +3655,35 @@
         { key: 't_2', name: 'Web 開發團隊' },
         { key: 't_3', name: '測試團隊' },
       ];
+      // 生成趨勢數據
+      const generateTrend = () => {
+        const baseValue = 55;
+        const trendDirection = Math.random() > 0.5 ? 1 : -1;
+        const volatility = 25;
+        let currentValue = baseValue;
+        const trend = [];
+        for (let i = 0; i < 12; i++) {
+          const trendInfluence = trendDirection * (i / 12) * 15;
+          const randomChange = (Math.random() - 0.5) * volatility;
+          const periodicChange = Math.sin(i * Math.PI / 6) * 8;
+          currentValue = Math.max(8, Math.min(98, baseValue + trendInfluence + randomChange + periodicChange));
+          if (i > 0) {
+            const prevValue = trend[i - 1];
+            currentValue = prevValue * 0.6 + currentValue * 0.4;
+          }
+          trend.push(Math.round(currentValue));
+        }
+        return trend;
+      };
+
       const initialData = [
-        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'] },
-        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'] },
-        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'] },
-        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'] },
+        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'], trend: generateTrend(), alarms: [] },
+        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'], trend: generateTrend(), alarms: [{ severity: 'warning', summary: 'Disk space is over 85%' }] },
+        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'], trend: generateTrend(), alarms: [{ severity: 'critical', summary: 'API latency > 2s' }, { severity: 'warning', summary: '5xx error rate > 5%' }] },
+        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'], trend: generateTrend(), alarms: [] },
       ];
 
-      const [resources, setResources] = useLocalStorageState('sre-resources', initialData);
+      const [resources, setResources] = useLocalStorageState('sre-resources-v3', initialData);
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingResource, setEditingResource] = useState(null);
       const [searchText, setSearchText] = useState('');
@@ -3978,11 +3739,31 @@
         });
       };
 
+      const createSparklineOption = (trendData) => ({
+        backgroundColor: 'transparent',
+        grid: { top: 4, bottom: 4, left: 2, right: 2 },
+        xAxis: { type: 'category', show: false, data: trendData.map((_, i) => i) },
+        yAxis: { type: 'value', show: false, min: 'dataMin', max: 'dataMax' },
+        series: [{
+          data: trendData,
+          type: 'line',
+          smooth: true,
+          showSymbol: false,
+          lineStyle: { width: 2, color: '#6395f9' },
+          areaStyle: {
+            color: {
+              type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
+              colorStops: [{ offset: 0, color: '#6395f94D' }, { offset: 1, color: '#6395f91A' }]
+            }
+          }
+        }]
+      });
+
       const columns = [
         {
           title: '狀態',
           dataIndex: 'status',
-          width: '10%',
+          width: '8%',
           filters: [
             { text: 'Healthy', value: 'healthy' },
             { text: 'Warning', value: 'warning' },
@@ -3995,11 +3776,23 @@
             </span>
           )
         },
-        { title: '資源名稱', dataIndex: 'name', width: '25%', sorter: (a, b) => a.name.localeCompare(b.name), render: text => <a>{text}</a> },
-        { title: 'IP位址', dataIndex: 'ip_address', width: '20%', sorter: (a, b) => a.ip_address.localeCompare(b.ip_address) },
+        { title: '資源名稱', dataIndex: 'name', width: '18%', sorter: (a, b) => a.name.localeCompare(b.name), render: text => <a>{text}</a> },
         {
-          title: '所屬團隊', key: 'team', width: '15%', render: (_, record) => {
-            // 找到包含此資源的資源群組
+          title: '資源趨勢 (24H)',
+          dataIndex: 'trend',
+          width: '12%',
+          render: (trend) => (
+            <div style={{ height: '30px' }}>
+              <EchartsForReact
+                option={createSparklineOption(trend)}
+                isDark={themeMode === 'dark'}
+              />
+            </div>
+          )
+        },
+        { title: 'IP位址', dataIndex: 'ip_address', width: '15%', sorter: (a, b) => a.ip_address.localeCompare(b.ip_address) },
+        {
+          title: '所屬團隊', key: 'team', width: '12%', render: (_, record) => {
             const group = groups.find(g => g.members && g.members.includes(record.key));
             if (group && group.responsibleTeam) {
               const team = teams.find(t => t.key === group.responsibleTeam);
@@ -4008,16 +3801,15 @@
             return '-';
           }
         },
-        { title: '類型', dataIndex: 'type', width: '15%', filters: [{ text: 'Database', value: 'database' }, { text: 'Server', value: 'server' }, { text: 'Gateway', value: 'gateway' }, { text: 'Cache', value: 'cache' },], onFilter: (value, record) => record.type.indexOf(value) === 0 },
+        { title: '類型', dataIndex: 'type', width: '10%', filters: [{ text: 'Database', value: 'database' }, { text: 'Server', value: 'server' }, { text: 'Gateway', value: 'gateway' }, { text: 'Cache', value: 'cache' },], onFilter: (value, record) => record.type.indexOf(value) === 0 },
         {
           title: '標籤',
           dataIndex: 'tags',
           key: 'tags',
-          width: '20%',
+          width: '15%',
           render: (tags) => (
             <Space size={[4, 4]} wrap>
               {tags && tags.length > 0 ? tags.map(tag => {
-                // 從標籤管理系統獲取標籤顏色（這裡使用預設映射）
                 const tagColorMap = {
                   'production': 'red',
                   'staging': 'orange',
@@ -4031,7 +3823,41 @@
             </Space>
           )
         },
-        { title: '操作', key: 'action', width: '15%', render: (_, record) => (<Space size="small"> <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
+        {
+          title: '即時告警',
+          dataIndex: 'alarms',
+          width: '10%',
+          render: (alarms, record) => {
+            if (!alarms || alarms.length === 0) {
+              return <Text type="secondary">-</Text>;
+            }
+
+            const highestSeverity = alarms.some(a => a.severity === 'critical') ? 'critical' : 'warning';
+            const color = highestSeverity === 'critical' ? 'red' : 'orange';
+            const icon = highestSeverity === 'critical' ? '🚨' : '⚠️';
+
+            const content = (
+              <List
+                size="small"
+                dataSource={alarms}
+                renderItem={item => <List.Item>{item.summary}</List.Item>}
+              />
+            );
+
+            return (
+              <Popover content={content} title="活躍告警" trigger="hover">
+                <Tag
+                  color={color}
+                  onClick={() => onNavigate && onNavigate('incident-list', { resourceFilter: record.name })}
+                  style={{ cursor: 'pointer' }}
+                >
+                  {icon} {alarms.length}
+                </Tag>
+              </Popover>
+            );
+          }
+        },
+        { title: '操作', key: 'action', width: '10%', render: (_, record) => (<Space size="small"> <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
       ];
       // 應用預篩選和搜尋篩選
       let filteredResources = resources;
@@ -4059,23 +3885,142 @@
         unknown: resources.filter(r => r.status === 'unknown').length
       };
 
+      const ResourceOverviewKPIs = ({ themeMode }) => {
+        const kpiData = {
+          total: 374,
+          health: { healthy: 138, warning: 143, critical: 93 },
+          cloud: { aws: 250, gcp: 124 },
+          os: { linux: 350, windows: 24 }
+        };
+
+        const healthChartOption = {
+          tooltip: { trigger: 'item' },
+          series: [
+            {
+              name: 'Health Status',
+              type: 'pie',
+              radius: ['60%', '80%'],
+              avoidLabelOverlap: false,
+              label: { show: false },
+              emphasis: {
+                label: { show: false }
+              },
+              labelLine: { show: false },
+              data: [
+                { value: kpiData.health.healthy, name: 'Healthy', itemStyle: { color: '#52c41a' } },
+                { value: kpiData.health.warning, name: 'Warning', itemStyle: { color: '#faad14' } },
+                { value: kpiData.health.critical, name: 'Critical', itemStyle: { color: '#ff4d4f' } }
+              ]
+            }
+          ]
+        };
+
+        const StatBox = ({ children, style }) => (
+          <div style={{
+            background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '8px',
+            padding: '16px',
+            height: '100%',
+            ...style
+          }}>
+            {children}
+          </div>
+        );
+
+        return (
+          <Card title="資源總覽" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, display: 'flex', alignItems: 'stretch' }}>
+            <Row gutter={[16, 16]} style={{ width: '100%' }}>
+              <Col span={12}>
+                <StatBox>
+                  <Statistic title="總資源數" value={kpiData.total} prefix={<HddOutlined />} />
+                </StatBox>
+              </Col>
+              <Col span={12}>
+                <StatBox style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ flex: 1 }}>
+                    <Statistic title="健康狀態" value={kpiData.health.healthy} suffix="健康" />
+                    <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                      <span style={{ color: '#faad14' }}>{kpiData.health.warning} 警告</span>, <span style={{ color: '#ff4d4f' }}>{kpiData.health.critical} 嚴重</span>
+                    </div>
+                  </div>
+                  <div style={{ width: '50px', height: '50px', flexShrink: 0 }}>
+                    <EchartsForReact option={healthChartOption} isDark={themeMode === 'dark'} />
+                  </div>
+                </StatBox>
+              </Col>
+              <Col span={12}>
+                <StatBox>
+                  <Statistic title="雲服務商分佈" value={kpiData.cloud.aws} suffix="AWS" />
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                    GCP: {kpiData.cloud.gcp}
+                  </div>
+                </StatBox>
+              </Col>
+              <Col span={12}>
+                <StatBox>
+                  <Statistic title="作業系統分佈" value={kpiData.os.linux} suffix="Linux" />
+                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                    Windows: {kpiData.os.windows}
+                  </div>
+                </StatBox>
+              </Col>
+            </Row>
+          </Card>
+        );
+      };
+
       return (
         <React.Fragment>
-          {/* 頁面標題 */}
-          <div style={{ marginBottom: 'var(--spacing-md)' }}>
-            <Title level={2} className="page-title">資源列表</Title>
-            <Paragraph className="page-subtitle" type="secondary">
-              專注的資產與健康中心 - 探索、監控與維護基礎設施資源。
-            </Paragraph>
+          {/* 頁面標題和工具列 */}
+          <div style={{ marginBottom: 'var(--spacing-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <Title level={2} className="page-title" style={{ margin: 0 }}>資源列表</Title>
+              <Paragraph className="page-subtitle" type="secondary" style={{ margin: '4px 0 0 0' }}>
+                指揮中心儀表板 - 無需滾動即可掌握全局狀態。
+              </Paragraph>
+            </div>
+            <Space>
+              <Input.Search
+                placeholder="搜尋資源..."
+                style={{ width: 250 }}
+                allowClear
+              />
+              <Button className="toolbar-btn" icon={<FilterOutlined />}>篩選</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增資源</Button>
+            </Space>
           </div>
 
+          {/* 2x2 Grid Layout */}
+          <div style={{ height: 'calc(100vh - 48px - 48px - 80px)', display: 'flex', flexDirection: 'column' }}>
+            <Row gutter={[16, 16]} style={{ flex: 1 }}>
+              {/* Top-Left Quadrant */}
+              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
+                <ResourceOverviewKPIs themeMode={themeMode} />
+              </Col>
+              {/* Top-Right Quadrant */}
+              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
+                <TopNResourceList themeMode={themeMode} />
+              </Col>
+            </Row>
+            <Row gutter={[16, 16]} style={{ flex: 1, marginTop: '16px' }}>
+              {/* Bottom-Left Quadrant */}
+              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
+                <ResourceHealthHeatmap themeMode={themeMode} />
+              </Col>
+              {/* Bottom-Right Quadrant */}
+              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
+                <AttentionRequiredList onNavigate={onNavigate} />
+              </Col>
+            </Row>
+          </div>
 
-          {/* 工具列 */}
+          {/* 詳細資源列表工具欄和表格 */}
           <div style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            marginBottom: 'var(--spacing-lg)',
+            marginTop: 'var(--spacing-lg)',
             padding: 'var(--spacing-lg)',
             background: 'var(--bg-elevated)',
             borderRadius: 'var(--radius-lg)',
@@ -4103,14 +4048,14 @@
               )}
               <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
-                新增資源
-              </Button>
             </Space>
           </div>
-          <div className="table-wrapper">
+
+          <div className="table-wrapper" style={{ marginTop: 'var(--spacing-lg)' }}>
             {resources.length > 0 ? <Table rowSelection={rowSelection} columns={columns} dataSource={filteredResources} rowKey="key" className="transparent-bg" /> : <Empty description="尚無任何資源"> <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增資源</Button> </Empty>}
           </div>
+
+          {/* Modal remains unchanged for now */}
           <Modal title={editingResource ? '編輯資源' : '新增資源'} open={isModalOpen} onCancel={handleCancel} footer={null}>
             <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 24 }}>
               <Form.Item name="name" label="資源名稱" rules={[{ required: true }]}><Input /></Form.Item>
@@ -9901,7 +9846,7 @@
       const [keyInputMode, setKeyInputMode] = useState(true);
       const { message } = antd.App.useApp();
 
-      // 從統一標籤管理系統獲取 Key 選項
+      // 從標籤管理系統獲取 Key 選項
       const keyOptions = tags.map(tag => ({
         value: tag.name,
         label: tag.displayName || tag.name,
@@ -10157,7 +10102,7 @@
 
 
     // 標籤 Key 管理頁面
-    // 統一標籤管理頁面 - 同時管理標籤名稱和值
+    // 標籤管理頁面 - 同時管理標籤名稱和值
     const TagKeyManagementPage = () => {
       // 標籤分類
       const tagCategories = [
@@ -10169,7 +10114,7 @@
         { id: 'security', name: '安全合規', color: '#f5222d', description: '安全等級、合規要求等安全相關標籤' }
       ];
 
-      // 預設的統一標籤數據（包含name和values）
+      // 預設的標籤數據（包含name和values）
       const initialTags = [
         {
           id: 't_1',
@@ -10376,6 +10321,14 @@
         ));
       };
 
+      const handleToggleRequired = (tagId, checked) => {
+        setTags(prev => prev.map(tag =>
+          tag.id === tagId
+            ? { ...tag, required: checked, updatedAt: dayjs() }
+            : tag
+        ));
+      };
+
       const handleValueSubmit = (values) => {
         const processedValue = {
           ...values,
@@ -10416,17 +10369,18 @@
       // 表格欄位
       const columns = [
         {
-          title: 'Key 名稱',
+          title: '標籤名稱',
           dataIndex: 'name',
           key: 'name',
-          width: '15%',
+          width: '20%',
+          sorter: (a, b) => a.name.localeCompare(b.name),
           render: (name, record) => (
             <div>
-              <div style={{ fontWeight: 600, color: 'var(--text-primary)' }}>
-                {name}
-              </div>
-              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+              <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
                 {record.displayName}
+              </div>
+              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+                {name}
               </div>
             </div>
           ),
@@ -10435,100 +10389,103 @@
           title: '分類',
           dataIndex: 'category',
           key: 'category',
-          width: '12%',
+          width: '10%',
+          filters: tagCategories.map(cat => ({ text: cat.name, value: cat.id })),
+          onFilter: (value, record) => record.category === value,
           render: (category) => {
-            const cat = categories.find(c => c.id === category);
-            return (
-              <Tag color={cat?.color}>
-                {cat?.name}
+            const cat = tagCategories.find(c => c.id === category);
+            return cat ? (
+              <Tag color={cat.color} style={{ border: 'none' }}>
+                {cat.name}
               </Tag>
-            );
+            ) : null;
           },
         },
         {
-          title: '描述',
-          dataIndex: 'description',
-          key: 'description',
-          width: '25%',
-          ellipsis: true,
-        },
-        {
-          title: '值類型',
-          dataIndex: 'valueType',
-          key: 'valueType',
-          width: '12%',
-          render: (valueType, record) => {
-            const type = valueTypes.find(vt => vt.id === valueType);
-            return (
-              <div>
-                <Tag color={valueType === 'enum' ? 'blue' : valueType === 'pattern' ? 'orange' : 'default'}>
-                  {type?.name}
-                </Tag>
-                {valueType === 'enum' && record.enumOptions && (
-                  <div style={{ fontSize: '11px', color: 'var(--text-tertiary)', marginTop: 2 }}>
-                    {record.enumOptions.slice(0, 3).join(', ')}
-                    {record.enumOptions.length > 3 && '...'}
-                  </div>
-                )}
+          title: '標籤值 (Available Values)',
+          dataIndex: 'values',
+          key: 'values',
+          width: '30%',
+          render: (values, record) => {
+            const displayValues = values.slice(0, 3);
+            const hiddenCount = values.length - displayValues.length;
+
+            const tooltipContent = (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {values.map(val => (
+                  <Tag key={val.id} color={val.color}>{val.displayName} ({val.value})</Tag>
+                ))}
               </div>
             );
-          },
+
+            return (
+              <Space wrap size={[4, 4]} align="center">
+                {displayValues.map(val => (
+                  <Tag key={val.id} color={val.color}>{val.displayName}</Tag>
+                ))}
+                {hiddenCount > 0 && (
+                  <Tooltip title={tooltipContent}>
+                    <Tag style={{ cursor: 'pointer' }}>+ {hiddenCount} more</Tag>
+                  </Tooltip>
+                )}
+                <Tooltip title="管理標籤值">
+                  <Button type="text" size="small" icon={<SettingOutlined />} style={{ marginLeft: 4 }} onClick={() => handleCreateValue(record)} />
+                </Tooltip>
+              </Space>
+            )
+          }
         },
         {
           title: '必填',
           dataIndex: 'required',
           key: 'required',
           width: '8%',
-          render: (required) => (
-            required ? <Tag color="red">必填</Tag> : <Tag>選填</Tag>
+          filters: [
+            { text: '必填', value: true },
+            { text: '選填', value: false },
+          ],
+          onFilter: (value, record) => record.required === value,
+          render: (required, record) => (
+            <Tooltip title={`開啟後，所有'生產環境'的'資料庫'類型資源都必須包含此標籤。`}>
+              <Switch checked={required} onChange={(checked) => handleToggleRequired(record.id, checked)} />
+            </Tooltip>
           ),
         },
         {
-          title: '使用次數',
-          dataIndex: 'usageCount',
-          key: 'usageCount',
+          title: '總使用次數',
+          dataIndex: 'totalUsage',
+          key: 'totalUsage',
           width: '10%',
-          sorter: (a, b) => a.usageCount - b.usageCount,
+          sorter: (a, b) => a.totalUsage - b.totalUsage,
           render: (count) => (
-            <Badge count={count} showZero style={{ backgroundColor: count > 0 ? '#52c41a' : '#d9d9d9' }} />
-          ),
-        },
-        {
-          title: '創建者',
-          dataIndex: 'createdBy',
-          key: 'createdBy',
-          width: '10%',
-          render: (createdBy) => (
-            <Tag color={createdBy === 'system' ? 'gold' : 'default'} size="small">
-              {createdBy}
-            </Tag>
+            <Text style={{ color: count > 50 ? '#52c41a' : count > 10 ? '#fa8c16' : 'rgba(255, 255, 255, 0.7)' }}>
+              {count.toLocaleString()}
+            </Text>
           ),
         },
         {
           title: '操作',
           key: 'action',
-          width: '8%',
+          width: '12%',
           render: (_, record) => (
-            <Space>
+            <Space size="small">
               <Button
                 type="link"
                 size="small"
                 icon={<EditOutlined />}
-                onClick={() => handleEdit(record)}
+                onClick={() => handleEditTag(record)}
               >
                 編輯
               </Button>
-              {record.createdBy !== 'system' && (
-                <Button
-                  type="link"
-                  size="small"
-                  danger
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(record)}
-                >
-                  刪除
-                </Button>
-              )}
+              <Button
+                type="link"
+                size="small"
+                danger
+                icon={<DeleteOutlined />}
+                onClick={() => handleDeleteTag(record.id)}
+              >
+                刪除
+              </Button>
             </Space>
           ),
         },
@@ -10537,7 +10494,7 @@
       return (
         <React.Fragment>
           <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <Title level={2} className="page-title">統一標籤管理</Title>
+            <Title level={2} className="page-title">標籤管理</Title>
             <Paragraph className="page-subtitle" type="secondary">
               統一管理標籤名稱和對應的值，提供結構化的標籤系統管理體驗。
             </Paragraph>
@@ -10632,7 +10589,7 @@
             </Row>
           </Card>
 
-          {/* 統一標籤表格 */}
+          {/* 標籤表格 */}
           <Card>
             <Table
               columns={[
@@ -10941,40 +10898,35 @@
             </Form>
           </Modal>
 
-          {/* 新增/編輯標籤值彈窗 */}
+          {/* 管理標籤值彈窗 */}
           <Modal
-            title={`${editingValue ? '編輯' : '新增'}標籤值${selectedTagForValue ? ` - ${selectedTagForValue.displayName}` : ''}`}
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <SettingOutlined />
+                <span>管理標籤值: {selectedTagForValue?.displayName}</span>
+              </div>
+            }
             open={isValueModalOpen}
             onCancel={handleValueCancel}
-            footer={null}
-            width={500}
+            footer={<Button onClick={handleValueCancel}>關閉</Button>}
+            width={700}
           >
-            <Form
-              form={valueForm}
-              layout="vertical"
-              onFinish={handleValueSubmit}
-              autoComplete="off"
-            >
-              <Row gutter={16}>
-                <Col span={14}>
-                  <Form.Item
-                    label="標籤值"
-                    name="value"
-                    rules={[
-                      { required: true, message: '請輸入標籤值' },
-                      { pattern: /^[a-zA-Z0-9_-]+$/, message: '只能包含字母、數字、下劃線和連字符' },
-                      { max: 50, message: '標籤值不能超過50個字符' }
-                    ]}
-                  >
-                    <Input placeholder="例如：production, frontend" />
+            <Row gutter={24} style={{ marginTop: 24 }}>
+              <Col span={12}>
+                <Title level={5}>新增或編輯值</Title>
+                <Form
+                  form={valueForm}
+                  layout="vertical"
+                  onFinish={handleValueSubmit}
+                  autoComplete="off"
+                >
+                  <Form.Item name="value" label="標籤值" rules={[{ required: true, message: '請輸入標籤值' }]}>
+                    <Input placeholder="e.g., production, frontend" />
                   </Form.Item>
-                </Col>
-                <Col span={10}>
-                  <Form.Item
-                    label="顏色"
-                    name="color"
-                    rules={[{ required: true, message: '請選擇顏色' }]}
-                  >
+                  <Form.Item name="displayName" label="顯示名稱" rules={[{ required: true, message: '請輸入顯示名稱' }]}>
+                    <Input placeholder="e.g., 生產環境, 前端團隊" />
+                  </Form.Item>
+                  <Form.Item name="color" label="顏色" rules={[{ required: true, message: '請選擇顏色' }]}>
                     <Select placeholder="選擇顏色">
                       {['#f5222d', '#fa541c', '#fa8c16', '#faad14', '#fadb14', '#a0d911', '#52c41a', '#13c2c2', '#1890ff', '#2f54eb', '#722ed1', '#eb2f96'].map(color => (
                         <Select.Option key={color} value={color}>
@@ -10986,31 +10938,47 @@
                       ))}
                     </Select>
                   </Form.Item>
-                </Col>
-              </Row>
-
-              <Form.Item
-                label="顯示名稱"
-                name="displayName"
-                rules={[
-                  { required: true, message: '請輸入顯示名稱' },
-                  { max: 100, message: '顯示名稱不能超過100個字符' }
-                ]}
-              >
-                <Input placeholder="例如：生產環境, 前端團隊" />
-              </Form.Item>
-
-              <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-                <Space>
-                  <Button onClick={handleValueCancel}>
-                    取消
-                  </Button>
-                  <Button type="primary" htmlType="submit">
-                    {editingValue ? '更新' : '創建'}
-                  </Button>
-                </Space>
-              </Form.Item>
-            </Form>
+                  <Form.Item>
+                    <Space>
+                      <Button type="primary" htmlType="submit">
+                        {editingValue ? '更新值' : '新增值'}
+                      </Button>
+                      {editingValue && (
+                        <Button onClick={() => {
+                          setEditingValue(null);
+                          valueForm.resetFields();
+                        }}>
+                          取消編輯
+                        </Button>
+                      )}
+                    </Space>
+                  </Form.Item>
+                </Form>
+              </Col>
+              <Col span={12}>
+                <Title level={5}>現有值列表</Title>
+                <div style={{ maxHeight: 350, overflowY: 'auto' }}>
+                  <List
+                    itemLayout="horizontal"
+                    dataSource={selectedTagForValue?.values || []}
+                    renderItem={(item) => (
+                      <List.Item
+                        actions={[
+                          <Button type="link" icon={<EditOutlined />} onClick={() => handleEditValue(selectedTagForValue, item)} />,
+                          <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDeleteValue(selectedTagForValue.id, item.id)} />
+                        ]}
+                      >
+                        <List.Item.Meta
+                          avatar={<Tag color={item.color} style={{ width: 20, height: 20, borderRadius: 4 }} />}
+                          title={<span style={{ color: 'var(--text-primary)' }}>{item.displayName}</span>}
+                          description={`Value: ${item.value} | Used: ${item.usageCount} times`}
+                        />
+                      </List.Item>
+                    )}
+                  />
+                </div>
+              </Col>
+            </Row>
           </Modal>
         </React.Fragment>
       );
@@ -11844,8 +11812,8 @@
           getItem('用戶管理', 'user-management'),
           getItem('團隊管理', 'team-management'),
           getItem('角色管理', 'role-management'),
-          getItem('統一標籤管理', 'tag-key-management'),
-          getItem('通知通道', 'notification-channels'),
+          getItem('標籤管理', 'tag-key-management'),
+          getItem('通知管道', 'notification-channels'),
           getItem('系統設定', 'system-settings'),
           getItem('平台診斷', 'platform-diagnostics'),
         ]),
@@ -11869,7 +11837,7 @@
           case 'incidents': return <IncidentsPage onNavigate={setCurrentPage} />;
           case 'analyzing': return <AnalyzingPage onNavigate={setCurrentPage} />;
           case 'automation': return <AutomationPage onNavigate={setCurrentPage} />;
-          case 'resource-list': return <ResourceListPage pageParams={pageParams} />;
+          case 'resource-list': return <ResourceListPage pageParams={pageParams} themeMode={themeMode} onNavigate={navigateToPage} />;
           case 'resource-groups': return <ResourceGroupsPage />;
           case 'incident-list': return <IncidentListPage onNavigate={setCurrentPage} pageParams={pageParams} />;
           case 'alerting-rules': return <AlertingRulesPage />;
@@ -11895,6 +11863,7 @@
           case 'notification-channels': return <NotificationChannelsPage />;
           case 'system-settings': return <SystemSettingsPage />;
           case 'diagnostics': return <PlatformDiagnosticsPage />;
+          case 'platform-diagnostics': return <PlatformDiagnosticsPage />;
           case 'audit-logs': return <AuditLogsPage />;
           case 'profile': return <ProfilePage themeMode={themeMode} setThemeMode={setThemeMode} />;
           default: return <DashboardPage />;
@@ -11910,7 +11879,7 @@
             }
           }
         }
-        const adminPageMap = { 'user-management': '人員管理', 'team-management': '團隊管理', 'role-management': '角色管理', 'notification-strategies': '通知策略', 'notification-channels': '通知管道', 'system-settings': '系統設定', diagnostics: '平台診斷', 'audit-logs': '審計日誌', profile: '個人資料' };
+        const adminPageMap = { 'user-management': '人員管理', 'team-management': '團隊管理', 'role-management': '角色管理', 'notification-strategies': '通知策略', 'notification-channels': '通知管道', 'system-settings': '系統設定', diagnostics: '平台診斷', 'platform-diagnostics': '平台診斷', 'audit-logs': '審計日誌', profile: '個人資料' };
         const analyzePageMap = {
           'performance-insights': '效能洞察',
           'cost-analysis': '成本分析',
