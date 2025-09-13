@@ -4420,7 +4420,18 @@
             );
           }
         },
-        { title: '操作', key: 'action', width: '10%', render: (_, record) => (<Space size="small"> <Button type="link" icon={<EditOutlined />} onClick={() => showModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)}>刪除</Button> </Space>) }
+        {
+          title: '操作', key: 'action', width: '10%', render: (_, record) => (
+            <Space size="small">
+              <Tooltip title="編輯">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除">
+                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)} />
+              </Tooltip>
+            </Space>
+          )
+        }
       ];
       // 應用預篩選和搜尋篩選
       let filteredResources = resources;
@@ -4554,9 +4565,17 @@
 
       return (
         <React.Fragment>
-          {/* 頁面標題列 */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
-            <Title level={2} className="page-title" style={{ margin: 0 }}>資源列表</Title>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
+            <div>
+              <Title level={2} className="page-title" style={{ marginBottom: 4 }}>資源列表</Title>
+              <Paragraph className="page-subtitle" type="secondary" style={{ margin: 0 }}>
+                集中管理、探索與操作所有監控資源。
+              </Paragraph>
+            </div>
+            <Radio.Group value={viewMode} onChange={(e) => setViewMode(e.target.value)}>
+              <Radio.Button value="dashboard">總覽</Radio.Button>
+              <Radio.Button value="list">列表</Radio.Button>
+            </Radio.Group>
           </div>
 
           {/* 工具列 - 僅在列表視圖顯示 */}
@@ -4582,7 +4601,6 @@
                 <Button className="toolbar-btn" icon={<FilterOutlined />}>篩選</Button>
               </Space>
               <Space>
-                <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
                 <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增資源</Button>
               </Space>
@@ -4755,7 +4773,24 @@
             );
           }
         },
-        { title: '操作', key: 'action', width: '15%', render: (_, record) => (<Space size="small"> <Button type="primary" icon={<PlayCircleOutlined />}>執行</Button> <Button type="link" icon={<HistoryOutlined />} style={{ color: '#faad14' }} onClick={() => handleViewHistory(record)}>歷史</Button> <Button type="link" icon={<EditOutlined />} onClick={() => showGroupModal(record)}>編輯</Button> <Button type="link" danger icon={<DeleteOutlined />} onClick={() => handleGroupDelete(record.key)}>刪除</Button> </Space>) },
+        {
+          title: '操作', key: 'action', width: '15%', render: (_, record) => (
+            <Space size="small">
+              <Tooltip title="執行" placement="top">
+                <Button type="text" icon={<PlayCircleOutlined style={{ color: '#52c41a' }} />} />
+              </Tooltip>
+              <Tooltip title="查看歷史" placement="top">
+                <Button type="text" icon={<HistoryOutlined />} onClick={() => handleViewHistory(record)} />
+              </Tooltip>
+              <Tooltip title="編輯" placement="top">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showGroupModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除" placement="top">
+                <Button type="text" icon={<DeleteOutlined />} danger onClick={() => handleGroupDelete(record.key)} />
+              </Tooltip>
+            </Space>
+          )
+        },
       ];
 
       const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchText.toLowerCase()));
@@ -4792,7 +4827,6 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showGroupModal()}>
                 新增群組
@@ -5559,34 +5593,28 @@
         {
           title: '操作', key: 'action', width: '11%', render: (_, record) => (
             <Space size="small">
-              <Tooltip title="確認事件">
+              <Tooltip title="確認事件" placement="top">
                 <Button
-                  type="primary" size="small"
-                  icon={<CheckCircleOutlined />}
+                  type="text"
+                  icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
                   disabled={record.status !== 'new'}
                   onClick={() => handleStatusChange([record.key], 'acknowledged')}
-                >
-                  確認
-                </Button>
+                />
               </Tooltip>
-              <Tooltip title={record.status === 'silenced' ? '已靜音' : '設置靜音'}>
+              <Tooltip title={record.status === 'silenced' ? '已靜音' : '設置靜音'} placement="top">
                 <Button
-                  type="default" size="small"
+                  type="text"
                   icon={<PauseCircleOutlined />}
                   disabled={record.status === 'resolved'}
                   onClick={() => showSilenceModal(record)}
-                >
-                  {record.status === 'silenced' ? '已靜音' : '靜音'}
-                </Button>
+                />
               </Tooltip>
-              <Tooltip title="查看詳情">
+              <Tooltip title="查看詳情" placement="top">
                 <Button
-                  size="small"
+                  type="text"
                   icon={<InfoCircleOutlined />}
                   onClick={() => showDetailModal(record)}
-                >
-                  詳情
-                </Button>
+                />
               </Tooltip>
             </Space>
           )
@@ -5685,7 +5713,6 @@
                   </Button>
                 </>
               )}
-              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" className="btn-ai-analysis" icon={<RobotOutlined />} onClick={() => handleAIAnalysis()}>
                 AI 分析
@@ -6606,8 +6633,12 @@
         {
           title: '操作', key: 'action', width: '15%', render: (_, record) => (
             <Space size="small">
-              <Button type="link" onClick={() => showModal(record)}>編輯</Button>
-              <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+              <Tooltip title="編輯">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除">
+                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)} />
+              </Tooltip>
             </Space>
           )
         }
@@ -8093,8 +8124,12 @@
           width: '12%',
           render: (_, record) => (
             <Space>
-              <Button type="link" onClick={() => showModal(record)}>編輯</Button>
-              <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+              <Tooltip title="編輯">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除">
+                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)} />
+              </Tooltip>
             </Space>
           )
         }
@@ -8539,20 +8574,31 @@
     const ScriptsPage = ({ scripts, setScripts, addExecution }) => {
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingScript, setEditingScript] = useState(null);
+      const [selectedRowKeys, setSelectedRowKeys] = useState([]);
       const [form] = Form.useForm();
       const { message, modal } = antd.App.useApp();
+      const confirmDelete = useDeleteConfirm();
 
       const showModal = (script = null) => {
         setEditingScript(script);
         form.setFieldsValue(script || { name: '', type: 'Python', description: '', code: '' });
         setIsModalOpen(true);
       };
+
       const handleCancel = () => setIsModalOpen(false);
+
       const onFinish = (values) => {
-        message.success(editingScript ? '腳本更新成功' : '腳本新增成功');
-        // Logic to update/add script
+        if (editingScript) {
+          setScripts(scripts.map(s => s.key === editingScript.key ? { ...s, ...values } : s));
+          message.success('腳本更新成功');
+        } else {
+          const newScript = { ...values, key: `s_${Date.now()}`, creator: 'admin' };
+          setScripts([newScript, ...scripts]);
+          message.success('腳本新增成功');
+        }
         handleCancel();
       };
+
       const handleRun = (script) => {
         modal.confirm({
           title: `確定要執行腳本 "${script.name}" 嗎?`,
@@ -8574,6 +8620,35 @@
         })
       };
 
+      const handleDelete = (key) => {
+        confirmDelete('腳本', () => {
+          setScripts(scripts.filter(s => s.key !== key));
+        });
+      };
+
+      const handleBatchDelete = () => {
+        modal.confirm({
+          title: `確定要刪除 ${selectedRowKeys.length} 個腳本嗎？`,
+          icon: <ExclamationCircleOutlined />,
+          content: '此操作無法復原。',
+          okText: '確定',
+          okType: 'danger',
+          cancelText: '取消',
+          onOk() {
+            setScripts(scripts.filter(s => !selectedRowKeys.includes(s.key)));
+            setSelectedRowKeys([]);
+            message.success('批次刪除成功');
+          }
+        });
+      };
+
+      const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+      };
+
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const hasSelected = selectedRowKeys.length > 0;
+
       const columns = [
         { title: '腳本名稱', dataIndex: 'name', width: '25%' },
         { title: '類型', dataIndex: 'type', width: '15%', render: t => <Tag>{t}</Tag> },
@@ -8582,9 +8657,15 @@
         {
           title: '操作', key: 'action', width: '10%', render: (_, record) => (
             <Space size="small">
-              <Tooltip title="運行"><Button type="primary" icon={<PlayCircleOutlined />} onClick={() => handleRun(record)}>運行</Button></Tooltip>
-              <Button type="link" onClick={() => showModal(record)}>編輯</Button>
-              <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+              <Tooltip title="運行" placement="top">
+                <Button type="text" icon={<PlayCircleOutlined style={{ color: '#52c41a' }} />} onClick={() => handleRun(record)} />
+              </Tooltip>
+              <Tooltip title="編輯" placement="top">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除" placement="top">
+                <Button type="text" icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.key)} />
+              </Tooltip>
             </Space>
           )
         }
@@ -8621,7 +8702,6 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增腳本
@@ -8631,12 +8711,26 @@
           <div className="table-wrapper">
             {
               scripts.length > 0 ?
-                <Table columns={columns} dataSource={scripts} rowKey="key" className="transparent-bg" /> :
+                <Table rowSelection={rowSelection} columns={columns} dataSource={scripts} rowKey="key" className="transparent-bg" /> :
                 <Empty description="尚無任何腳本">
                   <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增腳本</Button>
                 </Empty>
             }
           </div>
+
+          {hasSelected && (
+            <div className="batch-actions-floating">
+              <div className="batch-info">
+                <CheckCircleOutlined style={{ color: 'var(--brand-primary)' }} />
+                <span>已選擇 <span className="batch-count">{selectedRowKeys.length}</span> 項</span>
+              </div>
+              <Space>
+                <Button className="batch-action-button danger-button" onClick={handleBatchDelete}>批次刪除</Button>
+              </Space>
+              <Button type="text" icon={<CloseOutlined />} onClick={() => setSelectedRowKeys([])} />
+            </div>
+          )}
+
           <Modal
             title={editingScript ? '編輯腳本' : '新增腳本'}
             open={isModalOpen}
@@ -8721,11 +8815,27 @@
       }, [schedules, setSchedules]);
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingSchedule, setEditingSchedule] = useState(null);
+      const [selectedRowKeys, setSelectedRowKeys] = useState([]);
       const [scheduleMode, setScheduleMode] = useState('simple'); // 'simple' 或 'advanced'
       const [frequency, setFrequency] = useState('daily');
       const [selectedWeekdays, setSelectedWeekdays] = useState([]);
       const [form] = Form.useForm();
       const { message, modal } = antd.App.useApp();
+
+      const handleDelete = (key) => {
+        modal.confirm({
+          title: '確定要刪除此排程嗎？',
+          icon: <ExclamationCircleOutlined />,
+          content: '此操作無法復原。',
+          okText: '確定',
+          okType: 'danger',
+          cancelText: '取消',
+          onOk() {
+            setSchedules(schedules.filter(s => s.key !== key));
+            message.success('排程刪除成功');
+          }
+        });
+      };
       const selectedScriptId = Form.useWatch('scriptId', form);
       const selectedScript = scripts.find(function (s) { return s.key === selectedScriptId; });
 
@@ -8885,6 +8995,29 @@
         handleCancel();
       };
 
+      const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+      };
+
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const hasSelected = selectedRowKeys.length > 0;
+
+      const handleBatchDelete = () => {
+        modal.confirm({
+          title: `確定要刪除 ${selectedRowKeys.length} 個排程嗎？`,
+          icon: <ExclamationCircleOutlined />,
+          content: '此操作無法復原。',
+          okText: '確定',
+          okType: 'danger',
+          cancelText: '取消',
+          onOk() {
+            setSchedules(schedules.filter(s => !selectedRowKeys.includes(s.key)));
+            setSelectedRowKeys([]);
+            message.success('批次刪除成功');
+          }
+        });
+      };
+
       const columns = [
         { title: '啟用', dataIndex: 'enabled', width: '5%', render: e => <Switch defaultChecked={e} /> },
         { title: '任務名稱', dataIndex: 'name', width: '15%', render: name => <Text style={{ fontSize: '13px' }}>{name}</Text> },
@@ -8938,9 +9071,15 @@
         {
           title: '操作', key: 'action', width: '13%', render: (_, record) => (
             <Space size="small">
-              <Button type="link" icon={<HistoryOutlined />} style={{ color: '#faad14' }} onClick={() => handleViewHistory(record)}>歷史</Button>
-              <Button type="link" onClick={() => showModal(record)}>編輯</Button>
-              <Button type="link" danger>刪除</Button>
+              <Tooltip title="查看歷史" placement="top">
+                <Button type="text" icon={<HistoryOutlined />} onClick={() => handleViewHistory(record)} />
+              </Tooltip>
+              <Tooltip title="編輯" placement="top">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除" placement="top">
+                <Button type="text" icon={<DeleteOutlined />} danger onClick={() => handleDelete(record.key)} />
+              </Tooltip>
             </Space>
           )
         }
@@ -8977,7 +9116,6 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增排程
@@ -8987,12 +9125,26 @@
           <div className="table-wrapper">
             {
               schedules.length > 0 ?
-                <Table columns={columns} dataSource={schedules} rowKey="key" className="transparent-bg" /> :
+                <Table rowSelection={rowSelection} columns={columns} dataSource={schedules} rowKey="key" className="transparent-bg" /> :
                 <Empty description="尚無任何排程">
                   <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增排程</Button>
                 </Empty>
             }
           </div>
+
+          {hasSelected && (
+            <div className="batch-actions-floating">
+              <div className="batch-info">
+                <CheckCircleOutlined style={{ color: 'var(--brand-primary)' }} />
+                <span>已選擇 <span className="batch-count">{selectedRowKeys.length}</span> 項</span>
+              </div>
+              <Space>
+                <Button className="batch-action-button danger-button" onClick={handleBatchDelete}>批次刪除</Button>
+              </Space>
+              <Button type="text" icon={<CloseOutlined />} onClick={() => setSelectedRowKeys([])} />
+            </div>
+          )}
+
           <Modal
             title={editingSchedule ? '編輯排程' : '新增排程'}
             open={isModalOpen}
@@ -9184,6 +9336,7 @@
     const ExecutionsPage = ({ executions, setExecutions }) => {
       const [logModal, setLogModal] = useState({ open: false, log: '', structuredLogs: [], record: null });
       const [searchText, setSearchText] = useState('');
+      const [selectedRowKeys, setSelectedRowKeys] = useState([]);
       const [logLevelFilter, setLogLevelFilter] = useState('');
 
       const viewLog = (record) => {
@@ -9270,22 +9423,90 @@
         message.success('日誌已複製');
       };
 
+      const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+      };
+
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const hasSelected = selectedRowKeys.length > 0;
+
+      const handleBatchDelete = () => {
+        modal.confirm({
+          title: `確定要刪除 ${selectedRowKeys.length} 個執行日誌嗎？`,
+          icon: <ExclamationCircleOutlined />,
+          content: '此操作無法復原。',
+          okText: '確定',
+          okType: 'danger',
+          cancelText: '取消',
+          onOk() {
+            setExecutions(executions.filter(e => !selectedRowKeys.includes(e.key)));
+            setSelectedRowKeys([]);
+            message.success('批次刪除成功');
+          }
+        });
+      };
+
       const columns = [
         { title: '狀態', dataIndex: 'status', render: s => <Tag color={s === 'success' ? 'green' : 'red'}>{s ? s.toUpperCase() : 'UNKNOWN'}</Tag> },
         { title: '腳本名稱', dataIndex: 'scriptName' },
         { title: '觸發方式', dataIndex: 'trigger', render: t => t.type === 'Manual' ? `手動 (${t.user})` : t.type },
         { title: '開始時間', dataIndex: 'startTime', render: t => t ? t.format('YYYY-MM-DD HH:mm:ss') : '-' },
         { title: '執行耗時', dataIndex: 'duration' },
-        { title: '操作', key: 'action', render: (_, record) => <Button className="table-action-btn" onClick={() => viewLog(record)}>查看日誌</Button> }
+        {
+          title: '操作', key: 'action', render: (_, record) => (
+            <Tooltip title="查看日誌">
+              <Button type="text" icon={<FileTextOutlined />} onClick={() => viewLog(record)} />
+            </Tooltip>
+          )
+        }
       ];
 
       return (
         <React.Fragment>
           <Title level={2} className="page-title">執行日誌</Title>
           <Paragraph className="page-subtitle" type="secondary">追蹤所有自動化腳本的執行歷史與結果。</Paragraph>
-          <div className="table-wrapper">
-            <Table columns={columns} dataSource={executions} rowKey="key" className="transparent-bg" />
+          {/* 工具列 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--spacing-lg)',
+            padding: 'var(--spacing-lg)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-light)'
+          }}>
+            <Space>
+              <Input.Search
+                placeholder="搜尋腳本名稱或觸發者..."
+                style={{ width: 300 }}
+                allowClear
+              />
+              <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                篩選
+              </Button>
+            </Space>
+            <Space>
+              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+            </Space>
           </div>
+          <div className="table-wrapper">
+            <Table rowSelection={rowSelection} columns={columns} dataSource={executions} rowKey="key" className="transparent-bg" />
+          </div>
+
+          {hasSelected && (
+            <div className="batch-actions-floating">
+              <div className="batch-info">
+                <CheckCircleOutlined style={{ color: 'var(--brand-primary)' }} />
+                <span>已選擇 <span className="batch-count">{selectedRowKeys.length}</span> 項</span>
+              </div>
+              <Space>
+                <Button className="batch-action-button danger-button" onClick={handleBatchDelete}>批次刪除</Button>
+              </Space>
+              <Button type="text" icon={<CloseOutlined />} onClick={() => setSelectedRowKeys([])} />
+            </div>
+          )}
+
           <Modal
             title="執行日誌詳情"
             open={logModal.open}
@@ -9860,8 +10081,12 @@
         {
           title: '管理', key: 'action', width: 120, render: (_, record) => (
             <Space>
-              <Button type="link" onClick={() => showUserModal(record)}>編輯</Button>
-              <Button type="link" danger onClick={() => handleUserDelete(record)}>刪除</Button>
+              <Tooltip title="編輯">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showUserModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除">
+                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleUserDelete(record)} />
+              </Tooltip>
             </Space>
           )
         }
@@ -9903,7 +10128,6 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showUserModal()}>新增用戶</Button>
             </Space>
@@ -10199,8 +10423,12 @@
         {
           title: '操作', key: 'action', width: 120, render: (_, record) => (
             <Space size="small">
-              <Button type="link" onClick={() => showTeamModal(record)}>編輯</Button>
-              <Button type="link" danger onClick={() => handleTeamDelete(record)}>刪除</Button>
+              <Tooltip title="編輯">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showTeamModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除">
+                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleTeamDelete(record)} />
+              </Tooltip>
             </Space>
           )
         }
@@ -10245,7 +10473,6 @@
               </Button>
             </Space>
             <Space>
-              <Button className="toolbar-btn toolbar-btn--icon-only" icon={<ReloadOutlined />} />
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showTeamModal()}>新增團隊</Button>
             </Space>
@@ -11945,7 +12172,22 @@
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingChannel, setEditingChannel] = useState(null);
       const [form] = Form.useForm();
-      const { message } = antd.App.useApp();
+      const { message, modal } = antd.App.useApp();
+
+      const handleDelete = (key) => {
+        modal.confirm({
+          title: '確定要刪除此通知管道嗎？',
+          icon: <ExclamationCircleOutlined />,
+          content: '此操作無法復原。',
+          okText: '確定',
+          okType: 'danger',
+          cancelText: '取消',
+          onOk() {
+            setChannels(channels.filter(c => c.key !== key));
+            message.success('通知管道刪除成功');
+          }
+        });
+      };
 
       const channelType = Form.useWatch('type', form);
 
@@ -11967,7 +12209,18 @@
         { title: '類型', dataIndex: 'type', width: '15%' },
         { title: '最近測試結果', dataIndex: 'lastTest', width: '15%', render: lt => <Tag color={lt && lt.result === 'success' ? 'green' : 'red'}>{lt && lt.result ? lt.result.toUpperCase() : 'UNKNOWN'}</Tag> },
         { title: '最近測試時間', dataIndex: 'lastTest', width: '20%', render: lt => lt && lt.time ? lt.time.fromNow() : '未知' },
-        { title: '操作', key: 'action', width: '22%', render: (_, record) => <Space size="small"><Button type="link" className="table-action-btn" onClick={() => showModal(record)}>編輯</Button><Button type="link" danger className="table-action-btn danger-button">刪除</Button></Space> },
+        {
+          title: '操作', key: 'action', width: '22%', render: (_, record) => (
+            <Space size="small">
+              <Tooltip title="編輯">
+                <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+              </Tooltip>
+              <Tooltip title="刪除">
+                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)} />
+              </Tooltip>
+            </Space>
+          )
+        },
       ];
 
       return (
@@ -12235,25 +12488,49 @@
         { title: '腳本名稱', dataIndex: 'id', render: (id, record) => record.type === 'Script' ? getResourceName(record.type, id) : '-', width: '14%' },
         { title: '資源名稱', dataIndex: 'id', render: (id, record) => record.type !== 'Script' ? getResourceName(record.type, id) : '-', width: '14%' },
         { title: '結果', dataIndex: 'result', render: r => <Tag color={r === 'success' ? 'green' : 'red'}>{r ? r.toUpperCase() : 'UNKNOWN'}</Tag>, width: '8%' },
-        { title: '操作', key: 'action', render: (_, record) => <Button type="link" className="table-action-btn" onClick={() => showDrawer(record)}>查看詳情</Button>, width: '10%' },
+        {
+          title: '操作', key: 'action', render: (_, record) => (
+            <Tooltip title="查看詳情">
+              <Button type="text" icon={<InfoCircleOutlined />} onClick={() => showDrawer(record)} />
+            </Tooltip>
+          ), width: '10%'
+        },
       ];
 
       return (
         <React.Fragment>
           <Title level={2} className="page-title">審計日誌</Title>
           <Paragraph className="page-subtitle" type="secondary">追蹤平台重要操作的審計紀錄，用於追溯與合規。</Paragraph>
+          {/* 工具列 */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--spacing-lg)',
+            padding: 'var(--spacing-lg)',
+            background: 'var(--bg-elevated)',
+            borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--border-light)'
+          }}>
+            <Space>
+              <RangePicker showTime />
+              <Input placeholder="搜尋使用者..." style={{ width: 200 }} />
+              <Select placeholder="動作類型" style={{ width: 150 }}>
+                <Select.Option value="create">Create</Select.Option>
+                <Select.Option value="update">Update</Select.Option>
+                <Select.Option value="delete">Delete</Select.Option>
+                <Select.Option value="login">Login</Select.Option>
+              </Select>
+              <Button className="toolbar-btn" icon={<SearchOutlined />}>
+                查詢
+              </Button>
+            </Space>
+            <Space>
+              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+            </Space>
+          </div>
           <div className="table-wrapper">
-            <div className="table-toolbar">
-              <Form layout="inline">
-                <Form.Item label="時間範圍"><RangePicker showTime /></Form.Item>
-                <Form.Item label="使用者"><Input className="select-xl" /></Form.Item>
-                <Form.Item label="動作類型"><Select className="select-lg"><Select.Option value="create">Create</Select.Option></Select></Form.Item>
-                <Button type="primary" className="toolbar-btn">查詢</Button>
-              </Form>
-            </div>
-            <div className="table-wrapper">
-              <Table columns={columns} dataSource={initialLogs} rowKey="key" rowClassName={r => r.result === 'failure' ? 'row-highlight' : ''} className="transparent-bg" />
-            </div>
+            <Table columns={columns} dataSource={initialLogs} rowKey="key" rowClassName={r => r.result === 'failure' ? 'row-highlight' : ''} className="transparent-bg" />
           </div>
           <Drawer title="日誌詳情" onClose={closeDrawer} open={drawer.open} width={500}>
             {drawer.data && (
@@ -12323,43 +12600,46 @@
         <React.Fragment>
           <Title level={2} className="page-title">個人資料與偏好設定</Title>
           <Paragraph className="page-subtitle" type="secondary">管理您的個人資訊、密碼與通知偏好。</Paragraph>
-          <Tabs tabPosition="left">
-            <Tabs.TabPane tab="個人資訊" key="1">
-              <Card title="Profile">
-                <Form layout="vertical" form={form} style={{ maxWidth: 500 }}>
-                  <Form.Item label="姓名" name="name"><Input defaultValue="Admin User" /></Form.Item>
-                  <Form.Item label="電子郵件" name="email"><Input defaultValue="admin@example.com" disabled /></Form.Item>
-                  <Form.Item><Button type="primary">更新個人資訊</Button></Form.Item>
-                </Form>
-              </Card>
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="密碼安全" key="2">
-              <Card title="變更密碼">
-                <Form layout="vertical" style={{ maxWidth: 500 }}>
-                  <Form.Item label="目前密碼" name="currentPassword"><Input.Password /></Form.Item>
-                  <Form.Item label="新密碼" name="newPassword"><Input.Password /></Form.Item>
-                  <Form.Item label="確認新密碼" name="confirmPassword"><Input.Password /></Form.Item>
-                  <Form.Item><Button type="primary">更新密碼</Button></Form.Item>
-                </Form>
-              </Card>
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="通知設定" key="3">
-              <Card title="Preferences">
-                <Form layout="vertical" style={{ maxWidth: 500 }}>
-                  <Form.Item label="介面主題" name="theme">
-                    <Select value={themeMode} onChange={setThemeMode}><Select.Option value="dark">Dark</Select.Option><Select.Option value="light">Light</Select.Option></Select>
-                  </Form.Item>
-                  <Form.Item label="預設頁面" name="homeDashboard">
-                    <Select defaultValue="default"><Select.Option value="default">Default</Select.Option></Select>
-                  </Form.Item>
-                  <Form.Item label="時區" name="timezone">
-                    <Select defaultValue="utc"><Select.Option value="utc">UTC</Select.Option><Select.Option value="local">Browser Time</Select.Option></Select>
-                  </Form.Item>
-                  <Form.Item><Button type="primary">儲存偏好設定</Button></Form.Item>
-                </Form>
-              </Card>
-            </Tabs.TabPane>
-          </Tabs>
+
+          <div style={{ maxWidth: 800 }}>
+            <Row gutter={[24, 24]}>
+              <Col span={24}>
+                <Card title="個人資訊">
+                  <Form layout="vertical" form={form} style={{ maxWidth: 500 }}>
+                    <Form.Item label="姓名" name="name"><Input defaultValue="Admin User" /></Form.Item>
+                    <Form.Item label="電子郵件" name="email"><Input defaultValue="admin@example.com" disabled /></Form.Item>
+                    <Form.Item><Button type="primary">更新個人資訊</Button></Form.Item>
+                  </Form>
+                </Card>
+              </Col>
+              <Col span={24}>
+                <Card title="密碼安全">
+                  <Form layout="vertical" style={{ maxWidth: 500 }}>
+                    <Form.Item label="目前密碼" name="currentPassword"><Input.Password /></Form.Item>
+                    <Form.Item label="新密碼" name="newPassword"><Input.Password /></Form.Item>
+                    <Form.Item label="確認新密碼" name="confirmPassword"><Input.Password /></Form.Item>
+                    <Form.Item><Button type="primary">更新密碼</Button></Form.Item>
+                  </Form>
+                </Card>
+              </Col>
+              <Col span={24}>
+                <Card title="偏好設定">
+                  <Form layout="vertical" style={{ maxWidth: 500 }}>
+                    <Form.Item label="介面主題" name="theme">
+                      <Select value={themeMode} onChange={setThemeMode}><Select.Option value="dark">Dark</Select.Option><Select.Option value="light">Light</Select.Option></Select>
+                    </Form.Item>
+                    <Form.Item label="預設頁面" name="homeDashboard">
+                      <Select defaultValue="default"><Select.Option value="default">Default</Select.Option></Select>
+                    </Form.Item>
+                    <Form.Item label="時區" name="timezone">
+                      <Select defaultValue="utc"><Select.Option value="utc">UTC</Select.Option><Select.Option value="local">Browser Time</Select.Option></Select>
+                    </Form.Item>
+                    <Form.Item><Button type="primary">儲存偏好設定</Button></Form.Item>
+                  </Form>
+                </Card>
+              </Col>
+            </Row>
+          </div>
         </React.Fragment>
       );
     };
