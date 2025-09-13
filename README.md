@@ -4,7 +4,7 @@
 
 ![主頁](images/dashboard.png)
 ![alerts-list](images/alerts-list.png)
-![resource-list](images/resource-list.png)
+![resource-overview](images/resource-overview.png)
 ![capacity-planning](images/capacity-planning.png)
 
 ## 互動原型體驗
