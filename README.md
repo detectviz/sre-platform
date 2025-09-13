@@ -2,7 +2,10 @@
 
 這是一個基於 React、TypeScript 和 Ant Design 的 SRE 平台前端項目，實現了 specs.md 中定義的所有功能頁面。
 
-![homepage](homepage.png)
+![主頁](images/dashboard.png)
+![alerts-list](images/alerts-list.png)
+![resource-list](images/resource-list.png)
+![capacity-planning](images/capacity-planning.png)
 
 ## 互動原型體驗
 

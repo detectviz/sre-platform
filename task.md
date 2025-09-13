@@ -1,40 +1,65 @@
-> **注意**：請一律使用 **繁體中文** 回報，程式碼需加入 **繁體中文註解**
+# 所有頁面操作按鈕優化指令
+
+### 1. 核心目標
+將所有列表的「操作」欄位中，帶有文字的按鈕，重構為**「僅圖示」按鈕**，並為每個圖示按鈕增加**滑鼠懸停時的文字提示**，以達到節省空間、提升介面簡潔性的目的。
 
 ---
 
-## 1. 角色 (Persona)
+### 2. 詳細修改指令
 
-你是一位專精於 **React、TypeScript 與 Ant Design** 的資深前端開發者 Jules。你正在執行的任務是為 **SRE Platform** 開發前端介面。
+#### 2.1. 引入必要元件
+* **指令**：在檔案的元件引入區域，確保從 `antd` 引入 `Tooltip` 元件。
+* **程式碼參考**：
+    ```jsx
+    import { Table, Button, Tooltip, Space } from 'antd';
+    ```
 
-## 2. 核心任務 (Core Task)
+#### 2.2. 修改表格「操作」欄位的 `render` 函數
+* **指令**：定位到定義表格欄位的 `columns` 陣列，找到 `key` 為 `'操作'` 的物件，並將其 `render` 函數的內容，從「圖示+文字按鈕」的形式，替換為「Tooltip 包裹的純圖示按鈕」形式。
 
-在你上一個工作階段中，我們已經完成了專案 prototype.html 平台設計原型的初步開發，請你根據以下建議持續對 prototype.html 進行優化：
+* **修改前的程式碼範例 (示意)**：
+    ```jsx
+    <Space>
+        <Button icon={<PlayCircleOutlined />}>執行</Button>
+        <Button icon={<HistoryOutlined />}>歷史</Button>
+        <Button icon={<EditOutlined />}>編輯</Button>
+        <Button icon={<DeleteOutlined />} danger>刪除</Button>
+    </Space>
+    ```
 
-### 任務1：資源總覽頁面優化
+* **修改後的程式碼範例 (請直接替換)**：
+    ```jsx
+    <Space size="small">
+        <Tooltip title="執行" placement="top">
+            <Button type="text" icon={<PlayCircleOutlined style={{ color: '#52c41a' }} />} />
+        </Tooltip>
+        <Tooltip title="查看歷史" placement="top">
+            <Button type="text" icon={<HistoryOutlined />} />
+        </Tooltip>
+        <Tooltip title="編輯" placement="top">
+            <Button type="text" icon={<EditOutlined />} />
+        </Tooltip>
+        <Tooltip title="刪除" placement="top">
+            <Button type="text" icon={<DeleteOutlined />} danger />
+        </Tooltip>
+    </Space>
+    ```
 
-![resource-overview](resources-overview.png)
+---
+### 3. 設計細節與圖示建議
 
-1. 參考範例圖片 `resources-overview.png`，檢查間距設定，有沒有衝突。
-2. 調整緊湊一些，不用滾動就能看到全部。
+為了達到最佳視覺效果，建議採用以下細節：
 
-### 任務2：平台導航選單 (Menu) 設計需要調整「管理」分類項目
+| 操作 | 建議圖示 (from `@ant-design/icons`) | 樣式建議 |
+| :--- | :--- | :--- |
+| **執行** | `PlayCircleOutlined` | 賦予圖示成功狀態的顏色 (如綠色)，以示突出 |
+| **歷史** | `HistoryOutlined` | 使用預設顏色 |
+| **編輯** | `EditOutlined` | 使用預設顏色 |
+| **刪除** | `DeleteOutlined` | 使用 `danger` 屬性，使其呈現警告的紅色 |
 
-* **現狀**：「管理」分類中混合了「用戶/權限配置」和「平台診斷/日誌」等不同性質的功能。
-* **優化建議**：將「管理」的職責**聚焦於「平台配置」**，並將**「平台運維」**相關的功能獨立出來。
+* **按鈕類型**：建議將 `<Button>` 的 `type` 屬性設定為 `text`，這會移除按鈕的背景和邊框，使其在表格中顯得更輕量、更融合。
 
-sidebar 選單跟父選單的導覽卡片都獨立規劃與調整。
+### 4. 總結
+完成以上修改後，所有頁面的表格將會變得更加精緻和高效。**在不犧牲任何功能清晰度的前提下，成功地回收了寶貴的水平空間**，為將來可能增加的其他欄位預留了位置，也讓整個平台的視覺一致性更高。
 
-#### **平台維運 (Platform Ops)** - _(新) 獨立分類_
-* _職責：監控和審計平台自身的健康與活動。_
-	* `平台診斷` (原「管理」中的功能)
-	* `審計日誌` (原「管理」中的功能)
-	* `備份與還原` (原「管理」中的功能)
-
-#### **設定 (Settings)** - _(原「管理」分類，職責更名並聚焦)_
-* _職責：配置平台的人員、權限和功能。_
-	* `用戶管理`
-	* `團隊管理`
-	* `角色管理`
-	* `標籤管理`
-	* `通知管理`
-	* `系統設定`
+「容量規劃」頁面，在「開始分析」按鈕右邊，新增一個「匯出」按鈕，樣式參考「資源群組」頁面的「匯出」按鈕。

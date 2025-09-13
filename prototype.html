@@ -484,12 +484,14 @@
 
     /* Top N 資源使用列表表格樣式 */
     .topn-table .ant-table-tbody>tr>td {
-      padding: 6px 8px !important;
+      padding: 2px 4px !important;
+      line-height: 1.2 !important;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
 
     .topn-table .ant-table-thead>tr>th {
-      padding: 6px 8px !important;
+      padding: 4px 4px !important;
+      line-height: 1.2 !important;
       background: rgba(255, 255, 255, 0.05) !important;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
     }
@@ -920,6 +922,7 @@
       align-items: center;
       justify-content: space-between;
       height: 100%;
+      padding: 20px 16px;
     }
 
     .card-content-vertical {
@@ -1998,6 +2001,21 @@
       padding: 20px 24px;
     }
 
+    /* 自定義卡片標題高度 */
+    .ant-card-head {
+      height: 40px;
+      min-height: 40px;
+    }
+
+    .ant-card-head .ant-card-head-wrapper {
+      align-items: center;
+    }
+
+    .ant-card-head-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
     .stat-card .ant-statistic-title {
       color: var(--text-tertiary);
       font-size: 13px;
@@ -2744,6 +2762,13 @@
     .login-submit-btn:active {
       transform: translateY(0);
     }
+
+    .centered-statistic .ant-statistic-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
   </style>
 </head>
 
@@ -2780,7 +2805,7 @@
           };
           return storedValue ? JSON.parse(storedValue, reviver) : defaultValue;
         } catch (error) {
-          console.error("Error reading from localStorage for key:", key, error);
+          // localStorage 讀取失敗，使用預設值
           return defaultValue;
         }
       });
@@ -2789,7 +2814,7 @@
         try {
           window.localStorage.setItem(key, JSON.stringify(state));
         } catch (error) {
-          console.error("Error writing to localStorage for key:", key, error);
+          // localStorage 寫入失敗，靜默處理
         }
       }, [key, state]);
 
@@ -2912,13 +2937,7 @@
                   }} />
                 </div>
               </div>
-              <Title level={2} style={{
-                color: 'var(--text-primary)',
-                margin: '0 0 8px 0',
-                fontWeight: '700',
-                fontSize: '28px',
-                letterSpacing: '-0.5px'
-              }}>
+              <Title level={2} style={{ color: 'var(--text-primary)', margin: '0 0 8px 0', fontWeight: '700', fontSize: '28px', letterSpacing: '-0.5px' }}>
                 SRE Platform
               </Title>
               <Text style={{
@@ -3049,6 +3068,101 @@
       );
     };
 
+    const PlatformOpsPage = ({ onNavigate }) => {
+      const opsCards = [
+        {
+          key: 'platform-diagnostics',
+          icon: <ControlOutlined />,
+          title: '平台診斷',
+          description: '監控平台自身的健康狀態與效能。',
+          features: ['服務健康度', '資源使用率', '錯誤日誌'],
+          enabled: true
+        },
+        {
+          key: 'audit-logs',
+          icon: <AuditOutlined />,
+          title: '審計日誌',
+          description: '追蹤平台所有重要操作的紀錄。',
+          features: ['使用者活動', '系統變更', '合規報告'],
+          enabled: true
+        },
+        {
+          key: 'backup-restore',
+          icon: <SaveOutlined />,
+          title: '備份與還原',
+          description: '管理平台設定與資料的備份與還原。',
+          features: ['排程備份', '一鍵還原', '資料加密'],
+          enabled: false
+        }
+      ];
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title">平台維運</Title>
+          <Paragraph className="page-subtitle" type="secondary">
+            監控和審計平台自身的健康與活動。
+          </Paragraph>
+          <Row gutter={[16, 12]}>
+            {opsCards.map(item => (
+              <Col key={item.key} xs={24} md={12} lg={8}>
+                <Badge.Ribbon text="即將推出" style={{ display: !item.enabled ? 'block' : 'none' }}>
+                  <div
+                    className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
+                    onClick={() => item.enabled && onNavigate(item.key)}
+                    style={{ height: '100%' }}
+                  >
+                    <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '12px', width: '100%' }}>
+                        <div className="nav-item-icon" style={{
+                          background: 'rgba(255, 184, 77, 0.1)',
+                          padding: '12px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '28px',
+                          opacity: item.enabled ? 1 : 0.5
+                        }}>
+                          {item.icon}
+                        </div>
+                        <div className="nav-item-text" style={{ flex: 1 }}>
+                          <Title level={5} className="nav-item-title">
+                            {item.title}
+                          </Title>
+                          <Paragraph className="nav-item-description">{item.description}</Paragraph>
+                        </div>
+                      </div>
+                      {item.features && (
+                        <div style={{
+                          display: 'flex',
+                          gap: '8px',
+                          flexWrap: 'wrap',
+                          marginTop: 'auto'
+                        }}>
+                          {item.features.map((feature, idx) => (
+                            <Tag
+                              key={idx}
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.08)',
+                                border: '1px solid rgba(255, 255, 255, 0.12)',
+                                color: 'var(--text-tertiary)',
+                                fontSize: '12px',
+                                opacity: item.enabled ? 1 : 0.6
+                              }}
+                            >
+                              {feature}
+                            </Tag>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Badge.Ribbon>
+              </Col>
+            ))}
+          </Row>
+        </React.Fragment>
+      );
+    };
+
+
     const AiRiskForecast = ({ onNavigate }) => {
       const riskData = [
         { id: 'risk-1', resourceName: 'web-prod-01', metricName: 'CPU Usage', metricType: 'usage', timeToExhaust: 7, unit: '天' },
@@ -3071,13 +3185,14 @@
       };
 
       return (
-        <Card title="AI 資源洞察：風險預測" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 16px 16px' }}>
+        <Card title="AI 風險預測" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 8px 8px' }}>
           <List
             itemLayout="horizontal"
             dataSource={riskData}
             renderItem={item => (
               <List.Item
                 actions={[<Button type="link" onClick={() => onNavigate('resource-list', { searchText: item.resourceName, highlightedResource: item.resourceName })}>查看</Button>]}
+                style={{ padding: '8px 12px', lineHeight: 1.6 }}
               >
                 <List.Item.Meta
                   avatar={<Avatar size="large" icon={getIcon(item.metricType)} style={{ backgroundColor: 'rgba(255, 255, 255, 0.05)' }} />}
@@ -3135,28 +3250,28 @@
       };
 
       const data = {
-        CPU: Array.from({ length: 5 }, (_, i) => ({
+        CPU: Array.from({ length: 10 }, (_, i) => ({
           key: i,
           host: `web-prod-${i + 1}`,
-          value: 95 - i * 5,
+          value: 95 - i * 2,
           trend: generateTrend()
         })),
-        Mem: Array.from({ length: 5 }, (_, i) => ({
+        Mem: Array.from({ length: 10 }, (_, i) => ({
           key: i,
           host: `db-prod-${i + 1}`,
-          value: 92 - i * 4,
+          value: 92 - i * 1.8,
           trend: generateTrend()
         })),
-        Disk: Array.from({ length: 5 }, (_, i) => ({
+        Disk: Array.from({ length: 10 }, (_, i) => ({
           key: i,
           host: `log-server-${i + 1}`,
-          value: 88 - i * 6,
+          value: 88 - i * 2.5,
           trend: generateTrend()
         })),
-        Net: Array.from({ length: 5 }, (_, i) => ({
+        Net: Array.from({ length: 10 }, (_, i) => ({
           key: i,
           host: `api-gateway-${i + 1}`,
-          value: 800 - i * 50,
+          value: 800 - i * 25,
           trend: generateTrend()
         })),
       };
@@ -3199,7 +3314,7 @@
           series: [{
             data: trendData,
             type: 'line',
-            smooth: false,
+            smooth: true,
             showSymbol: false,
             lineStyle: {
               width: 1.5,
@@ -3231,7 +3346,7 @@
           title: '主機',
           dataIndex: 'host',
           key: 'host',
-          width: '25%',
+          width: '20%',
           render: (text) => (
             <div className="text-secondary" style={{ fontSize: '12px', cursor: 'pointer' }} onClick={() => {
               // 切换到列表模式并筛选该主机
@@ -3247,7 +3362,7 @@
           title: '資源趨勢 (24H)',
           dataIndex: 'trend',
           key: 'trend',
-          width: '18%',
+          width: '25%',
           render: (trend, record) => (
             <div style={{ height: '30px' }}>
               <EchartsForReact
@@ -3259,7 +3374,7 @@
                   series: [{
                     data: trend || [],
                     type: 'line',
-                    smooth: true,
+                    smooth: false,
                     showSymbol: false,
                     lineStyle: { width: 2, color: '#6395f9' },
                     areaStyle: {
@@ -3304,7 +3419,7 @@
 
       const titleContent = (
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <span>Top N 資源使用列表</span>
+          <span style={{ fontSize: '16px', fontWeight: '600' }}>Top N 資源使用列表</span>
           <Radio.Group
             value={metric}
             onChange={(e) => setMetric(e.target.value)}
@@ -3319,7 +3434,24 @@
       );
 
       return (
-        <Card title={titleContent} style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, overflow: 'hidden', padding: '0 16px 16px' }}>
+        <Card
+          title={titleContent}
+          style={{
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            borderRadius: 'var(--radius-lg)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            boxShadow: '0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+          bodyStyle={{ flex: 1, overflow: 'hidden', padding: '12px 12px 12px' }}
+        >
           <div style={{ height: '100%', overflow: 'auto' }}>
             <Table
               dataSource={data[metric]}
@@ -3327,6 +3459,8 @@
               pagination={false}
               size="small"
               rowKey="key"
+              className="topn-table"
+              scroll={{ y: 'calc(100% - 25px)' }}
             />
           </div>
         </Card>
@@ -3335,7 +3469,7 @@
 
     const AIInsightSummary = ({ onNavigate }) => {
       const [isRefreshing, setIsRefreshing] = useState(false);
-      const [insightContent, setInsightContent] = useState('整體系統穩定，但觀察到 Production Web Servers 的 CPU 使用率在高峰時段有 15% 的增長，接近警戒線。資料庫延遲平穩，無明顯異常。建議關注 web-prod-03 主機的日誌，該主機出現了數次響應緩慢的情況。');
+      const [insightContent, setInsightContent] = useState('整體系統穩定，但觀察到 Production Web Servers 的 CPU 使用率在高峰時段有 15% 的增長，接近警戒線。資料庫 延遲平穩，無明顯異常。建議關注 web-prod-03 主機的日誌，該主機出現了數次響應緩慢的情況。');
 
       // 刷新AI分析的函數
       const handleRefresh = async () => {
@@ -3388,7 +3522,7 @@
                 break;
               case 'service':
                 href = `/service-dashboard/${param}`;
-                color = '#722ed1';
+                color = '#1677FF';
                 break;
             }
 
@@ -3402,7 +3536,7 @@
       return (
         <div style={{
           background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
-          border: '2px solid rgba(114, 46, 209, 0.6)',
+          border: '1px solid rgba(114, 46, 209, 0.6)',
           borderRadius: 'var(--radius-lg)',
           padding: 'var(--spacing-lg)',
           backdropFilter: 'blur(10px)',
@@ -3790,76 +3924,208 @@
 
       return (
         <React.Fragment>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-md)' }}>
             <Title level={2} className="page-title" style={{ margin: 0 }}>資源總覽</Title>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-lg)' }}>
-            {/* Row 1: Statistic Cards */}
-            <Row gutter={[16, 16]}>
-              <Col span={6}>
-                <Card hoverable onClick={() => onNavigate('resource-list')} style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
-                  <Statistic
-                    title="總資源數"
-                    value={374}
-                    prefix={<HddOutlined style={{ color: 'var(--brand-primary)' }} />}
-                    valueStyle={{ color: 'var(--text-primary)', fontSize: '28px' }}
-                  />
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card hoverable style={{ height: '120px' }} bodyStyle={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                  <div onClick={() => onNavigate('resource-list', { statusFilter: 'healthy' })} style={{ textAlign: 'center', cursor: 'pointer' }}>
-                    <Statistic
-                      title="健康狀態"
-                      value={138}
-                      suffix="健康"
-                      prefix={<CheckCircleOutlined style={{ color: 'var(--brand-success)' }} />}
-                      valueStyle={{ color: 'var(--brand-success)', fontSize: '28px' }}
-                    />
+          {/* 頂部橫幅：宏觀 KPI 狀態欄 */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 'var(--spacing-lg)' }}>
+            {/* 總資源數 */}
+            <Col xs={24} sm={12} md={6} lg={6}>
+              <div
+                className="stat-card"
+                style={{ height: '120px', cursor: 'pointer' }}
+                onClick={() => onNavigate('resource-list')}
+              >
+                <div className="card-content">
+                  <div>
+                    <div className="card-title" style={{ fontSize: '14px' }}>總資源數</div>
+                    <div className="card-value" style={{ color: 'var(--brand-primary)', fontSize: '32px', fontWeight: '600' }}>
+                      374 <span style={{ fontSize: '16px', color: 'var(--text-tertiary)', fontWeight: '400' }}>個</span>
+                    </div>
+                    <div className="card-description" style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
+                      主機: 350, 服務: 24
+                    </div>
                   </div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px', textAlign: 'center' }}>
-                    <a onClick={() => onNavigate('resource-list', { statusFilter: 'warning' })} style={{ color: 'var(--brand-warning)' }}>143 警告</a>, <a onClick={() => onNavigate('resource-list', { statusFilter: 'critical' })} style={{ color: 'var(--brand-danger)' }}>93 嚴重</a>
-                  </div>
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card hoverable onClick={() => onNavigate('resource-list')} style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
-                  <Statistic
-                    title="作業系統"
-                    value={350}
-                    suffix="Linux"
-                    prefix={<BuildOutlined style={{ color: 'var(--brand-info)' }} />}
-                    valueStyle={{ color: 'var(--text-primary)', fontSize: '28px' }}
-                  />
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                    Windows: 24
-                  </div>
-                </Card>
-              </Col>
-              <Col span={6}>
-                <Card hoverable onClick={() => onNavigate('resource-list', { attention: true })} style={{ textAlign: 'center', height: '120px' }} bodyStyle={{ padding: '20px 16px' }}>
-                  <Statistic
-                    title="需要關注"
-                    value={attentionResources.length}
-                    suffix="項"
-                    prefix={<AlertOutlined style={{ color: 'var(--brand-warning)' }} />}
-                    valueStyle={{ color: 'var(--brand-warning)', fontSize: '28px' }}
-                  />
-                  <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', marginTop: '4px' }}>
-                    需立即處理
-                  </div>
-                </Card>
-              </Col>
-            </Row>
+                  <HddOutlined className="card-icon" style={{ color: 'var(--brand-primary)', fontSize: '24px' }} />
+                </div>
+              </div>
+            </Col>
 
-            {/* Row 2: Top N List and Attention List */}
-            <Row gutter={[16, 16]}>
-              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
+            {/* 健康狀態 */}
+            <Col xs={24} sm={12} md={6} lg={6}>
+              <div
+                className="stat-card"
+                style={{ height: '120px', cursor: 'pointer' }}
+                onClick={() => onNavigate('resource-list', { statusFilter: 'healthy' })}
+              >
+                <div className="card-content">
+                  <div>
+                    <div className="card-title" style={{ fontSize: '14px' }}>健康狀態</div>
+                    <div className="card-value" style={{ color: 'var(--brand-success)', fontSize: '32px', fontWeight: '600' }}>
+                      138 <span style={{ fontSize: '16px', color: 'var(--text-tertiary)', fontWeight: '400' }}>健康</span>
+                    </div>
+                    <div className="card-description" style={{ display: 'flex', gap: '12px', fontSize: '12px' }}>
+                      <span style={{ color: 'var(--brand-warning)', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={(e) => { e.stopPropagation(); onNavigate('resource-list', { statusFilter: 'warning' }) }}>
+                        143 警告
+                      </span>
+                      <span style={{ color: 'var(--brand-danger)', cursor: 'pointer', textDecoration: 'underline' }}
+                        onClick={(e) => { e.stopPropagation(); onNavigate('resource-list', { statusFilter: 'critical' }) }}>
+                        93 嚴重
+                      </span>
+                    </div>
+                  </div>
+                  <CheckCircleOutlined className="card-icon" style={{ color: 'var(--brand-success)', fontSize: '24px' }} />
+                </div>
+              </div>
+            </Col>
+
+            {/* 作業系統分佈 */}
+            <Col xs={24} sm={12} md={6} lg={6}>
+              <div
+                className="stat-card"
+                style={{ height: '120px', cursor: 'pointer' }}
+                onClick={() => onNavigate('resource-list')}
+              >
+                <div className="card-content">
+                  <div>
+                    <div className="card-title" style={{ fontSize: '14px' }}>作業系統分佈</div>
+                    <div className="card-value" style={{ color: 'var(--text-primary)', fontSize: '32px', fontWeight: '600' }}>
+                      350 <span style={{ fontSize: '16px', color: 'var(--text-tertiary)', fontWeight: '400' }}>Linux</span>
+                    </div>
+                    <div className="card-description">
+                      Windows: 24
+                    </div>
+                  </div>
+                  <BuildOutlined className="card-icon" style={{ color: 'var(--brand-info)', fontSize: '24px' }} />
+                </div>
+              </div>
+            </Col>
+
+            {/* 需要關注 */}
+            <Col xs={24} sm={12} md={6} lg={6}>
+              <div
+                className="stat-card"
+                style={{ height: '120px', cursor: 'pointer' }}
+                onClick={() => onNavigate('resource-list', { attention: true })}
+              >
+                <div className="card-content">
+                  <div>
+                    <div className="card-title" style={{ fontSize: '14px' }}>需要關注</div>
+                    <div className="card-value" style={{ color: 'var(--brand-warning)', fontSize: '32px', fontWeight: '600' }}>
+                      {attentionResources.length} <span style={{ fontSize: '16px', color: 'var(--text-tertiary)', fontWeight: '400' }}>項</span>
+                    </div>
+                    <div className="card-description">
+                      需立即處理
+                    </div>
+                  </div>
+                  <AlertOutlined className="card-icon" style={{ color: 'var(--brand-warning)', fontSize: '24px' }} />
+                </div>
+              </div>
+            </Col>
+          </Row>
+
+          {/* Main Content Area: 左側性能瓶頸分析 + 右側行動與風險中心 */}
+          <Row gutter={[16, 16]} style={{ height: 'calc(100vh - 48px - 48px - 140px - 32px)' }}>
+            {/* 左側區塊：性能瓶頸分析 (Top N 資源使用列表) */}
+            <Col span={14} style={{ display: 'flex', flexDirection: 'column' }}>
+              <div style={{ height: '520px' }}>
                 <TopNResourceList themeMode={themeMode} />
-              </Col>
-              <Col span={12} style={{ display: 'flex', flexDirection: 'column' }}>
-                <Card title="需關注的資源列表" style={{ flex: 1, display: 'flex', flexDirection: 'column' }} bodyStyle={{ flex: 1, padding: '16px' }}>
+              </div>
+            </Col>
+
+            {/* 右側區塊：行動與風險中心 */}
+            <Col span={10} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* 上方：AI 風險預測 */}
+              <Card
+                title={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <RobotOutlined style={{ color: '#722ed1' }} />
+                    <span style={{ fontSize: '16px', fontWeight: '600' }}>AI 風險預測</span>
+                    <Badge count={3} style={{ backgroundColor: '#722ed1' }} />
+                  </div>
+                }
+                style={{
+                  height: '252px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: 'var(--radius-lg)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                bodyStyle={{ flex: 1, padding: '12px', overflow: 'hidden' }}
+              >
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  {/* 風險資源列表 */}
+                  <div style={{ flex: 1, overflow: 'auto' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                      {/* 高風險 - web-prod-01 */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(255, 77, 79, 0.08)', borderRadius: '4px' }}>
+                        <div>
+                          <Text strong style={{ color: 'var(--text-primary)' }}>web-prod-01</Text>
+                          <br />
+                          <Text style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>CPU 使用率持續上升，預計 2 小時內達 90%</Text>
+                        </div>
+                        <Tag color="red" size="small">高風險</Tag>
+                      </div>
+
+                      {/* 高風險 - api-gateway-01 */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(255, 77, 79, 0.08)', borderRadius: '4px' }}>
+                        <div>
+                          <Text strong style={{ color: 'var(--text-primary)' }}>api-gateway-01</Text>
+                          <br />
+                          <Text style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>響應時間異常波動，錯誤率上升趨勢</Text>
+                        </div>
+                        <Tag color="red" size="small">高風險</Tag>
+                      </div>
+
+                      {/* 中風險 - db-prod-02 */}
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(250, 173, 20, 0.08)', borderRadius: '4px' }}>
+                        <div>
+                          <Text strong style={{ color: 'var(--text-primary)' }}>db-prod-02</Text>
+                          <br />
+                          <Text style={{ fontSize: '11px', color: 'var(--text-tertiary)' }}>磁碟空間剩餘不足 15%，建議清理</Text>
+                        </div>
+                        <Tag color="orange" size="small">中風險</Tag>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              {/* 下方：需關注的資源列表 */}
+              <Card
+                title={
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <AlertOutlined style={{ color: '#faad14' }} />
+                    <span style={{ fontSize: '16px', fontWeight: '600' }}>需關注的資源列表</span>
+                    <Badge count={attentionResources.length} style={{ backgroundColor: '#faad14' }} />
+                  </div>
+                }
+                style={{
+                  height: '252px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: 'var(--radius-lg)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  boxShadow: '0 4px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}
+                bodyStyle={{ flex: 1, padding: '12px', overflow: 'hidden' }}
+              >
+                <div style={{ height: '100%', overflow: 'auto' }}>
                   <Table
                     columns={[
                       {
@@ -3903,21 +4169,15 @@
                     pagination={false}
                     size="small"
                     style={{ backgroundColor: 'transparent' }}
-                    className="transparent-bg"
+                    className="topn-table"
+                    scroll={{ y: 'calc(100% - 25px)' }}
                   />
-                </Card>
-              </Col>
-            </Row>
+                </div>
+              </Card>
+            </Col>
+          </Row>
 
-            {/* Row 3: AI Risk Forecast */}
-            <Row gutter={[16, 16]}>
-              <Col span={24}>
-                <AiRiskForecast onNavigate={onNavigate} />
-              </Col>
-            </Row>
-
-          </div>
-        </React.Fragment>
+        </React.Fragment >
       );
     };
 
@@ -4080,21 +4340,8 @@
             </span>
           )
         },
-        { title: '資源名稱', dataIndex: 'name', width: '18%', sorter: (a, b) => a.name.localeCompare(b.name), render: text => <a>{text}</a> },
-        {
-          title: '資源趨勢 (24H)',
-          dataIndex: 'trend',
-          width: '12%',
-          render: (trend) => (
-            <div style={{ height: '30px' }}>
-              <EchartsForReact
-                option={createSparklineOption(trend)}
-                isDark={themeMode === 'dark'}
-              />
-            </div>
-          )
-        },
-        { title: 'IP位址', dataIndex: 'ip_address', width: '15%', sorter: (a, b) => a.ip_address.localeCompare(b.ip_address) },
+        { title: '資源名稱', dataIndex: 'name', width: '25%', sorter: (a, b) => a.name.localeCompare(b.name), render: text => <a>{text}</a> },
+        { title: 'IP位址', dataIndex: 'ip_address', width: '18%', sorter: (a, b) => a.ip_address.localeCompare(b.ip_address) },
         {
           title: '所屬團隊', key: 'team', width: '12%', render: (_, record) => {
             const group = groups.find(g => g.members && g.members.includes(record.key));
@@ -4110,7 +4357,7 @@
           title: '標籤',
           dataIndex: 'tags',
           key: 'tags',
-          width: '15%',
+          width: '17%',
           render: (tags) => (
             <Space size={[4, 4]} wrap>
               {tags && (
@@ -4928,7 +5175,7 @@
 
       return (
         <React.Fragment>
-          <Title level={2} className="page-title">分析與報告</Title>
+          <Title level={2} className="page-title">分析中心</Title>
           <Paragraph className="page-subtitle" type="secondary">
             深入了解系統趨勢、效能瓶颈和運營數據，做出數據驅動的決策。
           </Paragraph>
@@ -5290,35 +5537,6 @@
           }
         },
         {
-          title: '關聯服務',
-          dataIndex: 'service',
-          width: '12%',
-          filters: [
-            { text: '資料庫服務', value: '資料庫服務' },
-            { text: 'Web應用', value: 'Web應用' },
-            { text: 'API閘道', value: 'API閘道' },
-            { text: '快取服務', value: '快取服務' },
-            { text: '監控系統', value: '監控系統' },
-            { text: '網路基礎設施', value: '網路基礎設施' },
-            { text: '負載平衡', value: '負載平衡' }
-          ],
-          onFilter: (v, r) => r.service && r.service.includes(v),
-          render: (service, record) => (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <Tag color="blue" size="small" style={{ margin: 0 }}>{service}</Tag>
-              {record.business_impact && (
-                <Tag
-                  color={record.business_impact === '高' ? 'red' : record.business_impact === '中' ? 'orange' : 'green'}
-                  size="small"
-                  style={{ margin: 0, fontSize: '10px' }}
-                >
-                  影響: {record.business_impact}
-                </Tag>
-              )}
-            </div>
-          )
-        },
-        {
           title: '嚴重性',
           dataIndex: 'severity',
           width: '8%',
@@ -5518,17 +5736,6 @@
                   </div>
                   <Descriptions bordered column={1} size="small" className="compact-descriptions">
                     <Descriptions.Item label="摘要">{currentIncident.summary}</Descriptions.Item>
-                    <Descriptions.Item label="關聯服務">
-                      <Tag color="blue">{currentIncident.service}</Tag>
-                      {currentIncident.business_impact && (
-                        <Tag
-                          color={currentIncident.business_impact === '高' ? 'red' : currentIncident.business_impact === '中' ? 'orange' : 'green'}
-                          style={{ marginLeft: '8px' }}
-                        >
-                          業務影響: {currentIncident.business_impact}
-                        </Tag>
-                      )}
-                    </Descriptions.Item>
                     <Descriptions.Item label="嚴重性"><Tag color={currentIncident.severity === 'critical' ? 'red' : 'orange'}>{currentIncident.severity ? currentIncident.severity.toUpperCase() : 'UNKNOWN'}</Tag></Descriptions.Item>
                     <Descriptions.Item label="狀態">{currentIncident.status ? currentIncident.status.toUpperCase() : 'UNKNOWN'}</Descriptions.Item>
                     <Descriptions.Item label="來源">{currentIncident.source}</Descriptions.Item>
@@ -6352,7 +6559,6 @@
       };
 
       const onFinish = (values) => {
-        console.log("Rule Submitted:", values);
         message.success(editingRule ? '規則更新成功' : '規則新增成功');
         handleCancel();
       };
@@ -6832,7 +7038,7 @@
                                     }, 10);
                                   } else {
                                     // 如果找不到目標輸入框，顯示提示
-                                    console.warn('無法找到目標輸入框，請確保已選擇要編輯的字段');
+                                    message.warning('請先選擇要編輯的字段');
                                   }
                                 }}
                                 onMouseEnter={(e) => {
@@ -7815,7 +8021,7 @@
               checked={enabled}
               onChange={(checked) => {
                 // 這裡可以新增切換邏輯
-                console.log('Switch changed:', checked);
+                // TODO: 實作啟用/停用邏輯
               }}
             />
           )
@@ -8675,7 +8881,6 @@
           values.cron = generateCronExpression();
         }
 
-        console.log('Form values:', values);
         message.success(editingSchedule ? '排程更新成功' : '排程新增成功');
         handleCancel();
       };
@@ -8733,7 +8938,6 @@
         {
           title: '操作', key: 'action', width: '13%', render: (_, record) => (
             <Space size="small">
-              <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => handleRunNow(record)}>執行</Button>
               <Button type="link" icon={<HistoryOutlined />} style={{ color: '#faad14' }} onClick={() => handleViewHistory(record)}>歷史</Button>
               <Button type="link" onClick={() => showModal(record)}>編輯</Button>
               <Button type="link" danger>刪除</Button>
@@ -9362,14 +9566,14 @@
 
       return (
         <React.Fragment>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
             <div>
               <Title level={2} className="page-title" style={{ marginBottom: '8px', marginTop: 0 }}>容量規劃</Title>
               <Paragraph className="page-subtitle" type="secondary" style={{ margin: 0 }}>分析歷史數據，預測未來資源消耗趨勢，從被動事件轉向主動規劃。</Paragraph>
             </div>
           </div>
 
-          <Form form={form} layout="inline" onFinish={handleAnalysis} style={{ marginBottom: 16, padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
+          <Form form={form} layout="inline" onFinish={handleAnalysis} style={{ marginBottom: 8, padding: '16px', background: 'rgba(0,0,0,0.2)', borderRadius: '8px' }}>
             <Form.Item name="resource_group" label="資源群組" rules={[{ required: true }]} initialValue="g_1" style={{ marginBottom: 8 }}>
               <Select className="select-xxl" placeholder="選擇資源群組" options={mockResourceGroups.map(g => ({ label: g.name, value: g.id }))} />
             </Form.Item>
@@ -9384,7 +9588,10 @@
               </Select>
             </Form.Item>
             <Form.Item style={{ marginBottom: 8 }}>
-              <Button type="primary" htmlType="submit" loading={isLoading}>開始分析</Button>
+              <Space>
+                <Button type="primary" htmlType="submit" loading={isLoading}>開始分析</Button>
+                <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+              </Space>
             </Form.Item>
           </Form>
 
@@ -9462,9 +9669,12 @@
                     backdropFilter: 'blur(20px) saturate(180%)',
                     WebkitBackdropFilter: 'blur(20px) saturate(180%)',
                     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
-                    marginTop: '16px'
+                    marginTop: '8px'
                   }}>
-                    <Title level={5} style={{ margin: 0, marginBottom: 16, color: 'rgba(255, 255, 255, 0.85)' }}>分析與建議</Title>
+                    <Title level={5} style={{ margin: 0, marginBottom: 16, color: 'rgba(255, 255, 255, 0.85)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <RobotOutlined style={{ color: '#722ed1' }} />
+                      分析與建議
+                    </Title>
                     <List
                       size="small"
                       dataSource={analysisResult.suggestions}
@@ -9480,7 +9690,8 @@
                                 background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
                                 border: 'none',
                                 borderRadius: '6px',
-                                fontWeight: '500'
+                                fontWeight: '500',
+                                marginRight: 0
                               }}
                             >
                               {item.action_type}
@@ -12153,14 +12364,13 @@
       );
     };
 
-    const AdministrationPage = ({ onNavigate }) => {
-      // 將所有卡片放在一個平面陣列中，不分組
-      const adminCards = [
+    const SettingsPage = ({ onNavigate }) => {
+      const settingsCards = [
         {
           key: 'user-management',
           icon: <UserOutlined />,
-          title: '人員管理',
-          description: '管理使用者帳號與權限。',
+          title: '用戶管理',
+          description: '管理使用者帳號、邀請與狀態。',
           category: '存取控制',
           features: ['角色配置', 'SSO整合', '密碼策略'],
           enabled: true
@@ -12169,7 +12379,7 @@
           key: 'team-management',
           icon: <TeamOutlined />,
           title: '團隊管理',
-          description: '管理團隊結構與成員配置。',
+          description: '管理團隊結構、成員與通知訂閱者。',
           category: '存取控制',
           features: ['階層架構', '權限繼承', '成員管理'],
           enabled: true
@@ -12178,291 +12388,125 @@
           key: 'role-management',
           icon: <ApartmentOutlined />,
           title: '角色管理',
-          description: '定義系統角色與其權限。',
+          description: '定義系統角色及其包含的具體權限。',
           category: '存取控制',
           features: ['RBAC控制', '自訂角色', '權限模板'],
           enabled: true
         },
         {
-          key: 'notification-strategies',
-          icon: <ApartmentOutlined />,
-          title: '通知策略',
-          description: '設定告警通知的路由策略。',
+          key: 'tag-key-management',
+          icon: <TagsOutlined />,
+          title: '標籤管理',
+          description: '管理全域的標籤 (Tag) 與其可選值。',
           category: '平台設定',
-          features: ['智能路由', '升級規則', '值班整合'],
+          features: ['標籤標準化', '層級標籤', '標籤值管理'],
           enabled: true
         },
         {
           key: 'notification-channels',
-          icon: <BellOutlined />,
+          icon: <MailOutlined />,
           title: '通知管道',
-          description: '管理系統通知管道。',
+          description: '管理 Email, Slack, Webhook 等通知方式。',
           category: '平台設定',
-          features: ['多元管道', '模板管理', '送達確認'],
+          features: ['多種管道', '健康檢測', '模板配置'],
+          enabled: true
+        },
+        {
+          key: 'notification-strategies',
+          icon: <BranchesOutlined />,
+          title: '通知策略',
+          description: '設定告警通知的路由與分派規則。',
+          category: '平台設定',
+          features: ['路由規則', '團隊分派', '標籤匹配'],
           enabled: true
         },
         {
           key: 'system-settings',
           icon: <BuildOutlined />,
           title: '系統設定',
-          description: '配置平台全域參數。',
+          description: '配置平台級別的全域參數。',
           category: '平台設定',
           features: ['主題設定', '語系切換', '預設配置'],
           enabled: true
         },
-        {
-          key: 'diagnostics',
-          icon: <ControlOutlined />,
-          title: '平台診斷',
-          description: '監控平台健康狀態。',
-          category: '平台維運',
-          features: ['健康檢查', '效能監控', '系統資源'],
-          enabled: true
-        },
-        {
-          key: 'audit-logs',
-          icon: <AuditOutlined />,
-          title: '審計日誌',
-          description: '追蹤平台操作記錄。',
-          category: '平台維運',
-          features: ['操作追蹤', '安全分析', '合規報告'],
-          enabled: true
-        },
-        {
-          key: 'backup-restore',
-          icon: <SaveOutlined />,
-          title: '備份與還原',
-          description: '管理數據備份策略。',
-          category: '平台維運',
-          features: ['自動備份', '版本管理', '災難復原'],
-          enabled: false  // 未實現
-        }
       ];
+
+      const renderCategory = (category, iconColor) => (
+        <div style={{ marginBottom: '20px' }}>
+          <Title level={5} style={{ color: 'var(--text-secondary)', fontWeight: '500', marginBottom: '8px', fontSize: '14px' }}>
+            {category}
+          </Title>
+          <Row gutter={[16, 12]}>
+            {settingsCards.filter(item => item.category === category).map(item => (
+              <Col key={item.key} xs={24} md={12} lg={8}>
+                <Badge.Ribbon
+                  text="即將推出"
+                  style={{ display: !item.enabled ? 'block' : 'none' }}
+                >
+                  <div
+                    className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
+                    onClick={() => item.enabled && onNavigate(item.key)}
+                    style={{ height: '100%' }}
+                  >
+                    <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '12px', width: '100%' }}>
+                        <div className="nav-item-icon" style={{
+                          background: iconColor,
+                          padding: '12px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '28px',
+                          opacity: item.enabled ? 1 : 0.5
+                        }}>
+                          {item.icon}
+                        </div>
+                        <div className="nav-item-text" style={{ flex: 1 }}>
+                          <Title level={5} className="nav-item-title">
+                            {item.title}
+                          </Title>
+                          <Paragraph className="nav-item-description">{item.description}</Paragraph>
+                        </div>
+                      </div>
+                      {item.features && (
+                        <div style={{
+                          display: 'flex',
+                          gap: '8px',
+                          flexWrap: 'wrap',
+                          marginTop: 'auto'
+                        }}>
+                          {item.features.map((feature, idx) => (
+                            <Tag
+                              key={idx}
+                              style={{
+                                background: 'rgba(255, 255, 255, 0.08)',
+                                border: '1px solid rgba(255, 255, 255, 0.12)',
+                                color: 'var(--text-tertiary)',
+                                fontSize: '12px',
+                                opacity: item.enabled ? 1 : 0.6
+                              }}
+                            >
+                              {feature}
+                            </Tag>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </Badge.Ribbon>
+              </Col>
+            ))}
+          </Row>
+        </div>
+      );
 
       return (
         <React.Fragment>
-          <Title level={2} className="page-title">管理中心</Title>
+          <Title level={2} className="page-title">設定</Title>
           <Paragraph className="page-subtitle" type="secondary">
-            管理平台級別的設定、存取控制與維運狀態。
+            配置平台的人員、權限和功能。
           </Paragraph>
-
-          {/* 分組顯示管理功能 */}
           <div style={{ marginTop: '12px' }}>
-            {/* 存取控制組 */}
-            <div style={{ marginBottom: '20px' }}>
-              <Title level={5} style={{
-                color: 'var(--text-secondary)',
-                fontWeight: '500',
-                marginBottom: '8px',
-                fontSize: '14px'
-              }}>
-                存取控制
-              </Title>
-              <Row gutter={[12, 12]}>
-                {adminCards.filter(item => item.category === '存取控制').map(item => (
-                  <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon
-                      text="即將推出"
-                      style={{ display: !item.enabled ? 'block' : 'none' }}
-                    >
-                      <div
-                        className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-                        onClick={() => item.enabled && onNavigate(item.key)}
-                        style={{ height: '100%' }}
-                      >
-                        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{
-                              background: 'rgba(24, 144, 255, 0.1)',
-                              padding: '8px',
-                              borderRadius: 'var(--radius-md)',
-                              fontSize: '24px',
-                              opacity: item.enabled ? 1 : 0.5
-                            }}>
-                              {item.icon}
-                            </div>
-                            <div className="nav-item-text" style={{ flex: 1 }}>
-                              <Title level={5} className="nav-item-title" style={{ marginBottom: '4px' }}>
-                                {item.title}
-                              </Title>
-                              <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
-                            </div>
-                          </div>
-                          {item.features && (
-                            <div style={{
-                              display: 'flex',
-                              gap: '6px',
-                              flexWrap: 'wrap',
-                              marginTop: '6px'
-                            }}>
-                              {item.features.map((feature, idx) => (
-                                <Tag
-                                  key={idx}
-                                  style={{
-                                    background: 'rgba(255, 255, 255, 0.08)',
-                                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                                    color: 'var(--text-tertiary)',
-                                    fontSize: '11px',
-                                    padding: '2px 6px',
-                                    margin: 0,
-                                    lineHeight: '16px',
-                                    opacity: item.enabled ? 1 : 0.6
-                                  }}
-                                >
-                                  {feature}
-                                </Tag>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Badge.Ribbon>
-                  </Col>
-                ))}
-              </Row>
-            </div>
-
-            {/* 平台設定組 */}
-            <div style={{ marginBottom: '20px' }}>
-              <Title level={5} style={{
-                color: 'var(--text-secondary)',
-                fontWeight: '500',
-                marginBottom: '8px',
-                fontSize: '14px'
-              }}>
-                平台設定
-              </Title>
-              <Row gutter={[12, 12]}>
-                {adminCards.filter(item => item.category === '平台設定').map(item => (
-                  <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon
-                      text="即將推出"
-                      style={{ display: !item.enabled ? 'block' : 'none' }}
-                    >
-                      <div
-                        className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-                        onClick={() => item.enabled && onNavigate(item.key)}
-                        style={{ height: '100%' }}
-                      >
-                        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '8px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{
-                              background: 'rgba(24, 144, 255, 0.1)',
-                              padding: '8px',
-                              borderRadius: 'var(--radius-md)',
-                              fontSize: '24px',
-                              opacity: item.enabled ? 1 : 0.5
-                            }}>
-                              {item.icon}
-                            </div>
-                            <div className="nav-item-text" style={{ flex: 1 }}>
-                              <Title level={5} className="nav-item-title">
-                                {item.title}
-                              </Title>
-                              <Paragraph className="nav-item-description">{item.description}</Paragraph>
-                            </div>
-                          </div>
-                          {item.features && (
-                            <div style={{
-                              display: 'flex',
-                              gap: '8px',
-                              flexWrap: 'wrap',
-                              marginTop: '8px'
-                            }}>
-                              {item.features.map((feature, idx) => (
-                                <Tag
-                                  key={idx}
-                                  style={{
-                                    background: 'rgba(255, 255, 255, 0.08)',
-                                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                                    color: 'var(--text-tertiary)',
-                                    fontSize: '12px',
-                                    opacity: item.enabled ? 1 : 0.6
-                                  }}
-                                >
-                                  {feature}
-                                </Tag>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Badge.Ribbon>
-                  </Col>
-                ))}
-              </Row>
-            </div>
-
-            {/* 平台維運組 */}
-            <div>
-              <Title level={5} style={{
-                color: 'var(--text-secondary)',
-                fontWeight: '500',
-                marginBottom: '8px',
-                fontSize: '14px'
-              }}>
-                平台維運
-              </Title>
-              <Row gutter={[12, 12]}>
-                {adminCards.filter(item => item.category === '平台維運').map(item => (
-                  <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon
-                      text="即將推出"
-                      style={{ display: !item.enabled ? 'block' : 'none' }}
-                    >
-                      <div
-                        className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-                        onClick={() => item.enabled && onNavigate(item.key)}
-                        style={{ height: '100%' }}
-                      >
-                        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{
-                              background: 'rgba(24, 144, 255, 0.1)',
-                              padding: '8px',
-                              borderRadius: 'var(--radius-md)',
-                              fontSize: '24px',
-                              opacity: item.enabled ? 1 : 0.5
-                            }}>
-                              {item.icon}
-                            </div>
-                            <div className="nav-item-text" style={{ flex: 1 }}>
-                              <Title level={5} className="nav-item-title" style={{ marginBottom: '2px' }}>
-                                {item.title}
-                              </Title>
-                              <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
-                            </div>
-                          </div>
-                          {item.features && (
-                            <div style={{
-                              display: 'flex',
-                              gap: '4px',
-                              flexWrap: 'wrap',
-                              marginTop: '4px'
-                            }}>
-                              {item.features.map((feature, idx) => (
-                                <Tag
-                                  key={idx}
-                                  style={{
-                                    background: 'rgba(255, 255, 255, 0.08)',
-                                    border: '1px solid rgba(255, 255, 255, 0.12)',
-                                    color: 'var(--text-tertiary)',
-                                    fontSize: '12px',
-                                    opacity: item.enabled ? 1 : 0.6
-                                  }}
-                                >
-                                  {feature}
-                                </Tag>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Badge.Ribbon>
-                  </Col>
-                ))}
-              </Row>
-            </div>
+            {renderCategory('存取控制', 'rgba(24, 144, 255, 0.1)')}
+            {renderCategory('平台設定', 'rgba(82, 196, 26, 0.1)')}
           </div>
         </React.Fragment>
       );
@@ -12548,14 +12592,19 @@
           getItem('執行日誌', 'executions'),
         ]),
         { type: 'divider' },
-        getItem('管理', 'administration', <SettingOutlined />, [
+        getItem('設定', 'settings', <SettingOutlined />, [
           getItem('用戶管理', 'user-management'),
           getItem('團隊管理', 'team-management'),
           getItem('角色管理', 'role-management'),
           getItem('標籤管理', 'tag-key-management'),
+          getItem('通知策略', 'notification-strategies'),
           getItem('通知管道', 'notification-channels'),
           getItem('系統設定', 'system-settings'),
+        ]),
+        getItem('平台維運', 'platform-ops', <ControlOutlined />, [
           getItem('平台診斷', 'platform-diagnostics'),
+          getItem('審計日誌', 'audit-logs'),
+          getItem('備份與還原', 'backup-restore'),
         ]),
       ];
 
@@ -12595,7 +12644,9 @@
           case 'scripts': return <ScriptsPage scripts={scripts} setScripts={setScripts} addExecution={addExecution} />;
           case 'schedules': return <SchedulesPage scripts={scripts} />;
           case 'executions': return <ExecutionsPage executions={executions} setExecutions={setExecutions} />;
-          case 'administration': return <AdministrationPage onNavigate={setCurrentPage} />;
+          case 'settings': return <SettingsPage onNavigate={navigateToPage} />;
+          case 'platform-ops': return <PlatformOpsPage onNavigate={navigateToPage} />;
+          case 'administration': return <SettingsPage onNavigate={navigateToPage} />;
           case 'user-management': return <UserManagementPage />;
           case 'team-management': return <TeamManagementPage />;
           case 'role-management': return <RoleManagementPage />;
@@ -12603,9 +12654,9 @@
           case 'notification-strategies': return <NotificationStrategiesPage />;
           case 'notification-channels': return <NotificationChannelsPage />;
           case 'system-settings': return <SystemSettingsPage />;
-          case 'diagnostics': return <PlatformDiagnosticsPage />;
           case 'platform-diagnostics': return <PlatformDiagnosticsPage />;
           case 'audit-logs': return <AuditLogsPage />;
+          case 'backup-restore': return <PlaceholderPage title="備份與還原" icon={<SaveOutlined />} />;
           case 'profile': return <ProfilePage themeMode={themeMode} setThemeMode={setThemeMode} />;
           default: return <DashboardPage />;
         }
@@ -12617,10 +12668,15 @@
           if (item.children) {
             for (const child of item.children) {
               if (child.key === key) return { parent: item.label, parentKey: item.key, child: child.label };
+              if (child.children) {
+                for (const grandChild of child.children) {
+                  if (grandChild.key === key) return { parent: child.label, parentKey: child.key, child: grandChild.label };
+                }
+              }
             }
           }
         }
-        const adminPageMap = { 'user-management': '人員管理', 'team-management': '團隊管理', 'role-management': '角色管理', 'notification-strategies': '通知策略', 'notification-channels': '通知管道', 'system-settings': '系統設定', diagnostics: '平台診斷', 'platform-diagnostics': '平台診斷', 'audit-logs': '審計日誌', profile: '個人資料' };
+        const adminPageMap = { 'user-management': '人員管理', 'team-management': '團隊管理', 'role-management': '角色管理', 'notification-strategies': '通知策略', 'notification-channels': '通知管道', 'system-settings': '系統設定', 'platform-diagnostics': '平台診斷', 'audit-logs': '審計日誌', profile: '個人資料' };
         const analyzePageMap = {
           'performance-insights': '效能洞察',
           'cost-analysis': '成本分析',
