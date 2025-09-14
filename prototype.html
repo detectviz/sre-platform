@@ -5401,18 +5401,17 @@
 
     const IncidentListPage = ({ onNavigate, pageParams }) => {
       const initialData = [
-        { key: 'i_0', summary: 'Network Switch CPU High', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(1, 'minutes'), automation_id: null, assignee: null, resource_name: 'network-switch-01', service: '網路基礎設施', business_impact: '高', storm_group: null },
-        { key: 'i_1', summary: 'CPU high on db-prod-01', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'u_2', resource_name: 'db-prod-01', service: '資料庫服務', business_impact: '高', storm_group: null },
-        { key: 'i_2', summary: 'Disk space low on web-prod-02', severity: 'warning', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'hour'), automation_id: 'e_1', assignee: null, resource_name: 'web-prod-02', service: 'Web應用', business_impact: '中', storm_group: null },
-        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'u_4', resource_name: 'api-gateway-prod', service: 'API閘道', business_impact: '高', storm_group: null },
-        { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'u_1', resource_name: 'prometheus-server', service: '監控系統', business_impact: '中', storm_group: null },
-        { key: 'i_5', summary: '記憶體使用率過高 - staging', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(15, 'minutes'), automation_id: null, assignee: null, resource_name: 'web-staging-01', service: 'Web應用', business_impact: '低', storm_group: null },
-        { key: 'i_6', summary: 'Cache Redis Memory Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(30, 'minutes'), automation_id: null, assignee: null, resource_name: 'cache-redis-prod', service: '快取服務', business_impact: '高', storm_group: null },
-        { key: 'i_7', summary: 'Web Server 503 Errors', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'web-prod-03', service: 'Web應用', business_impact: '高', storm_group: 'storm_1' },
-        { key: 'i_8', summary: 'Load Balancer High Traffic', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(3, 'minutes'), automation_id: null, assignee: null, resource_name: 'lb-prod-01', service: '負載平衡', business_impact: '中', storm_group: 'storm_1' },
-        { key: 'i_9', summary: 'Database Connection Pool Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'db-pool-01', service: '資料庫服務', business_impact: '高', storm_group: 'storm_1' },
+        { key: 'i_1', summary: 'CPU high on db-mysql-prod-02', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'u_2', resource_name: 'db-mysql-prod-02', service: '資料庫服務', business_impact: '高', storm_group: null, ruleName: '高 CPU 使用率', triggerThreshold: 'CPU > 90%' },
+        { key: 'i_2', summary: 'Disk space low on srv-web-prod-02', severity: 'warning', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'hour'), automation_id: 'e_1', assignee: null, resource_name: 'srv-web-prod-02', service: 'Web應用', business_impact: '中', storm_group: null, ruleName: '磁碟空間不足', triggerThreshold: 'Disk < 15%' },
+        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'u_4', resource_name: 'srv-api-prod-01', service: 'API閘道', business_impact: '高', storm_group: null, ruleName: 'API 延遲過高', triggerThreshold: 'P95 Latency > 500ms' },
+        { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'u_1', resource_name: 'mon-prometheus-prod-01', service: '監控系統', business_impact: '中', storm_group: null, ruleName: '基礎設施監控', triggerThreshold: 'Pod is not ready' },
+        { key: 'i_5', summary: '記憶體使用率過高 - staging', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(15, 'minutes'), automation_id: null, assignee: null, resource_name: 'srv-web-stg-01', service: 'Web應用', business_impact: '低', storm_group: null, ruleName: '測試環境資源監控', triggerThreshold: 'Memory > 80%' },
+        { key: 'i_6', summary: 'Cache Redis Memory Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(30, 'minutes'), automation_id: null, assignee: null, resource_name: 'cache-redis-prod-01', service: '快取服務', business_impact: '高', storm_group: null, ruleName: '快取服務監控', triggerThreshold: 'Memory > 95%' },
+        { key: 'i_7', summary: 'Web Server 503 Errors', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'srv-web-prod-01', service: 'Web應用', business_impact: '高', storm_group: 'storm_1', ruleName: 'Web 服務可用性', triggerThreshold: '5xx errors > 5%' },
+        { key: 'i_8', summary: 'Load Balancer High Traffic', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(3, 'minutes'), automation_id: null, assignee: null, resource_name: 'net-lb-prod-01', service: '負載平衡', business_impact: '中', storm_group: 'storm_1', ruleName: '網路流量監控', triggerThreshold: 'Traffic > 1Gbps' },
+        { key: 'i_9', summary: 'Database Connection Pool Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'db-mysql-prod-01', service: '資料庫服務', business_impact: '高', storm_group: 'storm_1', ruleName: '資料庫連線池監控', triggerThreshold: 'Connection Pool > 98%' },
       ];
-      const [incidents, setIncidents] = useLocalStorageState('sre-incidents-v2', initialData);
+      const [incidents, setIncidents] = useLocalStorageState('sre-incidents-v3', initialData);
       const [searchText, setSearchText] = useState('');
       const [selectedRowKeys, setSelectedRowKeys] = useState([]);
       const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -5530,6 +5529,26 @@
 
       const columns = [
         {
+          title: '嚴重性',
+          dataIndex: 'severity',
+          width: '8%',
+          sorter: (a, b) => a.severity.localeCompare(b.severity),
+          filters: [
+            { text: 'Critical', value: 'critical' },
+            { text: 'Warning', value: 'warning' }
+          ],
+          onFilter: (v, r) => r.severity && r.severity.includes(v),
+          render: (severity) => (
+            <span className={`status-badge status-${severity}`}>
+              {severity ? severity.toUpperCase() : 'UNKNOWN'}
+            </span>
+          )
+        },
+        { title: '摘要', dataIndex: 'summary', width: '25%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
+        { title: '資源名稱', dataIndex: 'resource_name', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
+        { title: '規則名稱', dataIndex: 'ruleName', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
+        { title: '觸發閾值', dataIndex: 'triggerThreshold', width: '12%', render: name => name || '-' },
+        {
           title: '狀態',
           dataIndex: 'status',
           width: '8%',
@@ -5570,26 +5589,8 @@
             );
           }
         },
-        {
-          title: '嚴重性',
-          dataIndex: 'severity',
-          width: '8%',
-          sorter: (a, b) => a.severity.localeCompare(b.severity),
-          filters: [
-            { text: 'Critical', value: 'critical' },
-            { text: 'Warning', value: 'warning' }
-          ],
-          onFilter: (v, r) => r.severity && r.severity.includes(v),
-          render: (severity) => (
-            <span className={`status-badge status-${severity}`}>
-              {severity ? severity.toUpperCase() : 'UNKNOWN'}
-            </span>
-          )
-        },
-        { title: '觸發時間', dataIndex: 'created_at', width: '12%', sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(), render: time => <span title={time ? time.format('YYYY-MM-DD HH:mm:ss') : ''}>{time ? time.fromNow() : '-'}</span> },
-        { title: '資源名稱', dataIndex: 'resource_name', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
         { title: '處理人', dataIndex: 'assignee', width: '10%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: (assignee) => assignee || '-' },
-        { title: '摘要', dataIndex: 'summary', width: '25%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
+        { title: '觸發時間', dataIndex: 'created_at', width: '12%', sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(), render: time => <span title={time ? time.format('YYYY-MM-DD HH:mm:ss') : ''}>{time ? time.fromNow() : '-'}</span> },
         {
           title: '操作', key: 'action', width: '11%', render: (_, record) => (
             <Space size="small">
@@ -5773,6 +5774,8 @@
                         前往儀表板
                       </Button>
                     </Descriptions.Item>
+                    <Descriptions.Item label="規則名稱">{currentIncident.ruleName || '-'}</Descriptions.Item>
+                    <Descriptions.Item label="觸發閾值">{currentIncident.triggerThreshold || '-'}</Descriptions.Item>
                     {currentIncident.storm_group && (
                       <Descriptions.Item label="告警風暴">
                         <Tag color="orange">風暴群組: {currentIncident.storm_group}</Tag>
