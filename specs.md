@@ -100,6 +100,10 @@ SRE 平台
 - **目標**：構建一個現代化的 SRE 平台前端，提供資源監控、事件管理、自動化運維等功能
 - **使用者**：內部 SRE 團隊和開發人員
 - **核心價值**：提升系統可靠性、簡化運維操作、提供直觀的用戶體驗
+- **理論基礎**：參考 [Google SRE Book](https://sre.google/sre-book/) 的最佳實踐：
+  - [Chapter 4: Service Level Objectives](google-sre-book/Chapter-04-Service-Level-Objectives.md) - SLO/SLA 框架
+  - [Chapter 6: Monitoring Distributed Systems](google-sre-book/Chapter-06-Monitoring-Distributed-Systems.md) - 四個黃金信號
+  - [Chapter 14: Managing Incidents](google-sre-book/Chapter-14-Managing-Incidents.md) - 事件管理實踐
 
 ### **1.2. 技術選型 (Technology Stack)**
 

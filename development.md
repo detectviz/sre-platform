@@ -3,8 +3,7 @@
 ## 📋 文檔概述
 
 **版本**: 2.0
-**更新日期**: 2025年1月
-**整合來源**: `plan.md` + `roadmap.md` + `todo.md`
+**更新日期**: 2025年9月15日
 **目標**: 統整所有開發相關規劃，形成完整的開發藍圖
 
 ---
@@ -17,6 +16,12 @@
 - **平行開發**: 前端團隊基於API規範獨立開發，後端專注業務邏輯
 - **早期驗證**: 前端早期驗證UI/UX設計，後端專注API設計
 - **風險控制**: 降低整體項目風險，及早發現接口問題
+- **最佳實踐**: 參考 [Google SRE Book](https://sre.google/sre-book/) 的開發方法論：
+  - [Chapter 5: Eliminating Toil](google-sre-book/Chapter-05-Eliminating-Toil.md) - 瑣務量化管理
+  - [Chapter 7: The Evolution of Automation at Google](google-sre-book/Chapter-07-The-Evolution-of-Automation-at-Google.md) - 自動化演進
+  - [Chapter 17: Testing for Reliability](google-sre-book/Chapter-17-Testing-for-Reliability.md) - 可靠性測試
+
+  確保系統可靠性設計從開發階段開始
 
 #### 實施流程
 

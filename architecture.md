@@ -6,6 +6,11 @@
 - **平台定位**：作為「統一管理平面」(Unified Management Plane)
 - **整合方式**：通過API調用Grafana Alerting和Grafana OnCall
 - **核心價值**：提供最佳用戶體驗，而非重建底層引擎
+- **理論依據**：參考 [Google SRE Book](https://sre.google/sre-book/) 的自動化演進理念：
+  - [Chapter 7: The Evolution of Automation at Google](google-sre-book/Chapter-07-The-Evolution-of-Automation-at-Google.md) - 自動化成熟度模型
+  - [Chapter 5: Eliminating Toil](google-sre-book/Chapter-05-Eliminating-Toil.md) - 瑣務量化與消除
+
+  實現從手動操作向智慧自動化的轉型
 - **角色分工**：
   - 平台(UI + Backend)：擔任「總控制器」
   - Grafana：擔任「核心執行引擎」
@@ -51,6 +56,8 @@
 2. **排程觸發**：例行任務 (排程管理頁面)
 3. **手動觸發**：日常操作 (腳本庫執行按鈕)
 4. **Webhook觸發**：系統整合 (腳本詳情頁)
+
+> 💡 **設計依據**: 參考 [Google SRE Book](google-sre-book/Chapter-07-The-Evolution-of-Automation-at-Google.md) 的自動化觸發機制設計理念
 
 ## 📈 監控策略體系
 

@@ -43,6 +43,15 @@
 
 SRE 平台是一個現代化的維運平台，專為企業級 SRE 團隊設計。作為「統一管理平面」(Unified Management Plane)，它整合 Grafana Alerting、Grafana OnCall 等開源工具，實現從傳統的被動故障應對模式向主動系統管理的革命性轉變。
 
+本平台遵循 [Google SRE Book](https://sre.google/sre-book/) 的最佳實踐，主要參考章節：
+
+- **[Chapter 4: Service Level Objectives](google-sre-book/Chapter-04-Service-Level-Objectives.md)** - SLO/SLA 管理框架
+- **[Chapter 6: Monitoring Distributed Systems](google-sre-book/Chapter-06-Monitoring-Distributed-Systems.md)** - 四個黃金信號監控
+- **[Chapter 7: The Evolution of Automation at Google](google-sre-book/Chapter-07-The-Evolution-of-Automation-at-Google.md)** - 自動化哲學
+- **[Chapter 14: Managing Incidents](google-sre-book/Chapter-14-Managing-Incidents.md)** - 事件管理實踐
+
+實現服務水準目標 (SLO) 管理、錯誤預算控制、四個黃金信號監控等核心功能。
+
 ### 🏗️ 核心組件
 
 <table>
@@ -418,6 +427,12 @@ refactor: 重構狀態管理邏輯
 - **[🚀 部署指南](docs/DEPLOYMENT.md)** - 生產環境部署說明
 - **[🔧 故障排除](docs/TROUBLESHOOTING.md)** - 常見問題與解決方案
 - **[⚡ 性能調優](docs/PERFORMANCE.md)** - 性能優化指南
+
+### 📚 參考資源
+
+- **[🎓 Google SRE Book 參考指南](google-sre-book/REFERENCES.md)** - 本平台設計參考的核心理念和實踐
+  - 包含具體章節連結和概念映射
+  - 詳細說明每個功能模組的理論依據
 
 ---
 
