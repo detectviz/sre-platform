@@ -4516,6 +4516,12 @@
 
       return (
         <React.Fragment>
+          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <Title level={2} className="page-title" style={{ marginBottom: '4px' }}>資源總覽</Title>
+            <Paragraph className="page-subtitle" type="secondary" style={{ margin: 0 }}>
+              您所有基礎設施的作戰指揮中心。即時掌握資源健康度、定位性能瓶頸，並預測未來容量風險。
+            </Paragraph>
+          </div>
           {/* 頂部橫幅：宏觀 KPI 狀態欄 */}
           <Row gutter={[16, 16]} style={{ marginBottom: 'var(--spacing-lg)' }}>
             {/* 總資源數 */}
@@ -4770,21 +4776,71 @@
     };
 
     const DashboardsPage = ({ onNavigate, pageKey, themeMode }) => {
-      const tabKey = ['resource-overview'].includes(pageKey) ? pageKey : 'resource-overview';
+      // 如果是直接訪問資源總覽，顯示資源總覽頁面
+      if (pageKey === 'resource-overview') {
+        return <ResourceOverviewPage themeMode={themeMode} onNavigate={onNavigate} />;
+      }
+
+      // 儀表板導覽卡片
+      const dashboardCards = [
+        {
+          key: 'resource-overview',
+          icon: <BarChartOutlined />,
+          title: '資源總覽',
+          description: '您所有基礎設施的作戰指揮中心。即時掌握資源健康度、定位性能瓶頸，並預測未來容量風險。',
+          category: '儀表板',
+          enabled: true
+        }
+      ];
 
       return (
         <React.Fragment>
           <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <Title level={2} className="page-title" style={{ marginBottom: '4px' }}>儀表板</Title>
+            <Title level={2} className="page-title" style={{ marginBottom: '4px' }}>資源總覽</Title>
             <Paragraph className="page-subtitle" type="secondary" style={{ margin: 0 }}>
-              集中展示關鍵指標和資源狀態，提供全域視野的運營洞察。
+              聚合所有監控儀表板的可視化入口。從這裡開始，深入探索您的數據，或建立專屬的戰情室。
             </Paragraph>
           </div>
-          <Tabs defaultActiveKey={tabKey} onChange={(key) => onNavigate(key)}>
-            <Tabs.TabPane tab="資源總覽" key="resource-overview">
-              <ResourceOverviewPage themeMode={themeMode} onNavigate={onNavigate} />
-            </Tabs.TabPane>
-          </Tabs>
+
+          {/* 儀表板導覽卡片 */}
+          <div style={{ marginTop: '16px' }}>
+            <Row gutter={[16, 16]}>
+              {dashboardCards.map(item => (
+                <Col key={item.key} xs={24} md={12} lg={8}>
+                  <Badge.Ribbon
+                    text="即將推出"
+                    style={{ display: !item.enabled ? 'block' : 'none' }}
+                  >
+                    <div
+                      className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
+                      onClick={() => item.enabled && onNavigate(item.key)}
+                      style={{ height: '100%' }}
+                    >
+                      <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
+                          <div className="nav-item-icon" style={{
+                            background: 'rgba(24, 144, 255, 0.1)',
+                            padding: '6px',
+                            borderRadius: '8px',
+                            fontSize: '20px',
+                            opacity: item.enabled ? 1 : 0.5
+                          }}>
+                            {item.icon}
+                          </div>
+                          <div className="nav-item-text" style={{ flex: 1 }}>
+                            <Title level={5} className="nav-item-title" style={{ marginBottom: '4px' }}>
+                              {item.title}
+                            </Title>
+                            <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Badge.Ribbon>
+                </Col>
+              ))}
+            </Row>
+          </div>
         </React.Fragment>
       );
     };
@@ -15036,8 +15092,6 @@
         getItem('自動化', 'automation', <CodeOutlined />),
         getItem('儀表板', 'dashboards', <BarChartOutlined />, [
           getItem('資源總覽', 'resource-overview'),
-          getItem('效能儀表板', 'performance-dashboard'),
-          getItem('事件儀表板', 'incident-dashboard'),
         ]),
         getItem('設定', 'settings', <SettingOutlined />, [
           getItem('用戶與權限', 'user-permissions', <UserOutlined />),
@@ -15070,7 +15124,7 @@
         if (['resources', 'resource-list', 'resource-groups'].includes(pageKey)) {
           return <ResourcesPage onNavigate={navigateToPage} pageKey={pageKey} themeMode={themeMode} />;
         }
-        if (['dashboards', 'resource-overview', 'performance-dashboard', 'incident-dashboard'].includes(pageKey)) {
+        if (['dashboards', 'resource-overview'].includes(pageKey)) {
           return <DashboardsPage onNavigate={navigateToPage} pageKey={pageKey} themeMode={themeMode} />;
         }
         if (['analyzing', 'capacity-planning', 'performance-insights', 'cost-analysis', 'incident-trends', 'mttr-analysis', 'sla-reports'].includes(pageKey)) {
