@@ -197,27 +197,61 @@
     /* === 表格內容優化 === */
     .table-wrapper .ant-table-tbody>tr {
       transition: all 0.2s ease;
-      height: 52px;
-      /* 統一行高 - 提升資訊密度 */
+      height: 48px;
+      /* 優化行高 - 平衡資訊密度與可讀性 */
     }
 
     .table-wrapper .ant-table-tbody>tr:hover {
       background: var(--bg-hover);
       transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .table-wrapper .ant-table-tbody>tr>td {
       color: var(--text-secondary);
-      padding: var(--spacing-md) var(--spacing-lg);
-      line-height: 1.4;
+      padding: var(--spacing-sm) var(--spacing-lg);
+      line-height: 1.5;
       border-bottom: 1px solid var(--border-light);
       vertical-align: middle;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      font-size: 13px;
+      /* 優化字體大小以提升可讀性 */
+    }
+
+    /* === 欄位寬度優化 === */
+    .table-wrapper .ant-table-tbody>tr>td.col-name {
+      max-width: 180px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .table-wrapper .ant-table-tbody>tr>td.col-status {
+      max-width: 100px;
+    }
+
+    .table-wrapper .ant-table-tbody>tr>td.col-ip {
+      max-width: 140px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 12px;
+    }
+
+    .table-wrapper .ant-table-tbody>tr>td.col-tags {
       max-width: 200px;
-      /* 防止內容過長 */
+      white-space: normal;
+      overflow: visible;
+    }
+
+    .table-wrapper .ant-table-tbody>tr>td.col-time {
+      max-width: 160px;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 12px;
+    }
+
+    .table-wrapper .ant-table-tbody>tr>td.col-actions {
+      max-width: 120px;
+      text-align: center;
     }
 
     /* 選中行樣式 */
@@ -230,12 +264,174 @@
       background: var(--bg-selected) !important;
     }
 
-    /* === 表格分頁優化 === */
+    /* === 🎯 統一分頁設計系統 - Unified Pagination Design System === */
+
+    /* 全域分頁容器 */
+    .ant-pagination {
+      margin: var(--spacing-lg) 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: flex-end !important;
+      flex-wrap: wrap !important;
+      gap: var(--spacing-sm) !important;
+      color: var(--text-secondary) !important;
+    }
+
+    /* 分頁項目基礎樣式 */
+    .ant-pagination-item,
+    .ant-pagination-prev,
+    .ant-pagination-next,
+    .ant-pagination-jump-prev,
+    .ant-pagination-jump-next {
+      background: transparent !important;
+      border: 1px solid var(--border-base) !important;
+      border-radius: var(--radius-sm) !important;
+      color: var(--text-secondary) !important;
+      transition: all 0.2s ease !important;
+      min-width: 32px !important;
+      height: 32px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 2px !important;
+    }
+
+    /* 分頁項目懸停效果 */
+    .ant-pagination-item:hover,
+    .ant-pagination-prev:hover,
+    .ant-pagination-next:hover,
+    .ant-pagination-jump-prev:hover,
+    .ant-pagination-jump-next:hover {
+      background: var(--bg-hover) !important;
+      border-color: var(--border-hover) !important;
+      color: var(--text-primary) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    /* 分頁項目內容 */
+    .ant-pagination-item a,
+    .ant-pagination-prev .ant-pagination-item-link,
+    .ant-pagination-next .ant-pagination-item-link {
+      color: inherit !important;
+      font-size: 13px !important;
+      font-weight: 500 !important;
+      width: 100% !important;
+      height: 100% !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    /* 當前頁面樣式 */
+    .ant-pagination-item-active {
+      background: var(--brand-primary) !important;
+      border-color: var(--brand-primary) !important;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2) !important;
+    }
+
+    .ant-pagination-item-active a {
+      color: white !important;
+      font-weight: 600 !important;
+    }
+
+    .ant-pagination-item-active:hover {
+      background: var(--brand-primary-hover) !important;
+      border-color: var(--brand-primary-hover) !important;
+      transform: none !important;
+    }
+
+    /* 禁用狀態 */
+    .ant-pagination-disabled,
+    .ant-pagination-disabled:hover {
+      background: transparent !important;
+      border-color: var(--border-light) !important;
+      color: var(--text-disabled) !important;
+      cursor: not-allowed !important;
+      transform: none !important;
+    }
+
+    .ant-pagination-disabled .ant-pagination-item-link {
+      color: var(--text-disabled) !important;
+    }
+
+    /* 頁面大小選擇器 */
+    .ant-pagination-options {
+      margin-left: var(--spacing-md) !important;
+    }
+
+    .ant-pagination-options .ant-select {
+      margin-left: var(--spacing-sm) !important;
+    }
+
+    .ant-pagination-options .ant-select-selector {
+      background: var(--bg-container) !important;
+      border-color: var(--border-base) !important;
+      color: var(--text-secondary) !important;
+      border-radius: var(--radius-sm) !important;
+      height: 32px !important;
+    }
+
+    .ant-pagination-options .ant-select-selector:hover {
+      border-color: var(--border-hover) !important;
+    }
+
+    .ant-pagination-options .ant-select-selection-item {
+      color: var(--text-secondary) !important;
+      font-size: 13px !important;
+    }
+
+    /* 快速跳轉輸入框 */
+    .ant-pagination-options-quick-jumper input {
+      background: var(--bg-container) !important;
+      border-color: var(--border-base) !important;
+      color: var(--text-primary) !important;
+      border-radius: var(--radius-sm) !important;
+      height: 32px !important;
+      width: 50px !important;
+      text-align: center !important;
+      font-size: 13px !important;
+    }
+
+    .ant-pagination-options-quick-jumper input:focus {
+      border-color: var(--brand-primary) !important;
+      box-shadow: 0 0 0 2px var(--brand-primary-bg) !important;
+    }
+
+    /* 總數顯示 */
+    .ant-pagination-total-text {
+      color: var(--text-tertiary) !important;
+      font-size: 13px !important;
+      margin-right: var(--spacing-md) !important;
+    }
+
+    /* 表格容器內的分頁特殊處理 */
     .table-wrapper .ant-pagination {
-      margin: var(--spacing-lg) var(--spacing-lg) !important;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      margin: var(--spacing-lg) var(--spacing-lg) var(--spacing-md) var(--spacing-lg) !important;
+      padding: var(--spacing-md) 0 !important;
+      border-top: 1px solid var(--border-light) !important;
+      background: var(--bg-container) !important;
+    }
+
+    /* 響應式分頁 */
+    @media (max-width: 768px) {
+      .ant-pagination {
+        justify-content: center !important;
+        margin: var(--spacing-md) 0 !important;
+      }
+
+      .ant-pagination-item,
+      .ant-pagination-prev,
+      .ant-pagination-next {
+        min-width: 28px !important;
+        height: 28px !important;
+        margin: 0 1px !important;
+      }
+
+      .ant-pagination-options {
+        margin-top: var(--spacing-sm) !important;
+        width: 100% !important;
+        justify-content: center !important;
+      }
     }
 
     /* === 表格載入狀態 === */
@@ -494,7 +690,109 @@
       letter-spacing: 0.5px;
     }
 
-    /* 標籤模態框優化 */
+    /* === 🎨 統一 Modal 設計系統 - Unified Modal Design System === */
+
+    /* 全域 Modal 樣式 */
+    .ant-modal-mask {
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .ant-modal .ant-modal-content {
+      background: var(--bg-elevated);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: var(--glass-backdrop);
+      -webkit-backdrop-filter: var(--glass-backdrop);
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+    }
+
+    .ant-modal .ant-modal-header {
+      background: var(--bg-overlay);
+      border-bottom: 1px solid var(--border-base);
+      padding: var(--spacing-lg) var(--spacing-xl);
+      margin: 0;
+    }
+
+    .ant-modal .ant-modal-title {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 18px;
+      margin: 0;
+    }
+
+    .ant-modal .ant-modal-close {
+      color: var(--text-tertiary);
+      transition: all 0.2s ease;
+    }
+
+    .ant-modal .ant-modal-close:hover {
+      color: var(--text-primary);
+      background: var(--bg-hover);
+    }
+
+    .ant-modal .ant-modal-body {
+      padding: var(--spacing-xl);
+      color: var(--text-secondary);
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+
+    .ant-modal .ant-modal-footer {
+      background: var(--bg-container);
+      border-top: 1px solid var(--border-base);
+      padding: var(--spacing-lg) var(--spacing-xl);
+      margin: 0;
+    }
+
+    /* Modal 尺寸標準化 */
+    .modal-sm .ant-modal {
+      max-width: 480px;
+    }
+
+    .modal-md .ant-modal {
+      max-width: 640px;
+    }
+
+    .modal-lg .ant-modal {
+      max-width: 800px;
+    }
+
+    .modal-xl .ant-modal {
+      max-width: 1200px;
+    }
+
+    /* Modal 表單優化 */
+    .ant-modal .ant-form-item-label > label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .ant-modal .ant-input,
+    .ant-modal .ant-select-selector,
+    .ant-modal .ant-picker {
+      background: var(--bg-container);
+      border-color: var(--border-base);
+      color: var(--text-primary);
+    }
+
+    .ant-modal .ant-input:focus,
+    .ant-modal .ant-select-focused .ant-select-selector,
+    .ant-modal .ant-picker:hover {
+      border-color: var(--brand-primary);
+      box-shadow: 0 0 0 2px var(--brand-primary-bg);
+    }
+
+    /* Modal 按鈕優化 */
+    .ant-modal .ant-btn {
+      height: var(--btn-height-md);
+      border-radius: var(--radius-sm);
+      font-weight: 500;
+    }
+
+    /* 標籤模態框優化（特殊樣式保留） */
     .tag-modal .ant-modal-content {
       background: var(--bg-elevated);
       border: var(--glass-border);
@@ -1154,9 +1452,7 @@
       color: #1677ff !important;
     }
 
-    .ant-table-pagination.ant-pagination {
-      margin: 16px 8px !important;
-    }
+    /* 已統一使用全域分頁樣式 */
 
 
 
@@ -2585,40 +2881,143 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
     }
 
-    /* 🎯 Unified Button Styles */
-    /* Primary Actions - 主要操作按鈕 */
+    /* 🎯 統一按鈕設計系統 - Unified Button Design System */
+
+    /* === 主要操作按鈕 - Primary Action Buttons === */
     .btn-primary-action {
-      height: 32px;
-      padding: 0 16px;
+      height: var(--btn-height-md);
+      padding: var(--btn-padding-md);
       font-weight: 500;
-      border-radius: var(--radius-base);
+      border-radius: var(--radius-sm);
+      background: var(--brand-primary);
+      border-color: var(--brand-primary);
+      color: white;
+      transition: all 0.2s ease;
     }
 
-    /* Toolbar Buttons - 工具列按鈕 */
+    .btn-primary-action:hover {
+      background: var(--brand-primary-hover);
+      border-color: var(--brand-primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* === 工具列按鈕 - Toolbar Buttons === */
     .ant-btn.toolbar-btn,
     button.ant-btn.toolbar-btn {
-      height: 32px !important;
-      border-radius: 6px !important;
+      height: var(--btn-height-md) !important;
+      border-radius: var(--radius-sm) !important;
       background: transparent !important;
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      color: rgba(255, 255, 255, 0.85) !important;
+      border: 1px solid var(--border-base) !important;
+      color: var(--text-secondary) !important;
+      font-weight: 500 !important;
+      font-size: 13px !important;
       padding: 0 12px !important;
+      transition: all 0.2s ease !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 6px !important;
     }
 
     .ant-btn.toolbar-btn:hover,
     button.ant-btn.toolbar-btn:hover,
     .ant-btn.toolbar-btn:focus,
     button.ant-btn.toolbar-btn:focus {
-      background: rgba(255, 255, 255, 0.05) !important;
-      border-color: rgba(255, 255, 255, 0.3) !important;
-      color: rgba(255, 255, 255, 0.95) !important;
+      background: var(--bg-hover) !important;
+      border-color: var(--border-hover) !important;
+      color: var(--text-primary) !important;
+      transform: translateY(-1px) !important;
+      box-shadow: var(--shadow-sm) !important;
     }
 
+    /* 僅圖標的工具列按鈕 */
     .ant-btn.toolbar-btn--icon-only,
     button.ant-btn.toolbar-btn--icon-only {
-      width: 32px !important;
+      width: var(--btn-height-md) !important;
       padding: 0 !important;
-      border-radius: 6px !important;
+      border-radius: var(--radius-sm) !important;
+      justify-content: center !important;
+    }
+
+    /* === 表格操作按鈕 - Table Action Buttons === */
+    .table-action-btn {
+      height: var(--btn-height-sm);
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: var(--radius-xs);
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-tertiary);
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .table-action-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    .table-action-btn.primary {
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+    }
+
+    .table-action-btn.primary:hover {
+      background: var(--brand-primary-bg);
+      border-color: var(--brand-primary-hover);
+      color: var(--brand-primary-hover);
+    }
+
+    .table-action-btn.danger {
+      border-color: var(--brand-danger);
+      color: var(--brand-danger);
+    }
+
+    .table-action-btn.danger:hover {
+      background: var(--brand-danger-bg);
+      border-color: var(--brand-danger-hover);
+      color: var(--brand-danger-hover);
+    }
+
+    /* === 圖標按鈕 - Icon Buttons === */
+    .btn-icon-action {
+      width: var(--btn-height-md);
+      height: var(--btn-height-md);
+      padding: 0;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-tertiary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .btn-icon-action:hover {
+      background: var(--bg-hover);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    .btn-icon-action.primary:hover {
+      background: var(--brand-primary-bg);
+      border-color: var(--brand-primary);
+      color: var(--brand-primary);
+    }
+
+    .btn-icon-action.danger:hover {
+      background: var(--brand-danger-bg);
+      border-color: var(--brand-danger);
+      color: var(--brand-danger);
     }
 
     /* 通知鈴 Badge 尺寸 */
@@ -4478,22 +4877,190 @@
       };
 
       const initialData = [
-        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'], trend: generateTrend(), alarms: [] },
-        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'], trend: generateTrend(), alarms: [{ severity: 'warning', summary: 'Disk space is over 85%' }] },
-        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'], trend: generateTrend(), alarms: [{ severity: 'critical', summary: 'API latency > 2s' }, { severity: 'warning', summary: '5xx error rate > 5%' }] },
-        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'], trend: generateTrend(), alarms: [] },
+        // === 核心資料庫集群 - Core Database Cluster ===
+        {
+          key: 'r_1',
+          name: 'postgres-primary-01',
+          type: 'database',
+          status: 'healthy',
+          ip_address: '10.100.1.10',
+          groups: ['g_database'],
+          tags: ['production', 'postgresql', 'primary', 'high-priority', 'finance-system', 'team-backend', 'owner:david.chen', 'backup-policy:daily'],
+          trend: generateTrend(),
+          alarms: []
+        },
+        {
+          key: 'r_2',
+          name: 'postgres-replica-01',
+          type: 'database',
+          status: 'healthy',
+          ip_address: '10.100.1.11',
+          groups: ['g_database'],
+          tags: ['production', 'postgresql', 'replica', 'read-only', 'finance-system', 'team-backend'],
+          trend: generateTrend(),
+          alarms: []
+        },
+        {
+          key: 'r_3',
+          name: 'redis-cluster-master',
+          type: 'cache',
+          status: 'warning',
+          ip_address: '10.100.1.20',
+          groups: ['g_cache'],
+          tags: ['production', 'redis', 'master', 'session-store', 'team-platform', 'owner:sarah.liu'],
+          trend: generateTrend(),
+          alarms: [{ severity: 'warning', summary: 'Memory usage over 80%' }]
+        },
+
+        // === Web 前端集群 - Frontend Web Cluster ===
+        {
+          key: 'r_4',
+          name: 'nginx-lb-prod-01',
+          type: 'gateway',
+          status: 'healthy',
+          ip_address: '10.100.2.10',
+          groups: ['g_frontend'],
+          tags: ['production', 'nginx', 'load-balancer', 'public-facing', 'team-devops', 'owner:mike.wang'],
+          trend: generateTrend(),
+          alarms: []
+        },
         {
           key: 'r_5',
-          name: 'k8s-master-node-01',
+          name: 'web-app-prod-01',
           type: 'server',
           status: 'healthy',
-          ip_address: '10.0.1.5',
-          groups: ['g_2', 'g_3'],
+          ip_address: '10.100.2.21',
+          groups: ['g_frontend'],
+          tags: ['production', 'nodejs', 'web-server', 'react-app', 'team-frontend', 'owner:emily.zhang'],
+          trend: generateTrend(),
+          alarms: []
+        },
+        {
+          key: 'r_6',
+          name: 'web-app-prod-02',
+          type: 'server',
+          status: 'critical',
+          ip_address: '10.100.2.22',
+          groups: ['g_frontend'],
+          tags: ['production', 'nodejs', 'web-server', 'react-app', 'team-frontend'],
+          trend: generateTrend(),
+          alarms: [
+            { severity: 'critical', summary: 'CPU usage > 95% for 10 minutes' },
+            { severity: 'warning', summary: 'Memory usage > 85%' }
+          ]
+        },
+
+        // === API 服務集群 - API Services Cluster ===
+        {
+          key: 'r_7',
+          name: 'api-gateway-prod',
+          type: 'gateway',
+          status: 'warning',
+          ip_address: '10.100.3.10',
+          groups: ['g_api'],
+          tags: ['production', 'kong', 'api-gateway', 'microservices', 'team-platform', 'owner:alex.kim'],
+          trend: generateTrend(),
+          alarms: [{ severity: 'warning', summary: 'API latency P95 > 500ms' }]
+        },
+        {
+          key: 'r_8',
+          name: 'user-service-prod-01',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '10.100.3.21',
+          groups: ['g_api'],
+          tags: ['production', 'java', 'spring-boot', 'user-management', 'team-backend', 'owner:jason.liu'],
+          trend: generateTrend(),
+          alarms: []
+        },
+        {
+          key: 'r_9',
+          name: 'payment-service-prod-01',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '10.100.3.31',
+          groups: ['g_api'],
+          tags: ['production', 'java', 'spring-boot', 'payment', 'finance-critical', 'team-fintech', 'owner:lisa.wu'],
+          trend: generateTrend(),
+          alarms: []
+        },
+
+        // === Kubernetes 集群 - K8s Infrastructure ===
+        {
+          key: 'r_10',
+          name: 'k8s-master-01',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '10.100.4.10',
+          groups: ['g_k8s'],
           tags: [
-            'production', 'kubernetes', 'control-plane', 'high-availability', 'cluster-critical',
-            'team-alpha', 'owner:JohnDoe', 'cost-center:12345', 'data-center:us-east-1a',
-            'os:ubuntu-22.04', 'instance-type:m5.xlarge', 'backup-policy:daily'
+            'production', 'kubernetes', 'master', 'control-plane', 'cluster-critical',
+            'team-devops', 'owner:tom.chen', 'data-center:us-west-2a',
+            'os:ubuntu-22.04', 'instance-type:c5.2xlarge', 'backup-policy:daily'
           ],
+          trend: generateTrend(),
+          alarms: []
+        },
+        {
+          key: 'r_11',
+          name: 'k8s-worker-01',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '10.100.4.21',
+          groups: ['g_k8s'],
+          tags: [
+            'production', 'kubernetes', 'worker', 'compute-node', 'container-runtime',
+            'team-devops', 'data-center:us-west-2a', 'os:ubuntu-22.04', 'instance-type:m5.4xlarge'
+          ],
+          trend: generateTrend(),
+          alarms: []
+        },
+        {
+          key: 'r_12',
+          name: 'k8s-worker-02',
+          type: 'server',
+          status: 'warning',
+          ip_address: '10.100.4.22',
+          groups: ['g_k8s'],
+          tags: [
+            'production', 'kubernetes', 'worker', 'compute-node', 'container-runtime',
+            'team-devops', 'data-center:us-west-2b', 'os:ubuntu-22.04', 'instance-type:m5.4xlarge'
+          ],
+          trend: generateTrend(),
+          alarms: [{ severity: 'warning', summary: 'Node disk usage > 85%' }]
+        },
+
+        // === 監控和日誌系統 - Monitoring & Logging ===
+        {
+          key: 'r_13',
+          name: 'prometheus-server-01',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '10.100.5.10',
+          groups: ['g_monitoring'],
+          tags: ['production', 'prometheus', 'monitoring', 'metrics', 'team-devops', 'owner:kevin.park'],
+          trend: generateTrend(),
+          alarms: []
+        },
+        {
+          key: 'r_14',
+          name: 'elasticsearch-01',
+          type: 'database',
+          status: 'healthy',
+          ip_address: '10.100.5.20',
+          groups: ['g_logging'],
+          tags: ['production', 'elasticsearch', 'logging', 'search-engine', 'team-devops', 'owner:jenny.lee'],
+          trend: generateTrend(),
+          alarms: []
+        },
+        {
+          key: 'r_15',
+          name: 'kibana-dashboard-01',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '10.100.5.30',
+          groups: ['g_logging'],
+          tags: ['production', 'kibana', 'dashboard', 'visualization', 'team-devops'],
           trend: generateTrend(),
           alarms: []
         }
@@ -5667,13 +6234,76 @@
       ];
 
       const initialGroups = [
-        { key: 'g_1', name: 'Production Database', description: '所有生產環境的資料庫', members: ['r_1'], responsibleTeam: 't_6' },
-        { key: 'g_2', name: 'Production Web Servers', description: '所有生產環境的 Web 伺服器', members: ['r_2'], responsibleTeam: 't_5' },
-        { key: 'g_3', name: 'Staging Environment', description: '測試環境所有資源', members: ['r_5', 'r_6'], responsibleTeam: 't_1' },
-        { key: 'g_4', name: 'Network Infrastructure', description: '網路基礎設施資源', members: ['r_3', 'r_7'], responsibleTeam: 't_7' },
-        { key: 'g_5', name: 'Monitoring Systems', description: '監控系統與告警資源', members: ['r_4', 'r_8', 'r_9'], responsibleTeam: 't_9' },
-        { key: 'g_6', name: 'Security Resources', description: '安全相關的資源與工具', members: [], responsibleTeam: 't_8' },
-        { key: 'g_7', name: 'Development Tools', description: '開發環境與工具資源', members: ['r_10', 'r_11'], responsibleTeam: 't_10' },
+        // === 資料庫集群群組 ===
+        {
+          key: 'g_database',
+          name: 'Database Cluster',
+          description: '生產環境核心資料庫集群，包含主從資料庫和快取系統',
+          members: ['r_1', 'r_2', 'r_3'],
+          responsibleTeam: 't_6',
+          tags: ['production', 'database', 'high-priority'],
+          createdAt: dayjs().subtract(180, 'day')
+        },
+        // === 前端服務群組 ===
+        {
+          key: 'g_frontend',
+          name: 'Frontend Web Services',
+          description: 'Web 前端應用伺服器群組，包含負載均衡器和應用伺服器',
+          members: ['r_4', 'r_5', 'r_6'],
+          responsibleTeam: 't_5',
+          tags: ['production', 'frontend', 'web'],
+          createdAt: dayjs().subtract(120, 'day')
+        },
+        // === API 服務群組 ===
+        {
+          key: 'g_api',
+          name: 'API & Microservices',
+          description: 'API 閘道器和微服務應用群組，處理核心業務邏輯',
+          members: ['r_7', 'r_8', 'r_9'],
+          responsibleTeam: 't_10',
+          tags: ['production', 'api', 'microservices'],
+          createdAt: dayjs().subtract(90, 'day')
+        },
+        // === 快取服務群組 ===
+        {
+          key: 'g_cache',
+          name: 'Cache Services',
+          description: 'Redis 快取集群，提供高速資料存取',
+          members: ['r_3'],
+          responsibleTeam: 't_9',
+          tags: ['production', 'cache', 'redis'],
+          createdAt: dayjs().subtract(150, 'day')
+        },
+        // === Kubernetes 群組 ===
+        {
+          key: 'g_k8s',
+          name: 'Kubernetes Infrastructure',
+          description: 'Kubernetes 集群基礎設施，包含主節點和工作節點',
+          members: ['r_10', 'r_11', 'r_12'],
+          responsibleTeam: 't_5',
+          tags: ['production', 'kubernetes', 'infrastructure'],
+          createdAt: dayjs().subtract(60, 'day')
+        },
+        // === 監控系統群組 ===
+        {
+          key: 'g_monitoring',
+          name: 'Monitoring & Observability',
+          description: '監控和可觀測性系統，包含指標收集和告警',
+          members: ['r_13'],
+          responsibleTeam: 't_9',
+          tags: ['production', 'monitoring', 'prometheus'],
+          createdAt: dayjs().subtract(75, 'day')
+        },
+        // === 日誌系統群組 ===
+        {
+          key: 'g_logging',
+          name: 'Logging & Analytics',
+          description: 'ELK 日誌處理和分析系統',
+          members: ['r_14', 'r_15'],
+          responsibleTeam: 't_9',
+          tags: ['production', 'logging', 'elasticsearch'],
+          createdAt: dayjs().subtract(45, 'day')
+        }
       ];
 
       const initialTeams = [
@@ -8921,7 +9551,54 @@
         }
       ];
 
-      const [silences, setSilences] = useLocalStorageState('sre-silences-v2', initialSilences);
+      // Data integrity validation and repair function
+      const validateAndRepairSilenceData = (data) => {
+        if (!Array.isArray(data)) {
+          console.warn('Silence data is not an array, resetting to initial data');
+          return initialSilences;
+        }
+
+        return data.map(silence => {
+          if (!silence || typeof silence !== 'object') {
+            console.warn('Invalid silence object, skipping:', silence);
+            return null;
+          }
+
+          // Ensure matchers is always an array
+          if (!Array.isArray(silence.matchers)) {
+            console.warn('Repairing non-array matchers for silence:', silence.key);
+            silence.matchers = [];
+          }
+
+          // Validate each matcher object
+          silence.matchers = silence.matchers.filter(matcher => {
+            if (!matcher || typeof matcher !== 'object') {
+              console.warn('Removing invalid matcher:', matcher);
+              return false;
+            }
+            return true;
+          });
+
+          return silence;
+        }).filter(Boolean);
+      };
+
+      const [silences, setSilences] = useLocalStorageState('sre-silences-v2', initialSilences, {
+        serializer: {
+          read: (value) => {
+            try {
+              const parsed = JSON.parse(value);
+              return validateAndRepairSilenceData(parsed);
+            } catch (e) {
+              console.error('Failed to parse silence data from localStorage:', e);
+              return initialSilences;
+            }
+          },
+          write: (value) => {
+            return JSON.stringify(validateAndRepairSilenceData(value));
+          }
+        }
+      });
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingSilence, setEditingSilence] = useState(null);
       const [searchText, setSearchText] = useState('');
@@ -9010,13 +9687,48 @@
 
       const getNextExecution = (record) => {
         if (record.type === 'once') return null;
+        if (!record.enabled) return null;
+        if (record.validUntil && dayjs().isAfter(record.validUntil)) return null;
 
-        // 簡化的下次執行時間計算
+        const now = dayjs();
+
         if (record.recurringPattern === 'weekly' && record.weekdays) {
-          const nextSaturday = dayjs().day(6).hour(parseInt(record.timeSlot[0])).minute(0);
-          return nextSaturday.isAfter(dayjs()) ? nextSaturday : nextSaturday.add(1, 'week');
+          // 計算下一個週期日期
+          const timeSlot = record.timeSlot || ['02:00', '04:00'];
+          const startHour = parseInt(timeSlot[0].split(':')[0]);
+          const startMinute = parseInt(timeSlot[0].split(':')[1]);
+
+          // 找到下一個有效的weekday
+          for (let i = 0; i < 14; i++) { // 檢查未來兩週
+            const candidate = now.add(i, 'day');
+            if (record.weekdays.includes(candidate.day())) {
+              const nextTime = candidate.hour(startHour).minute(startMinute).second(0);
+              if (nextTime.isAfter(now)) {
+                return nextTime;
+              }
+            }
+          }
+        } else if (record.recurringPattern === 'monthly') {
+          const timeSlot = record.timeSlot || ['22:00', '06:00'];
+          const startHour = parseInt(timeSlot[0].split(':')[0]);
+          const startMinute = parseInt(timeSlot[0].split(':')[1]);
+
+          if (record.monthlyType === 'lastday') {
+            // 本月最後一天
+            const lastDayThisMonth = now.endOf('month').hour(startHour).minute(startMinute).second(0);
+            if (lastDayThisMonth.isAfter(now)) {
+              return lastDayThisMonth;
+            }
+            // 下個月最後一天
+            return now.add(1, 'month').endOf('month').hour(startHour).minute(startMinute).second(0);
+          }
         }
-        return dayjs().add(1, 'day').hour(parseInt(record.timeSlot?.[0] || '02')).minute(0);
+
+        // 默認返回明天相同時間
+        const timeSlot = record.timeSlot || ['02:00', '04:00'];
+        const startHour = parseInt(timeSlot[0].split(':')[0]);
+        const startMinute = parseInt(timeSlot[0].split(':')[1]);
+        return now.add(1, 'day').hour(startHour).minute(startMinute).second(0);
       };
 
       const showModal = (silence = null) => {
@@ -9097,33 +9809,58 @@
         {
           title: '啟用',
           dataIndex: 'enabled',
-          width: '8%',
-          render: (enabled) => (
+          width: 60,
+          fixed: 'left',
+          render: (enabled, record) => (
             <Switch
               checked={enabled}
+              size="small"
               onChange={(checked) => {
-                // 這裡可以新增切換邏輯
-                // TODO: 實作啟用/停用邏輯
+                toggleEnabled(record.key);
               }}
             />
           )
         },
-        { title: '名稱', dataIndex: 'name', width: '14%' },
+        {
+          title: '規則名稱',
+          dataIndex: 'name',
+          width: 180,
+          ellipsis: true,
+          className: 'col-name',
+          render: (name, record) => (
+            <div>
+              <div style={{ fontWeight: 500 }}>{name}</div>
+              {record.description && (
+                <div style={{
+                  fontSize: '12px',
+                  color: 'var(--text-tertiary)',
+                  marginTop: '2px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  maxWidth: '160px'
+                }} title={record.description}>
+                  {record.description}
+                </div>
+              )}
+            </div>
+          )
+        },
         {
           title: '狀態',
           key: 'status',
-          width: '8%',
+          width: 90,
           render: (_, record) => {
             const status = getStatus(record);
-            return <Tag color={status.color}>{status.text}</Tag>;
+            return <Tag color={status.color} size="small">{status.text}</Tag>;
           }
         },
         {
           title: '類型',
           dataIndex: 'type',
-          width: '7%',
+          width: 70,
           render: (type) => (
-            <Tag color={type === 'once' ? 'blue' : 'green'}>
+            <Tag color={type === 'once' ? 'blue' : 'green'} size="small">
               {type === 'once' ? '單次' : '週期'}
             </Tag>
           )
@@ -9131,31 +9868,125 @@
         {
           title: '匹配條件',
           dataIndex: 'matchers',
-          width: '18%',
-          render: (matchers) => (
-            <div>
-              {(matchers && matchers.length > 0) ?
-                matchers.slice(0, 2).map((m, i) => (
-                  <Tag key={i} size="small">{`${m.key}=${m.value}`}</Tag>
-                )) :
-                <Text type="secondary">無</Text>
-              }
-              {matchers && matchers.length > 2 && <Text type="secondary">...</Text>}
-            </div>
-          )
+          width: 240,
+          ellipsis: true,
+          render: (matchers, record) => {
+            // Enhanced error handling and data validation
+            if (!matchers) {
+              console.warn('Matchers is null/undefined for record:', record?.key);
+              return <Text type="secondary">無</Text>;
+            }
+
+            // Handle case where matchers might be a string instead of array
+            if (typeof matchers === 'string') {
+              console.warn('Matchers is string instead of array for record:', record?.key, 'value:', matchers);
+              return (
+                <Tag size="small" style={{ fontSize: '11px', maxWidth: '200px' }}>
+                  {matchers.length > 20 ? `${matchers.substring(0, 20)}...` : matchers}
+                </Tag>
+              );
+            }
+
+            if (!Array.isArray(matchers)) {
+              console.warn('Matchers is not an array for record:', record?.key, 'type:', typeof matchers, 'value:', matchers);
+              return <Text type="secondary">數據格式錯誤</Text>;
+            }
+
+            if (matchers.length === 0) {
+              return <Text type="secondary">無條件</Text>;
+            }
+
+            return (
+              <div style={{ maxWidth: '220px' }}>
+                <Space size={[4, 4]} wrap>
+                  {matchers.slice(0, 2).map((matcher, index) => {
+                    // Enhanced matcher validation
+                    if (!matcher) {
+                      console.warn('Null matcher at index', index, 'for record:', record?.key);
+                      return null;
+                    }
+
+                    if (typeof matcher !== 'object') {
+                      console.warn('Non-object matcher at index', index, 'for record:', record?.key, 'value:', matcher);
+                      return (
+                        <Tag key={index} size="small" style={{ fontSize: '11px' }}>
+                          {String(matcher).substring(0, 15)}
+                        </Tag>
+                      );
+                    }
+
+                    const { key, op = '=', value } = matcher;
+
+                    if (!key && !value) {
+                      console.warn('Empty matcher at index', index, 'for record:', record?.key);
+                      return null;
+                    }
+
+                    const safeKey = key || 'unknown';
+                    const safeValue = value || 'unknown';
+                    const displayText = `${safeKey}${op}${safeValue}`;
+                    const isLongText = displayText.length > 12;
+
+                    return (
+                      <Tag
+                        key={index}
+                        size="small"
+                        style={{
+                          margin: '1px 2px',
+                          maxWidth: '100px',
+                          fontSize: '11px',
+                          cursor: 'help'
+                        }}
+                        title={isLongText ? displayText : `${safeKey} ${op} ${safeValue}`}
+                      >
+                        {isLongText ? `${displayText.substring(0, 12)}...` : displayText}
+                      </Tag>
+                    );
+                  })}
+                  {matchers.length > 2 && (
+                    <Text
+                      type="secondary"
+                      style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}
+                      title={`還有 ${matchers.length - 2} 個條件`}
+                    >
+                      +{matchers.length - 2}個
+                    </Text>
+                  )}
+                </Space>
+              </div>
+            );
+          }
         },
         {
-          title: '排程',
+          title: '排程時間',
           key: 'schedule',
-          width: '15%',
+          width: 160,
+          ellipsis: true,
           render: (_, record) => {
             if (record.type === 'once') {
-              return record.timeRange?.[0]?.format('MM-DD HH:mm') + ' - ' + record.timeRange?.[1]?.format('MM-DD HH:mm');
+              const start = record.timeRange?.[0] ? dayjs(record.timeRange[0]) : null;
+              const end = record.timeRange?.[1] ? dayjs(record.timeRange[1]) : null;
+              return (
+                <div style={{ fontSize: '12px', lineHeight: '1.3' }}>
+                  <div>{start?.format('MM-DD HH:mm') || '未設定'}</div>
+                  <div style={{ color: 'var(--text-tertiary)' }}>至 {end?.format('MM-DD HH:mm') || '未設定'}</div>
+                </div>
+              );
             } else if (record.recurringPattern === 'weekly') {
               const days = record.weekdays?.map(d => ['日', '一', '二', '三', '四', '五', '六'][d]).join(',') || '';
-              return `每週${days} ${record.timeSlot?.[0]}-${record.timeSlot?.[1]}`;
+              return (
+                <div style={{ fontSize: '12px', lineHeight: '1.3' }}>
+                  <div>每週{days}</div>
+                  <div style={{ color: 'var(--text-tertiary)' }}>{record.timeSlot?.[0] || '--'}~{record.timeSlot?.[1] || '--'}</div>
+                </div>
+              );
             } else if (record.recurringPattern === 'monthly') {
-              return `每月${record.monthlyType === 'lastday' ? '最後一天' : '特定日期'} ${record.timeSlot?.[0]}-${record.timeSlot?.[1]}`;
+              return (
+                <div style={{ fontSize: '12px', lineHeight: '1.3' }}>
+                  <div>每月{record.monthlyType === 'lastday' ? '最後一天' : '特定日期'}</div>
+                  <div style={{ color: 'var(--text-tertiary)' }}>{record.timeSlot?.[0] || '--'}~{record.timeSlot?.[1] || '--'}</div>
+                </div>
+              );
             }
             return '-';
           }
@@ -9163,29 +9994,42 @@
         {
           title: '下次執行',
           key: 'nextExecution',
-          width: '10%',
+          width: 110,
+          className: 'col-time',
           render: (_, record) => {
             const next = getNextExecution(record);
-            return next ? next.format('MM-DD HH:mm') : '-';
+            return next ? (
+              <div style={{ fontSize: '12px', lineHeight: '1.3', textAlign: 'center' }}>
+                <div>{next.format('MM-DD')}</div>
+                <div style={{ color: 'var(--text-tertiary)' }}>{next.format('HH:mm')}</div>
+              </div>
+            ) : (
+              <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', textAlign: 'center' }}>-</div>
+            );
           }
         },
         {
           title: '創建者',
           dataIndex: 'creator',
-          width: '8%',
-          render: (creator) => creator || '-'
+          width: 90,
+          ellipsis: true,
+          render: (creator) => (
+            <span style={{ fontSize: '12px' }}>{creator || '-'}</span>
+          )
         },
         {
           title: '操作',
           key: 'action',
-          width: '12%',
+          width: 100,
+          fixed: 'right',
+          className: 'col-actions',
           render: (_, record) => (
-            <Space>
+            <Space size="small">
               <Tooltip title="編輯">
-                <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
+                <Button type="text" size="small" icon={<EditOutlined />} onClick={() => showModal(record)} />
               </Tooltip>
               <Tooltip title="刪除">
-                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)} />
+                <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)} />
               </Tooltip>
             </Space>
           )
@@ -9224,6 +10068,20 @@
             </Space>
             <Space>
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+              <Button
+                className="toolbar-btn"
+                danger
+                onClick={() => {
+                  const confirmed = window.confirm('這將重置所有靜音規則數據到初始狀態，確定要繼續嗎？');
+                  if (confirmed) {
+                    setSilences(initialSilences);
+                    message.success('數據已重置');
+                  }
+                }}
+                title="重置靜音規則數據（僅用於調試）"
+              >
+                重置數據
+              </Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增規則
               </Button>
@@ -9239,6 +10097,14 @@
                   rowKey="key"
                   className="transparent-bg"
                   size="small"
+                  scroll={{ x: 1100, y: 400 }}
+                  pagination={{
+                    pageSize: 10,
+                    position: ['bottomRight'],
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
+                  }}
                 /> :
                 <Empty description="尚無任何靜音規則">
                   <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增規則</Button>
