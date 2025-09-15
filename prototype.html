@@ -3414,7 +3414,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef } = React;
     const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker } = antd;
-    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } = icons;
+    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } = icons;
     const { Title, Text, Paragraph } = Typography;
     const { TextArea } = Input;
     const { RangePicker } = DatePicker;
@@ -6311,7 +6311,7 @@
             </span>
           )
         },
-        summary: { title: '摘要', dataIndex: 'summary', width: '20%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
+        summary: { title: '摘要', dataIndex: 'summary', width: '18%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
         resource_name: { title: '資源名稱', dataIndex: 'resource_name', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
         business_impact: {
           title: '業務影響',
@@ -6375,7 +6375,7 @@
         assignee: { title: '處理人', dataIndex: 'assignee', width: '8%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: (assignee) => assignee || '-' },
         created_at: { title: '觸發時間', dataIndex: 'created_at', width: '10%', sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(), render: time => <span title={time ? time.format('YYYY-MM-DD HH:mm:ss') : ''}>{time ? time.fromNow() : '-'}</span> },
         action: {
-          title: '操作', key: 'action', width: '8%', render: (_, record) => (
+          title: '操作', key: 'action', width: '10%', render: (_, record) => (
             <Space size="small">
               <Tooltip title="確認事件" placement="top">
                 <Button
@@ -6544,7 +6544,7 @@
                   border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}
               >
-                <Button className="toolbar-btn" icon={<SettingOutlined />}>
+                <Button className="toolbar-btn" icon={<EyeOutlined />}>
                   欄位設定
                 </Button>
               </Popover>
@@ -8405,7 +8405,7 @@
                 dataSource={filteredStrategies}
                 rowKey="key"
                 className="transparent-bg"
-                pagination={{ pageSize: 10 }}
+                pagination={{ pageSize: 10, position: ['bottomRight'] }}
                 size="small"
               />
             ) : (
@@ -9751,10 +9751,10 @@
       const columns = [
         { title: '腳本名稱', dataIndex: 'name', width: '25%' },
         { title: '類型', dataIndex: 'type', width: '15%', render: t => <Tag>{t}</Tag> },
-        { title: '創建者', dataIndex: 'creator', width: '20%' },
+        { title: '創建者', dataIndex: 'creator', width: '15%' },
         { title: '描述', dataIndex: 'description', width: '30%' },
         {
-          title: '操作', key: 'action', width: '10%', render: (_, record) => (
+          title: '操作', key: 'action', width: '12%', render: (_, record) => (
             <Space size="small">
               <Tooltip title="運行" placement="top">
                 <Button type="text" icon={<PlayCircleOutlined style={{ color: '#52c41a' }} />} onClick={() => handleRun(record)} />
@@ -10111,7 +10111,7 @@
       const columns = [
         { title: '啟用', dataIndex: 'enabled', width: '5%', render: e => <Switch defaultChecked={e} /> },
         { title: '任務名稱', dataIndex: 'name', width: '15%', render: name => <Text style={{ fontSize: '13px' }}>{name}</Text> },
-        { title: '執行腳本', dataIndex: 'scriptId', width: '15%', render: id => <Text style={{ fontSize: '13px' }}>{getScriptName(id)}</Text> },
+        { title: '腳本名稱', dataIndex: 'scriptId', width: '12%', render: id => <Text style={{ fontSize: '13px' }}>{getScriptName(id)}</Text> },
         {
           title: 'CRON 條件',
           dataIndex: 'cron',
@@ -11217,7 +11217,7 @@
               columns={userColumns}
               rowKey="key"
               className="transparent-bg"
-              pagination={{ pageSize: 10 }}
+              pagination={{ pageSize: 10, position: ['bottomRight'] }}
               size="small"
             />
           </div>
@@ -11604,7 +11604,7 @@
               columns={teamColumns}
               rowKey="key"
               className="transparent-bg"
-              pagination={{ pageSize: 10 }}
+              pagination={{ pageSize: 10, position: ['bottomRight'] }}
               size="small"
             />
           </div>
@@ -13814,7 +13814,8 @@
                     showSizeChanger: true,
                     showQuickJumper: true,
                     showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
-                    responsive: true
+                    responsive: true,
+                    position: ['bottomRight']
                   }}
                   locale={{
                     emptyText: (
