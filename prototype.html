@@ -23,50 +23,92 @@
   <style>
     /* 🎨 統一設計系統 - Design System */
     :root {
-      /* 核心品牌色 - 更柔和的色調 */
-      --brand-primary: #4A90FF;
-      --brand-success: #5FCF80;
-      --brand-warning: #FFB84D;
-      --brand-danger: #FF6B6B;
-      --brand-info: #B794F6;
+      /* === 核心品牌色系統 === */
+      --brand-primary: #1890ff;
+      --brand-primary-hover: #40a9ff;
+      --brand-primary-active: #096dd9;
+      --brand-primary-bg: rgba(24, 144, 255, 0.1);
 
-      /* 文字層級系統 */
+      --brand-success: #52c41a;
+      --brand-success-hover: #73d13d;
+      --brand-success-bg: rgba(82, 196, 26, 0.1);
+
+      --brand-warning: #faad14;
+      --brand-warning-hover: #ffc53d;
+      --brand-warning-bg: rgba(250, 173, 20, 0.1);
+
+      --brand-danger: #ff4d4f;
+      --brand-danger-hover: #ff7875;
+      --brand-danger-bg: rgba(255, 77, 79, 0.1);
+
+      --brand-info: #722ed1;
+      --brand-info-hover: #9254de;
+      --brand-info-bg: rgba(114, 46, 209, 0.1);
+
+      /* === 文字層級系統 === */
       --text-primary: rgba(255, 255, 255, 0.95);
       --text-secondary: rgba(255, 255, 255, 0.85);
       --text-tertiary: rgba(255, 255, 255, 0.65);
       --text-quaternary: rgba(255, 255, 255, 0.45);
+      --text-disabled: rgba(255, 255, 255, 0.25);
 
-      /* 背景層級系統 */
+      /* === 背景層級系統 === */
       --bg-page: #0A0B0E;
       --bg-container: #141519;
       --bg-elevated: #1A1D23;
       --bg-overlay: #23262F;
-      --bg-hover: rgba(74, 144, 255, 0.08);
-      --bg-active: rgba(74, 144, 255, 0.16);
+      --bg-hover: rgba(255, 255, 255, 0.08);
+      --bg-active: rgba(255, 255, 255, 0.12);
+      --bg-selected: rgba(24, 144, 255, 0.15);
 
-      /* 邊框系統 */
+      /* === 邊框系統 === */
       --border-base: rgba(255, 255, 255, 0.12);
       --border-light: rgba(255, 255, 255, 0.08);
       --border-focus: var(--brand-primary);
+      --border-hover: rgba(255, 255, 255, 0.2);
 
-      /* 間距系統 */
+      /* === 間距系統 (8px 基礎網格) === */
       --spacing-xs: 4px;
+      /* 0.5 單位 */
       --spacing-sm: 8px;
+      /* 1 單位 */
       --spacing-md: 12px;
+      /* 1.5 單位 */
       --spacing-lg: 16px;
+      /* 2 單位 */
       --spacing-xl: 24px;
+      /* 3 單位 */
       --spacing-2xl: 32px;
+      /* 4 單位 */
+      --spacing-3xl: 48px;
+      /* 6 單位 */
 
-      /* 圓角系統 */
+      /* === 圓角系統 === */
+      --radius-xs: 4px;
       --radius-sm: 6px;
       --radius-md: 8px;
       --radius-lg: 12px;
       --radius-xl: 16px;
 
-      /* 陰影系統 */
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.24);
-      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.32);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.48);
+      /* === 陰影系統 === */
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+      --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+      /* === 按鈕系統 === */
+      --btn-height-sm: 28px;
+      --btn-height-md: 32px;
+      --btn-height-lg: 36px;
+      --btn-padding-sm: 0 8px;
+      --btn-padding-md: 0 12px;
+      --btn-padding-lg: 0 16px;
+
+      /* === 玻璃效果系統 === */
+      --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+      --glass-border: 1px solid rgba(255, 255, 255, 0.12);
+      --glass-backdrop: blur(20px) saturate(180%);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
 
     /* 頁面標題優化 */
@@ -92,17 +134,21 @@
     }
 
 
-    /* 🔧 優化後的表格容器 */
+    /* === 🔧 優化表格容器系統 === */
+
+    /* 表格容器 */
     .table-wrapper {
-      background: var(--bg-container);
-      border: 1px solid var(--border-light);
+      background: var(--glass-bg);
+      border: var(--glass-border);
       border-radius: var(--radius-lg);
       overflow: hidden;
       margin-top: var(--spacing-xl);
-      box-shadow: var(--shadow-sm);
+      box-shadow: var(--glass-shadow);
+      backdrop-filter: var(--glass-backdrop);
+      -webkit-backdrop-filter: var(--glass-backdrop);
     }
 
-    /* 工具列優化 */
+    /* 表格工具列 */
     .table-toolbar {
       display: flex;
       justify-content: space-between;
@@ -111,43 +157,405 @@
       padding: var(--spacing-lg);
       background: var(--bg-elevated);
       border-bottom: 1px solid var(--border-light);
+      min-height: 64px;
+      /* 統一工具列高度 */
     }
 
+    /* 表格主體 */
     .table-wrapper .ant-table {
       background: transparent;
     }
 
-    /* 表頭優化 - 更清晰的層級 */
+    /* === 表頭優化 === */
     .table-wrapper .ant-table-thead>tr>th {
       background: var(--bg-elevated);
-      color: var(--text-secondary);
+      color: var(--text-primary);
       font-weight: 600;
-      font-size: 13px;
+      font-size: 12px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      padding: var(--spacing-md) var(--spacing-lg);
-      line-height: 1.5;
-      border-bottom: 1px solid var(--border-light);
+      letter-spacing: 0.8px;
+      padding: var(--spacing-lg) var(--spacing-lg);
+      height: 48px;
+      /* 統一表頭高度 */
+      line-height: 1.2;
+      border-bottom: 2px solid var(--border-base);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* 表格內容優化 - 增加間距 */
+    /* 表頭排序圖標 */
+    .table-wrapper .ant-table-thead>tr>th .ant-table-column-sorter {
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+    }
+
+    .table-wrapper .ant-table-thead>tr>th:hover .ant-table-column-sorter {
+      opacity: 1;
+    }
+
+    /* === 表格內容優化 === */
     .table-wrapper .ant-table-tbody>tr {
       transition: all 0.2s ease;
+      height: 52px;
+      /* 統一行高 - 提升資訊密度 */
     }
 
-    .table-wrapper .ant-table-tbody>tr:hover>td {
+    .table-wrapper .ant-table-tbody>tr:hover {
       background: var(--bg-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .table-wrapper .ant-table-tbody>tr>td {
       color: var(--text-secondary);
-      padding: 16px var(--spacing-lg);
-      line-height: 1.5;
+      padding: var(--spacing-md) var(--spacing-lg);
+      line-height: 1.4;
       border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 200px;
+      /* 防止內容過長 */
     }
 
+    /* 選中行樣式 */
     .table-wrapper .ant-table-row-selected>td {
-      background: rgba(24, 144, 255, 0.1);
+      background: var(--bg-selected) !important;
+      border-left: 3px solid var(--brand-primary);
+    }
+
+    .table-wrapper .ant-table-row-selected:hover>td {
+      background: var(--bg-selected) !important;
+    }
+
+    /* === 表格分頁優化 === */
+    .table-wrapper .ant-pagination {
+      margin: var(--spacing-lg) var(--spacing-lg) !important;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* === 表格載入狀態 === */
+    .table-wrapper .ant-spin-container {
+      min-height: 200px;
+    }
+
+    .table-wrapper .ant-table-placeholder {
+      border-bottom: none;
+    }
+
+    /* === 響應式表格 === */
+    @media (max-width: 1200px) {
+      .table-wrapper .ant-table-tbody>tr>td {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 13px;
+      }
+
+      .table-wrapper .ant-table-thead>tr>th {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 11px;
+      }
+    }
+
+    /* === 表格狀態標籤優化 === */
+    .table-status-tag {
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+    }
+
+    .table-status-tag--success {
+      background: var(--brand-success-bg);
+      color: var(--brand-success);
+      border-color: rgba(82, 196, 26, 0.3);
+    }
+
+    .table-status-tag--warning {
+      background: var(--brand-warning-bg);
+      color: var(--brand-warning);
+      border-color: rgba(250, 173, 20, 0.3);
+    }
+
+    .table-status-tag--danger {
+      background: var(--brand-danger-bg);
+      color: var(--brand-danger);
+      border-color: rgba(255, 77, 79, 0.3);
+    }
+
+    /* === 🏷️ 標籤管理專用樣式 === */
+
+    /* 標籤分類導航 */
+    .tag-category-nav {
+      display: flex;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-xl);
+      flex-wrap: wrap;
+    }
+
+
+    /* 統一分類標籤下拉選項樣式 */
+    .ant-select-dropdown .ant-select-item-option {
+      padding: 8px 12px !important;
+    }
+
+    .ant-select-dropdown .ant-select-item-option:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .ant-select-dropdown .ant-select-item-option-selected {
+      background: rgba(24, 144, 255, 0.1) !important;
+    }
+
+    .tag-category-item {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+      padding: var(--spacing-sm) var(--spacing-lg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border-light);
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .tag-category-item:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    .tag-category-item.active {
+      border-color: var(--brand-primary);
+      background: var(--brand-primary-bg);
+      color: var(--brand-primary);
+    }
+
+    .tag-category-count {
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.15);
+      margin-left: var(--spacing-xs);
+    }
+
+    /* 標籤統計卡片 */
+    .tag-stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .tag-stat-card {
+      background: var(--glass-bg);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-lg);
+      backdrop-filter: var(--glass-backdrop);
+      -webkit-backdrop-filter: var(--glass-backdrop);
+      box-shadow: var(--glass-shadow);
+      transition: all 0.3s ease;
+    }
+
+    .tag-stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .tag-stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+      line-height: 1;
+    }
+
+    .tag-stat-label {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .tag-stat-icon {
+      font-size: 20px;
+      color: var(--brand-primary);
+      opacity: 0.7;
+      margin-bottom: var(--spacing-sm);
+    }
+
+    /* 標籤表格優化 */
+    .tag-table-wrapper {
+      background: var(--glass-bg);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      backdrop-filter: var(--glass-backdrop);
+      -webkit-backdrop-filter: var(--glass-backdrop);
+      box-shadow: var(--glass-shadow);
+    }
+
+    /* 標籤值顯示 */
+    .tag-values-display {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      max-width: 300px;
+    }
+
+    .tag-value-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      max-width: 100px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tag-value-count {
+      background: var(--bg-elevated);
+      color: var(--text-tertiary);
+      border-color: var(--border-light);
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: var(--radius-xs);
+      margin-left: 4px;
+    }
+
+    /* 標籤操作按鈕組 */
+    .tag-actions {
+      display: flex;
+      gap: var(--spacing-xs);
+      align-items: center;
+    }
+
+    .tag-action-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .tag-action-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-primary);
+      transform: translateY(-1px);
+    }
+
+    .tag-action-btn.primary:hover {
+      background: var(--brand-primary-bg);
+      color: var(--brand-primary);
+    }
+
+    .tag-action-btn.danger:hover {
+      background: var(--brand-danger-bg);
+      color: var(--brand-danger);
+    }
+
+    /* 必需標籤行樣式 */
+    .required-tag-row {
+      border-left: 3px solid var(--brand-warning) !important;
+    }
+
+    .required-tag-row .tag-required-badge {
+      background: var(--brand-warning-bg);
+      color: var(--brand-warning);
+      font-size: 10px;
+      padding: 1px 4px;
+      border-radius: var(--radius-xs);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* 標籤模態框優化 */
+    .tag-modal .ant-modal-content {
+      background: var(--bg-elevated);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: var(--glass-backdrop);
+      -webkit-backdrop-filter: var(--glass-backdrop);
+    }
+
+    .tag-modal .ant-modal-header {
+      background: transparent;
+      border-bottom: 1px solid var(--border-light);
+      padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+    }
+
+    .tag-modal .ant-modal-body {
+      padding: var(--spacing-xl);
+    }
+
+    .tag-modal .ant-form-item-label>label {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    /* 顏色選擇器優化 */
+    .color-picker-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: var(--spacing-sm);
+    }
+
+    .color-option {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      border: 2px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+
+    .color-option:hover {
+      transform: scale(1.1);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .color-option.selected {
+      border-color: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+    }
+
+    .color-option.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
     }
 
     /* Sidebar 選取效果 - 左側藍色邊框（主色） */
@@ -306,44 +714,161 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
     }
 
-    /* 🎯 優化操作按鈕組 */
+    /* === 🎯 統一操作按鈕系統 === */
+
+    /* 按鈕容器 */
     .action-buttons {
       display: flex;
       gap: var(--spacing-xs);
+      align-items: center;
     }
 
-    .action-btn {
-      width: 32px;
-      height: 32px;
-      padding: 0;
+    /* 標準按鈕基礎樣式 */
+    .btn-standard {
+      height: var(--btn-height-md);
+      padding: var(--btn-padding-md);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      background: transparent;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      border-radius: var(--radius-sm);
-      transition: all 0.2s ease;
-      background: transparent;
-      border: 1px solid transparent;
-      color: var(--text-tertiary);
+      gap: var(--spacing-xs);
       cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
     }
 
-    .action-btn:hover {
-      background: var(--bg-elevated);
+    /* 主要按鈕 */
+    .btn-primary {
+      background: var(--brand-primary);
+      border-color: var(--brand-primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--brand-primary-hover);
+      border-color: var(--brand-primary-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* 成功按鈕 */
+    .btn-success {
+      background: var(--brand-success);
+      border-color: var(--brand-success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: var(--brand-success-hover);
+      border-color: var(--brand-success-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* 危險按鈕 */
+    .btn-danger {
+      background: var(--brand-danger);
+      border-color: var(--brand-danger);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background: var(--brand-danger-hover);
+      border-color: var(--brand-danger-hover);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* 次要按鈕 (outlined) */
+    .btn-secondary {
+      border-color: var(--border-base);
+      color: var(--text-secondary);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--border-hover);
+      background: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* 圖標按鈕 */
+    .btn-icon {
+      width: var(--btn-height-md);
+      height: var(--btn-height-md);
+      padding: 0;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-icon:hover {
+      background: var(--bg-hover);
       border-color: var(--border-light);
       color: var(--text-primary);
       transform: translateY(-1px);
     }
 
-    .action-btn.primary:hover {
-      background: rgba(74, 144, 255, 0.1);
+    .btn-icon.btn-icon--primary:hover {
+      background: var(--brand-primary-bg);
       color: var(--brand-primary);
-      border-color: rgba(74, 144, 255, 0.2);
+      border-color: rgba(24, 144, 255, 0.3);
     }
 
-    .action-btn.danger:hover {
-      background: rgba(255, 107, 107, 0.1);
+    .btn-icon.btn-icon--danger:hover {
+      background: var(--brand-danger-bg);
       color: var(--brand-danger);
-      border-color: rgba(255, 107, 107, 0.2);
+      border-color: rgba(255, 77, 79, 0.3);
+    }
+
+    /* 小尺寸按鈕 */
+    .btn-sm {
+      height: var(--btn-height-sm);
+      padding: var(--btn-padding-sm);
+      font-size: 12px;
+    }
+
+    .btn-icon.btn-sm {
+      width: var(--btn-height-sm);
+      height: var(--btn-height-sm);
+    }
+
+    /* 大尺寸按鈕 */
+    .btn-lg {
+      height: var(--btn-height-lg);
+      padding: var(--btn-padding-lg);
+      font-size: 14px;
+    }
+
+    .btn-icon.btn-lg {
+      width: var(--btn-height-lg);
+      height: var(--btn-height-lg);
+    }
+
+    /* 按鈕組 */
+    .btn-group {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .btn-group .btn-standard:not(:first-child) {
+      margin-left: -1px;
+      border-top-left-radius: 0;
+      border-bottom-left-radius: 0;
+    }
+
+    .btn-group .btn-standard:not(:last-child) {
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
     }
 
     /* 統一搜尋框樣式 */
@@ -1912,6 +2437,8 @@
     /* 8點網格系統表單間距 */
     .ant-modal .ant-form-item {
       margin-bottom: 16px;
+      padding: 8px 0;
+      /* 調整表單項目上下 padding 從 12px 改為 8px */
     }
 
     .ant-modal .ant-form-item:last-child {
@@ -2499,62 +3026,94 @@
       justify-content: center !important;
     }
 
-    /* 🎯 表格操作按鈕統一為 outlined 樣式 - 排除 Switch 組件 */
-    .ant-table-tbody .ant-btn:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody button:not(.ant-switch):not(.ant-btn-sm) {
-      box-shadow: none !important;
-      padding: 4px 12px !important;
-      height: 32px !important;
-      font-size: 13px !important;
-      font-weight: 400 !important;
+    /* === 🎯 表格操作按鈕統一樣式 === */
+
+    /* 表格按鈕基礎樣式 - 使用新的設計系統 */
+    .ant-table-tbody .ant-btn:not(.ant-switch),
+    .ant-table-tbody button:not(.ant-switch) {
+      height: var(--btn-height-sm) !important;
+      padding: var(--btn-padding-sm) !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      border-radius: var(--radius-sm) !important;
       min-width: 60px !important;
-      line-height: 1.5 !important;
-      border-radius: 6px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
+      gap: 4px !important;
+      transition: all 0.2s ease !important;
+      box-shadow: none !important;
     }
 
-    /* 預設按鈕樣式 - 白色外框 */
-    .ant-table-tbody .ant-btn:not(.ant-switch):not(.ant-btn-sm):not(.ant-btn-primary):not(.ant-btn-dangerous):not([danger]),
-    .ant-table-tbody button:not(.ant-switch):not(.ant-btn-sm):not(.ant-btn-primary):not(.ant-btn-dangerous):not([danger]) {
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    /* 預設按鈕 - 次要樣式 */
+    .ant-table-tbody .ant-btn:not(.ant-switch):not(.ant-btn-primary):not(.ant-btn-dangerous):not([danger]),
+    .ant-table-tbody button:not(.ant-switch):not(.ant-btn-primary):not(.ant-btn-dangerous):not([danger]) {
+      border: 1px solid var(--border-base) !important;
       background: transparent !important;
-      color: rgba(255, 255, 255, 0.85) !important;
+      color: var(--text-secondary) !important;
     }
 
-    /* 執行、確認按鈕 - 綠色 */
-    .ant-table-tbody .ant-btn-primary:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody button.ant-btn-primary:not(.ant-switch):not(.ant-btn-sm) {
-      border: 1px solid rgba(82, 196, 26, 0.4) !important;
-      background: rgba(82, 196, 26, 0.1) !important;
-      color: #52c41a !important;
+    .ant-table-tbody .ant-btn:not(.ant-switch):not(.ant-btn-primary):not(.ant-btn-dangerous):not([danger]):hover,
+    .ant-table-tbody button:not(.ant-switch):not(.ant-btn-primary):not(.ant-btn-dangerous):not([danger]):hover {
+      border-color: var(--border-hover) !important;
+      background: var(--bg-hover) !important;
+      color: var(--text-primary) !important;
+      transform: translateY(-1px) !important;
     }
 
-    .ant-table-tbody .ant-btn-primary:hover:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody button.ant-btn-primary:hover:not(.ant-switch):not(.ant-btn-sm) {
-      border-color: #52c41a !important;
-      background: rgba(82, 196, 26, 0.2) !important;
-      color: #52c41a !important;
+    /* 主要操作按鈕 - 使用品牌色 */
+    .ant-table-tbody .ant-btn-primary:not(.ant-switch),
+    .ant-table-tbody button.ant-btn-primary:not(.ant-switch) {
+      border: 1px solid var(--brand-primary) !important;
+      background: var(--brand-primary-bg) !important;
+      color: var(--brand-primary) !important;
     }
 
-    /* 刪除按鈕 - 紅色外框 */
-    .ant-table-tbody .ant-btn-dangerous:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody .ant-btn[danger]:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody button[danger]:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody button.ant-btn-dangerous:not(.ant-switch):not(.ant-btn-sm) {
-      border: 1px solid rgba(255, 76, 76, 0.4) !important;
+    .ant-table-tbody .ant-btn-primary:hover:not(.ant-switch),
+    .ant-table-tbody button.ant-btn-primary:hover:not(.ant-switch) {
+      border-color: var(--brand-primary-hover) !important;
+      background: rgba(24, 144, 255, 0.2) !important;
+      color: var(--brand-primary-hover) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    /* 危險操作按鈕 - 使用危險色 */
+    .ant-table-tbody .ant-btn-dangerous:not(.ant-switch),
+    .ant-table-tbody .ant-btn[danger]:not(.ant-switch),
+    .ant-table-tbody button[danger]:not(.ant-switch),
+    .ant-table-tbody button.ant-btn-dangerous:not(.ant-switch) {
+      border: 1px solid var(--brand-danger) !important;
+      background: var(--brand-danger-bg) !important;
+      color: var(--brand-danger) !important;
+    }
+
+    .ant-table-tbody .ant-btn-dangerous:hover:not(.ant-switch),
+    .ant-table-tbody .ant-btn[danger]:hover:not(.ant-switch),
+    .ant-table-tbody button[danger]:hover:not(.ant-switch),
+    .ant-table-tbody button.ant-btn-dangerous:hover:not(.ant-switch) {
+      border-color: var(--brand-danger-hover) !important;
+      background: rgba(255, 77, 79, 0.2) !important;
+      color: var(--brand-danger-hover) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    /* 文字按鈕樣式 */
+    .ant-table-tbody .ant-btn-link:not(.ant-switch) {
       background: transparent !important;
-      color: #ff4c4c !important;
+      border: none !important;
+      color: var(--text-tertiary) !important;
+      min-width: auto !important;
+      padding: 4px 8px !important;
     }
 
-    .ant-table-tbody .ant-btn-dangerous:hover:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody .ant-btn[danger]:hover:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody button[danger]:hover:not(.ant-switch):not(.ant-btn-sm),
-    .ant-table-tbody button.ant-btn-dangerous:hover:not(.ant-switch):not(.ant-btn-sm) {
-      border-color: #ff4c4c !important;
-      background: rgba(255, 76, 76, 0.1) !important;
-      color: #ff4c4c !important;
+    .ant-table-tbody .ant-btn-link:hover:not(.ant-switch) {
+      color: var(--brand-primary) !important;
+      background: var(--brand-primary-bg) !important;
+    }
+
+    .ant-table-tbody .ant-btn-link.ant-btn-dangerous:hover:not(.ant-switch) {
+      color: var(--brand-danger) !important;
+      background: var(--brand-danger-bg) !important;
     }
 
     /* 顯示所有圖標 - 恢復正常圖標顯示 */
@@ -2630,6 +3189,83 @@
     .ant-switch::after {
       display: none !important;
     }
+
+    /* 🎯 固定欄位背景修復 - 強制覆蓋所有狀態 */
+    .table-wrapper .ant-table-cell-fix-right,
+    .table-wrapper .ant-table-cell-fix-right-first,
+    .table-wrapper .ant-table-cell-fix-right-last {
+      background: transparent !important;
+      background-color: transparent !important;
+      backdrop-filter: none !important;
+      box-shadow: none !important;
+    }
+
+    .table-wrapper .ant-table-cell-fix-right-first::after,
+    .table-wrapper .ant-table-cell-fix-right-last::after {
+      background: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+
+    /* 表頭固定欄位 */
+    .table-wrapper .ant-table-thead>tr>th.ant-table-cell-fix-right,
+    .table-wrapper .ant-table-thead>tr>th.ant-table-cell-fix-right-first,
+    .table-wrapper .ant-table-thead>tr>th.ant-table-cell-fix-right-last {
+      background: var(--bg-elevated) !important;
+      background-color: var(--bg-elevated) !important;
+    }
+
+    /* 表格內容固定欄位 */
+    .table-wrapper .ant-table-tbody>tr>td.ant-table-cell-fix-right,
+    .table-wrapper .ant-table-tbody>tr>td.ant-table-cell-fix-right-first,
+    .table-wrapper .ant-table-tbody>tr>td.ant-table-cell-fix-right-last {
+      background: transparent !important;
+      background-color: transparent !important;
+    }
+
+    /* 懸停狀態固定欄位 - 與其他欄位完全一致 */
+    .table-wrapper .ant-table-tbody>tr:hover>td.ant-table-cell-fix-right,
+    .table-wrapper .ant-table-tbody>tr:hover>td.ant-table-cell-fix-right-first,
+    .table-wrapper .ant-table-tbody>tr:hover>td.ant-table-cell-fix-right-last {
+      background: var(--bg-hover) !important;
+      background-color: var(--bg-hover) !important;
+    }
+
+    /* 確保整行懸停時所有欄位背景一致 */
+    .table-wrapper .ant-table-tbody>tr:hover>td {
+      background: var(--bg-hover) !important;
+    }
+
+    /* 固定欄位在整行懸停時保持完全一致的效果 */
+    .table-wrapper .ant-table-tbody>tr:hover>td.ant-table-cell-fix-right,
+    .table-wrapper .ant-table-tbody>tr:hover>td.ant-table-cell-fix-right-first,
+    .table-wrapper .ant-table-tbody>tr:hover>td.ant-table-cell-fix-right-last {
+      background: var(--bg-hover) !important;
+      background-color: var(--bg-hover) !important;
+    }
+
+    /* 選中狀態固定欄位 */
+    .table-wrapper .ant-table-row-selected>td.ant-table-cell-fix-right,
+    .table-wrapper .ant-table-row-selected>td.ant-table-cell-fix-right-first,
+    .table-wrapper .ant-table-row-selected>td.ant-table-cell-fix-right-last {
+      background: var(--bg-selected) !important;
+      background-color: var(--bg-selected) !important;
+    }
+
+    /* 強制移除所有固定欄位的陰影和邊框效果 */
+    .table-wrapper .ant-table-cell-fix-right::before,
+    .table-wrapper .ant-table-cell-fix-right::after,
+    .table-wrapper .ant-table-cell-fix-right-first::before,
+    .table-wrapper .ant-table-cell-fix-right-first::after,
+    .table-wrapper .ant-table-cell-fix-right-last::before,
+    .table-wrapper .ant-table-cell-fix-right-last::after {
+      display: none !important;
+      content: none !important;
+      background: none !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+
 
     /* 🎯 小尺寸按鈕 outlined 樣式 - 統一尺寸 */
     .ant-table-tbody .ant-btn-sm,
@@ -4706,18 +5342,272 @@
     };
 
     const ResourceGroupsPage = () => {
+      // === 🚀 真實化的企業級資源數據 ===
       const allResourcesData = [
-        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10' },
-        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21' },
-        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35' },
-        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40' },
-        { key: 'r_5', name: 'web-staging-01', type: 'server', status: 'healthy', ip_address: '10.1.0.11' },
-        { key: 'r_6', name: 'db-staging-01', type: 'database', status: 'healthy', ip_address: '10.1.0.12' },
-        { key: 'r_7', name: 'network-switch-01', type: 'network', status: 'healthy', ip_address: '192.168.1.1' },
-        { key: 'r_8', name: 'prometheus-server', type: 'monitoring', status: 'healthy', ip_address: '10.0.0.50' },
-        { key: 'r_9', name: 'grafana-server', type: 'monitoring', status: 'healthy', ip_address: '10.0.0.51' },
-        { key: 'r_10', name: 'jenkins-server', type: 'ci_cd', status: 'healthy', ip_address: '10.0.0.60' },
-        { key: 'r_11', name: 'gitlab-server', type: 'development', status: 'healthy', ip_address: '10.0.0.70' },
+        // 生產資料庫集群
+        {
+          key: 'r_1',
+          name: 'mysql-prod-master-01',
+          type: 'database',
+          status: 'healthy',
+          ip_address: '10.100.10.11',
+          tags: ['production', 'database', 'mysql', 'master', 'high-priority'],
+          team: 'Database Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'db.r5.xlarge',
+          cpu_usage: 68,
+          memory_usage: 72,
+          disk_usage: 58,
+          created_at: dayjs().subtract(180, 'day'),
+          last_check: dayjs().subtract(2, 'minute')
+        },
+        {
+          key: 'r_2',
+          name: 'mysql-prod-slave-01',
+          type: 'database',
+          status: 'healthy',
+          ip_address: '10.100.10.12',
+          tags: ['production', 'database', 'mysql', 'slave', 'high-priority'],
+          team: 'Database Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'db.r5.xlarge',
+          cpu_usage: 45,
+          memory_usage: 52,
+          disk_usage: 58,
+          created_at: dayjs().subtract(180, 'day'),
+          last_check: dayjs().subtract(3, 'minute')
+        },
+        // 生產Web服務器集群
+        {
+          key: 'r_3',
+          name: 'web-prod-frontend-01',
+          type: 'server',
+          status: 'warning',
+          ip_address: '10.100.20.11',
+          tags: ['production', 'web', 'frontend', 'nginx', 'high-priority'],
+          team: 'Frontend Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'c5.2xlarge',
+          cpu_usage: 82,
+          memory_usage: 78,
+          disk_usage: 34,
+          created_at: dayjs().subtract(90, 'day'),
+          last_check: dayjs().subtract(1, 'minute')
+        },
+        {
+          key: 'r_4',
+          name: 'web-prod-backend-01',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '10.100.20.21',
+          tags: ['production', 'web', 'backend', 'nodejs', 'high-priority'],
+          team: 'Backend Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'c5.2xlarge',
+          cpu_usage: 65,
+          memory_usage: 71,
+          disk_usage: 42,
+          created_at: dayjs().subtract(75, 'day'),
+          last_check: dayjs().subtract(1, 'minute')
+        },
+        // API 閘道和負載平衡
+        {
+          key: 'r_5',
+          name: 'api-gateway-prod-01',
+          type: 'gateway',
+          status: 'critical',
+          ip_address: '10.100.30.11',
+          tags: ['production', 'api', 'gateway', 'kong', 'critical'],
+          team: 'Platform Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'c5.xlarge',
+          cpu_usage: 91,
+          memory_usage: 86,
+          disk_usage: 67,
+          created_at: dayjs().subtract(120, 'day'),
+          last_check: dayjs().subtract(30, 'second')
+        },
+        {
+          key: 'r_6',
+          name: 'load-balancer-prod-01',
+          type: 'load_balancer',
+          status: 'healthy',
+          ip_address: '10.100.30.21',
+          tags: ['production', 'load-balancer', 'nginx', 'high-priority'],
+          team: 'Network Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'c5.large',
+          cpu_usage: 23,
+          memory_usage: 31,
+          disk_usage: 15,
+          created_at: dayjs().subtract(200, 'day'),
+          last_check: dayjs().subtract(45, 'second')
+        },
+        // 快取服務
+        {
+          key: 'r_7',
+          name: 'redis-prod-cluster-01',
+          type: 'cache',
+          status: 'healthy',
+          ip_address: '10.100.40.11',
+          tags: ['production', 'cache', 'redis', 'cluster', 'high-priority'],
+          team: 'Backend Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'cache.r6g.large',
+          cpu_usage: 55,
+          memory_usage: 78,
+          disk_usage: 25,
+          created_at: dayjs().subtract(150, 'day'),
+          last_check: dayjs().subtract(1, 'minute')
+        },
+        // 監控系統
+        {
+          key: 'r_8',
+          name: 'prometheus-prod-01',
+          type: 'monitoring',
+          status: 'healthy',
+          ip_address: '10.100.50.11',
+          tags: ['production', 'monitoring', 'prometheus', 'observability'],
+          team: 'SRE Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'm5.xlarge',
+          cpu_usage: 72,
+          memory_usage: 84,
+          disk_usage: 76,
+          created_at: dayjs().subtract(240, 'day'),
+          last_check: dayjs().subtract(1, 'minute')
+        },
+        {
+          key: 'r_9',
+          name: 'grafana-prod-01',
+          type: 'monitoring',
+          status: 'healthy',
+          ip_address: '10.100.50.21',
+          tags: ['production', 'monitoring', 'grafana', 'visualization'],
+          team: 'SRE Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'm5.large',
+          cpu_usage: 38,
+          memory_usage: 45,
+          disk_usage: 32,
+          created_at: dayjs().subtract(220, 'day'),
+          last_check: dayjs().subtract(2, 'minute')
+        },
+        // 測試環境
+        {
+          key: 'r_10',
+          name: 'web-staging-frontend-01',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '10.200.20.11',
+          tags: ['staging', 'web', 'frontend', 'nginx', 'testing'],
+          team: 'QA Team',
+          environment: 'staging',
+          region: 'us-east-1',
+          instance_type: 't3.medium',
+          cpu_usage: 25,
+          memory_usage: 42,
+          disk_usage: 28,
+          created_at: dayjs().subtract(60, 'day'),
+          last_check: dayjs().subtract(5, 'minute')
+        },
+        {
+          key: 'r_11',
+          name: 'mysql-staging-01',
+          type: 'database',
+          status: 'healthy',
+          ip_address: '10.200.10.11',
+          tags: ['staging', 'database', 'mysql', 'testing'],
+          team: 'QA Team',
+          environment: 'staging',
+          region: 'us-east-1',
+          instance_type: 'db.t3.medium',
+          cpu_usage: 18,
+          memory_usage: 35,
+          disk_usage: 22,
+          created_at: dayjs().subtract(60, 'day'),
+          last_check: dayjs().subtract(4, 'minute')
+        },
+        // 開發和CI/CD工具
+        {
+          key: 'r_12',
+          name: 'jenkins-cicd-01',
+          type: 'ci_cd',
+          status: 'healthy',
+          ip_address: '10.300.10.11',
+          tags: ['development', 'ci-cd', 'jenkins', 'automation'],
+          team: 'DevOps Team',
+          environment: 'development',
+          region: 'us-east-1',
+          instance_type: 'm5.large',
+          cpu_usage: 42,
+          memory_usage: 58,
+          disk_usage: 67,
+          created_at: dayjs().subtract(300, 'day'),
+          last_check: dayjs().subtract(3, 'minute')
+        },
+        {
+          key: 'r_13',
+          name: 'gitlab-dev-01',
+          type: 'development',
+          status: 'healthy',
+          ip_address: '10.300.10.21',
+          tags: ['development', 'git', 'gitlab', 'source-control'],
+          team: 'Development Team',
+          environment: 'development',
+          region: 'us-east-1',
+          instance_type: 'm5.large',
+          cpu_usage: 35,
+          memory_usage: 48,
+          disk_usage: 85,
+          created_at: dayjs().subtract(350, 'day'),
+          last_check: dayjs().subtract(6, 'minute')
+        },
+        // 網路基礎設施
+        {
+          key: 'r_14',
+          name: 'core-switch-dc1-01',
+          type: 'network',
+          status: 'healthy',
+          ip_address: '192.168.1.10',
+          tags: ['infrastructure', 'network', 'switch', 'core'],
+          team: 'Network Team',
+          environment: 'infrastructure',
+          region: 'us-east-1',
+          instance_type: 'physical',
+          cpu_usage: 8,
+          memory_usage: 12,
+          disk_usage: 5,
+          created_at: dayjs().subtract(800, 'day'),
+          last_check: dayjs().subtract(10, 'minute')
+        },
+        // 安全相關
+        {
+          key: 'r_15',
+          name: 'waf-prod-01',
+          type: 'security',
+          status: 'healthy',
+          ip_address: '10.100.60.11',
+          tags: ['production', 'security', 'waf', 'protection'],
+          team: 'Security Team',
+          environment: 'production',
+          region: 'us-east-1',
+          instance_type: 'c5.large',
+          cpu_usage: 28,
+          memory_usage: 35,
+          disk_usage: 22,
+          created_at: dayjs().subtract(180, 'day'),
+          last_check: dayjs().subtract(2, 'minute')
+        }
       ];
 
       const initialGroups = [
@@ -5208,7 +6098,7 @@
         { key: 'i_8', summary: 'Load Balancer High Traffic', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(3, 'minutes'), automation_id: null, assignee: null, resource_name: 'net-lb-prod-01', service: '負載平衡', business_impact: '中', storm_group: 'storm_1', ruleName: '網路流量監控', triggerThreshold: 'Traffic > 1Gbps' },
         { key: 'i_9', summary: 'Database Connection Pool Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'db-mysql-prod-01', service: '資料庫服務', business_impact: '高', storm_group: 'storm_1', ruleName: '資料庫連線池監控', triggerThreshold: 'Connection Pool > 98%' },
       ];
-      const [incidents, setIncidents] = useLocalStorageState('sre-incidents-v3', initialData);
+      const [incidents, setIncidents] = useLocalStorageState('sre-incidents-v4', initialData);
       const [searchText, setSearchText] = useState('');
       const [selectedRowKeys, setSelectedRowKeys] = useState([]);
       const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -5229,6 +6119,22 @@
         resourceName: ''
       });
       const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+      // 欄位自訂功能
+      const defaultVisibleColumns = {
+        severity: true,
+        summary: true,
+        resource_name: true,
+        business_impact: true,
+        ruleName: false, // 預設隱藏
+        triggerThreshold: false, // 預設隱藏
+        status: true,
+        assignee: true,
+        created_at: true,
+        action: true
+      };
+      const [visibleColumns, setVisibleColumns] = useLocalStorageState('sre-incident-columns', defaultVisibleColumns);
+      const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
       const handleStatusChange = (keys, newStatus) => {
         const actionText = newStatus === 'acknowledged' ? '確認' : '解決';
@@ -5331,8 +6237,9 @@
         hideSilenceModal();
       };
 
-      const columns = [
-        {
+      // 定義所有可能的欄位
+      const allColumns = {
+        severity: {
           title: '嚴重性',
           dataIndex: 'severity',
           width: '8%',
@@ -5348,9 +6255,9 @@
             </span>
           )
         },
-        { title: '摘要', dataIndex: 'summary', width: '20%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
-        { title: '資源名稱', dataIndex: 'resource_name', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
-        {
+        summary: { title: '摘要', dataIndex: 'summary', width: '20%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
+        resource_name: { title: '資源名稱', dataIndex: 'resource_name', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
+        business_impact: {
           title: '業務影響',
           dataIndex: 'business_impact',
           width: '10%',
@@ -5366,9 +6273,9 @@
             return <Tag color={color}>{impact || '-'}</Tag>;
           }
         },
-        { title: '規則名稱', dataIndex: 'ruleName', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
-        { title: '觸發閾值', dataIndex: 'triggerThreshold', width: '10%', render: name => name || '-' },
-        {
+        ruleName: { title: '規則名稱', dataIndex: 'ruleName', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
+        triggerThreshold: { title: '觸發閾值', dataIndex: 'triggerThreshold', width: '10%', render: name => name || '-' },
+        status: {
           title: '狀態',
           dataIndex: 'status',
           width: '8%',
@@ -5409,9 +6316,9 @@
             );
           }
         },
-        { title: '處理人', dataIndex: 'assignee', width: '8%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: (assignee) => assignee || '-' },
-        { title: '觸發時間', dataIndex: 'created_at', width: '10%', sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(), render: time => <span title={time ? time.format('YYYY-MM-DD HH:mm:ss') : ''}>{time ? time.fromNow() : '-'}</span> },
-        {
+        assignee: { title: '處理人', dataIndex: 'assignee', width: '8%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: (assignee) => assignee || '-' },
+        created_at: { title: '觸發時間', dataIndex: 'created_at', width: '10%', sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(), render: time => <span title={time ? time.format('YYYY-MM-DD HH:mm:ss') : ''}>{time ? time.fromNow() : '-'}</span> },
+        action: {
           title: '操作', key: 'action', width: '8%', render: (_, record) => (
             <Space size="small">
               <Tooltip title="確認事件" placement="top">
@@ -5439,8 +6346,13 @@
               </Tooltip>
             </Space>
           )
-        },
-      ];
+        }
+      };
+
+      // 根據可見欄位設定動態生成表格欄位
+      const columns = Object.keys(allColumns)
+        .filter(key => visibleColumns[key])
+        .map(key => allColumns[key]);
 
       // 應用預篩選和搜尋篩選
       let filteredIncidents = incidents;
@@ -5543,6 +6455,43 @@
             </Space>
             <Space>
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+              <Popover
+                content={
+                  <div style={{ width: '200px' }}>
+                    <div style={{ marginBottom: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)' }}>
+                      欄位顯示設定
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {Object.keys(allColumns).map(key => (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Checkbox
+                            checked={visibleColumns[key]}
+                            onChange={(e) => setVisibleColumns(prev => ({ ...prev, [key]: e.target.checked }))}
+                            style={{ marginRight: '8px' }}
+                          />
+                          <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px' }}>
+                            {allColumns[key].title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+                title={null}
+                trigger="click"
+                open={isColumnSettingsOpen}
+                onOpenChange={setIsColumnSettingsOpen}
+                placement="bottomRight"
+                overlayStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+              >
+                <Button className="toolbar-btn" icon={<SettingOutlined />}>
+                  欄位設定
+                </Button>
+              </Popover>
               <Button type="primary" className="btn-ai-analysis" icon={<RobotOutlined />} onClick={() => handleAIAnalysis(selectedRowKeys.length > 0 ? selectedRowKeys : null)}>
                 AI 分析
               </Button>
@@ -11708,17 +12657,16 @@
       );
     };
 
-    // 標籤 Key 管理頁面
-    // 標籤管理頁面 - 同時管理標籤名稱和值
+    // === 🏷️ 優化後的標籤管理頁面 ===
     const TagKeyManagementPage = () => {
-      // 標籤分類
+      // 標籤分類系統
       const tagCategories = [
-        { id: 'infrastructure', name: '基礎設施', color: '#1890ff', description: '服務器、網絡、存儲等基礎設施相關標籤' },
-        { id: 'application', name: '應用程序', color: '#52c41a', description: '應用服務、微服務等應用相關標籤' },
-        { id: 'organization', name: '組織結構', color: '#fa8c16', description: '團隊、部門、責任人等組織相關標籤' },
-        { id: 'business', name: '業務屬性', color: '#722ed1', description: '項目、產品線、客戶等業務相關標籤' },
-        { id: 'finance', name: '成本管理', color: '#eb2f96', description: '成本中心、預算、計費等財務相關標籤' },
-        { id: 'security', name: '安全合規', color: '#f5222d', description: '安全等級、合規要求等安全相關標籤' }
+        { id: 'infrastructure', name: '基礎設施', color: '#1890ff', icon: <HddOutlined />, description: '服務器、網絡、存儲等基礎設施相關標籤' },
+        { id: 'application', name: '應用程序', color: '#52c41a', icon: <CodeOutlined />, description: '應用服務、微服務等應用相關標籤' },
+        { id: 'organization', name: '組織結構', color: '#fa8c16', icon: <TeamOutlined />, description: '團隊、部門、責任人等組織相關標籤' },
+        { id: 'business', name: '業務屬性', color: '#722ed1', icon: <BuildOutlined />, description: '項目、產品線、客戶等業務相關標籤' },
+        { id: 'finance', name: '成本管理', color: '#eb2f96', icon: <DollarOutlined />, description: '成本中心、預算、計費等財務相關標籤' },
+        { id: 'security', name: '安全合規', color: '#f5222d', icon: <SafetyOutlined />, description: '安全等級、合規要求等安全相關標籤' }
       ];
 
       // 預設的標籤數據（包含name和values）
@@ -11820,6 +12768,10 @@
       const [editingTag, setEditingTag] = React.useState(null);
       const [editingValue, setEditingValue] = React.useState(null);
       const [selectedTagForValue, setSelectedTagForValue] = React.useState(null);
+      const [inlineEditingId, setInlineEditingId] = React.useState(null);
+      const [inlineEditForm, setInlineEditForm] = React.useState({});
+      const [displayNameManuallyChanged, setDisplayNameManuallyChanged] = React.useState(false);
+      const [tagDisplayNameManuallyChanged, setTagDisplayNameManuallyChanged] = React.useState(false);
       const [selectedRowKeys, setSelectedRowKeys] = React.useState([]);
       const [tagForm] = Form.useForm();
       const [valueForm] = Form.useForm();
@@ -11918,6 +12870,7 @@
         setIsTagModalOpen(false);
         tagForm.resetFields();
         setEditingTag(null);
+        setTagDisplayNameManuallyChanged(false); // 重置自動同步狀態
       };
 
       // 值管理函數
@@ -11925,6 +12878,7 @@
         setSelectedTagForValue(tag);
         setEditingValue(null);
         valueForm.resetFields();
+        setDisplayNameManuallyChanged(false); // 重置自動同步狀態
         setIsValueModalOpen(true);
       };
 
@@ -11932,7 +12886,69 @@
         setSelectedTagForValue(tag);
         setEditingValue(value);
         valueForm.setFieldsValue(value);
+        setDisplayNameManuallyChanged(true); // 編輯模式下不自動同步
         setIsValueModalOpen(true);
+      };
+
+      // 處理標籤值輸入變化 - 自動同步到顯示名稱
+      const handleValueInputChange = (e) => {
+        const inputValue = e.target.value;
+        // 只有在顯示名稱沒有被手動修改過的情況下才自動同步
+        if (!displayNameManuallyChanged) {
+          valueForm.setFieldValue('displayName', inputValue);
+        }
+      };
+
+      // 處理顯示名稱輸入變化 - 標記為手動修改
+      const handleDisplayNameChange = (e) => {
+        setDisplayNameManuallyChanged(true);
+      };
+
+      // 處理標籤名稱輸入變化 - 自動同步到顯示名稱
+      const handleTagNameChange = (e) => {
+        const inputValue = e.target.value;
+        // 只有在顯示名稱沒有被手動修改過的情況下才自動同步
+        if (!tagDisplayNameManuallyChanged) {
+          tagForm.setFieldValue('displayName', inputValue);
+        }
+      };
+
+      // 處理標籤顯示名稱輸入變化 - 標記為手動修改
+      const handleTagDisplayNameChange = (e) => {
+        setTagDisplayNameManuallyChanged(true);
+      };
+
+      // 行內編輯相關函數
+      const handleInlineEdit = (value) => {
+        setInlineEditingId(value.id);
+        setInlineEditForm({
+          value: value.value,
+          displayName: value.displayName,
+          color: value.color
+        });
+      };
+
+      const handleInlineCancel = () => {
+        setInlineEditingId(null);
+        setInlineEditForm({});
+      };
+
+      const handleInlineSave = (tagId, valueId) => {
+        setTags(prev => prev.map(tag =>
+          tag.id === tagId
+            ? {
+              ...tag,
+              values: tag.values.map(val =>
+                val.id === valueId
+                  ? { ...val, ...inlineEditForm }
+                  : val
+              )
+            }
+            : tag
+        ));
+        setInlineEditingId(null);
+        setInlineEditForm({});
+        message.success('標籤值已更新');
       };
 
       const handleDeleteValue = (tagId, valueId) => {
@@ -11991,6 +13007,7 @@
         valueForm.resetFields();
         setEditingValue(null);
         setSelectedTagForValue(null);
+        setDisplayNameManuallyChanged(false); // 重置自動同步狀態
       };
 
       // 表格欄位
@@ -11999,14 +13016,29 @@
           title: '標籤名稱',
           dataIndex: 'name',
           key: 'name',
-          width: '20%',
+          width: '18%',
           sorter: (a, b) => a.name.localeCompare(b.name),
           render: (name, record) => (
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)' }}>
+            <div style={{ minWidth: 0 }}>
+              <div style={{
+                fontWeight: 600,
+                fontSize: '14px',
+                color: 'var(--text-primary)',
+                marginBottom: '2px',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap'
+              }}>
                 {record.displayName}
               </div>
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
+              <div style={{
+                fontSize: '12px',
+                color: 'var(--text-tertiary)',
+                fontFamily: 'monospace',
+                textOverflow: 'ellipsis',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap'
+              }}>
                 {name}
               </div>
             </div>
@@ -12016,49 +13048,141 @@
           title: '分類',
           dataIndex: 'category',
           key: 'category',
-          width: '10%',
+          width: '12%',
           filters: tagCategories.map(cat => ({ text: cat.name, value: cat.id })),
           onFilter: (value, record) => record.category === value,
           render: (category) => {
             const cat = tagCategories.find(c => c.id === category);
             return cat ? (
-              <Tag color={cat.color} style={{ border: 'none' }}>
-                {cat.name}
-              </Tag>
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '3px 8px',
+                background: `${cat.color}15`,
+                border: `1px solid ${cat.color}30`,
+                borderRadius: '12px',
+                fontSize: '12px',
+                fontWeight: 500
+              }}>
+                <div
+                  style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    backgroundColor: cat.color,
+                    flexShrink: 0
+                  }}
+                />
+                <span style={{ color: cat.color }}>{cat.name}</span>
+              </div>
             ) : null;
           },
         },
         {
-          title: '標籤值 (Available Values)',
+          title: '標籤值',
           dataIndex: 'values',
           key: 'values',
-          width: '30%',
+          width: '35%',
           render: (values, record) => {
-            const displayValues = values.slice(0, 3);
+            const displayValues = values.slice(0, 4);
             const hiddenCount = values.length - displayValues.length;
 
             const tooltipContent = (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                maxWidth: '300px'
+              }}>
                 {values.map(val => (
-                  <Tag key={val.id} color={val.color}>{val.displayName} ({val.value})</Tag>
+                  <div key={val.id} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '4px 0'
+                  }}>
+                    <div
+                      style={{
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '2px',
+                        backgroundColor: val.color,
+                        flexShrink: 0
+                      }}
+                    />
+                    <span style={{ fontWeight: 500 }}>{val.displayName}</span>
+                    <span style={{ color: 'var(--text-tertiary)', fontSize: '12px' }}>({val.value})</span>
+                  </div>
                 ))}
               </div>
             );
 
             return (
-              <Space wrap size={[4, 4]} align="center">
-                {displayValues.map(val => (
-                  <Tag key={val.id} color={val.color}>{val.displayName}</Tag>
-                ))}
-                {hiddenCount > 0 && (
-                  <Tooltip title={tooltipContent}>
-                    <Tag style={{ cursor: 'pointer' }}>+ {hiddenCount} more</Tag>
-                  </Tooltip>
-                )}
-                <Tooltip title="管理標籤值">
-                  <Button type="text" size="small" icon={<SettingOutlined />} style={{ marginLeft: 4 }} onClick={() => handleCreateValue(record)} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <Space wrap size={[4, 4]} align="center" style={{ flex: 1 }}>
+                  {displayValues.map(val => (
+                    <div key={val.id} style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      padding: '2px 6px',
+                      background: `${val.color}20`,
+                      border: `1px solid ${val.color}40`,
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: 500
+                    }}>
+                      <div
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          backgroundColor: val.color,
+                          flexShrink: 0
+                        }}
+                      />
+                      <span style={{ color: val.color }}>{val.displayName}</span>
+                    </div>
+                  ))}
+                  {hiddenCount > 0 && (
+                    <Tooltip title={tooltipContent} placement="topLeft">
+                      <div style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        padding: '2px 6px',
+                        background: 'rgba(255,255,255,0.1)',
+                        border: '1px solid rgba(255,255,255,0.2)',
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        cursor: 'pointer',
+                        color: 'var(--text-secondary)'
+                      }}>
+                        +{hiddenCount}
+                      </div>
+                    </Tooltip>
+                  )}
+                </Space>
+                <Tooltip title="新增標籤值">
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<PlusOutlined />}
+                    onClick={() => handleCreateValue(record)}
+                    style={{
+                      width: '24px',
+                      height: '24px',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      color: 'var(--text-tertiary)',
+                      borderRadius: '4px'
+                    }}
+                  />
                 </Tooltip>
-              </Space>
+              </div>
             )
           }
         },
@@ -12079,36 +13203,94 @@
           ),
         },
         {
-          title: '總使用次數',
+          title: '使用次數',
           dataIndex: 'totalUsage',
           key: 'totalUsage',
           width: '10%',
           sorter: (a, b) => a.totalUsage - b.totalUsage,
           render: (count) => (
-            <Text style={{ color: count > 50 ? '#52c41a' : count > 10 ? '#fa8c16' : 'rgba(255, 255, 255, 0.7)' }}>
-              {count.toLocaleString()}
-            </Text>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}>
+              <div style={{
+                width: '8px',
+                height: '8px',
+                borderRadius: '50%',
+                backgroundColor: count > 50 ? '#52c41a' : count > 10 ? '#fa8c16' : 'var(--text-tertiary)'
+              }} />
+              <Text style={{
+                color: count > 50 ? '#52c41a' : count > 10 ? '#fa8c16' : 'var(--text-tertiary)',
+                fontSize: '13px',
+                fontWeight: 500
+              }}>
+                {count.toLocaleString()}
+              </Text>
+            </div>
           ),
         },
         {
           title: '操作',
           key: 'action',
-          width: '12%',
-          render: (_, record) => {
-            const menu = (
-              <Menu>
-                <Menu.Item key="add-value" icon={<PlusOutlined />} onClick={() => handleCreateValue(record)} />
-                <Menu.Item key="edit" icon={<EditOutlined />} onClick={() => handleEditTag(record)} />
-                <Menu.Item key="delete" icon={<DeleteOutlined />} danger onClick={() => handleDeleteTag(record.id)} />
-              </Menu>
-            );
-
-            return (
-              <Dropdown overlay={menu} trigger={['click']}>
-                <Button type="link" icon={<DownOutlined />} />
-              </Dropdown>
-            );
-          },
+          width: '15%',
+          fixed: 'right',
+          render: (_, record) => (
+            <Space size="small" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Tooltip title="新增值">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<PlusOutlined />}
+                  onClick={() => handleCreateValue(record)}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px'
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="編輯">
+                <Button
+                  type="text"
+                  size="small"
+                  icon={<EditOutlined />}
+                  onClick={() => handleEditTag(record)}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px'
+                  }}
+                />
+              </Tooltip>
+              <Tooltip title="刪除">
+                <Button
+                  type="text"
+                  danger
+                  size="small"
+                  icon={<DeleteOutlined />}
+                  onClick={() => handleDeleteTag(record.id)}
+                  style={{
+                    width: '28px',
+                    height: '28px',
+                    padding: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '12px'
+                  }}
+                />
+              </Tooltip>
+            </Space>
+          ),
         },
       ];
 
@@ -12123,101 +13305,95 @@
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: '16px',
             marginBottom: 'var(--spacing-lg)',
             flexWrap: 'wrap'
           }}>
-            <span style={{
-              fontSize: '14px',
-              fontWeight: 600,
-              color: 'rgba(255, 255, 255, 0.8)',
-              marginRight: '8px'
+            <Button.Group style={{
+              borderRadius: '8px',
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.15)'
             }}>
-              分類:
-            </span>
-            <Button
-              type={selectedCategory === 'all' ? 'primary' : 'default'}
-              size="middle"
-              onClick={() => setSelectedCategory('all')}
-              style={{
-                height: '36px',
-                borderRadius: '18px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                padding: '0 16px',
-                fontWeight: 500,
-                minWidth: '80px',
-                border: selectedCategory === 'all' ? '1px solid #1890ff' : '1px solid rgba(255, 255, 255, 0.15)',
-                background: selectedCategory === 'all' ? '#1890ff' : 'rgba(255, 255, 255, 0.05)',
-                boxShadow: selectedCategory === 'all' ? '0 2px 8px rgba(24, 144, 255, 0.3)' : 'none',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            >
-              <span style={{ fontSize: '13px' }}>全部</span>
-              <div style={{
-                background: selectedCategory === 'all' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(24, 144, 255, 0.15)',
-                color: selectedCategory === 'all' ? '#fff' : '#1890ff',
-                padding: '2px 8px',
-                borderRadius: '12px',
-                fontSize: '11px',
-                fontWeight: 700,
-                minWidth: '22px',
-                textAlign: 'center',
-                lineHeight: '16px'
-              }}>
-                {tagStats.totalTags}
-              </div>
-            </Button>
-            {tagStats.byCategory.map(cat => (
               <Button
-                key={cat.id}
-                type={selectedCategory === cat.id ? 'primary' : 'default'}
-                size="middle"
-                onClick={() => setSelectedCategory(cat.id)}
+                type={selectedCategory === 'all' ? 'primary' : 'default'}
+                onClick={() => setSelectedCategory('all')}
                 style={{
                   height: '36px',
-                  borderRadius: '18px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
-                  padding: '0 14px',
+                  gap: '8px',
+                  padding: '0 16px',
                   fontWeight: 500,
-                  minWidth: 'auto',
-                  border: selectedCategory === cat.id ? `1px solid ${cat.color}` : `1px solid ${cat.color}30`,
-                  background: selectedCategory === cat.id ? cat.color : `${cat.color}08`,
-                  boxShadow: selectedCategory === cat.id ? `0 2px 8px ${cat.color}40` : 'none',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                  border: 'none',
+                  borderRadius: '0',
+                  background: selectedCategory === 'all' ? '#1890ff' : 'rgba(255, 255, 255, 0.05)',
+                  color: selectedCategory === 'all' ? '#fff' : 'rgba(255, 255, 255, 0.85)',
+                  borderRight: '1px solid rgba(255, 255, 255, 0.1)',
+                  transition: 'all 0.2s ease'
                 }}
               >
+                <span style={{ fontSize: '13px' }}>全部</span>
                 <div style={{
-                  width: '8px',
-                  height: '8px',
-                  borderRadius: '50%',
-                  background: selectedCategory === cat.id ? '#fff' : cat.color,
-                  opacity: selectedCategory === cat.id ? 0.9 : 0.7
-                }} />
-                <span style={{
-                  fontSize: '13px',
-                  color: selectedCategory === cat.id ? '#fff' : 'rgba(255, 255, 255, 0.85)'
-                }}>
-                  {cat.name}
-                </span>
-                <div style={{
-                  background: selectedCategory === cat.id ? 'rgba(255, 255, 255, 0.25)' : `${cat.color}20`,
-                  color: selectedCategory === cat.id ? '#fff' : cat.color,
+                  background: selectedCategory === 'all' ? 'rgba(255, 255, 255, 0.25)' : 'rgba(24, 144, 255, 0.15)',
+                  color: selectedCategory === 'all' ? '#fff' : '#1890ff',
                   padding: '2px 6px',
-                  borderRadius: '10px',
+                  borderRadius: '8px',
                   fontSize: '11px',
-                  fontWeight: 700,
-                  minWidth: '18px',
+                  fontWeight: 600,
+                  minWidth: '20px',
                   textAlign: 'center',
                   lineHeight: '14px'
                 }}>
-                  {cat.count}
+                  {tagStats.totalTags}
                 </div>
               </Button>
-            ))}
+              {tagStats.byCategory.map((cat, index) => (
+                <Button
+                  key={cat.id}
+                  type={selectedCategory === cat.id ? 'primary' : 'default'}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  style={{
+                    height: '36px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '0 14px',
+                    fontWeight: 500,
+                    border: 'none',
+                    borderRadius: '0',
+                    background: selectedCategory === cat.id ? cat.color : 'rgba(255, 255, 255, 0.05)',
+                    color: selectedCategory === cat.id ? '#fff' : 'rgba(255, 255, 255, 0.85)',
+                    borderRight: index < tagStats.byCategory.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: selectedCategory === cat.id ? '#fff' : cat.color,
+                    opacity: selectedCategory === cat.id ? 0.9 : 0.8
+                  }} />
+                  <span style={{ fontSize: '13px' }}>
+                    {cat.name}
+                  </span>
+                  <div style={{
+                    background: selectedCategory === cat.id ? 'rgba(255, 255, 255, 0.25)' : `${cat.color}20`,
+                    color: selectedCategory === cat.id ? '#fff' : cat.color,
+                    padding: '2px 6px',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    minWidth: '18px',
+                    textAlign: 'center',
+                    lineHeight: '14px'
+                  }}>
+                    {cat.count}
+                  </div>
+                </Button>
+              ))}
+            </Button.Group>
           </div>
 
           {/* 工具列 */}
@@ -12272,7 +13448,7 @@
                       title: '標籤名稱',
                       dataIndex: 'name',
                       key: 'name',
-                      width: 200,
+                      width: '15%',
                       sorter: (a, b) => a.name.localeCompare(b.name),
                       render: (text, record) => (
                         <div style={{ padding: '4px 0' }}>
@@ -12304,7 +13480,7 @@
                       title: '分類',
                       dataIndex: 'category',
                       key: 'category',
-                      width: 90,
+                      width: '12%',
                       filters: tagCategories.map(cat => ({ text: cat.name, value: cat.id })),
                       onFilter: (value, record) => record.category === value,
                       render: (category) => {
@@ -12320,13 +13496,15 @@
                             padding: '4px 12px',
                             fontSize: '12px',
                             fontWeight: 500,
-                            color: 'rgba(255, 255, 255, 0.9)'
+                            color: 'rgba(255, 255, 255, 0.9)',
+                            whiteSpace: 'nowrap'
                           }}>
                             <div style={{
                               width: '6px',
                               height: '6px',
                               borderRadius: '50%',
-                              background: cat.color
+                              background: cat.color,
+                              flexShrink: 0
                             }} />
                             <span>{cat.name}</span>
                           </div>
@@ -12336,7 +13514,7 @@
                     {
                       title: '標籤值',
                       key: 'values',
-                      width: 300,
+                      width: '45%',
                       render: (_, record) => {
                         const maxDisplay = 3; // 最多顯示3個
                         const displayValues = record.values.slice(0, maxDisplay);
@@ -12351,55 +13529,70 @@
                             minHeight: '24px'
                           }}>
                             {displayValues.map(value => (
-                              <span
+                              <div
                                 key={value.id}
                                 style={{
-                                  display: 'inline-block',
-                                  padding: '2px 6px',
-                                  fontSize: '11px',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '3px 8px',
+                                  fontSize: '12px',
                                   fontWeight: 500,
                                   borderRadius: '4px',
-                                  background: 'rgba(255, 255, 255, 0.05)',
-                                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                                  color: 'rgba(255, 255, 255, 0.8)',
+                                  background: `${value.color || '#666'}20`,
+                                  border: `1px solid ${value.color || '#666'}40`,
+                                  color: value.color || '#fff',
                                   cursor: 'pointer',
-                                  transition: 'all 0.2s ease',
-                                  fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace'
+                                  transition: 'all 0.2s ease'
                                 }}
                                 onClick={() => handleEditValue(record, value)}
                                 onMouseEnter={(e) => {
-                                  e.target.style.background = 'rgba(255, 255, 255, 0.1)';
-                                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+                                  e.target.style.background = `${value.color || '#666'}30`;
+                                  e.target.style.borderColor = `${value.color || '#666'}60`;
                                 }}
                                 onMouseLeave={(e) => {
-                                  e.target.style.background = 'rgba(255, 255, 255, 0.05)';
-                                  e.target.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                                  e.target.style.background = `${value.color || '#666'}20`;
+                                  e.target.style.borderColor = `${value.color || '#666'}40`;
                                 }}
                               >
-                                {value.displayName}
-                              </span>
+                                <div style={{
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  backgroundColor: value.color || '#666',
+                                  flexShrink: 0
+                                }} />
+                                <span>{value.displayName}</span>
+                              </div>
                             ))}
                             {hiddenCount > 0 && (
                               <Tooltip
                                 title={
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxWidth: '300px' }}>
                                     {record.values.slice(maxDisplay).map(val => (
-                                      <span
+                                      <div
                                         key={val.id}
                                         style={{
-                                          display: 'inline-block',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px',
                                           padding: '2px 6px',
-                                          fontSize: '10px',
+                                          fontSize: '11px',
                                           fontWeight: 500,
                                           borderRadius: '4px',
-                                          background: 'rgba(255, 255, 255, 0.1)',
-                                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                                          color: 'rgba(255, 255, 255, 0.9)',
-                                          fontFamily: 'SFMono-Regular, Consolas, "Liberation Mono", Menlo, Courier, monospace'
+                                          background: `${val.color || '#666'}25`,
+                                          border: `1px solid ${val.color || '#666'}50`,
+                                          color: val.color || '#fff'
                                         }}
                                       >
-                                        {val.displayName}
-                                      </span>
+                                        <div style={{
+                                          width: '4px',
+                                          height: '4px',
+                                          borderRadius: '50%',
+                                          backgroundColor: val.color || '#666'
+                                        }} />
+                                        <span>{val.displayName}</span>
+                                      </div>
                                     ))}
                                   </div>
                                 }
@@ -12439,7 +13632,7 @@
                       title: '必填',
                       dataIndex: 'required',
                       key: 'required',
-                      width: 80,
+                      width: '8%',
                       align: 'center',
                       filters: [
                         { text: '必填', value: true },
@@ -12468,49 +13661,51 @@
                       ),
                     },
                     {
-                      title: '總使用次數',
+                      title: '使用次數',
                       dataIndex: 'totalUsage',
                       key: 'totalUsage',
-                      width: 120,
+                      width: '8%',
                       sorter: (a, b) => a.totalUsage - b.totalUsage,
                       render: (count) => (
-                        <Text style={{ color: count > 50 ? '#52c41a' : count > 10 ? '#fa8c16' : 'rgba(255, 255, 255, 0.7)' }}>
+                        <Text style={{ color: 'rgba(255, 255, 255, 0.9)' }}>
                           {count.toLocaleString()}
                         </Text>
                       ),
                     },
                     {
-                      title: '描述',
-                      dataIndex: 'description',
-                      key: 'description',
-                      ellipsis: { showTitle: false },
-                      render: (text) => (
-                        <Tooltip title={text}>
-                          <Text style={{ color: 'rgba(255, 255, 255, 0.7)' }}>{text}</Text>
-                        </Tooltip>
-                      ),
-                    },
-                    {
                       title: '操作',
                       key: 'action',
-                      width: 180,
+                      width: '20%',
                       align: 'center',
+                      fixed: 'right',
                       render: (_, record) => (
-                        <Space size="small">
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '4px'
+                        }}>
                           <Tooltip title="新增值">
                             <Button
-                              type="primary"
+                              type="text"
                               size="small"
                               icon={<PlusOutlined />}
                               onClick={() => handleCreateValue(record)}
                               style={{
+                                width: '28px',
                                 height: '28px',
-                                padding: '0 8px',
-                                fontSize: '12px'
+                                padding: 0,
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '4px',
+                                color: 'var(--brand-primary)',
+                                backgroundColor: 'transparent',
+                                border: '1px solid var(--brand-primary)',
+                                transition: 'all 0.2s ease'
                               }}
-                            >
-                              新增值
-                            </Button>
+                            />
                           </Tooltip>
                           <Tooltip title="編輯">
                             <Button
@@ -12522,7 +13717,12 @@
                                 width: '28px',
                                 height: '28px',
                                 padding: 0,
-                                color: 'rgba(255, 255, 255, 0.6)'
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '4px',
+                                color: 'var(--text-tertiary)'
                               }}
                             />
                           </Tooltip>
@@ -12536,17 +13736,22 @@
                               style={{
                                 width: '28px',
                                 height: '28px',
-                                padding: 0
+                                padding: 0,
+                                fontSize: '12px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                borderRadius: '4px'
                               }}
                             />
                           </Tooltip>
-                        </Space>
+                        </div>
                       ),
                     },
                   ]}
                   dataSource={filteredTags}
                   rowKey="id"
-                  scroll={{ x: 1000 }}
+                  scroll={{ x: 1100 }}
                   pagination={{
                     total: filteredTags.length,
                     pageSize: 10,
@@ -12564,7 +13769,7 @@
                       </div>
                     )
                   }}
-                  size="middle"
+                  size="small"
                   className="transparent-bg"
                   rowClassName={(record) =>
                     record.required ? 'required-tag-row' : ''
@@ -12601,19 +13806,33 @@
                       { max: 50, message: '標籤名稱不能超過50個字符' }
                     ]}
                   >
-                    <Input placeholder="例如：environment, team" />
+                    <Input placeholder="例如：environment, team" onChange={handleTagNameChange} />
                   </Form.Item>
                 </Col>
                 <Col span={12}>
                   <Form.Item
-                    label="顯示名稱"
+                    label={
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>顯示名稱</span>
+                        {!tagDisplayNameManuallyChanged && (
+                          <span style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            fontWeight: 400,
+                            fontStyle: 'italic'
+                          }}>
+                            (自動同步)
+                          </span>
+                        )}
+                      </div>
+                    }
                     name="displayName"
                     rules={[
                       { required: true, message: '請輸入顯示名稱' },
                       { max: 100, message: '顯示名稱不能超過100個字符' }
                     ]}
                   >
-                    <Input placeholder="例如：環境, 團隊" />
+                    <Input placeholder="例如：環境, 團隊" onChange={handleTagDisplayNameChange} />
                   </Form.Item>
                 </Col>
               </Row>
@@ -12628,9 +13847,30 @@
                     <Select placeholder="選擇標籤分類">
                       {tagCategories.map(cat => (
                         <Select.Option key={cat.id} value={cat.id}>
-                          <Tag color={cat.color} style={{ margin: 0 }}>
-                            {cat.name}
-                          </Tag>
+                          <div style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '0 12px',
+                            height: '26px',
+                            background: `${cat.color}15`,
+                            border: `1px solid ${cat.color}30`,
+                            borderRadius: '12px',
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            color: cat.color,
+                            margin: '7px 0',
+                            boxSizing: 'border-box'
+                          }}>
+                            <div style={{
+                              width: '6px',
+                              height: '6px',
+                              borderRadius: '50%',
+                              backgroundColor: cat.color,
+                              flexShrink: 0
+                            }} />
+                            <span>{cat.name}</span>
+                          </div>
                         </Select.Option>
                       ))}
                     </Select>
@@ -12662,15 +13902,19 @@
                 />
               </Form.Item>
 
-              <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
-                <Space>
+              <Form.Item style={{ marginBottom: 0, marginTop: '24px' }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '8px'
+                }}>
                   <Button onClick={handleTagCancel}>
                     取消
                   </Button>
                   <Button type="primary" htmlType="submit">
                     {editingTag ? '更新' : '創建'}
                   </Button>
-                </Space>
+                </div>
               </Form.Item>
             </Form>
           </Modal>
@@ -12736,6 +13980,7 @@
                   >
                     <Input
                       placeholder="例如: production, staging"
+                      onChange={handleValueInputChange}
                       style={{
                         background: 'rgba(255, 255, 255, 0.05)',
                         border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -12746,12 +13991,27 @@
 
                   <Form.Item
                     name="displayName"
-                    label="顯示名稱"
+                    label={
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>顯示名稱</span>
+                        {!displayNameManuallyChanged && (
+                          <span style={{
+                            fontSize: '11px',
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            fontWeight: 400,
+                            fontStyle: 'italic'
+                          }}>
+                            (自動同步)
+                          </span>
+                        )}
+                      </div>
+                    }
                     rules={[{ required: true, message: '請輸入顯示名稱' }]}
                     style={{ marginBottom: '20px' }}
                   >
                     <Input
                       placeholder="例如: 生產環境, 測試環境"
+                      onChange={handleDisplayNameChange}
                       style={{
                         background: 'rgba(255, 255, 255, 0.05)',
                         border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -12853,61 +14113,151 @@
                           }}
                         >
                           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                            <div style={{
-                              width: '12px',
-                              height: '12px',
-                              backgroundColor: item.color,
-                              borderRadius: '50%'
-                            }} />
-                            <div>
+                            {/* 顏色選擇器 - 編輯模式或普通模式 */}
+                            {inlineEditingId === item.id ? (
+                              <Select
+                                value={inlineEditForm.color}
+                                onChange={(color) => setInlineEditForm(prev => ({ ...prev, color }))}
+                                style={{
+                                  width: '80px',
+                                  background: 'rgba(255, 255, 255, 0.05)',
+                                  border: '1px solid rgba(255, 255, 255, 0.15)'
+                                }}
+                                size="small"
+                                dropdownStyle={{ backgroundColor: '#1f1f1f', border: '1px solid rgba(255, 255, 255, 0.15)' }}
+                              >
+                                {['#f5222d', '#fa541c', '#fa8c16', '#faad14', '#fadb14', '#a0d911', '#52c41a', '#13c2c2', '#1890ff', '#2f54eb', '#722ed1', '#eb2f96'].map(color => (
+                                  <Select.Option key={color} value={color}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <div style={{ width: '12px', height: '12px', backgroundColor: color, borderRadius: '50%' }}></div>
+                                    </div>
+                                  </Select.Option>
+                                ))}
+                              </Select>
+                            ) : (
                               <div style={{
-                                color: 'rgba(255, 255, 255, 0.9)',
-                                fontWeight: 500,
-                                fontSize: '13px',
-                                marginBottom: '2px'
-                              }}>
-                                {item.displayName}
-                              </div>
-                              <div style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '8px',
-                                fontSize: '11px',
-                                color: 'rgba(255, 255, 255, 0.6)'
-                              }}>
-                                <span style={{ fontFamily: 'monospace' }}>{item.value}</span>
-                                <span>•</span>
-                                <span>使用 {item.usageCount} 次</span>
-                              </div>
+                                width: '12px',
+                                height: '12px',
+                                backgroundColor: item.color,
+                                borderRadius: '50%'
+                              }} />
+                            )}
+
+                            <div style={{ flex: 1 }}>
+                              {/* 顯示名稱 - 編輯模式或普通模式 */}
+                              {inlineEditingId === item.id ? (
+                                <Input
+                                  value={inlineEditForm.displayName}
+                                  onChange={(e) => setInlineEditForm(prev => ({ ...prev, displayName: e.target.value }))}
+                                  size="small"
+                                  style={{
+                                    marginBottom: '4px',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    color: 'rgba(255, 255, 255, 0.9)'
+                                  }}
+                                />
+                              ) : (
+                                <div style={{
+                                  color: 'rgba(255, 255, 255, 0.9)',
+                                  fontWeight: 500,
+                                  fontSize: '13px',
+                                  marginBottom: '2px'
+                                }}>
+                                  {item.displayName}
+                                </div>
+                              )}
+
+                              {/* 標籤值 - 編輯模式或普通模式 */}
+                              {inlineEditingId === item.id ? (
+                                <Input
+                                  value={inlineEditForm.value}
+                                  onChange={(e) => setInlineEditForm(prev => ({ ...prev, value: e.target.value }))}
+                                  size="small"
+                                  style={{
+                                    fontFamily: 'monospace',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    color: 'rgba(255, 255, 255, 0.9)'
+                                  }}
+                                />
+                              ) : (
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '8px',
+                                  fontSize: '11px',
+                                  color: 'rgba(255, 255, 255, 0.6)'
+                                }}>
+                                  <span style={{ fontFamily: 'monospace' }}>{item.value}</span>
+                                  <span>•</span>
+                                  <span>使用 {item.usageCount} 次</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                           <div style={{ display: 'flex', gap: '4px' }}>
-                            <Tooltip title="編輯">
-                              <Button
-                                type="text"
-                                size="small"
-                                icon={<EditOutlined />}
-                                onClick={() => handleEditValue(selectedTagForValue, item)}
-                                style={{
-                                  width: '28px',
-                                  height: '28px',
-                                  color: 'rgba(255, 255, 255, 0.6)'
-                                }}
-                              />
-                            </Tooltip>
-                            <Tooltip title="刪除">
-                              <Button
-                                type="text"
-                                danger
-                                size="small"
-                                icon={<DeleteOutlined />}
-                                onClick={() => handleDeleteValue(selectedTagForValue.id, item.id)}
-                                style={{
-                                  width: '28px',
-                                  height: '28px'
-                                }}
-                              />
-                            </Tooltip>
+                            {inlineEditingId === item.id ? (
+                              // 編輯模式：顯示儲存和取消按鈕
+                              <>
+                                <Tooltip title="儲存">
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<CheckOutlined />}
+                                    onClick={() => handleInlineSave(selectedTagForValue.id, item.id)}
+                                    style={{
+                                      width: '28px',
+                                      height: '28px',
+                                      color: '#52c41a'
+                                    }}
+                                  />
+                                </Tooltip>
+                                <Tooltip title="取消">
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<CloseOutlined />}
+                                    onClick={handleInlineCancel}
+                                    style={{
+                                      width: '28px',
+                                      height: '28px',
+                                      color: 'rgba(255, 255, 255, 0.6)'
+                                    }}
+                                  />
+                                </Tooltip>
+                              </>
+                            ) : (
+                              // 普通模式：顯示編輯和刪除按鈕
+                              <>
+                                <Tooltip title="編輯">
+                                  <Button
+                                    type="text"
+                                    size="small"
+                                    icon={<EditOutlined />}
+                                    onClick={() => handleInlineEdit(item)}
+                                    style={{
+                                      width: '28px',
+                                      height: '28px',
+                                      color: 'rgba(255, 255, 255, 0.6)'
+                                    }}
+                                  />
+                                </Tooltip>
+                                <Tooltip title="刪除">
+                                  <Button
+                                    type="text"
+                                    danger
+                                    size="small"
+                                    icon={<DeleteOutlined />}
+                                    onClick={() => handleDeleteValue(selectedTagForValue.id, item.id)}
+                                    style={{
+                                      width: '28px',
+                                      height: '28px'
+                                    }}
+                                  />
+                                </Tooltip>
+                              </>
+                            )}
                           </div>
                         </div>
                       ))}
