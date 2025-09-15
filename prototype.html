@@ -197,61 +197,27 @@
     /* === 表格內容優化 === */
     .table-wrapper .ant-table-tbody>tr {
       transition: all 0.2s ease;
-      height: 48px;
-      /* 優化行高 - 平衡資訊密度與可讀性 */
+      height: 52px;
+      /* 統一行高 - 提升資訊密度 */
     }
 
     .table-wrapper .ant-table-tbody>tr:hover {
       background: var(--bg-hover);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .table-wrapper .ant-table-tbody>tr>td {
       color: var(--text-secondary);
-      padding: var(--spacing-sm) var(--spacing-lg);
-      line-height: 1.5;
+      padding: var(--spacing-md) var(--spacing-lg);
+      line-height: 1.4;
       border-bottom: 1px solid var(--border-light);
       vertical-align: middle;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      font-size: 13px;
-      /* 優化字體大小以提升可讀性 */
-    }
-
-    /* === 欄位寬度優化 === */
-    .table-wrapper .ant-table-tbody>tr>td.col-name {
-      max-width: 180px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .table-wrapper .ant-table-tbody>tr>td.col-status {
-      max-width: 100px;
-    }
-
-    .table-wrapper .ant-table-tbody>tr>td.col-ip {
-      max-width: 140px;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 12px;
-    }
-
-    .table-wrapper .ant-table-tbody>tr>td.col-tags {
       max-width: 200px;
-      white-space: normal;
-      overflow: visible;
-    }
-
-    .table-wrapper .ant-table-tbody>tr>td.col-time {
-      max-width: 160px;
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 12px;
-    }
-
-    .table-wrapper .ant-table-tbody>tr>td.col-actions {
-      max-width: 120px;
-      text-align: center;
+      /* 防止內容過長 */
     }
 
     /* 選中行樣式 */
@@ -264,174 +230,12 @@
       background: var(--bg-selected) !important;
     }
 
-    /* === 🎯 統一分頁設計系統 - Unified Pagination Design System === */
-
-    /* 全域分頁容器 */
-    .ant-pagination {
-      margin: var(--spacing-lg) 0 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: flex-end !important;
-      flex-wrap: wrap !important;
-      gap: var(--spacing-sm) !important;
-      color: var(--text-secondary) !important;
-    }
-
-    /* 分頁項目基礎樣式 */
-    .ant-pagination-item,
-    .ant-pagination-prev,
-    .ant-pagination-next,
-    .ant-pagination-jump-prev,
-    .ant-pagination-jump-next {
-      background: transparent !important;
-      border: 1px solid var(--border-base) !important;
-      border-radius: var(--radius-sm) !important;
-      color: var(--text-secondary) !important;
-      transition: all 0.2s ease !important;
-      min-width: 32px !important;
-      height: 32px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      margin: 0 2px !important;
-    }
-
-    /* 分頁項目懸停效果 */
-    .ant-pagination-item:hover,
-    .ant-pagination-prev:hover,
-    .ant-pagination-next:hover,
-    .ant-pagination-jump-prev:hover,
-    .ant-pagination-jump-next:hover {
-      background: var(--bg-hover) !important;
-      border-color: var(--border-hover) !important;
-      color: var(--text-primary) !important;
-      transform: translateY(-1px) !important;
-    }
-
-    /* 分頁項目內容 */
-    .ant-pagination-item a,
-    .ant-pagination-prev .ant-pagination-item-link,
-    .ant-pagination-next .ant-pagination-item-link {
-      color: inherit !important;
-      font-size: 13px !important;
-      font-weight: 500 !important;
-      width: 100% !important;
-      height: 100% !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
-
-    /* 當前頁面樣式 */
-    .ant-pagination-item-active {
-      background: var(--brand-primary) !important;
-      border-color: var(--brand-primary) !important;
-      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.2) !important;
-    }
-
-    .ant-pagination-item-active a {
-      color: white !important;
-      font-weight: 600 !important;
-    }
-
-    .ant-pagination-item-active:hover {
-      background: var(--brand-primary-hover) !important;
-      border-color: var(--brand-primary-hover) !important;
-      transform: none !important;
-    }
-
-    /* 禁用狀態 */
-    .ant-pagination-disabled,
-    .ant-pagination-disabled:hover {
-      background: transparent !important;
-      border-color: var(--border-light) !important;
-      color: var(--text-disabled) !important;
-      cursor: not-allowed !important;
-      transform: none !important;
-    }
-
-    .ant-pagination-disabled .ant-pagination-item-link {
-      color: var(--text-disabled) !important;
-    }
-
-    /* 頁面大小選擇器 */
-    .ant-pagination-options {
-      margin-left: var(--spacing-md) !important;
-    }
-
-    .ant-pagination-options .ant-select {
-      margin-left: var(--spacing-sm) !important;
-    }
-
-    .ant-pagination-options .ant-select-selector {
-      background: var(--bg-container) !important;
-      border-color: var(--border-base) !important;
-      color: var(--text-secondary) !important;
-      border-radius: var(--radius-sm) !important;
-      height: 32px !important;
-    }
-
-    .ant-pagination-options .ant-select-selector:hover {
-      border-color: var(--border-hover) !important;
-    }
-
-    .ant-pagination-options .ant-select-selection-item {
-      color: var(--text-secondary) !important;
-      font-size: 13px !important;
-    }
-
-    /* 快速跳轉輸入框 */
-    .ant-pagination-options-quick-jumper input {
-      background: var(--bg-container) !important;
-      border-color: var(--border-base) !important;
-      color: var(--text-primary) !important;
-      border-radius: var(--radius-sm) !important;
-      height: 32px !important;
-      width: 50px !important;
-      text-align: center !important;
-      font-size: 13px !important;
-    }
-
-    .ant-pagination-options-quick-jumper input:focus {
-      border-color: var(--brand-primary) !important;
-      box-shadow: 0 0 0 2px var(--brand-primary-bg) !important;
-    }
-
-    /* 總數顯示 */
-    .ant-pagination-total-text {
-      color: var(--text-tertiary) !important;
-      font-size: 13px !important;
-      margin-right: var(--spacing-md) !important;
-    }
-
-    /* 表格容器內的分頁特殊處理 */
+    /* === 表格分頁優化 === */
     .table-wrapper .ant-pagination {
-      margin: var(--spacing-lg) var(--spacing-lg) var(--spacing-md) var(--spacing-lg) !important;
-      padding: var(--spacing-md) 0 !important;
-      border-top: 1px solid var(--border-light) !important;
-      background: var(--bg-container) !important;
-    }
-
-    /* 響應式分頁 */
-    @media (max-width: 768px) {
-      .ant-pagination {
-        justify-content: center !important;
-        margin: var(--spacing-md) 0 !important;
-      }
-
-      .ant-pagination-item,
-      .ant-pagination-prev,
-      .ant-pagination-next {
-        min-width: 28px !important;
-        height: 28px !important;
-        margin: 0 1px !important;
-      }
-
-      .ant-pagination-options {
-        margin-top: var(--spacing-sm) !important;
-        width: 100% !important;
-        justify-content: center !important;
-      }
+      margin: var(--spacing-lg) 0 !important;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
     }
 
     /* === 表格載入狀態 === */
@@ -690,109 +494,7 @@
       letter-spacing: 0.5px;
     }
 
-    /* === 🎨 統一 Modal 設計系統 - Unified Modal Design System === */
-
-    /* 全域 Modal 樣式 */
-    .ant-modal-mask {
-      background: rgba(0, 0, 0, 0.65);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-
-    .ant-modal .ant-modal-content {
-      background: var(--bg-elevated);
-      border: var(--glass-border);
-      border-radius: var(--radius-lg);
-      backdrop-filter: var(--glass-backdrop);
-      -webkit-backdrop-filter: var(--glass-backdrop);
-      box-shadow: var(--shadow-xl);
-      overflow: hidden;
-    }
-
-    .ant-modal .ant-modal-header {
-      background: var(--bg-overlay);
-      border-bottom: 1px solid var(--border-base);
-      padding: var(--spacing-lg) var(--spacing-xl);
-      margin: 0;
-    }
-
-    .ant-modal .ant-modal-title {
-      color: var(--text-primary);
-      font-weight: 600;
-      font-size: 18px;
-      margin: 0;
-    }
-
-    .ant-modal .ant-modal-close {
-      color: var(--text-tertiary);
-      transition: all 0.2s ease;
-    }
-
-    .ant-modal .ant-modal-close:hover {
-      color: var(--text-primary);
-      background: var(--bg-hover);
-    }
-
-    .ant-modal .ant-modal-body {
-      padding: var(--spacing-xl);
-      color: var(--text-secondary);
-      max-height: 70vh;
-      overflow-y: auto;
-    }
-
-    .ant-modal .ant-modal-footer {
-      background: var(--bg-container);
-      border-top: 1px solid var(--border-base);
-      padding: var(--spacing-lg) var(--spacing-xl);
-      margin: 0;
-    }
-
-    /* Modal 尺寸標準化 */
-    .modal-sm .ant-modal {
-      max-width: 480px;
-    }
-
-    .modal-md .ant-modal {
-      max-width: 640px;
-    }
-
-    .modal-lg .ant-modal {
-      max-width: 800px;
-    }
-
-    .modal-xl .ant-modal {
-      max-width: 1200px;
-    }
-
-    /* Modal 表單優化 */
-    .ant-modal .ant-form-item-label > label {
-      color: var(--text-secondary);
-      font-weight: 500;
-    }
-
-    .ant-modal .ant-input,
-    .ant-modal .ant-select-selector,
-    .ant-modal .ant-picker {
-      background: var(--bg-container);
-      border-color: var(--border-base);
-      color: var(--text-primary);
-    }
-
-    .ant-modal .ant-input:focus,
-    .ant-modal .ant-select-focused .ant-select-selector,
-    .ant-modal .ant-picker:hover {
-      border-color: var(--brand-primary);
-      box-shadow: 0 0 0 2px var(--brand-primary-bg);
-    }
-
-    /* Modal 按鈕優化 */
-    .ant-modal .ant-btn {
-      height: var(--btn-height-md);
-      border-radius: var(--radius-sm);
-      font-weight: 500;
-    }
-
-    /* 標籤模態框優化（特殊樣式保留） */
+    /* 標籤模態框優化 */
     .tag-modal .ant-modal-content {
       background: var(--bg-elevated);
       border: var(--glass-border);
@@ -1286,6 +988,17 @@
       background: transparent !important;
     }
 
+    /* 靜音規則設定透明背景 */
+    .silence-modal .ant-modal-content,
+    .silence-modal .ant-modal-body {
+      background: transparent !important;
+    }
+
+    .silence-modal .ant-table,
+    .silence-modal .ant-table-tbody>tr>td {
+      background: transparent !important;
+    }
+
     /* 高亮行樣式 */
     .highlighted-row {
       background: rgba(24, 144, 255, 0.1) !important;
@@ -1452,7 +1165,9 @@
       color: #1677ff !important;
     }
 
-    /* 已統一使用全域分頁樣式 */
+    .ant-table-pagination.ant-pagination {
+      margin: 16px 8px !important;
+    }
 
 
 
@@ -2881,143 +2596,40 @@
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
     }
 
-    /* 🎯 統一按鈕設計系統 - Unified Button Design System */
-
-    /* === 主要操作按鈕 - Primary Action Buttons === */
+    /* 🎯 Unified Button Styles */
+    /* Primary Actions - 主要操作按鈕 */
     .btn-primary-action {
-      height: var(--btn-height-md);
-      padding: var(--btn-padding-md);
+      height: 32px;
+      padding: 0 16px;
       font-weight: 500;
-      border-radius: var(--radius-sm);
-      background: var(--brand-primary);
-      border-color: var(--brand-primary);
-      color: white;
-      transition: all 0.2s ease;
+      border-radius: var(--radius-base);
     }
 
-    .btn-primary-action:hover {
-      background: var(--brand-primary-hover);
-      border-color: var(--brand-primary-hover);
-      transform: translateY(-1px);
-      box-shadow: var(--shadow-sm);
-    }
-
-    /* === 工具列按鈕 - Toolbar Buttons === */
+    /* Toolbar Buttons - 工具列按鈕 */
     .ant-btn.toolbar-btn,
     button.ant-btn.toolbar-btn {
-      height: var(--btn-height-md) !important;
-      border-radius: var(--radius-sm) !important;
+      height: 32px !important;
+      border-radius: 6px !important;
       background: transparent !important;
-      border: 1px solid var(--border-base) !important;
-      color: var(--text-secondary) !important;
-      font-weight: 500 !important;
-      font-size: 13px !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      color: rgba(255, 255, 255, 0.85) !important;
       padding: 0 12px !important;
-      transition: all 0.2s ease !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      gap: 6px !important;
     }
 
     .ant-btn.toolbar-btn:hover,
     button.ant-btn.toolbar-btn:hover,
     .ant-btn.toolbar-btn:focus,
     button.ant-btn.toolbar-btn:focus {
-      background: var(--bg-hover) !important;
-      border-color: var(--border-hover) !important;
-      color: var(--text-primary) !important;
-      transform: translateY(-1px) !important;
-      box-shadow: var(--shadow-sm) !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      border-color: rgba(255, 255, 255, 0.3) !important;
+      color: rgba(255, 255, 255, 0.95) !important;
     }
 
-    /* 僅圖標的工具列按鈕 */
     .ant-btn.toolbar-btn--icon-only,
     button.ant-btn.toolbar-btn--icon-only {
-      width: var(--btn-height-md) !important;
+      width: 32px !important;
       padding: 0 !important;
-      border-radius: var(--radius-sm) !important;
-      justify-content: center !important;
-    }
-
-    /* === 表格操作按鈕 - Table Action Buttons === */
-    .table-action-btn {
-      height: var(--btn-height-sm);
-      padding: 0 8px;
-      font-size: 12px;
-      font-weight: 500;
-      border-radius: var(--radius-xs);
-      background: transparent;
-      border: 1px solid var(--border-light);
-      color: var(--text-tertiary);
-      transition: all 0.2s ease;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .table-action-btn:hover {
-      background: var(--bg-hover);
-      border-color: var(--border-hover);
-      color: var(--text-primary);
-      transform: translateY(-1px);
-    }
-
-    .table-action-btn.primary {
-      border-color: var(--brand-primary);
-      color: var(--brand-primary);
-    }
-
-    .table-action-btn.primary:hover {
-      background: var(--brand-primary-bg);
-      border-color: var(--brand-primary-hover);
-      color: var(--brand-primary-hover);
-    }
-
-    .table-action-btn.danger {
-      border-color: var(--brand-danger);
-      color: var(--brand-danger);
-    }
-
-    .table-action-btn.danger:hover {
-      background: var(--brand-danger-bg);
-      border-color: var(--brand-danger-hover);
-      color: var(--brand-danger-hover);
-    }
-
-    /* === 圖標按鈕 - Icon Buttons === */
-    .btn-icon-action {
-      width: var(--btn-height-md);
-      height: var(--btn-height-md);
-      padding: 0;
-      border-radius: var(--radius-sm);
-      background: transparent;
-      border: 1px solid var(--border-light);
-      color: var(--text-tertiary);
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s ease;
-    }
-
-    .btn-icon-action:hover {
-      background: var(--bg-hover);
-      border-color: var(--border-hover);
-      color: var(--text-primary);
-      transform: translateY(-1px);
-    }
-
-    .btn-icon-action.primary:hover {
-      background: var(--brand-primary-bg);
-      border-color: var(--brand-primary);
-      color: var(--brand-primary);
-    }
-
-    .btn-icon-action.danger:hover {
-      background: var(--brand-danger-bg);
-      border-color: var(--brand-danger);
-      color: var(--brand-danger);
+      border-radius: 6px !important;
     }
 
     /* 通知鈴 Badge 尺寸 */
@@ -3819,6 +3431,186 @@
     const { RangePicker } = DatePicker;
     dayjs.extend(dayjs_plugin_relativeTime);
     dayjs.extend(dayjs_plugin_isBetween);
+
+    // === 🚀 性能優化和通用組件 ===
+
+    // 錯誤邊界組件
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error('Error caught by boundary:', error, errorInfo);
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div style={{
+              padding: '20px',
+              textAlign: 'center',
+              background: 'rgba(255, 77, 79, 0.1)',
+              border: '1px solid rgba(255, 77, 79, 0.3)',
+              borderRadius: '8px',
+              margin: '20px'
+            }}>
+              <Title level={4} style={{ color: '#ff4d4f', marginBottom: '16px' }}>
+                🚨 發生錯誤
+              </Title>
+              <Text type="secondary" style={{ display: 'block', marginBottom: '16px' }}>
+                應用程式遇到了一些問題，請刷新頁面重試。
+              </Text>
+              <Button onClick={() => window.location.reload()}>
+                刷新頁面
+              </Button>
+            </div>
+          );
+        }
+
+        return this.props.children;
+      }
+    }
+
+    // 自定義 Hook: 表格數據管理
+    const useTableData = (initialData = [], options = {}) => {
+      const [data, setData] = useState(initialData);
+      const [loading, setLoading] = useState(false);
+      const [selectedKeys, setSelectedKeys] = useState([]);
+
+      const updateData = useCallback((newData) => {
+        setData(newData);
+      }, []);
+
+      const addItem = useCallback((item) => {
+        setData(prev => [...prev, { ...item, key: item.key || `key_${Date.now()}` }]);
+      }, []);
+
+      const removeItems = useCallback((keys) => {
+        setData(prev => prev.filter(item => !keys.includes(item.key)));
+      }, []);
+
+      const clearSelection = useCallback(() => {
+        setSelectedKeys([]);
+      }, []);
+
+      return {
+        data,
+        loading,
+        selectedKeys,
+        setLoading,
+        updateData,
+        addItem,
+        removeItems,
+        setSelectedKeys,
+        clearSelection
+      };
+    };
+
+    // 自定義 Hook: 搜尋和篩選
+    const useSearchFilter = (data, searchFields = []) => {
+      const [searchText, setSearchText] = useState('');
+      const [filters, setFilters] = useState({});
+      const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+      const filteredData = useMemo(() => {
+        let result = data;
+
+        // 文字搜尋
+        if (searchText && searchFields.length > 0) {
+          result = result.filter(item =>
+            searchFields.some(field => {
+              const value = item[field];
+              return value && value.toString().toLowerCase().includes(searchText.toLowerCase());
+            })
+          );
+        }
+
+        // 條件篩選
+        Object.entries(filters).forEach(([key, value]) => {
+          if (value && value.length > 0) {
+            result = result.filter(item => {
+              const itemValue = item[key];
+              return Array.isArray(value) ? value.includes(itemValue) : itemValue === value;
+            });
+          }
+        });
+
+        return result;
+      }, [data, searchText, filters, searchFields]);
+
+      const applyFilter = useCallback((newFilters) => {
+        setFilters(newFilters);
+        setIsFilterOpen(false);
+      }, []);
+
+      const clearFilters = useCallback(() => {
+        setFilters({});
+        setSearchText('');
+      }, []);
+
+      return {
+        searchText,
+        setSearchText,
+        filters,
+        isFilterOpen,
+        setIsFilterOpen,
+        filteredData,
+        applyFilter,
+        clearFilters
+      };
+    };
+
+    // 通用表格組件 - 使用 React.memo 優化性能
+    const OptimizedTable = React.memo(({
+      dataSource,
+      columns,
+      loading,
+      rowKey = 'key',
+      pagination,
+      onRowSelectionChange,
+      scroll,
+      size = 'small',
+      className = 'transparent-bg'
+    }) => {
+      const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
+      const rowSelection = useMemo(() => onRowSelectionChange ? {
+        selectedRowKeys,
+        onChange: (keys) => {
+          setSelectedRowKeys(keys);
+          onRowSelectionChange(keys);
+        },
+        columnWidth: 32
+      } : undefined, [selectedRowKeys, onRowSelectionChange]);
+
+      const defaultPagination = useMemo(() => ({
+        position: ['bottomRight'],
+        showSizeChanger: true,
+        showQuickJumper: true,
+        size: 'small',
+        ...pagination
+      }), [pagination]);
+
+      return (
+        <Table
+          rowSelection={rowSelection}
+          columns={columns}
+          dataSource={dataSource}
+          rowKey={rowKey}
+          loading={loading}
+          pagination={defaultPagination}
+          scroll={scroll || { x: 'max-content' }}
+          size={size}
+          className={className}
+        />
+      );
+    });
 
     // --- Custom Hook for localStorage ---
     const useLocalStorageState = (key, defaultValue) => {
@@ -4877,190 +4669,22 @@
       };
 
       const initialData = [
-        // === 核心資料庫集群 - Core Database Cluster ===
+        { key: 'host_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'], trend: generateTrend(), alarms: [] },
+        { key: 'host_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'], trend: generateTrend(), alarms: [{ severity: 'warning', summary: 'Disk space is over 85%' }] },
+        { key: 'host_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'], trend: generateTrend(), alarms: [{ severity: 'critical', summary: 'API latency > 2s' }, { severity: 'warning', summary: '5xx error rate > 5%' }] },
+        { key: 'host_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'], trend: generateTrend(), alarms: [] },
         {
-          key: 'r_1',
-          name: 'postgres-primary-01',
-          type: 'database',
-          status: 'healthy',
-          ip_address: '10.100.1.10',
-          groups: ['g_database'],
-          tags: ['production', 'postgresql', 'primary', 'high-priority', 'finance-system', 'team-backend', 'owner:david.chen', 'backup-policy:daily'],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_2',
-          name: 'postgres-replica-01',
-          type: 'database',
-          status: 'healthy',
-          ip_address: '10.100.1.11',
-          groups: ['g_database'],
-          tags: ['production', 'postgresql', 'replica', 'read-only', 'finance-system', 'team-backend'],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_3',
-          name: 'redis-cluster-master',
-          type: 'cache',
-          status: 'warning',
-          ip_address: '10.100.1.20',
-          groups: ['g_cache'],
-          tags: ['production', 'redis', 'master', 'session-store', 'team-platform', 'owner:sarah.liu'],
-          trend: generateTrend(),
-          alarms: [{ severity: 'warning', summary: 'Memory usage over 80%' }]
-        },
-
-        // === Web 前端集群 - Frontend Web Cluster ===
-        {
-          key: 'r_4',
-          name: 'nginx-lb-prod-01',
-          type: 'gateway',
-          status: 'healthy',
-          ip_address: '10.100.2.10',
-          groups: ['g_frontend'],
-          tags: ['production', 'nginx', 'load-balancer', 'public-facing', 'team-devops', 'owner:mike.wang'],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_5',
-          name: 'web-app-prod-01',
+          key: 'host_5',
+          name: 'k8s-master-node-01',
           type: 'server',
           status: 'healthy',
-          ip_address: '10.100.2.21',
-          groups: ['g_frontend'],
-          tags: ['production', 'nodejs', 'web-server', 'react-app', 'team-frontend', 'owner:emily.zhang'],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_6',
-          name: 'web-app-prod-02',
-          type: 'server',
-          status: 'critical',
-          ip_address: '10.100.2.22',
-          groups: ['g_frontend'],
-          tags: ['production', 'nodejs', 'web-server', 'react-app', 'team-frontend'],
-          trend: generateTrend(),
-          alarms: [
-            { severity: 'critical', summary: 'CPU usage > 95% for 10 minutes' },
-            { severity: 'warning', summary: 'Memory usage > 85%' }
-          ]
-        },
-
-        // === API 服務集群 - API Services Cluster ===
-        {
-          key: 'r_7',
-          name: 'api-gateway-prod',
-          type: 'gateway',
-          status: 'warning',
-          ip_address: '10.100.3.10',
-          groups: ['g_api'],
-          tags: ['production', 'kong', 'api-gateway', 'microservices', 'team-platform', 'owner:alex.kim'],
-          trend: generateTrend(),
-          alarms: [{ severity: 'warning', summary: 'API latency P95 > 500ms' }]
-        },
-        {
-          key: 'r_8',
-          name: 'user-service-prod-01',
-          type: 'server',
-          status: 'healthy',
-          ip_address: '10.100.3.21',
-          groups: ['g_api'],
-          tags: ['production', 'java', 'spring-boot', 'user-management', 'team-backend', 'owner:jason.liu'],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_9',
-          name: 'payment-service-prod-01',
-          type: 'server',
-          status: 'healthy',
-          ip_address: '10.100.3.31',
-          groups: ['g_api'],
-          tags: ['production', 'java', 'spring-boot', 'payment', 'finance-critical', 'team-fintech', 'owner:lisa.wu'],
-          trend: generateTrend(),
-          alarms: []
-        },
-
-        // === Kubernetes 集群 - K8s Infrastructure ===
-        {
-          key: 'r_10',
-          name: 'k8s-master-01',
-          type: 'server',
-          status: 'healthy',
-          ip_address: '10.100.4.10',
-          groups: ['g_k8s'],
+          ip_address: '10.0.1.5',
+          groups: ['g_2', 'g_3'],
           tags: [
-            'production', 'kubernetes', 'master', 'control-plane', 'cluster-critical',
-            'team-devops', 'owner:tom.chen', 'data-center:us-west-2a',
-            'os:ubuntu-22.04', 'instance-type:c5.2xlarge', 'backup-policy:daily'
+            'production', 'kubernetes', 'control-plane', 'high-availability', 'cluster-critical',
+            'team-alpha', 'owner:JohnDoe', 'cost-center:12345', 'data-center:us-east-1a',
+            'os:ubuntu-22.04', 'instance-type:m5.xlarge', 'backup-policy:daily'
           ],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_11',
-          name: 'k8s-worker-01',
-          type: 'server',
-          status: 'healthy',
-          ip_address: '10.100.4.21',
-          groups: ['g_k8s'],
-          tags: [
-            'production', 'kubernetes', 'worker', 'compute-node', 'container-runtime',
-            'team-devops', 'data-center:us-west-2a', 'os:ubuntu-22.04', 'instance-type:m5.4xlarge'
-          ],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_12',
-          name: 'k8s-worker-02',
-          type: 'server',
-          status: 'warning',
-          ip_address: '10.100.4.22',
-          groups: ['g_k8s'],
-          tags: [
-            'production', 'kubernetes', 'worker', 'compute-node', 'container-runtime',
-            'team-devops', 'data-center:us-west-2b', 'os:ubuntu-22.04', 'instance-type:m5.4xlarge'
-          ],
-          trend: generateTrend(),
-          alarms: [{ severity: 'warning', summary: 'Node disk usage > 85%' }]
-        },
-
-        // === 監控和日誌系統 - Monitoring & Logging ===
-        {
-          key: 'r_13',
-          name: 'prometheus-server-01',
-          type: 'server',
-          status: 'healthy',
-          ip_address: '10.100.5.10',
-          groups: ['g_monitoring'],
-          tags: ['production', 'prometheus', 'monitoring', 'metrics', 'team-devops', 'owner:kevin.park'],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_14',
-          name: 'elasticsearch-01',
-          type: 'database',
-          status: 'healthy',
-          ip_address: '10.100.5.20',
-          groups: ['g_logging'],
-          tags: ['production', 'elasticsearch', 'logging', 'search-engine', 'team-devops', 'owner:jenny.lee'],
-          trend: generateTrend(),
-          alarms: []
-        },
-        {
-          key: 'r_15',
-          name: 'kibana-dashboard-01',
-          type: 'server',
-          status: 'healthy',
-          ip_address: '10.100.5.30',
-          groups: ['g_logging'],
-          tags: ['production', 'kibana', 'dashboard', 'visualization', 'team-devops'],
           trend: generateTrend(),
           alarms: []
         }
@@ -5435,6 +5059,75 @@
         }, 1500);
       };
 
+      // 篩選狀態
+      const [filterStatus, setFilterStatus] = useState([]);
+      const [filterType, setFilterType] = useState([]);
+      const [filterResourceName, setFilterResourceName] = useState('');
+      const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+      // 篩選應用函數
+      const applyFilters = () => {
+        setIsFilterOpen(false);
+        // 篩選邏輯會在渲染時應用
+      };
+
+      // 重置篩選
+      const resetFilters = () => {
+        setFilterStatus([]);
+        setFilterType([]);
+        setFilterResourceName('');
+        setIsFilterOpen(false);
+      };
+
+      // 篩選組件
+      const ResourceFilterPopover = () => (
+        <div style={{ width: 300, padding: '16px' }}>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '8px', fontWeight: 500 }}>狀態</div>
+            <Select
+              mode="multiple"
+              placeholder="選擇狀態"
+              value={filterStatus}
+              onChange={setFilterStatus}
+              style={{ width: '100%' }}
+              options={[
+                { value: 'healthy', label: 'Healthy' },
+                { value: 'warning', label: 'Warning' },
+                { value: 'critical', label: 'Critical' }
+              ]}
+            />
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '8px', fontWeight: 500 }}>類型</div>
+            <Select
+              mode="multiple"
+              placeholder="選擇類型"
+              value={filterType}
+              onChange={setFilterType}
+              style={{ width: '100%' }}
+              options={[
+                { value: 'database', label: 'Database' },
+                { value: 'server', label: 'Server' },
+                { value: 'gateway', label: 'Gateway' },
+                { value: 'cache', label: 'Cache' }
+              ]}
+            />
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '8px', fontWeight: 500 }}>資源名稱</div>
+            <Input
+              placeholder="輸入資源名稱"
+              value={filterResourceName}
+              onChange={e => setFilterResourceName(e.target.value)}
+            />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+            <Button onClick={resetFilters} style={{ flex: 1 }}>重置</Button>
+            <Button type="primary" onClick={applyFilters} style={{ flex: 1 }}>應用</Button>
+          </div>
+        </div>
+      );
+
       // AttentionRequiredList 已移至 ResourceOverviewPage
       // const AttentionRequiredList = ...
 
@@ -5446,16 +5139,16 @@
 
       // 資源群組數據（與 ResourceGroupsPage 保持一致）
       const groups = [
-        { key: 'g_1', name: 'Production Database', description: '所有生產環境的資料庫', responsibleTeam: 't_1', members: ['r_1'] },
-        { key: 'g_2', name: 'Production Web Servers', description: '所有生產環境的 Web 伺服器', responsibleTeam: 't_2', members: ['r_2'] },
-        { key: 'g_3', name: 'Staging Environment', description: '測試環境所有資源', responsibleTeam: 't_3', members: ['r_3', 'r_4'] },
+        { key: 'g_1', name: 'Production Database', description: '所有生產環境的資料庫', responsibleTeam: 'team_1', members: ['host_1'] },
+        { key: 'g_2', name: 'Production Web Servers', description: '所有生產環境的 Web 伺服器', responsibleTeam: 'team_2', members: ['host_2'] },
+        { key: 'g_3', name: 'Staging Environment', description: '測試環境所有資源', responsibleTeam: 'team_3', members: ['host_3', 'host_4'] },
       ];
 
       // 團隊數據
       const teams = [
-        { key: 't_1', name: '資料庫團隊' },
-        { key: 't_2', name: 'Web 開發團隊' },
-        { key: 't_3', name: '測試團隊' },
+        { key: 'team_1', name: '資料庫團隊' },
+        { key: 'team_2', name: 'Web 開發團隊' },
+        { key: 'team_3', name: '測試團隊' },
       ];
       // 生成趨勢數據
       const generateTrend = () => {
@@ -5479,10 +5172,10 @@
       };
 
       const initialData = [
-        { key: 'r_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'], trend: generateTrend(), alarms: [] },
-        { key: 'r_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'], trend: generateTrend(), alarms: [{ severity: 'warning', summary: 'Disk space is over 85%' }] },
-        { key: 'r_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'], trend: generateTrend(), alarms: [{ severity: 'critical', summary: 'API latency > 2s' }, { severity: 'warning', summary: '5xx error rate > 5%' }] },
-        { key: 'r_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'], trend: generateTrend(), alarms: [] },
+        { key: 'host_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'], trend: generateTrend(), alarms: [] },
+        { key: 'host_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'], trend: generateTrend(), alarms: [{ severity: 'warning', summary: 'Disk space is over 85%' }] },
+        { key: 'host_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'], trend: generateTrend(), alarms: [{ severity: 'critical', summary: 'API latency > 2s' }, { severity: 'warning', summary: '5xx error rate > 5%' }] },
+        { key: 'host_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'], trend: generateTrend(), alarms: [] },
       ];
 
       const [resources, setResources] = useLocalStorageState('sre-resources-v3', initialData);
@@ -5497,6 +5190,20 @@
       const [form] = Form.useForm();
       const { message, modal } = antd.App.useApp();
       const confirmDelete = useDeleteConfirm();
+
+      // Column settings state
+      const defaultVisibleColumns = {
+        status: true,
+        name: true,
+        ip_address: true,
+        team: true,
+        type: true,
+        tags: true,
+        alarms: true,
+        action: true
+      };
+      const [visibleColumns, setVisibleColumns] = useLocalStorageState('sre-resource-columns', defaultVisibleColumns);
+      const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
       // 當搜尋文字改變時清除高亮狀態
       useEffect(() => {
@@ -5538,7 +5245,7 @@
         setSelectedRowKeys(newSelectedRowKeys);
       };
 
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       const handleBatchDelete = () => {
@@ -5600,27 +5307,36 @@
         }]
       });
 
-      const columns = [
-        {
+      // Define all possible columns
+      const allColumns = {
+        status: {
           title: '狀態',
           dataIndex: 'status',
           width: '8%',
-          filters: [
-            { text: 'Healthy', value: 'healthy' },
-            { text: 'Warning', value: 'warning' },
-            { text: 'Critical', value: 'critical' }
-          ],
-          onFilter: (value, record) => record.status && record.status.indexOf(value) === 0,
           render: (status) => (
             <span className={`status-badge status-${status || 'unknown'}`}>
               {status ? status.toUpperCase() : 'UNKNOWN'}
             </span>
           )
         },
-        { title: '資源名稱', dataIndex: 'name', width: '25%', sorter: (a, b) => a.name.localeCompare(b.name), render: text => <a>{text}</a> },
-        { title: 'IP位址', dataIndex: 'ip_address', width: '18%', sorter: (a, b) => a.ip_address.localeCompare(b.ip_address) },
-        {
-          title: '所屬團隊', key: 'team', width: '12%', render: (_, record) => {
+        name: {
+          title: '資源名稱',
+          dataIndex: 'name',
+          width: '25%',
+          sorter: (a, b) => a.name.localeCompare(b.name),
+          render: text => <a>{text}</a>
+        },
+        ip_address: {
+          title: 'IP位址',
+          dataIndex: 'ip_address',
+          width: '18%',
+          sorter: (a, b) => a.ip_address.localeCompare(b.ip_address)
+        },
+        team: {
+          title: '所屬團隊',
+          key: 'team',
+          width: '12%',
+          render: (_, record) => {
             const group = groups.find(g => g.members && g.members.includes(record.key));
             if (group && group.responsibleTeam) {
               const team = teams.find(t => t.key === group.responsibleTeam);
@@ -5629,8 +5345,12 @@
             return '-';
           }
         },
-        { title: '類型', dataIndex: 'type', width: '10%', filters: [{ text: 'Database', value: 'database' }, { text: 'Server', value: 'server' }, { text: 'Gateway', value: 'gateway' }, { text: 'Cache', value: 'cache' },], onFilter: (value, record) => record.type.indexOf(value) === 0 },
-        {
+        type: {
+          title: '類型',
+          dataIndex: 'type',
+          width: '10%'
+        },
+        tags: {
           title: '標籤',
           dataIndex: 'tags',
           key: 'tags',
@@ -5663,7 +5383,7 @@
             </Space>
           )
         },
-        {
+        alarms: {
           title: '即時告警',
           dataIndex: 'alarms',
           width: '10%',
@@ -5697,12 +5417,12 @@
             );
           }
         },
-        {
-          title: '操作', key: 'action', width: '10%', render: (_, record) => (
+        action: {
+          title: '操作',
+          key: 'action',
+          width: '10%',
+          render: (_, record) => (
             <Space size="small">
-              <Tooltip title="測試規則">
-                <Button type="text" icon={<PlayCircleOutlined />} onClick={() => handleTestRule(record)} />
-              </Tooltip>
               <Tooltip title="編輯">
                 <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
               </Tooltip>
@@ -5712,7 +5432,12 @@
             </Space>
           )
         }
-      ];
+      };
+
+      // Generate dynamic columns based on visible settings
+      const columns = Object.keys(allColumns)
+        .filter(key => visibleColumns[key])
+        .map(key => allColumns[key]);
       // 應用預篩選和搜尋篩選
       let filteredResources = resources;
 
@@ -5734,6 +5459,19 @@
               res.tags.some(tag => tag.toLowerCase().includes(searchText.toLowerCase())) :
               Object.keys(res.tags).some(key => key.toLowerCase().includes(searchText.toLowerCase()) || res.tags[key].toLowerCase().includes(searchText.toLowerCase()))
           ))
+        );
+      }
+
+      // 進階篩選邏輯
+      if (filterStatus.length > 0) {
+        filteredResources = filteredResources.filter(res => filterStatus.includes(res.status));
+      }
+      if (filterType.length > 0) {
+        filteredResources = filteredResources.filter(res => filterType.includes(res.type));
+      }
+      if (filterResourceName) {
+        filteredResources = filteredResources.filter(res =>
+          res.name.toLowerCase().includes(filterResourceName.toLowerCase())
         );
       }
 
@@ -5864,10 +5602,59 @@
                   style={{ width: 300 }}
                   allowClear
                 />
-                <Button className="toolbar-btn" icon={<FilterOutlined />}>篩選</Button>
+                <Popover
+                  content={<ResourceFilterPopover />}
+                  title="篩選條件"
+                  trigger="click"
+                  open={isFilterOpen}
+                  onOpenChange={setIsFilterOpen}
+                  placement="bottomLeft"
+                >
+                  <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                    篩選
+                    <Badge count={filterStatus.length + filterType.length + (filterResourceName ? 1 : 0)} style={{ marginLeft: 8 }} />
+                  </Button>
+                </Popover>
               </Space>
               <Space>
                 <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+                <Popover
+                  content={
+                    <div style={{ width: '200px' }}>
+                      <div style={{ marginBottom: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)' }}>
+                        欄位顯示設定
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {Object.keys(allColumns).map(key => (
+                          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Checkbox
+                              checked={visibleColumns[key]}
+                              onChange={(e) => setVisibleColumns(prev => ({ ...prev, [key]: e.target.checked }))}
+                              style={{ marginRight: '8px' }}
+                            />
+                            <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px' }}>
+                              {allColumns[key].title}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  }
+                  title={null}
+                  trigger="click"
+                  open={isColumnSettingsOpen}
+                  onOpenChange={setIsColumnSettingsOpen}
+                  placement="bottomRight"
+                  overlayStyle={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    backdropFilter: 'blur(8px)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}
+                >
+                  <Button className="toolbar-btn" icon={<EyeOutlined />}>
+                    欄位設定
+                  </Button>
+                </Popover>
                 <Button className="toolbar-btn" icon={<SearchOutlined />} onClick={handleOpenScanModal}>掃描網路</Button>
                 <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增資源</Button>
               </Space>
@@ -5969,7 +5756,7 @@
       const allResourcesData = [
         // 生產資料庫集群
         {
-          key: 'r_1',
+          key: 'host_1',
           name: 'mysql-prod-master-01',
           type: 'database',
           status: 'healthy',
@@ -5986,7 +5773,7 @@
           last_check: dayjs().subtract(2, 'minute')
         },
         {
-          key: 'r_2',
+          key: 'host_2',
           name: 'mysql-prod-slave-01',
           type: 'database',
           status: 'healthy',
@@ -6004,7 +5791,7 @@
         },
         // 生產Web服務器集群
         {
-          key: 'r_3',
+          key: 'host_3',
           name: 'web-prod-frontend-01',
           type: 'server',
           status: 'warning',
@@ -6021,7 +5808,7 @@
           last_check: dayjs().subtract(1, 'minute')
         },
         {
-          key: 'r_4',
+          key: 'host_4',
           name: 'web-prod-backend-01',
           type: 'server',
           status: 'healthy',
@@ -6039,7 +5826,7 @@
         },
         // API 閘道和負載平衡
         {
-          key: 'r_5',
+          key: 'host_5',
           name: 'api-gateway-prod-01',
           type: 'gateway',
           status: 'critical',
@@ -6056,7 +5843,7 @@
           last_check: dayjs().subtract(30, 'second')
         },
         {
-          key: 'r_6',
+          key: 'host_6',
           name: 'load-balancer-prod-01',
           type: 'load_balancer',
           status: 'healthy',
@@ -6074,7 +5861,7 @@
         },
         // 快取服務
         {
-          key: 'r_7',
+          key: 'host_7',
           name: 'redis-prod-cluster-01',
           type: 'cache',
           status: 'healthy',
@@ -6092,7 +5879,7 @@
         },
         // 監控系統
         {
-          key: 'r_8',
+          key: 'host_8',
           name: 'prometheus-prod-01',
           type: 'monitoring',
           status: 'healthy',
@@ -6109,7 +5896,7 @@
           last_check: dayjs().subtract(1, 'minute')
         },
         {
-          key: 'r_9',
+          key: 'host_9',
           name: 'grafana-prod-01',
           type: 'monitoring',
           status: 'healthy',
@@ -6127,7 +5914,7 @@
         },
         // 測試環境
         {
-          key: 'r_10',
+          key: 'host_10',
           name: 'web-staging-frontend-01',
           type: 'server',
           status: 'healthy',
@@ -6144,7 +5931,7 @@
           last_check: dayjs().subtract(5, 'minute')
         },
         {
-          key: 'r_11',
+          key: 'host_11',
           name: 'mysql-staging-01',
           type: 'database',
           status: 'healthy',
@@ -6162,7 +5949,7 @@
         },
         // 開發和CI/CD工具
         {
-          key: 'r_12',
+          key: 'host_12',
           name: 'jenkins-cicd-01',
           type: 'ci_cd',
           status: 'healthy',
@@ -6179,7 +5966,7 @@
           last_check: dayjs().subtract(3, 'minute')
         },
         {
-          key: 'r_13',
+          key: 'host_13',
           name: 'gitlab-dev-01',
           type: 'development',
           status: 'healthy',
@@ -6197,7 +5984,7 @@
         },
         // 網路基礎設施
         {
-          key: 'r_14',
+          key: 'host_14',
           name: 'core-switch-dc1-01',
           type: 'network',
           status: 'healthy',
@@ -6215,7 +6002,7 @@
         },
         // 安全相關
         {
-          key: 'r_15',
+          key: 'host_15',
           name: 'waf-prod-01',
           type: 'security',
           status: 'healthy',
@@ -6234,89 +6021,26 @@
       ];
 
       const initialGroups = [
-        // === 資料庫集群群組 ===
-        {
-          key: 'g_database',
-          name: 'Database Cluster',
-          description: '生產環境核心資料庫集群，包含主從資料庫和快取系統',
-          members: ['r_1', 'r_2', 'r_3'],
-          responsibleTeam: 't_6',
-          tags: ['production', 'database', 'high-priority'],
-          createdAt: dayjs().subtract(180, 'day')
-        },
-        // === 前端服務群組 ===
-        {
-          key: 'g_frontend',
-          name: 'Frontend Web Services',
-          description: 'Web 前端應用伺服器群組，包含負載均衡器和應用伺服器',
-          members: ['r_4', 'r_5', 'r_6'],
-          responsibleTeam: 't_5',
-          tags: ['production', 'frontend', 'web'],
-          createdAt: dayjs().subtract(120, 'day')
-        },
-        // === API 服務群組 ===
-        {
-          key: 'g_api',
-          name: 'API & Microservices',
-          description: 'API 閘道器和微服務應用群組，處理核心業務邏輯',
-          members: ['r_7', 'r_8', 'r_9'],
-          responsibleTeam: 't_10',
-          tags: ['production', 'api', 'microservices'],
-          createdAt: dayjs().subtract(90, 'day')
-        },
-        // === 快取服務群組 ===
-        {
-          key: 'g_cache',
-          name: 'Cache Services',
-          description: 'Redis 快取集群，提供高速資料存取',
-          members: ['r_3'],
-          responsibleTeam: 't_9',
-          tags: ['production', 'cache', 'redis'],
-          createdAt: dayjs().subtract(150, 'day')
-        },
-        // === Kubernetes 群組 ===
-        {
-          key: 'g_k8s',
-          name: 'Kubernetes Infrastructure',
-          description: 'Kubernetes 集群基礎設施，包含主節點和工作節點',
-          members: ['r_10', 'r_11', 'r_12'],
-          responsibleTeam: 't_5',
-          tags: ['production', 'kubernetes', 'infrastructure'],
-          createdAt: dayjs().subtract(60, 'day')
-        },
-        // === 監控系統群組 ===
-        {
-          key: 'g_monitoring',
-          name: 'Monitoring & Observability',
-          description: '監控和可觀測性系統，包含指標收集和告警',
-          members: ['r_13'],
-          responsibleTeam: 't_9',
-          tags: ['production', 'monitoring', 'prometheus'],
-          createdAt: dayjs().subtract(75, 'day')
-        },
-        // === 日誌系統群組 ===
-        {
-          key: 'g_logging',
-          name: 'Logging & Analytics',
-          description: 'ELK 日誌處理和分析系統',
-          members: ['r_14', 'r_15'],
-          responsibleTeam: 't_9',
-          tags: ['production', 'logging', 'elasticsearch'],
-          createdAt: dayjs().subtract(45, 'day')
-        }
+        { key: 'g_1', name: 'Production Database', description: '所有生產環境的資料庫', members: ['host_1'], responsibleTeam: 'team_6' },
+        { key: 'g_2', name: 'Production Web Servers', description: '所有生產環境的 Web 伺服器', members: ['host_2'], responsibleTeam: 'team_5' },
+        { key: 'g_3', name: 'Staging Environment', description: '測試環境所有資源', members: ['host_5', 'host_6'], responsibleTeam: 'team_1' },
+        { key: 'g_4', name: 'Network Infrastructure', description: '網路基礎設施資源', members: ['host_3', 'host_7'], responsibleTeam: 'team_7' },
+        { key: 'g_5', name: 'Monitoring Systems', description: '監控系統與告警資源', members: ['host_4', 'host_8', 'host_9'], responsibleTeam: 'team_9' },
+        { key: 'g_6', name: 'Security Resources', description: '安全相關的資源與工具', members: [], responsibleTeam: 'team_8' },
+        { key: 'g_7', name: 'Development Tools', description: '開發環境與工具資源', members: ['host_10', 'host_11'], responsibleTeam: 'team_10' },
       ];
 
       const initialTeams = [
-        { key: 't_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_devops'], createdAt: dayjs().subtract(60, 'day'), owner: 'u_2' },
-        { key: 't_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['u_3'], subscribers: ['u_2'], createdAt: dayjs().subtract(45, 'day'), owner: 'u_1' },
-        { key: 't_3', name: 'Administrators', description: '平台最高權限管理者', members: ['u_1', 'u_4'], subscribers: ['u_1', 'slack_network', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(90, 'day'), owner: 'u_1' },
-        { key: 't_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['u_3', 'email_ops'], createdAt: dayjs().subtract(20, 'day'), owner: 'u_1' },
-        { key: 't_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_devops'], createdAt: dayjs().subtract(30, 'day'), owner: 'u_2' },
-        { key: 't_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['u_1'], subscribers: ['u_1', 'slack_database'], createdAt: dayjs().subtract(40, 'day'), owner: 'u_1' },
-        { key: 't_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['u_3'], subscribers: ['u_3', 'slack_network'], createdAt: dayjs().subtract(50, 'day'), owner: 'u_3' },
-        { key: 't_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['u_4'], subscribers: ['u_4', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(35, 'day'), owner: 'u_4' },
-        { key: 't_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['u_1', 'u_2', 'u_3'], subscribers: ['u_1', 'slack_operations'], createdAt: dayjs().subtract(25, 'day'), owner: 'u_1' },
-        { key: 't_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_platform'], createdAt: dayjs().subtract(15, 'day'), owner: 'u_2' },
+        { key: 'team_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], createdAt: dayjs().subtract(60, 'day'), owner: 'user_2' },
+        { key: 'team_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['user_3'], subscribers: ['user_2'], createdAt: dayjs().subtract(45, 'day'), owner: 'user_1' },
+        { key: 'team_3', name: 'Administrators', description: '平台最高權限管理者', members: ['user_1', 'user_4'], subscribers: ['user_1', 'slack_network', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(90, 'day'), owner: 'user_1' },
+        { key: 'team_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['user_3', 'email_ops'], createdAt: dayjs().subtract(20, 'day'), owner: 'user_1' },
+        { key: 'team_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], createdAt: dayjs().subtract(30, 'day'), owner: 'user_2' },
+        { key: 'team_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['user_1'], subscribers: ['user_1', 'slack_database'], createdAt: dayjs().subtract(40, 'day'), owner: 'user_1' },
+        { key: 'team_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['user_3'], subscribers: ['user_3', 'slack_network'], createdAt: dayjs().subtract(50, 'day'), owner: 'user_3' },
+        { key: 'team_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['user_4'], subscribers: ['user_4', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(35, 'day'), owner: 'user_4' },
+        { key: 'team_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['user_1', 'user_2', 'user_3'], subscribers: ['user_1', 'slack_operations'], createdAt: dayjs().subtract(25, 'day'), owner: 'user_1' },
+        { key: 'team_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_platform'], createdAt: dayjs().subtract(15, 'day'), owner: 'user_2' },
       ];
 
       const [groups, setGroups] = useLocalStorageState('sre-groups', initialGroups);
@@ -6330,6 +6054,18 @@
       const [groupForm] = Form.useForm();
       const { message, modal } = antd.App.useApp();
       const confirmDelete = useDeleteConfirm();
+
+      // Column settings state
+      const defaultVisibleColumns = {
+        name: true,
+        description: true,
+        responsibleTeam: true,
+        members: true,
+        status: true,
+        action: true
+      };
+      const [visibleColumns, setVisibleColumns] = useLocalStorageState('sre-resource-group-columns', defaultVisibleColumns);
+      const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
       const getStatusSummary = (memberKeys) => {
         const summary = { healthy: 0, warning: 0, critical: 0 };
@@ -6399,13 +6135,36 @@
         return team ? team.name : teamKey;
       };
 
-      const columns = [
-        { title: '群組名稱', dataIndex: 'name', width: '20%', sorter: (a, b) => a.name.localeCompare(b.name) },
-        { title: '描述', dataIndex: 'description', width: '20%' },
-        { title: '負責團隊', dataIndex: 'responsibleTeam', width: '15%', render: responsibleTeam => getTeamName(responsibleTeam) },
-        { title: '成員數量', dataIndex: 'members', width: '10%', render: members => members.length },
-        {
-          title: '狀態', dataIndex: 'members', width: '25%', render: members => {
+      // Define all possible columns
+      const allColumns = {
+        name: {
+          title: '群組名稱',
+          dataIndex: 'name',
+          width: '20%',
+          sorter: (a, b) => a.name.localeCompare(b.name)
+        },
+        description: {
+          title: '描述',
+          dataIndex: 'description',
+          width: '20%'
+        },
+        responsibleTeam: {
+          title: '負責團隊',
+          dataIndex: 'responsibleTeam',
+          width: '15%',
+          render: responsibleTeam => getTeamName(responsibleTeam)
+        },
+        members: {
+          title: '成員數量',
+          dataIndex: 'members',
+          width: '10%',
+          render: members => members.length
+        },
+        status: {
+          title: '狀態',
+          dataIndex: 'members',
+          width: '25%',
+          render: members => {
             const summary = getStatusSummary(members);
             return (
               <span>
@@ -6416,15 +6175,12 @@
             );
           }
         },
-        {
-          title: '操作', key: 'action', width: '15%', render: (_, record) => (
+        action: {
+          title: '操作',
+          key: 'action',
+          width: '15%',
+          render: (_, record) => (
             <Space size="small">
-              <Tooltip title="執行" placement="top">
-                <Button type="text" icon={<PlayCircleOutlined style={{ color: '#52c41a' }} />} />
-              </Tooltip>
-              <Tooltip title="查看歷史" placement="top">
-                <Button type="text" icon={<HistoryOutlined />} onClick={() => handleViewHistory(record)} />
-              </Tooltip>
               <Tooltip title="編輯" placement="top">
                 <Button type="text" icon={<EditOutlined />} onClick={() => showGroupModal(record)} />
               </Tooltip>
@@ -6433,13 +6189,18 @@
               </Tooltip>
             </Space>
           )
-        },
-      ];
+        }
+      };
+
+      // Generate dynamic columns based on visible settings
+      const columns = Object.keys(allColumns)
+        .filter(key => visibleColumns[key])
+        .map(key => allColumns[key]);
 
       const filteredGroups = groups.filter(g => g.name.toLowerCase().includes(searchText.toLowerCase()));
 
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       return (
@@ -6466,6 +6227,43 @@
             </Space>
             <Space>
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+              <Popover
+                content={
+                  <div style={{ width: '200px' }}>
+                    <div style={{ marginBottom: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)' }}>
+                      欄位顯示設定
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {Object.keys(allColumns).map(key => (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Checkbox
+                            checked={visibleColumns[key]}
+                            onChange={(e) => setVisibleColumns(prev => ({ ...prev, [key]: e.target.checked }))}
+                            style={{ marginRight: '8px' }}
+                          />
+                          <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px' }}>
+                            {allColumns[key].title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+                title={null}
+                trigger="click"
+                open={isColumnSettingsOpen}
+                onOpenChange={setIsColumnSettingsOpen}
+                placement="bottomRight"
+                overlayStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+              >
+                <Button className="toolbar-btn" icon={<EyeOutlined />}>
+                  欄位設定
+                </Button>
+              </Popover>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showGroupModal()}>
                 新增群組
               </Button>
@@ -6714,59 +6512,126 @@
       }
 
       return (
-        <div style={{ width: 300, padding: 8 }}>
-          <Space direction="vertical" style={{ width: '100%' }} size="middle">
+        <div style={{
+          width: '320px',
+          padding: '16px',
+          maxHeight: '500px',
+          overflowY: 'auto'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <Text>時間範圍</Text>
+              <div style={{
+                marginBottom: '8px',
+                fontWeight: 600,
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '13px'
+              }}>
+                時間範圍
+              </div>
               <DatePicker.RangePicker
-                style={{ width: '100%', marginTop: 4 }}
+                style={{ width: '100%' }}
+                size="small"
                 value={filters.timeRange}
                 onChange={(dates) => setFilters(f => ({ ...f, timeRange: dates }))}
+                placeholder={['開始日期', '結束日期']}
               />
             </div>
             <div>
-              <Text>嚴重性</Text>
+              <div style={{
+                marginBottom: '8px',
+                fontWeight: 600,
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '13px'
+              }}>
+                嚴重性
+              </div>
               <Select
                 mode="multiple"
                 allowClear
-                style={{ width: '100%', marginTop: 4 }}
+                size="small"
+                style={{ width: '100%' }}
                 placeholder="選擇嚴重性"
                 value={filters.severity}
                 onChange={(value) => setFilters(f => ({ ...f, severity: value }))}
+                maxTagCount={2}
+                maxTagPlaceholder={(omittedValues) => `+${omittedValues.length}`}
               >
-                <Select.Option value="critical">Critical</Select.Option>
-                <Select.Option value="warning">Warning</Select.Option>
+                <Select.Option value="critical">
+                  <span style={{ color: '#ff4d4f' }}>🔴 Critical</span>
+                </Select.Option>
+                <Select.Option value="warning">
+                  <span style={{ color: '#faad14' }}>🟡 Warning</span>
+                </Select.Option>
               </Select>
             </div>
             <div>
-              <Text>狀態</Text>
+              <div style={{
+                marginBottom: '8px',
+                fontWeight: 600,
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '13px'
+              }}>
+                狀態
+              </div>
               <Select
                 mode="multiple"
                 allowClear
-                style={{ width: '100%', marginTop: 4 }}
+                size="small"
+                style={{ width: '100%' }}
                 placeholder="選擇狀態"
                 value={filters.status}
                 onChange={(value) => setFilters(f => ({ ...f, status: value }))}
+                maxTagCount={2}
+                maxTagPlaceholder={(omittedValues) => `+${omittedValues.length}`}
               >
-                <Select.Option value="new">New</Select.Option>
-                <Select.Option value="acknowledged">Acknowledged</Select.Option>
-                <Select.Option value="resolved">Resolved</Select.Option>
+                <Select.Option value="new">🆕 New</Select.Option>
+                <Select.Option value="acknowledged">✅ Acknowledged</Select.Option>
+                <Select.Option value="resolved">🎯 Resolved</Select.Option>
               </Select>
             </div>
             <div>
-              <Text>資源名稱</Text>
+              <div style={{
+                marginBottom: '8px',
+                fontWeight: 600,
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '13px'
+              }}>
+                資源名稱
+              </div>
               <Input
                 placeholder="輸入資源名稱"
-                style={{ marginTop: 4 }}
+                size="small"
                 value={filters.resourceName}
                 onChange={(e) => setFilters(f => ({ ...f, resourceName: e.target.value }))}
+                allowClear
               />
             </div>
-            <Space style={{ width: '100%', justifyContent: 'flex-end', paddingTop: 8, borderTop: '1px solid var(--border-light)' }}>
-              <Button onClick={resetFilters}>重設</Button>
-              <Button type="primary" onClick={handleFilter}>套用篩選</Button>
-            </Space>
-          </Space>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '8px',
+              paddingTop: '12px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <Button
+                onClick={resetFilters}
+                style={{
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderColor: 'rgba(255, 255, 255, 0.2)'
+                }}
+              >
+                重設
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleFilter}
+                style={{ flex: 1 }}
+              >
+                套用篩選
+              </Button>
+            </div>
+          </div>
         </div>
       );
     };
@@ -6774,10 +6639,10 @@
 
     const IncidentListPage = ({ onNavigate, pageParams }) => {
       const initialData = [
-        { key: 'i_1', summary: 'CPU high on db-mysql-prod-02', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'u_2', resource_name: 'db-mysql-prod-02', service: '資料庫服務', business_impact: '高', storm_group: null, ruleName: '高 CPU 使用率', triggerThreshold: 'CPU > 90%' },
+        { key: 'i_1', summary: 'CPU high on db-mysql-prod-02', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'user_2', resource_name: 'db-mysql-prod-02', service: '資料庫服務', business_impact: '高', storm_group: null, ruleName: '高 CPU 使用率', triggerThreshold: 'CPU > 90%' },
         { key: 'i_2', summary: 'Disk space low on srv-web-prod-02', severity: 'warning', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'hour'), automation_id: 'e_1', assignee: null, resource_name: 'srv-web-prod-02', service: 'Web應用', business_impact: '中', storm_group: null, ruleName: '磁碟空間不足', triggerThreshold: 'Disk < 15%' },
-        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'u_4', resource_name: 'srv-api-prod-01', service: 'API閘道', business_impact: '高', storm_group: null, ruleName: 'API 延遲過高', triggerThreshold: 'P95 Latency > 500ms' },
-        { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'u_1', resource_name: 'mon-prometheus-prod-01', service: '監控系統', business_impact: '中', storm_group: null, ruleName: '基礎設施監控', triggerThreshold: 'Pod is not ready' },
+        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'user_4', resource_name: 'srv-api-prod-01', service: 'API閘道', business_impact: '高', storm_group: null, ruleName: 'API 延遲過高', triggerThreshold: 'P95 Latency > 500ms' },
+        { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'user_1', resource_name: 'mon-prometheus-prod-01', service: '監控系統', business_impact: '中', storm_group: null, ruleName: '基礎設施監控', triggerThreshold: 'Pod is not ready' },
         { key: 'i_5', summary: '記憶體使用率過高 - staging', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(15, 'minutes'), automation_id: null, assignee: null, resource_name: 'srv-web-stg-01', service: 'Web應用', business_impact: '低', storm_group: null, ruleName: '測試環境資源監控', triggerThreshold: 'Memory > 80%' },
         { key: 'i_6', summary: 'Cache Redis Memory Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(30, 'minutes'), automation_id: null, assignee: null, resource_name: 'cache-redis-prod-01', service: '快取服務', business_impact: '高', storm_group: null, ruleName: '快取服務監控', triggerThreshold: 'Memory > 95%' },
         { key: 'i_7', summary: 'Web Server 503 Errors', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'srv-web-prod-01', service: 'Web應用', business_impact: '高', storm_group: 'storm_1', ruleName: 'Web 服務可用性', triggerThreshold: '5xx errors > 5%' },
@@ -6930,30 +6795,19 @@
           dataIndex: 'severity',
           width: '8%',
           sorter: (a, b) => a.severity.localeCompare(b.severity),
-          filters: [
-            { text: 'Critical', value: 'critical' },
-            { text: 'Warning', value: 'warning' }
-          ],
-          onFilter: (v, r) => r.severity && r.severity.includes(v),
           render: (severity) => (
             <span className={`status-badge status-${severity}`}>
               {severity ? severity.toUpperCase() : 'UNKNOWN'}
             </span>
           )
         },
-        summary: { title: '摘要', dataIndex: 'summary', width: '18%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
+        summary: { title: '摘要', dataIndex: 'summary', width: '18%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)} style={{ color: '#1890ff', textDecoration: 'none', cursor: 'pointer' }} onMouseEnter={(e) => e.target.style.textDecoration = 'underline'} onMouseLeave={(e) => e.target.style.textDecoration = 'none'}>{text}</a> },
         resource_name: { title: '資源名稱', dataIndex: 'resource_name', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
         business_impact: {
           title: '業務影響',
           dataIndex: 'business_impact',
           width: '10%',
           sorter: (a, b) => (a.business_impact || '').localeCompare(b.business_impact || ''),
-          filters: [
-            { text: '高', value: '高' },
-            { text: '中', value: '中' },
-            { text: '低', value: '低' },
-          ],
-          onFilter: (v, r) => r.business_impact && r.business_impact.includes(v),
           render: (impact) => {
             const color = impact === '高' ? 'red' : impact === '中' ? 'orange' : 'blue';
             return <Tag color={color}>{impact || '-'}</Tag>;
@@ -6965,13 +6819,6 @@
           title: '狀態',
           dataIndex: 'status',
           width: '8%',
-          filters: [
-            { text: 'New', value: 'new' },
-            { text: 'Acknowledged', value: 'acknowledged' },
-            { text: 'Resolved', value: 'resolved' },
-            { text: 'Silenced', value: 'silenced' }
-          ],
-          onFilter: (v, r) => r.status && r.status.includes(v),
           render: (status, record) => {
             const statusText = {
               new: 'NEW',
@@ -7021,13 +6868,6 @@
                   icon={<PauseCircleOutlined />}
                   disabled={record.status === 'resolved'}
                   onClick={() => showSilenceModal(record)}
-                />
-              </Tooltip>
-              <Tooltip title="查看詳情" placement="top">
-                <Button
-                  type="text"
-                  icon={<InfoCircleOutlined />}
-                  onClick={() => showDetailModal(record)}
                 />
               </Tooltip>
             </Space>
@@ -7081,7 +6921,7 @@
         );
       }
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       // 統計資料
@@ -7118,11 +6958,22 @@
                   setAdvancedFilters(newFilters);
                   setIsFilterOpen(false);
                 }} initialFilters={advancedFilters} />}
-                title="進階篩選"
+                title={null}
                 trigger="click"
                 open={isFilterOpen}
                 onOpenChange={setIsFilterOpen}
                 placement="bottomLeft"
+                overlayStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '8px',
+                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)'
+                }}
+                overlayInnerStyle={{
+                  padding: 0,
+                  backgroundColor: 'transparent'
+                }}
               >
                 <Button className="toolbar-btn" icon={<FilterOutlined />}>
                   篩選
@@ -7913,6 +7764,107 @@
       const { message, modal } = antd.App.useApp();
       const confirmDelete = useDeleteConfirm();
 
+      // Filter state
+      const [filters, setFilters] = useState({
+        enabled: [],
+        target: []
+      });
+      const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+      // Filter functions
+      const applyFilters = () => {
+        setIsFilterOpen(false);
+      };
+
+      const resetFilters = () => {
+        setFilters({
+          enabled: [],
+          target: []
+        });
+        setIsFilterOpen(false);
+      };
+
+      // Calculate active filters count
+      const activeFiltersCount = (filters.enabled?.length || 0) + (filters.target?.length || 0);
+
+      // Filter component
+      const AlertRulesFilterPopover = () => (
+        <div style={{ width: '300px', padding: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <div style={{
+                marginBottom: '8px',
+                fontWeight: 600,
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '13px'
+              }}>
+                啟用狀態
+              </div>
+              <Select
+                mode="multiple"
+                placeholder="選擇狀態"
+                value={filters.enabled}
+                onChange={(value) => setFilters(f => ({ ...f, enabled: value }))}
+                style={{ width: '100%' }}
+                size="small"
+                maxTagCount={2}
+              >
+                <Select.Option value={true}>✅ 已啟用</Select.Option>
+                <Select.Option value={false}>❌ 已停用</Select.Option>
+              </Select>
+            </div>
+            <div>
+              <div style={{
+                marginBottom: '8px',
+                fontWeight: 600,
+                color: 'rgba(255, 255, 255, 0.9)',
+                fontSize: '13px'
+              }}>
+                監控對象
+              </div>
+              <Select
+                mode="multiple"
+                placeholder="選擇監控對象"
+                value={filters.target}
+                onChange={(value) => setFilters(f => ({ ...f, target: value }))}
+                style={{ width: '100%' }}
+                size="small"
+                maxTagCount={2}
+              >
+                <Select.Option value="Production Web Servers">Production Web Servers</Select.Option>
+                <Select.Option value="Production Database">Production Database</Select.Option>
+                <Select.Option value="Network Infrastructure">Network Infrastructure</Select.Option>
+              </Select>
+            </div>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '8px',
+              paddingTop: '12px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <Button
+                onClick={resetFilters}
+                style={{
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderColor: 'rgba(255, 255, 255, 0.2)'
+                }}
+              >
+                重設
+              </Button>
+              <Button
+                type="primary"
+                onClick={applyFilters}
+                style={{ flex: 1 }}
+              >
+                套用篩選
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+
       useEffect(() => {
         // Simulate fetching metrics from an API
         const fetchMetrics = () => {
@@ -8172,7 +8124,73 @@
             </Space>
           )
         },
-        { title: '觸發條件', dataIndex: 'conditions', width: '20%' },
+        {
+          title: '觸發條件',
+          dataIndex: 'conditions',
+          width: '25%',
+          render: (conditions) => {
+            if (!conditions || !conditions.conditions || conditions.conditions.length === 0) {
+              return <Text type="secondary">無條件</Text>;
+            }
+
+            const { operator = 'AND', conditions: conditionList } = conditions;
+            const displayConditions = conditionList.slice(0, 2);
+            const remainingCount = conditionList.length - displayConditions.length;
+
+            return (
+              <Tooltip title={
+                <div style={{ maxWidth: '350px' }}>
+                  <div style={{ marginBottom: '8px', fontWeight: 600 }}>
+                    觸發條件 ({operator} 邏輯)：
+                  </div>
+                  {conditionList.map((condition, i) => (
+                    <div key={i} style={{ marginBottom: '6px' }}>
+                      <Tag size="small" color="green">{condition.metric}</Tag>
+                      <span style={{ margin: '0 4px', color: 'rgba(255,255,255,0.8)' }}>{condition.operator}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.9)' }}>{condition.value}</span>
+                      <span style={{ margin: '0 4px', color: 'rgba(255,255,255,0.6)' }}>
+                        ({condition.duration} {condition.durationUnit})
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              }
+                placement="topLeft"
+              >
+                <div>
+                  <Space size={[4, 4]} wrap style={{ maxWidth: '100%' }}>
+                    {displayConditions.map((condition, i) => (
+                      <Tag
+                        key={i}
+                        size="small"
+                        color="green"
+                        style={{
+                          maxWidth: '140px',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-block'
+                        }}
+                      >
+                        {`${condition.metric} ${condition.operator} ${condition.value}`}
+                      </Tag>
+                    ))}
+                    {remainingCount > 0 && (
+                      <Tag size="small" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                        +{remainingCount}
+                      </Tag>
+                    )}
+                  </Space>
+                  {conditionList.length > 1 && (
+                    <Text style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+                      {operator} 邏輯
+                    </Text>
+                  )}
+                </div>
+              </Tooltip>
+            );
+          }
+        },
         {
           title: '通知對象',
           dataIndex: 'notifications',
@@ -8199,12 +8217,25 @@
       ];
 
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
-      const filteredRules = rules.filter(rule =>
-        rule.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        (rule.target && rule.target.toLowerCase().includes(searchText.toLowerCase()))
-      );
+
+      // Apply filters and search
+      const filteredRules = rules.filter(rule => {
+        // Search filter
+        const matchesSearch = rule.name.toLowerCase().includes(searchText.toLowerCase()) ||
+          (rule.target && rule.target.toLowerCase().includes(searchText.toLowerCase()));
+
+        // Status filter
+        const matchesEnabled = filters.enabled.length === 0 ||
+          filters.enabled.includes(rule.enabled);
+
+        // Target filter
+        const matchesTarget = filters.target.length === 0 ||
+          filters.target.includes(rule.target);
+
+        return matchesSearch && matchesEnabled && matchesTarget;
+      });
 
       return (
         <React.Fragment>
@@ -8224,9 +8255,25 @@
                 style={{ width: 300 }}
                 allowClear
               />
-              <Button className="toolbar-btn" icon={<FilterOutlined />}>
-                篩選
-              </Button>
+              <Popover
+                content={<AlertRulesFilterPopover />}
+                title="篩選條件"
+                trigger="click"
+                open={isFilterOpen}
+                onOpenChange={setIsFilterOpen}
+                placement="bottomLeft"
+                overlayClassName="filter-popover-overlay"
+              >
+                <Badge count={activeFiltersCount} size="small">
+                  <Button
+                    className="toolbar-btn"
+                    icon={<FilterOutlined />}
+                    type={activeFiltersCount > 0 ? "primary" : "default"}
+                  >
+                    篩選
+                  </Button>
+                </Badge>
+              </Popover>
             </Space>
             <Space>
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
@@ -8804,29 +8851,29 @@
       ];
 
       const mockTeams = [
-        { key: 't_1', name: 'Developers', description: '負責開發與維護的核心團隊' },
-        { key: 't_2', name: 'Viewers', description: '僅有檢視權限的觀察員' },
-        { key: 't_3', name: 'Administrators', description: '平台最高權限管理者' },
-        { key: 't_4', name: 'QA Team', description: '品質保證與測試團隊' },
-        { key: 't_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊' },
-        { key: 't_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊' },
-        { key: 't_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊' },
-        { key: 't_8', name: 'Security Team', description: '負責資訊安全與合規的團隊' },
-        { key: 't_9', name: 'Operations Team', description: '負責系統運營與監控的團隊' },
-        { key: 't_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊' }
+        { key: 'team_1', name: 'Developers', description: '負責開發與維護的核心團隊' },
+        { key: 'team_2', name: 'Viewers', description: '僅有檢視權限的觀察員' },
+        { key: 'team_3', name: 'Administrators', description: '平台最高權限管理者' },
+        { key: 'team_4', name: 'QA Team', description: '品質保證與測試團隊' },
+        { key: 'team_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊' },
+        { key: 'team_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊' },
+        { key: 'team_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊' },
+        { key: 'team_8', name: 'Security Team', description: '負責資訊安全與合規的團隊' },
+        { key: 'team_9', name: 'Operations Team', description: '負責系統運營與監控的團隊' },
+        { key: 'team_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊' }
       ];
 
       const mockChannels = [
-        { key: 'c_pagerduty_db', name: 'Database Team PagerDuty', type: 'PagerDuty', team: 't_6' },
-        { key: 'c_slack_db', name: 'Database Slack Channel', type: 'Slack', team: 't_6' },
-        { key: 'c_pagerduty_ops', name: 'Operations Team PagerDuty', type: 'PagerDuty', team: 't_9' },
-        { key: 'c_slack_ops', name: 'Operations Slack Channel', type: 'Slack', team: 't_9' },
-        { key: 'c_email_devops', name: 'DevOps Email', type: 'Email', team: 't_5' },
-        { key: 'c_pagerduty_network', name: 'Network Team PagerDuty', type: 'PagerDuty', team: 't_7' },
-        { key: 'c_slack_network', name: 'Network Slack Channel', type: 'Slack', team: 't_7' },
-        { key: 'c_email_security', name: 'Security Email', type: 'Email', team: 't_8' },
-        { key: 'c_pagerduty_platform', name: 'Platform Team PagerDuty', type: 'PagerDuty', team: 't_10' },
-        { key: 'c_slack_platform', name: 'Platform Slack Channel', type: 'Slack', team: 't_10' }
+        { key: 'c_pagerduty_db', name: 'Database Team PagerDuty', type: 'PagerDuty', team: 'team_6' },
+        { key: 'c_slack_db', name: 'Database Slack Channel', type: 'Slack', team: 'team_6' },
+        { key: 'c_pagerduty_ops', name: 'Operations Team PagerDuty', type: 'PagerDuty', team: 'team_9' },
+        { key: 'c_slack_ops', name: 'Operations Slack Channel', type: 'Slack', team: 'team_9' },
+        { key: 'c_email_devops', name: 'DevOps Email', type: 'Email', team: 'team_5' },
+        { key: 'c_pagerduty_network', name: 'Network Team PagerDuty', type: 'PagerDuty', team: 'team_7' },
+        { key: 'c_slack_network', name: 'Network Slack Channel', type: 'Slack', team: 'team_7' },
+        { key: 'c_email_security', name: 'Security Email', type: 'Email', team: 'team_8' },
+        { key: 'c_pagerduty_platform', name: 'Platform Team PagerDuty', type: 'PagerDuty', team: 'team_10' },
+        { key: 'c_slack_platform', name: 'Platform Slack Channel', type: 'Slack', team: 'team_10' }
       ];
 
       const showModal = (strategy = null) => {
@@ -8863,17 +8910,17 @@
 
         // 根據資源群組自動建議團隊（模擬邏輯）
         if (resourceGroupKey === 'rg_prod_db') {
-          setSelectedTeam(mockTeams.find(t => t.key === 't_6'));
-          setSelectedChannels(mockChannels.filter(c => c.team === 't_6'));
+          setSelectedTeam(mockTeams.find(t => t.key === 'team_6'));
+          setSelectedChannels(mockChannels.filter(c => c.team === 'team_6'));
         } else if (resourceGroupKey === 'rg_prod_web') {
-          setSelectedTeam(mockTeams.find(t => t.key === 't_9'));
-          setSelectedChannels(mockChannels.filter(c => c.team === 't_9'));
+          setSelectedTeam(mockTeams.find(t => t.key === 'team_9'));
+          setSelectedChannels(mockChannels.filter(c => c.team === 'team_9'));
         } else if (resourceGroupKey === 'rg_monitoring') {
-          setSelectedTeam(mockTeams.find(t => t.key === 't_9'));
-          setSelectedChannels(mockChannels.filter(c => c.team === 't_9'));
+          setSelectedTeam(mockTeams.find(t => t.key === 'team_9'));
+          setSelectedChannels(mockChannels.filter(c => c.team === 'team_9'));
         } else {
-          setSelectedTeam(mockTeams.find(t => t.key === 't_5'));
-          setSelectedChannels(mockChannels.filter(c => c.team === 't_5'));
+          setSelectedTeam(mockTeams.find(t => t.key === 'team_5'));
+          setSelectedChannels(mockChannels.filter(c => c.team === 'team_5'));
         }
       };
 
@@ -8989,7 +9036,7 @@
       ];
 
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
       const filteredStrategies = strategies.filter(s =>
         s.name.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -9035,15 +9082,13 @@
                 dataSource={filteredStrategies}
                 rowKey="key"
                 className="transparent-bg"
-                pagination={{ pageSize: 10, position: ['bottomRight'] }}
+                pagination={{ pageSize: 10, position: ['bottomRight'], size: 'small' }}
                 size="small"
               />
             ) : (
-              <Empty description="尚無任何通知策略">
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
-                  立即新增通知策略
-                </Button>
-              </Empty>
+              <div style={{ padding: '40px 20px', textAlign: 'center' }}>
+                <Empty description="尚無任何通知策略" />
+              </div>
             )}
           </div>
 
@@ -9551,54 +9596,7 @@
         }
       ];
 
-      // Data integrity validation and repair function
-      const validateAndRepairSilenceData = (data) => {
-        if (!Array.isArray(data)) {
-          console.warn('Silence data is not an array, resetting to initial data');
-          return initialSilences;
-        }
-
-        return data.map(silence => {
-          if (!silence || typeof silence !== 'object') {
-            console.warn('Invalid silence object, skipping:', silence);
-            return null;
-          }
-
-          // Ensure matchers is always an array
-          if (!Array.isArray(silence.matchers)) {
-            console.warn('Repairing non-array matchers for silence:', silence.key);
-            silence.matchers = [];
-          }
-
-          // Validate each matcher object
-          silence.matchers = silence.matchers.filter(matcher => {
-            if (!matcher || typeof matcher !== 'object') {
-              console.warn('Removing invalid matcher:', matcher);
-              return false;
-            }
-            return true;
-          });
-
-          return silence;
-        }).filter(Boolean);
-      };
-
-      const [silences, setSilences] = useLocalStorageState('sre-silences-v2', initialSilences, {
-        serializer: {
-          read: (value) => {
-            try {
-              const parsed = JSON.parse(value);
-              return validateAndRepairSilenceData(parsed);
-            } catch (e) {
-              console.error('Failed to parse silence data from localStorage:', e);
-              return initialSilences;
-            }
-          },
-          write: (value) => {
-            return JSON.stringify(validateAndRepairSilenceData(value));
-          }
-        }
-      });
+      const [silences, setSilences] = useLocalStorageState('sre-silences-v2', initialSilences);
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingSilence, setEditingSilence] = useState(null);
       const [searchText, setSearchText] = useState('');
@@ -9611,6 +9609,21 @@
       const [form] = Form.useForm();
       const { message, modal } = antd.App.useApp();
       const confirmDelete = useDeleteConfirm();
+
+      // Column settings state
+      const defaultVisibleColumns = {
+        enabled: true,
+        name: true,
+        status: true,
+        type: true,
+        matchers: true,
+        schedule: true,
+        nextExecution: true,
+        creator: true,
+        action: true
+      };
+      const [visibleColumns, setVisibleColumns] = useLocalStorageState('sre-silence-columns', defaultVisibleColumns);
+      const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
 
       // 步驟導航函數
       const nextStep = () => setCurrentStep(currentStep + 1);
@@ -9687,48 +9700,13 @@
 
       const getNextExecution = (record) => {
         if (record.type === 'once') return null;
-        if (!record.enabled) return null;
-        if (record.validUntil && dayjs().isAfter(record.validUntil)) return null;
 
-        const now = dayjs();
-
+        // 簡化的下次執行時間計算
         if (record.recurringPattern === 'weekly' && record.weekdays) {
-          // 計算下一個週期日期
-          const timeSlot = record.timeSlot || ['02:00', '04:00'];
-          const startHour = parseInt(timeSlot[0].split(':')[0]);
-          const startMinute = parseInt(timeSlot[0].split(':')[1]);
-
-          // 找到下一個有效的weekday
-          for (let i = 0; i < 14; i++) { // 檢查未來兩週
-            const candidate = now.add(i, 'day');
-            if (record.weekdays.includes(candidate.day())) {
-              const nextTime = candidate.hour(startHour).minute(startMinute).second(0);
-              if (nextTime.isAfter(now)) {
-                return nextTime;
-              }
-            }
-          }
-        } else if (record.recurringPattern === 'monthly') {
-          const timeSlot = record.timeSlot || ['22:00', '06:00'];
-          const startHour = parseInt(timeSlot[0].split(':')[0]);
-          const startMinute = parseInt(timeSlot[0].split(':')[1]);
-
-          if (record.monthlyType === 'lastday') {
-            // 本月最後一天
-            const lastDayThisMonth = now.endOf('month').hour(startHour).minute(startMinute).second(0);
-            if (lastDayThisMonth.isAfter(now)) {
-              return lastDayThisMonth;
-            }
-            // 下個月最後一天
-            return now.add(1, 'month').endOf('month').hour(startHour).minute(startMinute).second(0);
-          }
+          const nextSaturday = dayjs().day(6).hour(parseInt(record.timeSlot[0])).minute(0);
+          return nextSaturday.isAfter(dayjs()) ? nextSaturday : nextSaturday.add(1, 'week');
         }
-
-        // 默認返回明天相同時間
-        const timeSlot = record.timeSlot || ['02:00', '04:00'];
-        const startHour = parseInt(timeSlot[0].split(':')[0]);
-        const startMinute = parseInt(timeSlot[0].split(':')[1]);
-        return now.add(1, 'day').hour(startHour).minute(startMinute).second(0);
+        return dayjs().add(1, 'day').hour(parseInt(record.timeSlot?.[0] || '02')).minute(0);
       };
 
       const showModal = (silence = null) => {
@@ -9805,239 +9783,157 @@
         message.success('靜音規則狀態已更新');
       };
 
-      const columns = [
-        {
+      // Define all possible columns
+      const allColumns = {
+        enabled: {
           title: '啟用',
           dataIndex: 'enabled',
-          width: 60,
-          fixed: 'left',
-          render: (enabled, record) => (
+          width: '8%',
+          render: (enabled) => (
             <Switch
               checked={enabled}
-              size="small"
               onChange={(checked) => {
-                toggleEnabled(record.key);
+                // 這裡可以新增切換邏輯
+                // TODO: 實作啟用/停用邏輯
               }}
             />
           )
         },
-        {
-          title: '規則名稱',
+        name: {
+          title: '名稱',
           dataIndex: 'name',
-          width: 180,
-          ellipsis: true,
-          className: 'col-name',
-          render: (name, record) => (
-            <div>
-              <div style={{ fontWeight: 500 }}>{name}</div>
-              {record.description && (
-                <div style={{
-                  fontSize: '12px',
-                  color: 'var(--text-tertiary)',
-                  marginTop: '2px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  maxWidth: '160px'
-                }} title={record.description}>
-                  {record.description}
-                </div>
-              )}
-            </div>
-          )
+          width: '14%'
         },
-        {
+        status: {
           title: '狀態',
           key: 'status',
-          width: 90,
+          width: '8%',
           render: (_, record) => {
             const status = getStatus(record);
-            return <Tag color={status.color} size="small">{status.text}</Tag>;
+            return <Tag color={status.color}>{status.text}</Tag>;
           }
         },
-        {
+        type: {
           title: '類型',
           dataIndex: 'type',
-          width: 70,
+          width: '7%',
           render: (type) => (
-            <Tag color={type === 'once' ? 'blue' : 'green'} size="small">
+            <Tag color={type === 'once' ? 'blue' : 'green'}>
               {type === 'once' ? '單次' : '週期'}
             </Tag>
           )
         },
-        {
+        matchers: {
           title: '匹配條件',
           dataIndex: 'matchers',
-          width: 240,
-          ellipsis: true,
-          render: (matchers, record) => {
-            // Enhanced error handling and data validation
-            if (!matchers) {
-              console.warn('Matchers is null/undefined for record:', record?.key);
-              return <Text type="secondary">無</Text>;
-            }
-
-            // Handle case where matchers might be a string instead of array
-            if (typeof matchers === 'string') {
-              console.warn('Matchers is string instead of array for record:', record?.key, 'value:', matchers);
-              return (
-                <Tag size="small" style={{ fontSize: '11px', maxWidth: '200px' }}>
-                  {matchers.length > 20 ? `${matchers.substring(0, 20)}...` : matchers}
-                </Tag>
-              );
-            }
-
-            if (!Array.isArray(matchers)) {
-              console.warn('Matchers is not an array for record:', record?.key, 'type:', typeof matchers, 'value:', matchers);
-              return <Text type="secondary">數據格式錯誤</Text>;
-            }
-
-            if (matchers.length === 0) {
+          width: '20%',
+          render: (matchers) => {
+            if (!matchers || matchers.length === 0) {
               return <Text type="secondary">無條件</Text>;
             }
 
+            const displayMatchers = matchers.slice(0, 3);
+            const remainingCount = matchers.length - displayMatchers.length;
+
+            const allMatchersText = matchers.map(m => `${m.key} ${m.op || '='} ${m.value}`).join(', ');
+
             return (
-              <div style={{ maxWidth: '220px' }}>
-                <Space size={[4, 4]} wrap>
-                  {matchers.slice(0, 2).map((matcher, index) => {
-                    // Enhanced matcher validation
-                    if (!matcher) {
-                      console.warn('Null matcher at index', index, 'for record:', record?.key);
-                      return null;
-                    }
-
-                    if (typeof matcher !== 'object') {
-                      console.warn('Non-object matcher at index', index, 'for record:', record?.key, 'value:', matcher);
-                      return (
-                        <Tag key={index} size="small" style={{ fontSize: '11px' }}>
-                          {String(matcher).substring(0, 15)}
-                        </Tag>
-                      );
-                    }
-
-                    const { key, op = '=', value } = matcher;
-
-                    if (!key && !value) {
-                      console.warn('Empty matcher at index', index, 'for record:', record?.key);
-                      return null;
-                    }
-
-                    const safeKey = key || 'unknown';
-                    const safeValue = value || 'unknown';
-                    const displayText = `${safeKey}${op}${safeValue}`;
-                    const isLongText = displayText.length > 12;
-
-                    return (
-                      <Tag
-                        key={index}
-                        size="small"
-                        style={{
-                          margin: '1px 2px',
-                          maxWidth: '100px',
-                          fontSize: '11px',
-                          cursor: 'help'
-                        }}
-                        title={isLongText ? displayText : `${safeKey} ${op} ${safeValue}`}
-                      >
-                        {isLongText ? `${displayText.substring(0, 12)}...` : displayText}
-                      </Tag>
-                    );
-                  })}
-                  {matchers.length > 2 && (
-                    <Text
-                      type="secondary"
-                      style={{ fontSize: '10px', color: 'var(--text-tertiary)' }}
-                      title={`還有 ${matchers.length - 2} 個條件`}
+              <Tooltip title={
+                <div style={{ maxWidth: '300px' }}>
+                  <div style={{ marginBottom: '8px', fontWeight: 600 }}>所有匹配條件：</div>
+                  {matchers.map((m, i) => (
+                    <div key={i} style={{ marginBottom: '4px' }}>
+                      <Tag size="small" color="default">{m.key}</Tag>
+                      <span style={{ margin: '0 4px', color: 'rgba(255,255,255,0.8)' }}>{m.op || '='}</span>
+                      <span style={{ color: 'rgba(255,255,255,0.9)' }}>{m.value}</span>
+                    </div>
+                  ))}
+                </div>
+              }
+                placement="topLeft"
+              >
+                <Space size={[4, 4]} wrap style={{ maxWidth: '100%' }}>
+                  {displayMatchers.map((m, i) => (
+                    <Tag
+                      key={i}
+                      size="small"
+                      color="default"
+                      style={{
+                        maxWidth: '120px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        display: 'inline-block'
+                      }}
                     >
-                      +{matchers.length - 2}個
-                    </Text>
+                      {`${m.key}${m.op || '='}${m.value}`}
+                    </Tag>
+                  ))}
+                  {remainingCount > 0 && (
+                    <Tag size="small" style={{ color: 'rgba(255,255,255,0.6)' }}>
+                      +{remainingCount}
+                    </Tag>
                   )}
                 </Space>
-              </div>
+              </Tooltip>
             );
           }
         },
-        {
-          title: '排程時間',
+        schedule: {
+          title: '排程',
           key: 'schedule',
-          width: 160,
-          ellipsis: true,
+          width: '15%',
           render: (_, record) => {
             if (record.type === 'once') {
-              const start = record.timeRange?.[0] ? dayjs(record.timeRange[0]) : null;
-              const end = record.timeRange?.[1] ? dayjs(record.timeRange[1]) : null;
-              return (
-                <div style={{ fontSize: '12px', lineHeight: '1.3' }}>
-                  <div>{start?.format('MM-DD HH:mm') || '未設定'}</div>
-                  <div style={{ color: 'var(--text-tertiary)' }}>至 {end?.format('MM-DD HH:mm') || '未設定'}</div>
-                </div>
-              );
+              return record.timeRange?.[0]?.format('MM-DD HH:mm') + ' - ' + record.timeRange?.[1]?.format('MM-DD HH:mm');
             } else if (record.recurringPattern === 'weekly') {
               const days = record.weekdays?.map(d => ['日', '一', '二', '三', '四', '五', '六'][d]).join(',') || '';
-              return (
-                <div style={{ fontSize: '12px', lineHeight: '1.3' }}>
-                  <div>每週{days}</div>
-                  <div style={{ color: 'var(--text-tertiary)' }}>{record.timeSlot?.[0] || '--'}~{record.timeSlot?.[1] || '--'}</div>
-                </div>
-              );
+              return `每週${days} ${record.timeSlot?.[0]}-${record.timeSlot?.[1]}`;
             } else if (record.recurringPattern === 'monthly') {
-              return (
-                <div style={{ fontSize: '12px', lineHeight: '1.3' }}>
-                  <div>每月{record.monthlyType === 'lastday' ? '最後一天' : '特定日期'}</div>
-                  <div style={{ color: 'var(--text-tertiary)' }}>{record.timeSlot?.[0] || '--'}~{record.timeSlot?.[1] || '--'}</div>
-                </div>
-              );
+              return `每月${record.monthlyType === 'lastday' ? '最後一天' : '特定日期'} ${record.timeSlot?.[0]}-${record.timeSlot?.[1]}`;
             }
             return '-';
           }
         },
-        {
+        nextExecution: {
           title: '下次執行',
           key: 'nextExecution',
-          width: 110,
-          className: 'col-time',
+          width: '10%',
           render: (_, record) => {
             const next = getNextExecution(record);
-            return next ? (
-              <div style={{ fontSize: '12px', lineHeight: '1.3', textAlign: 'center' }}>
-                <div>{next.format('MM-DD')}</div>
-                <div style={{ color: 'var(--text-tertiary)' }}>{next.format('HH:mm')}</div>
-              </div>
-            ) : (
-              <div style={{ fontSize: '12px', color: 'var(--text-tertiary)', textAlign: 'center' }}>-</div>
-            );
+            return next ? next.format('MM-DD HH:mm') : '-';
           }
         },
-        {
+        creator: {
           title: '創建者',
           dataIndex: 'creator',
-          width: 90,
-          ellipsis: true,
-          render: (creator) => (
-            <span style={{ fontSize: '12px' }}>{creator || '-'}</span>
-          )
+          width: '8%',
+          render: (creator) => creator || '-'
         },
-        {
+        action: {
           title: '操作',
           key: 'action',
-          width: 100,
-          fixed: 'right',
-          className: 'col-actions',
+          width: '12%',
           render: (_, record) => (
-            <Space size="small">
+            <Space>
               <Tooltip title="編輯">
-                <Button type="text" size="small" icon={<EditOutlined />} onClick={() => showModal(record)} />
+                <Button type="text" icon={<EditOutlined />} onClick={() => showModal(record)} />
               </Tooltip>
               <Tooltip title="刪除">
-                <Button type="text" size="small" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)} />
+                <Button type="text" danger icon={<DeleteOutlined />} onClick={() => handleDelete(record.key)} />
               </Tooltip>
             </Space>
           )
         }
-      ];
+      };
+
+      // Generate dynamic columns based on visible settings
+      const columns = Object.keys(allColumns)
+        .filter(key => visibleColumns[key])
+        .map(key => allColumns[key]);
 
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
       const filteredSilences = silences.filter(s =>
         s.name.toLowerCase().includes(searchText.toLowerCase()) ||
@@ -10068,20 +9964,43 @@
             </Space>
             <Space>
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
-              <Button
-                className="toolbar-btn"
-                danger
-                onClick={() => {
-                  const confirmed = window.confirm('這將重置所有靜音規則數據到初始狀態，確定要繼續嗎？');
-                  if (confirmed) {
-                    setSilences(initialSilences);
-                    message.success('數據已重置');
-                  }
+              <Popover
+                content={
+                  <div style={{ width: '200px' }}>
+                    <div style={{ marginBottom: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)' }}>
+                      欄位顯示設定
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {Object.keys(allColumns).map(key => (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Checkbox
+                            checked={visibleColumns[key]}
+                            onChange={(e) => setVisibleColumns(prev => ({ ...prev, [key]: e.target.checked }))}
+                            style={{ marginRight: '8px' }}
+                          />
+                          <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px' }}>
+                            {allColumns[key].title}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+                title={null}
+                trigger="click"
+                open={isColumnSettingsOpen}
+                onOpenChange={setIsColumnSettingsOpen}
+                placement="bottomRight"
+                overlayStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
                 }}
-                title="重置靜音規則數據（僅用於調試）"
               >
-                重置數據
-              </Button>
+                <Button className="toolbar-btn" icon={<EyeOutlined />}>
+                  欄位設定
+                </Button>
+              </Popover>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增規則
               </Button>
@@ -10097,14 +10016,6 @@
                   rowKey="key"
                   className="transparent-bg"
                   size="small"
-                  scroll={{ x: 1100, y: 400 }}
-                  pagination={{
-                    pageSize: 10,
-                    position: ['bottomRight'],
-                    showSizeChanger: true,
-                    showQuickJumper: true,
-                    showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
-                  }}
                 /> :
                 <Empty description="尚無任何靜音規則">
                   <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增規則</Button>
@@ -10133,6 +10044,7 @@
             width={900}
             centered
             className="silence-modal"
+            style={{ background: 'transparent' }}
           >
             {/* Modal Header */}
             <div className="modal-header" style={{
@@ -10611,16 +10523,16 @@
         setSelectedRowKeys(newSelectedRowKeys);
       };
 
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       const columns = [
         { title: '腳本名稱', dataIndex: 'name', width: '25%' },
-        { title: '類型', dataIndex: 'type', width: '15%', render: t => <Tag>{t}</Tag> },
-        { title: '創建者', dataIndex: 'creator', width: '15%' },
+        { title: '類型', dataIndex: 'type', width: '12%', render: t => <Tag>{t}</Tag> },
+        { title: '創建者', dataIndex: 'creator', width: '12%' },
         { title: '描述', dataIndex: 'description', width: '30%' },
         {
-          title: '操作', key: 'action', width: '12%', render: (_, record) => (
+          title: '操作', key: 'action', width: '21%', render: (_, record) => (
             <Space size="small">
               <Tooltip title="運行" placement="top">
                 <Button type="text" icon={<PlayCircleOutlined style={{ color: '#52c41a' }} />} onClick={() => handleRun(record)} />
@@ -10803,7 +10715,7 @@
         }
       }, [frequency, selectedWeekdays, scheduleMode, form]);
       const mockResources = [
-        { key: 'r_1', name: 'db-prod-01' }, { key: 'r_2', name: 'web-prod-02' }, { key: 'r_3', name: 'api-gateway-prod' }, { key: 'r_4', name: 'cache-redis-prod' }
+        { key: 'host_1', name: 'db-prod-01' }, { key: 'host_2', name: 'web-prod-02' }, { key: 'host_3', name: 'api-gateway-prod' }, { key: 'host_4', name: 'cache-redis-prod' }
       ];
 
       // 人性化排程器輔助函數
@@ -10955,7 +10867,7 @@
         setSelectedRowKeys(newSelectedRowKeys);
       };
 
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       const handleBatchDelete = () => {
@@ -10977,7 +10889,7 @@
       const columns = [
         { title: '啟用', dataIndex: 'enabled', width: '5%', render: e => <Switch defaultChecked={e} /> },
         { title: '任務名稱', dataIndex: 'name', width: '15%', render: name => <Text style={{ fontSize: '13px' }}>{name}</Text> },
-        { title: '腳本名稱', dataIndex: 'scriptId', width: '12%', render: id => <Text style={{ fontSize: '13px' }}>{getScriptName(id)}</Text> },
+        { title: '腳本名稱', dataIndex: 'scriptId', width: '10%', render: id => <Text style={{ fontSize: '13px' }}>{getScriptName(id)}</Text> },
         {
           title: 'CRON 條件',
           dataIndex: 'cron',
@@ -10993,9 +10905,9 @@
         {
           title: '上次狀態', dataIndex: 'lastStatus', width: '10%', render: status => (
             status === 'success' ? (
-              <Tag color="green" style={{ fontSize: '13px' }}>✅ SUCCESS</Tag>
+              <Tag color="green" style={{ fontSize: '13px' }}>SUCCESS</Tag>
             ) : status === 'failed' ? (
-              <Tag color="red" style={{ fontSize: '13px' }}>❌ FAILED</Tag>
+              <Tag color="red" style={{ fontSize: '13px' }}>FAILED</Tag>
             ) : (
               <Tag color="gray" style={{ fontSize: '13px' }}>PENDING</Tag>
             )
@@ -11020,12 +10932,7 @@
           )
         },
         {
-          title: '創建者', dataIndex: 'creator', width: '8%', render: creator => (
-            <Text style={{ fontSize: '13px' }}>{creator || '未設定'}</Text>
-          )
-        },
-        {
-          title: '操作', key: 'action', width: '13%', render: (_, record) => (
+          title: '操作', key: 'action', width: '26%', render: (_, record) => (
             <Space size="small">
               <Tooltip title="查看歷史" placement="top">
                 <Button type="text" icon={<HistoryOutlined />} onClick={() => handleViewHistory(record)} />
@@ -11374,7 +11281,7 @@
         setSelectedRowKeys(newSelectedRowKeys);
       };
 
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       const handleBatchDelete = () => {
@@ -11892,10 +11799,10 @@
 
     const UserManagementPage = () => {
       const initialUsers = [
-        { key: 'u_1', name: 'Admin User', email: 'admin@example.com', teams: ['t_3'], roles: ['super_admin'], status: 'active', lastLogin: dayjs().subtract(1, 'day'), createdAt: dayjs().subtract(30, 'day') },
-        { key: 'u_2', name: 'Dev User', email: 'dev@example.com', teams: ['t_1'], roles: ['team_manager', 'team_member'], status: 'active', lastLogin: dayjs().subtract(2, 'hours'), createdAt: dayjs().subtract(15, 'day') },
-        { key: 'u_3', name: 'View User', email: 'view@example.com', teams: ['t_2'], roles: ['viewer'], status: 'inactive', lastLogin: dayjs().subtract(7, 'day'), createdAt: dayjs().subtract(45, 'day') },
-        { key: 'u_4', name: 'Ops User', email: 'ops@example.com', teams: ['t_1', 't_3'], roles: ['team_member'], status: 'active', lastLogin: dayjs().subtract(30, 'minutes'), createdAt: dayjs().subtract(10, 'day') },
+        { key: 'user_1', name: 'Admin User', email: 'admin@example.com', teams: ['team_3'], roles: ['super_admin'], status: 'active', lastLogin: dayjs().subtract(1, 'day'), createdAt: dayjs().subtract(30, 'day') },
+        { key: 'user_2', name: 'Dev User', email: 'dev@example.com', teams: ['team_1'], roles: ['team_manager', 'team_member'], status: 'active', lastLogin: dayjs().subtract(2, 'hours'), createdAt: dayjs().subtract(15, 'day') },
+        { key: 'user_3', name: 'View User', email: 'view@example.com', teams: ['team_2'], roles: ['viewer'], status: 'inactive', lastLogin: dayjs().subtract(7, 'day'), createdAt: dayjs().subtract(45, 'day') },
+        { key: 'user_4', name: 'Ops User', email: 'ops@example.com', teams: ['team_1', 'team_3'], roles: ['team_member'], status: 'active', lastLogin: dayjs().subtract(30, 'minutes'), createdAt: dayjs().subtract(10, 'day') },
       ];
 
       const [users, setUsers] = useLocalStorageState('sre-users', initialUsers);
@@ -11909,16 +11816,16 @@
 
       // 团队名称映射（在UserManagementPage中定义，避免依赖外部teams）
       const teamNameMap = {
-        't_1': 'Developers',
-        't_2': 'Viewers',
-        't_3': 'Administrators',
-        't_4': 'QA Team',
-        't_5': 'DevOps Team',
-        't_6': 'Database Team',
-        't_7': 'Network Team',
-        't_8': 'Security Team',
-        't_9': 'Operations Team',
-        't_10': 'Platform Team'
+        'team_1': 'Developers',
+        'team_2': 'Viewers',
+        'team_3': 'Administrators',
+        'team_4': 'QA Team',
+        'team_5': 'DevOps Team',
+        'team_6': 'Database Team',
+        'team_7': 'Network Team',
+        'team_8': 'Security Team',
+        'team_9': 'Operations Team',
+        'team_10': 'Platform Team'
       };
 
       const getTeamNames = (teamIds) => teamIds.map(id => teamNameMap[id] || id);
@@ -12046,7 +11953,7 @@
       );
 
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       return (
@@ -12272,16 +12179,16 @@
 
     const TeamManagementPage = () => {
       const initialTeams = [
-        { key: 't_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_devops'], createdAt: dayjs().subtract(60, 'day'), owner: 'u_2' },
-        { key: 't_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['u_3'], subscribers: ['u_2'], createdAt: dayjs().subtract(45, 'day'), owner: 'u_1' },
-        { key: 't_3', name: 'Administrators', description: '平台最高權限管理者', members: ['u_1', 'u_4'], subscribers: ['u_1', 'slack_network', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(90, 'day'), owner: 'u_1' },
-        { key: 't_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['u_3', 'email_ops'], createdAt: dayjs().subtract(20, 'day'), owner: 'u_1' },
-        { key: 't_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_devops'], createdAt: dayjs().subtract(30, 'day'), owner: 'u_2' },
-        { key: 't_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['u_1'], subscribers: ['u_1', 'slack_database'], createdAt: dayjs().subtract(40, 'day'), owner: 'u_1' },
-        { key: 't_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['u_3'], subscribers: ['u_3', 'slack_network'], createdAt: dayjs().subtract(50, 'day'), owner: 'u_3' },
-        { key: 't_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['u_4'], subscribers: ['u_4', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(35, 'day'), owner: 'u_4' },
-        { key: 't_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['u_1', 'u_2', 'u_3'], subscribers: ['u_1', 'slack_operations'], createdAt: dayjs().subtract(25, 'day'), owner: 'u_1' },
-        { key: 't_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['u_2', 'u_4'], subscribers: ['u_1', 'slack_platform'], createdAt: dayjs().subtract(15, 'day'), owner: 'u_2' },
+        { key: 'team_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], createdAt: dayjs().subtract(60, 'day'), owner: 'user_2' },
+        { key: 'team_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['user_3'], subscribers: ['user_2'], createdAt: dayjs().subtract(45, 'day'), owner: 'user_1' },
+        { key: 'team_3', name: 'Administrators', description: '平台最高權限管理者', members: ['user_1', 'user_4'], subscribers: ['user_1', 'slack_network', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(90, 'day'), owner: 'user_1' },
+        { key: 'team_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['user_3', 'email_ops'], createdAt: dayjs().subtract(20, 'day'), owner: 'user_1' },
+        { key: 'team_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], createdAt: dayjs().subtract(30, 'day'), owner: 'user_2' },
+        { key: 'team_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['user_1'], subscribers: ['user_1', 'slack_database'], createdAt: dayjs().subtract(40, 'day'), owner: 'user_1' },
+        { key: 'team_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['user_3'], subscribers: ['user_3', 'slack_network'], createdAt: dayjs().subtract(50, 'day'), owner: 'user_3' },
+        { key: 'team_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['user_4'], subscribers: ['user_4', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(35, 'day'), owner: 'user_4' },
+        { key: 'team_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['user_1', 'user_2', 'user_3'], subscribers: ['user_1', 'slack_operations'], createdAt: dayjs().subtract(25, 'day'), owner: 'user_1' },
+        { key: 'team_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_platform'], createdAt: dayjs().subtract(15, 'day'), owner: 'user_2' },
       ];
 
       const [teams, setTeams] = useLocalStorageState('sre-teams', initialTeams);
@@ -12298,18 +12205,18 @@
 
       // 模擬用戶資料（用於團隊管理中的成員選擇）
       const mockUsers = [
-        { key: 'u_1', name: '王工程師', email: 'wang@example.com' },
-        { key: 'u_2', name: '陳經理', email: 'chen@example.com' },
-        { key: 'u_3', name: '李開發', email: 'li@example.com' },
-        { key: 'u_4', name: '張管理員', email: 'zhang@example.com' },
+        { key: 'user_1', name: '王工程師', email: 'wang@example.com' },
+        { key: 'user_2', name: '陳經理', email: 'chen@example.com' },
+        { key: 'user_3', name: '李開發', email: 'li@example.com' },
+        { key: 'user_4', name: '張管理員', email: 'zhang@example.com' },
       ];
 
       // 模擬通知訂閱者資料
       const mockSubscribers = [
         // 人員
-        { key: 'u_1', name: '王工程師', type: 'USER', icon: '👤' },
-        { key: 'u_2', name: '陳經理', type: 'USER', icon: '👤' },
-        { key: 'u_3', name: '李開發', type: 'USER', icon: '👤' },
+        { key: 'user_1', name: '王工程師', type: 'USER', icon: '👤' },
+        { key: 'user_2', name: '陳經理', type: 'USER', icon: '👤' },
+        { key: 'user_3', name: '李開發', type: 'USER', icon: '👤' },
         // Slack頻道
         { key: 'slack_network', name: '網路一部 Slack', type: 'SLACK_CHANNEL', icon: '#️⃣' },
         { key: 'slack_devops', name: 'DevOps 團隊 Slack', type: 'SLACK_CHANNEL', icon: '#️⃣' },
@@ -12350,7 +12257,7 @@
           subscribers: selectedSubscribers,
           key: editingTeam ? editingTeam.key : `t_${Date.now()}`,
           createdAt: editingTeam ? editingTeam.createdAt : dayjs(),
-          owner: editingTeam ? editingTeam.owner : 'u_1' // 預設創建者為管理員
+          owner: editingTeam ? editingTeam.owner : 'user_1' // 預設創建者為管理員
         };
         if (editingTeam) {
           setTeams(teams.map(t => t.key === editingTeam.key ? newTeam : t));
@@ -12433,7 +12340,7 @@
       );
 
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       return (
@@ -13594,7 +13501,7 @@
       // 預設的標籤數據（包含name和values）
       const initialTags = [
         {
-          id: 't_1',
+          id: 'team_1',
           name: 'environment',
           displayName: '環境',
           description: '部署環境標識，用於區分不同的運行環境',
@@ -13611,7 +13518,7 @@
           updatedAt: dayjs().subtract(5, 'day')
         },
         {
-          id: 't_2',
+          id: 'team_2',
           name: 'team',
           displayName: '負責團隊',
           description: '資源或服務的責任團隊',
@@ -13629,7 +13536,7 @@
           updatedAt: dayjs().subtract(3, 'day')
         },
         {
-          id: 't_3',
+          id: 'team_3',
           name: 'priority',
           displayName: '優先級',
           description: '資源或告警的優先級別',
@@ -13646,7 +13553,7 @@
           updatedAt: dayjs().subtract(2, 'day')
         },
         {
-          id: 't_4',
+          id: 'team_4',
           name: 'security-level',
           displayName: '安全等級',
           description: '資源的安全分級，用於訪問控制',
@@ -13663,7 +13570,7 @@
           updatedAt: dayjs().subtract(7, 'day')
         },
         {
-          id: 't_5',
+          id: 'team_5',
           name: 'service-type',
           displayName: '服務類型',
           description: '應用或服務的類型分類',
@@ -14217,7 +14124,7 @@
       ];
 
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
-      const rowSelection = { selectedRowKeys, onChange: onSelectChange };
+      const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
       const hasSelected = selectedRowKeys.length > 0;
 
       return (
@@ -14681,7 +14588,8 @@
                     showQuickJumper: true,
                     showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
                     responsive: true,
-                    position: ['bottomRight']
+                    position: ['bottomRight'],
+                    size: 'small'
                   }}
                   locale={{
                     emptyText: (
@@ -16347,7 +16255,7 @@
       const GlobalSearch = () => {
         const [query, setQuery] = useState('');
         const mockResults = [
-          { type: '資源', items: [{ key: 'r_1', name: 'db-prod-01', desc: '10.0.0.10' }] },
+          { type: '資源', items: [{ key: 'host_1', name: 'db-prod-01', desc: '10.0.0.10' }] },
           { type: '事件', items: [{ key: 'i_1', name: 'CPU high on db-prod-01', desc: 'Firing' }] },
           { type: '自動化腳本', items: [{ key: 's_1', name: 'Auto-scaling for Web Servers', desc: 'Python Script' }] },
         ];
@@ -16555,11 +16463,13 @@
       };
 
       return (
-        <ConfigProvider theme={currentTheme}>
-          <antd.App>
-            {isAuthenticated ? <MainApp themeMode={themeMode} setThemeMode={setThemeMode} /> : <LoginPage onLogin={handleLogin} />}
-          </antd.App>
-        </ConfigProvider>
+        <ErrorBoundary>
+          <ConfigProvider theme={currentTheme}>
+            <antd.App>
+              {isAuthenticated ? <MainApp themeMode={themeMode} setThemeMode={setThemeMode} /> : <LoginPage onLogin={handleLogin} />}
+            </antd.App>
+          </ConfigProvider>
+        </ErrorBoundary>
       )
     }
 

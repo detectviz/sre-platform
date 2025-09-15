@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SRE 平台設計指南 - Design Guide</title>
+
+  <!-- React, Babel, Day.js -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
+  <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+
+  <!-- Ant Design -->
+  <script src="https://unpkg.com/antd@5.19.1/dist/antd.min.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/antd@5.19.1/dist/reset.css" />
+
+  <!-- Ant Design Icons -->
+  <script src="https://unpkg.com/@ant-design/icons@5.3.7/dist/index.umd.min.js"></script>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .guide-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .guide-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .component-demo {
+      padding: 20px;
+      border: 1px solid #d9d9d9;
+      border-radius: 8px;
+      margin: 16px 0;
+      background: #fafafa;
+    }
+
+    /* 深色主題變數 */
+    :root {
+      --brand-primary: #1890ff;
+      --brand-success: #52c41a;
+      --brand-warning: #faad14;
+      --brand-danger: #ff4d4f;
+      --text-primary: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.85);
+      --bg-page: #0A0B0E;
+      --bg-container: #141519;
+      --bg-elevated: #1A1D23;
+      --border-base: rgba(255, 255, 255, 0.12);
+    }
+
+    /* 深色主題樣式 */
+    .dark-theme {
+      background: var(--bg-page) !important;
+      color: var(--text-primary) !important;
+    }
+
+    .dark-theme .guide-section {
+      background: var(--bg-container) !important;
+      border: 1px solid var(--border-base) !important;
+      color: var(--text-primary) !important;
+    }
+
+    .dark-theme .component-demo {
+      background: var(--bg-elevated) !important;
+      border-color: var(--border-base) !important;
+      color: var(--text-primary) !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="guide-root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+    const {
+      Button, Space, Table, Modal, Form, Input, Select, Card, Row, Col,
+      Statistic, Popover, Drawer, Tag, Switch, InputNumber, DatePicker,
+      Divider, Typography, ConfigProvider, theme, message, Badge, Tooltip,
+      Tabs, Radio, Checkbox, Descriptions, Timeline, Steps
+    } = antd;
+    const {
+      PlusOutlined, EditOutlined, DeleteOutlined, SearchOutlined,
+      FilterOutlined, SettingOutlined, EyeOutlined, PlayCircleOutlined,
+      HistoryOutlined, CheckCircleOutlined, PauseCircleOutlined,
+      SaveOutlined, CloseOutlined, UserOutlined, MailOutlined, LockOutlined,
+      DatabaseOutlined, CloudOutlined, GlobalOutlined
+    } = icons;
+
+    const { Title, Text, Paragraph } = Typography;
+    const { RangePicker } = DatePicker;
+    const { TextArea } = Input;
+
+    // 主應用組件
+    const DesignGuide = () => {
+      const [isDarkTheme, setIsDarkTheme] = useState(true);
+      const [activeSection, setActiveSection] = useState('overview');
+
+      const themeConfig = {
+        algorithm: isDarkTheme ? theme.darkAlgorithm : theme.defaultAlgorithm,
+        token: {
+          colorPrimary: '#1890ff',
+          colorSuccess: '#52c41a',
+          colorWarning: '#faad14',
+          colorError: '#ff4d4f',
+        }
+      };
+
+      // 總覽頁面
+      const OverviewDemo = () => (
+        <div className="component-demo">
+          <Title level={4} style={{ marginBottom: '16px' }}>SRE 平台設計系統總覽</Title>
+
+          <Row gutter={[24, 24]}>
+            <Col span={8}>
+              <Card title="🎨 設計語言" size="small">
+                <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                  <li>Ant Design 5.x 組件庫</li>
+                  <li>自訂深色主題</li>
+                  <li>統一的色彩系統</li>
+                  <li>8px 網格間距</li>
+                </ul>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card title="🏗️ 架構模式" size="small">
+                <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                  <li>工具列 + 內容區域</li>
+                  <li>集中式篩選</li>
+                  <li>響應式佈局</li>
+                  <li>統一的分頁</li>
+                </ul>
+              </Card>
+            </Col>
+            <Col span={8}>
+              <Card title="📱 互動模式" size="small">
+                <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                  <li>即時搜尋</li>
+                  <li>Popover 篩選</li>
+                  <li>抽屜式詳情</li>
+                  <li>多標籤頁表單</li>
+                </ul>
+              </Card>
+            </Col>
+          </Row>
+
+          <Divider />
+
+          <Title level={5}>快速開始</Title>
+          <Space direction="vertical" style={{ width: '100%' }}>
+            <Text>1. 選擇右側標籤頁查看具體組件示例</Text>
+            <Text>2. 切換淺色/深色主題觀察差異</Text>
+            <Text>3. 點擊按鈕體驗互動效果</Text>
+            <Text>4. 參考代碼結構進行開發</Text>
+          </Space>
+        </div>
+      );
+
+      // 頁面結構示例組件
+      const PageStructureDemo = () => {
+        const [searchText, setSearchText] = useState('');
+        const [isFilterOpen, setIsFilterOpen] = useState(false);
+        const [filters, setFilters] = useState({ status: [], type: [] });
+
+        const filterContent = (
+          <div style={{ width: 300, padding: '16px' }}>
+            <div style={{ marginBottom: '16px' }}>
+              <Text strong style={{ display: 'block', marginBottom: '8px' }}>狀態</Text>
+              <Select
+                mode="multiple"
+                placeholder="選擇狀態"
+                value={filters.status}
+                onChange={(value) => setFilters(f => ({ ...f, status: value }))}
+                style={{ width: '100%' }}
+                options={[
+                  { value: 'healthy', label: 'Healthy' },
+                  { value: 'warning', label: 'Warning' },
+                  { value: 'critical', label: 'Critical' }
+                ]}
+              />
+            </div>
+            <div style={{ marginBottom: '16px' }}>
+              <Text strong style={{ display: 'block', marginBottom: '8px' }}>類型</Text>
+              <Select
+                mode="multiple"
+                placeholder="選擇類型"
+                value={filters.type}
+                onChange={(value) => setFilters(f => ({ ...f, type: value }))}
+                style={{ width: '100%' }}
+                options={[
+                  { value: 'database', label: 'Database' },
+                  { value: 'server', label: 'Server' },
+                  { value: 'gateway', label: 'Gateway' }
+                ]}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px' }}>
+              <Button onClick={() => setFilters({ status: [], type: [] })} style={{ flex: 1 }}>
+                重置
+              </Button>
+              <Button type="primary" onClick={() => setIsFilterOpen(false)} style={{ flex: 1 }}>
+                應用
+              </Button>
+            </div>
+          </div>
+        );
+
+        return (
+          <div className="component-demo">
+            <Title level={4} style={{ marginBottom: '16px' }}>標準頁面佈局示例</Title>
+
+            {/* 頁面標題 - 可選 */}
+            <Title level={2} style={{ marginBottom: '24px' }}>資源列表</Title>
+
+            {/* 工具列 */}
+            <Space style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', width: '100%' }}>
+              <Space>
+                <Input.Search
+                  placeholder="搜尋資源名稱、IP或標籤..."
+                  style={{ width: 300 }}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  allowClear
+                />
+                <Popover
+                  content={filterContent}
+                  title="篩選條件"
+                  trigger="click"
+                  open={isFilterOpen}
+                  onOpenChange={setIsFilterOpen}
+                  placement="bottomLeft"
+                >
+                  <Button icon={<FilterOutlined />}>
+                    篩選
+                    <Badge count={filters.status.length + filters.type.length} style={{ marginLeft: 8 }} />
+                  </Button>
+                </Popover>
+              </Space>
+              <Space>
+                <Button icon={<SettingOutlined />}>欄位設定</Button>
+                <Button icon={<SearchOutlined />}>掃描網路</Button>
+                <Button type="primary" icon={<PlusOutlined />}>新增資源</Button>
+              </Space>
+            </Space>
+
+            {/* 統計卡片區域 */}
+            <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+              <Col span={6}>
+                <Card size="small">
+                  <Statistic title="總資源數" value={374} />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card size="small">
+                  <Statistic title="健康資源" value={138} valueStyle={{ color: '#52c41a' }} />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card size="small">
+                  <Statistic title="警告資源" value={143} valueStyle={{ color: '#faad14' }} />
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card size="small">
+                  <Statistic title="嚴重資源" value={93} valueStyle={{ color: '#ff4d4f' }} />
+                </Card>
+              </Col>
+            </Row>
+
+            <Text strong>表格區域將在下方「表格組件」章節中展示完整示例</Text>
+          </div>
+        );
+      };
+
+      // 按鈕系統示例組件
+      const ButtonSystemDemo = () => {
+        const [loading, setLoading] = useState(false);
+
+        const handleClick = () => {
+          setLoading(true);
+          setTimeout(() => setLoading(false), 2000);
+        };
+
+        return (
+          <div className="component-demo">
+            <Title level={4} style={{ marginBottom: '16px' }}>按鈕系統示例</Title>
+
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+              {/* 主要操作按鈕 */}
+              <div>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>主要操作按鈕：</Text>
+                <Space wrap>
+                  <Button type="primary" icon={<PlusOutlined />}>新增</Button>
+                  <Button type="primary" icon={<SaveOutlined />}>儲存</Button>
+                  <Button type="primary" icon={<CheckCircleOutlined />}>確認</Button>
+                  <Button type="primary" loading={loading} onClick={handleClick}>應用</Button>
+                </Space>
+              </div>
+
+              {/* 危險操作按鈕 */}
+              <div>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>危險操作按鈕：</Text>
+                <Space wrap>
+                  <Button danger icon={<DeleteOutlined />}>刪除</Button>
+                  <Button danger icon={<CloseOutlined />}>取消</Button>
+                  <Button danger>停用</Button>
+                </Space>
+              </div>
+
+              {/* 次要操作按鈕 */}
+              <div>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>次要操作按鈕：</Text>
+                <Space wrap>
+                  <Button icon={<EditOutlined />}>編輯</Button>
+                  <Button icon={<EyeOutlined />}>查看</Button>
+                  <Button icon={<HistoryOutlined />}>歷史</Button>
+                  <Button icon={<SettingOutlined />}>設定</Button>
+                </Space>
+              </div>
+
+              {/* 文字按鈕 - 用於表格內操作 */}
+              <div>
+                <Text strong style={{ display: 'block', marginBottom: '8px' }}>文字按鈕 (表格內操作)：</Text>
+                <Space wrap>
+                  <Button type="text" icon={<EditOutlined />} size="small" />
+                  <Button type="text" icon={<DeleteOutlined />} size="small" danger />
+                  <Button type="text" icon={<EyeOutlined />} size="small">查看詳情</Button>
+                </Space>
+              </div>
+            </Space>
+          </div>
+        );
+      };
+
+      // 表格組件示例
+      const TableDemo = () => {
+        const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+
+        const mockData = [
+          { key: '1', name: 'db-prod-01', status: 'healthy', type: 'database', ip: '10.0.0.10' },
+          { key: '2', name: 'web-prod-01', status: 'warning', type: 'server', ip: '10.0.0.11' },
+          { key: '3', name: 'api-gateway', status: 'critical', type: 'gateway', ip: '10.0.0.12' },
+        ];
+
+        const columns = [
+          {
+            title: '狀態',
+            dataIndex: 'status',
+            width: '8%',
+            render: (status) => (
+              <Tag color={
+                status === 'healthy' ? 'green' :
+                  status === 'warning' ? 'orange' : 'red'
+              }>
+                {status.toUpperCase()}
+              </Tag>
+            )
+          },
+          { title: '資源名稱', dataIndex: 'name', width: '25%' },
+          { title: 'IP位址', dataIndex: 'ip', width: '18%' },
+          { title: '類型', dataIndex: 'type', width: '10%' },
+          {
+            title: '操作',
+            key: 'action',
+            width: '15%',
+            render: (_, record) => (
+              <Space size="small">
+                <Tooltip title="編輯">
+                  <Button type="text" icon={<EditOutlined />} size="small" />
+                </Tooltip>
+                <Tooltip title="刪除">
+                  <Button type="text" danger icon={<DeleteOutlined />} size="small" />
+                </Tooltip>
+              </Space>
+            )
+          }
+        ];
+
+        const rowSelection = {
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
+          columnWidth: 32
+        };
+
+        return (
+          <div className="component-demo">
+            <Title level={4} style={{ marginBottom: '16px' }}>表格組件示例</Title>
+
+            {selectedRowKeys.length > 0 && (
+              <div style={{ marginBottom: '16px', padding: '8px', background: 'rgba(24, 144, 255, 0.1)', borderRadius: '4px' }}>
+                <Text>已選擇 {selectedRowKeys.length} 項</Text>
+                <Button type="link" size="small" style={{ marginLeft: '16px' }} onClick={() => setSelectedRowKeys([])}>
+                  清除選擇
+                </Button>
+              </div>
+            )}
+
+            <Table
+              rowSelection={rowSelection}
+              columns={columns}
+              dataSource={mockData}
+              rowKey="key"
+              size="small"
+              pagination={{
+                pageSize: 10,
+                position: ['bottomRight'],
+                showSizeChanger: true,
+                showQuickJumper: true
+              }}
+              scroll={{ x: 'max-content' }}
+            />
+          </div>
+        );
+      };
+
+      // 表單設計示例
+      const FormDemo = () => {
+        const [form] = Form.useForm();
+        const [modalVisible, setModalVisible] = useState(false);
+        const [drawerVisible, setDrawerVisible] = useState(false);
+
+        const handleSubmit = (values) => {
+          console.log('表單數據:', values);
+          message.success('表單提交成功！');
+          setModalVisible(false);
+          setDrawerVisible(false);
+        };
+
+        const formContent = (
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <Form.Item
+                  label="資源名稱"
+                  name="name"
+                  rules={[{ required: true, message: '請輸入資源名稱' }]}
+                >
+                  <Input placeholder="請輸入資源名稱" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  label="IP位址"
+                  name="ip"
+                  rules={[{ required: true, message: '請輸入IP位址' }]}
+                >
+                  <Input placeholder="請輸入IP位址" />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="類型" name="type">
+                  <Select placeholder="請選擇類型">
+                    <Select.Option value="database">Database</Select.Option>
+                    <Select.Option value="server">Server</Select.Option>
+                    <Select.Option value="gateway">Gateway</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="狀態" name="status">
+                  <Radio.Group>
+                    <Radio value="active">啟用</Radio>
+                    <Radio value="inactive">停用</Radio>
+                  </Radio.Group>
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <Form.Item label="描述" name="description">
+                  <TextArea rows={3} placeholder="請輸入資源描述" />
+                </Form.Item>
+              </Col>
+            </Row>
+          </Form>
+        );
+
+        return (
+          <div className="component-demo">
+            <Title level={4} style={{ marginBottom: '16px' }}>表單設計示例</Title>
+
+            <Space style={{ marginBottom: '16px' }}>
+              <Button type="primary" onClick={() => setModalVisible(true)}>
+                開啟表單彈窗 (600px)
+              </Button>
+              <Button onClick={() => setDrawerVisible(true)}>
+                開啟表單抽屜 (700px)
+              </Button>
+            </Space>
+
+            {/* 彈窗表單 */}
+            <Modal
+              title="新增資源"
+              open={modalVisible}
+              onCancel={() => setModalVisible(false)}
+              width={600}
+              footer={[
+                <Button key="cancel" onClick={() => setModalVisible(false)}>
+                  取消
+                </Button>,
+                <Button key="submit" type="primary" onClick={() => form.submit()}>
+                  儲存
+                </Button>
+              ]}
+            >
+              {formContent}
+            </Modal>
+
+            {/* 抽屜表單 */}
+            <Drawer
+              title="編輯資源"
+              placement="right"
+              width={700}
+              open={drawerVisible}
+              onClose={() => setDrawerVisible(false)}
+              extra={
+                <Space>
+                  <Button onClick={() => setDrawerVisible(false)}>取消</Button>
+                  <Button type="primary" onClick={() => form.submit()}>儲存</Button>
+                </Space>
+              }
+            >
+              {formContent}
+            </Drawer>
+
+            <Text type="secondary" style={{ marginTop: '16px', display: 'block' }}>
+              💡 提示：表單使用 vertical 佈局，標籤寬度統一，支援響應式網格
+            </Text>
+          </div>
+        );
+      };
+
+      const sections = [
+        { key: 'overview', title: '📋 總覽', component: OverviewDemo },
+        { key: 'page-structure', title: '🏗️ 頁面結構', component: PageStructureDemo },
+        { key: 'buttons', title: '🔘 按鈕系統', component: ButtonSystemDemo },
+        { key: 'tables', title: '📊 表格組件', component: TableDemo },
+        { key: 'forms', title: '📝 表單設計', component: FormDemo },
+      ];
+
+      return (
+        <ConfigProvider theme={themeConfig}>
+          <div className={isDarkTheme ? 'dark-theme' : ''}>
+            {/* 頁面頭部 */}
+            <div className="guide-header">
+              <h1>🎨 SRE 平台設計指南</h1>
+              <p>Design Guide for SRE Platform - 互動式開發參考手冊</p>
+              <div style={{ marginTop: '20px' }}>
+                <Space>
+                  <Button
+                    type={isDarkTheme ? 'primary' : 'default'}
+                    onClick={() => setIsDarkTheme(true)}
+                  >
+                    🌙 深色主題
+                  </Button>
+                  <Button
+                    type={!isDarkTheme ? 'primary' : 'default'}
+                    onClick={() => setIsDarkTheme(false)}
+                  >
+                    ☀️ 淺色主題
+                  </Button>
+                </Space>
+              </div>
+              <p style={{ fontSize: '14px', opacity: 0.9, marginTop: '10px' }}>
+                基於 Ant Design 5.x + 自訂深色主題 | 更新日期: 2025-01-15
+              </p>
+            </div>
+
+            {/* 導航標籤頁 */}
+            <Tabs
+              activeKey={activeSection}
+              onChange={setActiveSection}
+              style={{ margin: '0 20px' }}
+              items={sections.map(section => ({
+                key: section.key,
+                label: section.title,
+                children: (
+                  <div className="guide-section" style={{ margin: '20px 0' }}>
+                    {React.createElement(section.component)}
+                  </div>
+                )
+              }))}
+            />
+
+            {/* 頁尾 */}
+            <div style={{ textAlign: 'center', margin: '40px 20px 20px', padding: '20px', borderTop: '1px solid rgba(255,255,255,0.1)', color: isDarkTheme ? 'rgba(255,255,255,0.6)' : '#666' }}>
+              <p>SRE 平台設計指南 | 版本 1.0 | 更新日期: 2025-01-15</p>
+              <p>開發者可以直接複製這些組件代碼到項目中使用</p>
+            </div>
+          </div>
+        </ConfigProvider>
+      );
+    };
+
+    // 渲染應用
+    ReactDOM.render(<DesignGuide />, document.getElementById('guide-root'));
+  </script>
+</body>
+
+</html>
