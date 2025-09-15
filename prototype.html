@@ -4661,7 +4661,7 @@
                   <div style={{ flex: 1, overflow: 'auto' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                       {/* 高風險 - web-prod-01 */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(255, 77, 79, 0.08)', borderRadius: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 6px', background: 'rgba(255, 77, 79, 0.08)', borderRadius: '4px' }}>
                         <div>
                           <Text strong style={{ color: 'var(--text-primary)' }}>web-prod-01</Text>
                           <br />
@@ -4671,7 +4671,7 @@
                       </div>
 
                       {/* 高風險 - api-gateway-01 */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(255, 77, 79, 0.08)', borderRadius: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 6px', background: 'rgba(255, 77, 79, 0.08)', borderRadius: '4px' }}>
                         <div>
                           <Text strong style={{ color: 'var(--text-primary)' }}>api-gateway-01</Text>
                           <br />
@@ -4681,7 +4681,7 @@
                       </div>
 
                       {/* 中風險 - db-prod-02 */}
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px', background: 'rgba(250, 173, 20, 0.08)', borderRadius: '4px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '3px 6px', background: 'rgba(250, 173, 20, 0.08)', borderRadius: '4px' }}>
                         <div>
                           <Text strong style={{ color: 'var(--text-primary)' }}>db-prod-02</Text>
                           <br />
@@ -15557,6 +15557,7 @@
               theme="dark"
               mode="inline"
               selectedKeys={[currentPage]}
+              defaultOpenKeys={['dashboards']}
               items={sideMenuItems}
               onClick={handleMenuClick}
             />
