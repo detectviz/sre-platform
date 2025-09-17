@@ -2,7 +2,7 @@
 # 版本: 2.0.0
 # 更新日期: 2025-09-16
 # 描述: 此文件為 SRE 平台前端與後端之間的 API 契約唯一真實來源 (Single Source of Truth)，
-#      根據 specs.md v3.1 和 prototype.html 的全面審查結果重新撰寫。
+#      根據 prototype.html 的全面審查結果重新撰寫。
 openapi: 3.1.0
 info:
   title: SRE 平台 - API 規格書
@@ -90,12 +90,33 @@ x-incident-lifecycle:
   # 事件狀態機契約
   states: [new, acknowledged, resolved, silenced]
   transitions:
-    - { from: new, to: acknowledged, roles: [team_member, team_manager, super_admin], action: "確認" }
-    - { from: acknowledged, to: resolved, roles: [team_member, team_manager, super_admin], action: "解決" }
-    - { from: new, to: silenced, roles: [team_manager, super_admin], action: "靜音" }
-    - { from: acknowledged, to: silenced, roles: [team_manager, super_admin], action: "靜音" }
+    - {
+        from: new,
+        to: acknowledged,
+        roles: [team_member, team_manager, super_admin],
+        action: "確認",
+      }
+    - {
+        from: acknowledged,
+        to: resolved,
+        roles: [team_member, team_manager, super_admin],
+        action: "解決",
+      }
+    - {
+        from: new,
+        to: silenced,
+        roles: [team_manager, super_admin],
+        action: "靜音",
+      }
+    - {
+        from: acknowledged,
+        to: silenced,
+        roles: [team_manager, super_admin],
+        action: "靜音",
+      }
   actions:
-    acknowledge: { endpoint: "/incidents/{incidentId}/acknowledge", method: POST }
+    acknowledge:
+      { endpoint: "/incidents/{incidentId}/acknowledge", method: POST }
     resolve: { endpoint: "/incidents/{incidentId}/resolve", method: POST }
     silence: { endpoint: "/incidents/silences", method: POST }
 
@@ -180,7 +201,7 @@ paths:
       tags: [System]
       summary: 獲取可用監控指標列表
       operationId: getMetricDefinitions
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       responses:
         "200":
           description: 成功獲取指標列表
@@ -195,7 +216,7 @@ paths:
       tags: [System]
       summary: 多資源指標時序查詢
       operationId: queryMetrics
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       requestBody:
         required: true
         content:
@@ -262,7 +283,7 @@ paths:
       tags: [Search & Autocomplete]
       summary: 獲取自動完成建議
       operationId: getAutocompleteSuggestions
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - name: type
           in: query
@@ -289,7 +310,7 @@ paths:
       tags: [Search & Autocomplete]
       summary: 全局搜尋
       operationId: globalSearch
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - name: q
           in: query
@@ -314,7 +335,7 @@ paths:
       tags: [Dashboard]
       summary: 儀表板摘要
       operationId: getDashboardSummary
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       responses:
         "200":
           description: 儀表板摘要
@@ -327,7 +348,7 @@ paths:
       tags: [Dashboard]
       summary: 趨勢數據
       operationId: getDashboardTrends
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - name: period
           in: query
@@ -347,7 +368,7 @@ paths:
       tags: [Dashboard]
       summary: 資源分佈
       operationId: getResourceDistribution
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       responses:
         "200":
           description: 資源分佈數據
@@ -364,7 +385,7 @@ paths:
       tags: [Resources]
       summary: 獲取資源列表
       operationId: listResources
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -397,7 +418,7 @@ paths:
       tags: [Resources]
       summary: 創建資源
       operationId: createResource
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       requestBody:
         $ref: "#/components/requestBodies/ResourceCreateRequest"
@@ -413,7 +434,7 @@ paths:
       tags: [Resources]
       summary: 獲取資源詳情
       operationId: getResource
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/ResourceIdParam"
       responses:
@@ -427,7 +448,7 @@ paths:
       tags: [Resources]
       summary: 更新資源
       operationId: updateResource
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - $ref: "#/components/parameters/ResourceIdParam"
@@ -444,7 +465,7 @@ paths:
       tags: [Resources]
       summary: 刪除資源
       operationId: deleteResource
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - $ref: "#/components/parameters/ResourceIdParam"
@@ -456,7 +477,7 @@ paths:
       tags: [Resources]
       summary: 獲取資源歷史指標
       operationId: getResourceMetricsHistory
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/ResourceIdParam"
         - name: metric_name
@@ -481,7 +502,7 @@ paths:
       tags: [Resources]
       summary: 獲取資源關聯事件列表
       operationId: getResourceIncidents
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/ResourceIdParam"
         - $ref: "#/components/parameters/PageParam"
@@ -498,7 +519,7 @@ paths:
       tags: [Resources]
       summary: 批次操作資源
       operationId: batchOperateResources
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       requestBody:
         $ref: "#/components/requestBodies/BatchResourceOperation"
@@ -514,7 +535,7 @@ paths:
       tags: [Resources]
       summary: 掃描網段
       operationId: scanNetwork
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       requestBody:
         $ref: "#/components/requestBodies/NetworkScanRequest"
@@ -530,7 +551,7 @@ paths:
       tags: [Resources]
       summary: 獲取掃描結果
       operationId: getScanResult
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - name: taskId
           in: path
@@ -551,7 +572,7 @@ paths:
       tags: [Resource Groups]
       summary: 獲取群組列表
       operationId: listResourceGroups
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -566,7 +587,7 @@ paths:
       tags: [Resource Groups]
       summary: 創建群組
       operationId: createResourceGroup
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       requestBody:
         $ref: "#/components/requestBodies/ResourceGroupCreateRequest"
@@ -582,7 +603,7 @@ paths:
       tags: [Resource Groups]
       summary: 獲取單一資源群組詳情
       operationId: getResourceGroup
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - name: groupId
           in: path
@@ -599,7 +620,7 @@ paths:
       tags: [Resource Groups]
       summary: 更新群組
       operationId: updateResourceGroup
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - name: groupId
@@ -619,7 +640,7 @@ paths:
       tags: [Resource Groups]
       summary: 刪除群組
       operationId: deleteResourceGroup
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - name: groupId
@@ -634,7 +655,7 @@ paths:
       tags: [Resource Groups]
       summary: 管理群組成員
       operationId: manageResourceGroupMembers
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - name: groupId
@@ -658,7 +679,7 @@ paths:
       tags: [Incidents]
       summary: 獲取事件列表
       operationId: listIncidents
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -684,7 +705,7 @@ paths:
       tags: [Incidents]
       summary: 創建事件
       operationId: createIncident
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       requestBody:
         $ref: "#/components/requestBodies/IncidentCreateRequest"
@@ -700,7 +721,7 @@ paths:
       tags: [Incidents]
       summary: 獲取事件詳情
       operationId: getIncident
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - name: incidentId
           in: path
@@ -717,7 +738,7 @@ paths:
       tags: [Incidents]
       summary: 更新事件
       operationId: updateIncident
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       parameters:
         - name: incidentId
@@ -738,7 +759,7 @@ paths:
       tags: [Incidents]
       summary: 確認事件
       operationId: acknowledgeIncident
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       parameters:
         - name: incidentId
@@ -757,7 +778,7 @@ paths:
       tags: [Incidents]
       summary: 解決事件
       operationId: resolveIncident
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       parameters:
         - name: incidentId
@@ -776,7 +797,7 @@ paths:
       tags: [Incidents]
       summary: 指派事件
       operationId: assignIncident
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - name: incidentId
@@ -805,7 +826,7 @@ paths:
       tags: [Incidents]
       summary: 新增事件註記
       operationId: addIncidentComment
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       parameters:
         - name: incidentId
@@ -834,7 +855,7 @@ paths:
       tags: [Incidents]
       summary: AI 生成事件報告
       operationId: generateIncidentReport
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       requestBody:
         required: true
@@ -862,7 +883,7 @@ paths:
       tags: [Incident Silences]
       summary: 獲取靜音規則列表
       operationId: listSilences
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -877,7 +898,7 @@ paths:
       tags: [Incident Silences]
       summary: 創建靜音規則
       operationId: createSilence
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       requestBody:
         $ref: "#/components/requestBodies/SilenceCreateRequest"
@@ -893,7 +914,7 @@ paths:
       tags: [Incident Silences]
       summary: 獲取單一靜音規則
       operationId: getSilence
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       parameters:
         - name: silenceId
           in: path
@@ -910,7 +931,7 @@ paths:
       tags: [Incident Silences]
       summary: 更新靜音規則
       operationId: updateSilence
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - name: silenceId
@@ -930,7 +951,7 @@ paths:
       tags: [Incident Silences]
       summary: 刪除靜音規則
       operationId: deleteSilence
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - name: silenceId
@@ -945,7 +966,7 @@ paths:
       tags: [Incident Silences]
       summary: 啟用靜音規則
       operationId: enableSilence
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - name: silenceId
@@ -964,7 +985,7 @@ paths:
       tags: [Incident Silences]
       summary: 停用靜音規則
       operationId: disableSilence
-      security: [ { bearerAuth: [] } ]
+      security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
         - name: silenceId
@@ -1211,7 +1232,8 @@ components:
         ip_address: { type: string }
         group_id: { type: string }
         tags: { type: array, items: { type: string } }
-        silences: { type: array, items: { $ref: "#/components/schemas/Silence" } }
+        silences:
+          { type: array, items: { $ref: "#/components/schemas/Silence" } }
         created_at: { type: string, format: "date-time" }
         updated_at: { type: string, format: "date-time" }
     ResourceList:
@@ -1273,7 +1295,8 @@ components:
     ResourceGroupList:
       type: object
       properties:
-        items: { type: array, items: { $ref: "#/components/schemas/ResourceGroup" } }
+        items:
+          { type: array, items: { $ref: "#/components/schemas/ResourceGroup" } }
         pagination: { $ref: "#/components/schemas/Pagination" }
     ResourceGroupCreateRequest:
       type: object

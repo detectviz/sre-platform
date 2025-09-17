@@ -167,19 +167,17 @@
     }
 
     /* === 表頭優化 === */
-    .table-wrapper .ant-table-thead>tr {
-      background: rgba(255, 255, 255, 0.05);
-    }
-
     .table-wrapper .ant-table-thead>tr>th {
-      background: rgba(255, 255, 255, 0.05) !important;
+      background: var(--bg-elevated);
       color: var(--text-primary);
       font-weight: 600;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       padding: var(--spacing-lg) var(--spacing-lg);
-      line-height: 1.4;
+      height: 48px;
+      /* 統一表頭高度 */
+      line-height: 1.2;
       border-bottom: 2px solid var(--border-base);
       white-space: nowrap;
       overflow: hidden;
@@ -2946,6 +2944,8 @@
       height: auto !important;
       min-height: auto !important;
     }
+
+
 
     .ant-table-tbody>tr>td {
       color: var(--text-secondary);
