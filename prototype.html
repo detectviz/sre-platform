@@ -20538,7 +20538,6 @@
       const settingsStats = {
         totalTags: 42,
         activeTags: 38,
-        emailTemplates: 15,
         authSessions: 156,
         configChanges: 7,
         lastBackup: '2小時前'
@@ -20555,7 +20554,7 @@
           {/* 平台設定 KPI 儀表板 */}
           <div style={{ marginBottom: 'var(--spacing-xl)' }}>
             <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} lg={6}>
+              <Col xs={24} sm={12} lg={8}>
                 <ContextualKPICard
                   title="標籤總數"
                   value={settingsStats.totalTags}
@@ -20566,18 +20565,7 @@
                   icon={<TagsOutlined />}
                 />
               </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="通知管道"
-                  value={settingsStats.emailTemplates}
-                  unit="個"
-                  trend="0%"
-                  status="info"
-                  description="通知管道配置"
-                  icon={<MailOutlined />}
-                />
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
+              <Col xs={24} sm={12} lg={8}>
                 <ContextualKPICard
                   title="活躍會話"
                   value={settingsStats.authSessions}
@@ -20588,7 +20576,7 @@
                   icon={<LockOutlined />}
                 />
               </Col>
-              <Col xs={24} sm={12} lg={6}>
+              <Col xs={24} sm={12} lg={8}>
                 <ContextualKPICard
                   title="配置異動"
                   value={settingsStats.configChanges}
