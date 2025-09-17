@@ -422,6 +422,7 @@ refactor: 重構狀態管理邏輯
 
 ### 📖 專業文件
 
+- **[🎨 設計審閱合集](docs/design-reviews.md)** - 各模塊設計分析與優化建議
 - **[🔒 安全配置指南](docs/SECURITY.md)** - 認證、授權、加密配置
 - **[📈 監控與告警](docs/MONITORING.md)** - 可觀測性最佳實踐
 - **[🚀 部署指南](docs/DEPLOYMENT.md)** - 生產環境部署說明

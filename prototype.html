@@ -9788,6 +9788,210 @@
 
     // 資源拓撲 Tab - 資源間的依賴關係視覺化
     const ResourceTopologyTab = ({ onNavigate }) => {
+      const [selectedNode, setSelectedNode] = React.useState(null);
+      const [layoutType, setLayoutType] = React.useState('force');
+      const chartRef = React.useRef(null);
+      const chartInstance = React.useRef(null);
+
+      // 基於資源數據生成拓撲圖數據
+      const generateTopologyData = () => {
+        // 節點數據 - 從現有資源轉換
+        const nodes = [
+          { id: 'host_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', category: 0 },
+          { id: 'host_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', category: 1 },
+          { id: 'host_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', category: 2 },
+          { id: 'host_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', category: 3 },
+          { id: 'host_5', name: 'k8s-master-node-01', type: 'server', status: 'healthy', ip_address: '10.0.1.5', category: 1 },
+          // 新增一些虛擬節點來展示更複雜的拓撲
+          { id: 'service_auth', name: '認證服務', type: 'service', status: 'healthy', ip_address: 'N/A', category: 4 },
+          { id: 'service_order', name: '訂單服務', type: 'service', status: 'healthy', ip_address: 'N/A', category: 4 },
+          { id: 'load_balancer', name: '負載均衡器', type: 'gateway', status: 'healthy', ip_address: '10.0.0.1', category: 2 },
+          { id: 'monitoring', name: '監控系統', type: 'service', status: 'healthy', ip_address: '10.0.0.100', category: 5 }
+        ];
+
+        // 連線數據 - 定義資源間的依賴關係
+        const links = [
+          { source: 'load_balancer', target: 'host_3', label: '流量路由' },
+          { source: 'host_3', target: 'host_2', label: 'API調用' },
+          { source: 'host_3', target: 'service_auth', label: '認證驗證' },
+          { source: 'host_2', target: 'host_1', label: '資料讀寫' },
+          { source: 'host_2', target: 'host_4', label: '緩存讀取' },
+          { source: 'service_auth', target: 'host_1', label: '用戶驗證' },
+          { source: 'service_order', target: 'host_1', label: '訂單儲存' },
+          { source: 'service_order', target: 'host_4', label: '會話緩存' },
+          { source: 'host_5', target: 'host_2', label: '容器管理' },
+          { source: 'monitoring', target: 'host_1', label: '監控採集' },
+          { source: 'monitoring', target: 'host_2', label: '監控採集' },
+          { source: 'monitoring', target: 'host_3', label: '監控採集' },
+          { source: 'monitoring', target: 'host_4', label: '監控採集' },
+          { source: 'monitoring', target: 'host_5', label: '監控採集' }
+        ];
+
+        return { nodes, links };
+      };
+
+      // 節點類型和顏色映射
+      const getNodeStyle = (node) => {
+        const statusColors = {
+          healthy: '#52c41a',
+          warning: '#faad14',
+          critical: '#ff4d4f'
+        };
+
+        const categoryColors = {
+          0: '#1890ff', // database
+          1: '#722ed1', // server
+          2: '#13c2c2', // gateway
+          3: '#eb2f96', // cache
+          4: '#52c41a', // service
+          5: '#fa8c16'  // monitoring
+        };
+
+        const color = statusColors[node.status] || categoryColors[node.category] || '#d9d9d9';
+
+        return {
+          color,
+          borderColor: color,
+          shadowColor: color + '40',
+          symbolSize: node.type === 'service' ? 50 : 40
+        };
+      };
+
+      // 初始化ECharts圖表
+      React.useEffect(() => {
+        if (chartRef.current && !chartInstance.current) {
+          chartInstance.current = echarts.init(chartRef.current, 'dark', { renderer: 'svg' });
+
+          const { nodes, links } = generateTopologyData();
+
+          const option = {
+            tooltip: {
+              trigger: 'item',
+              formatter: (params) => {
+                if (params.dataType === 'node') {
+                  const node = params.data;
+                  return `
+                    <div style="font-weight: bold; margin-bottom: 8px;">${node.name}</div>
+                    <div>類型: ${node.type}</div>
+                    <div>狀態: <span style="color: ${getNodeStyle(node).color}">●</span> ${node.status}</div>
+                    <div>IP: ${node.ip_address}</div>
+                  `;
+                } else if (params.dataType === 'edge') {
+                  return `${params.data.source} → ${params.data.target}<br/>${params.data.label}`;
+                }
+              }
+            },
+            legend: {
+              data: ['資料庫', '伺服器', '網關', '快取', '服務', '監控'],
+              textStyle: { color: '#fff' },
+              top: 10
+            },
+            series: [{
+              type: 'graph',
+              layout: layoutType,
+              data: nodes.map(node => ({
+                ...node,
+                ...getNodeStyle(node),
+                label: {
+                  show: true,
+                  position: 'bottom',
+                  color: '#fff',
+                  fontSize: 12,
+                  formatter: '{b}'
+                }
+              })),
+              links: links.map(link => ({
+                ...link,
+                lineStyle: {
+                  color: '#aaa',
+                  width: 2,
+                  curveness: 0.2
+                },
+                emphasis: {
+                  lineStyle: {
+                    width: 4
+                  }
+                }
+              })),
+              emphasis: {
+                focus: 'adjacency',
+                lineStyle: {
+                  width: 4
+                }
+              },
+              roam: true,
+              focusNodeAdjacency: true,
+              draggable: true,
+              categories: [
+                { name: '資料庫', itemStyle: { color: '#1890ff' } },
+                { name: '伺服器', itemStyle: { color: '#722ed1' } },
+                { name: '網關', itemStyle: { color: '#13c2c2' } },
+                { name: '快取', itemStyle: { color: '#eb2f96' } },
+                { name: '服務', itemStyle: { color: '#52c41a' } },
+                { name: '監控', itemStyle: { color: '#fa8c16' } }
+              ],
+              force: {
+                repulsion: 1000,
+                edgeLength: [150, 300]
+              }
+            }]
+          };
+
+          chartInstance.current.setOption(option);
+
+          // 點擊事件
+          chartInstance.current.on('click', (params) => {
+            if (params.dataType === 'node') {
+              setSelectedNode(params.data);
+              message.info(`已選擇資源: ${params.data.name}`);
+            }
+          });
+
+          // 懸停事件
+          chartInstance.current.on('mouseover', (params) => {
+            if (params.dataType === 'node') {
+              chartRef.current.style.cursor = 'pointer';
+            }
+          });
+
+          chartInstance.current.on('mouseout', () => {
+            chartRef.current.style.cursor = 'default';
+          });
+        }
+
+        return () => {
+          if (chartInstance.current) {
+            chartInstance.current.dispose();
+            chartInstance.current = null;
+          }
+        };
+      }, [layoutType]);
+
+      // 佈局切換處理
+      const handleLayoutChange = (newLayout) => {
+        setLayoutType(newLayout);
+        if (chartInstance.current) {
+          chartInstance.current.setOption({
+            series: [{
+              layout: newLayout
+            }]
+          });
+        }
+      };
+
+      // 重新整理圖表
+      const handleRefresh = () => {
+        if (chartInstance.current) {
+          chartInstance.current.dispose();
+          chartInstance.current = null;
+          setSelectedNode(null);
+          // 重新觸發useEffect
+          setLayoutType(layoutType === 'force' ? 'circular' : 'force');
+          setTimeout(() => setLayoutType('force'), 100);
+        }
+        message.success('拓撲圖已重新整理');
+      };
+
       return (
         <div style={{ marginTop: 'var(--spacing-lg)' }}>
           <Card
@@ -9800,43 +10004,93 @@
             }
             extra={
               <div style={{ display: 'flex', gap: '8px' }}>
-                <Button size="small" icon={<CompressOutlined />}>
-                  收縮
-                </Button>
-                <Button size="small" icon={<ExpandOutlined />}>
-                  展開
-                </Button>
-                <Button size="small" icon={<ReloadOutlined />}>
+                <Select
+                  size="small"
+                  value={layoutType}
+                  onChange={handleLayoutChange}
+                  style={{ width: 100 }}
+                >
+                  <Select.Option value="force">力引導</Select.Option>
+                  <Select.Option value="circular">環形</Select.Option>
+                </Select>
+                <Button size="small" icon={<ReloadOutlined />} onClick={handleRefresh}>
                   重新整理
                 </Button>
               </div>
             }
             bodyStyle={{ padding: '20px' }}
           >
-            <div style={{
-              height: '600px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: 'rgba(255, 255, 255, 0.02)',
-              borderRadius: '8px',
-              border: '2px dashed rgba(255, 255, 255, 0.1)'
-            }}>
-              <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)' }}>
-                <BranchesOutlined style={{ fontSize: '64px', marginBottom: '16px' }} />
-                <div style={{ fontSize: '18px', marginBottom: '8px' }}>資源拓撲視覺化</div>
-                <div style={{ fontSize: '14px' }}>
-                  顯示資源間的依賴關係與數據流向
+            <div style={{ display: 'flex', gap: '16px', height: '600px' }}>
+              {/* 圖表區域 */}
+              <div
+                ref={chartRef}
+                style={{
+                  flex: 1,
+                  backgroundColor: 'rgba(255, 255, 255, 0.02)',
+                  borderRadius: '8px'
+                }}
+              />
+
+              {/* 詳細資訊面板 */}
+              {selectedNode && (
+                <div style={{
+                  width: '300px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                  <Title level={4} style={{ color: '#fff', marginBottom: '16px' }}>
+                    資源詳情
+                  </Title>
+                  <Descriptions
+                    column={1}
+                    size="small"
+                    style={{ color: '#fff' }}
+                  >
+                    <Descriptions.Item label="名稱" style={{ color: '#fff' }}>
+                      {selectedNode.name}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="類型" style={{ color: '#fff' }}>
+                      {selectedNode.type}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="狀態" style={{ color: '#fff' }}>
+                      <span style={{
+                        color: getNodeStyle(selectedNode).color,
+                        fontWeight: 'bold'
+                      }}>
+                        ● {selectedNode.status}
+                      </span>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="IP位址" style={{ color: '#fff' }}>
+                      {selectedNode.ip_address}
+                    </Descriptions.Item>
+                  </Descriptions>
+                  <div style={{ marginTop: '16px' }}>
+                    <Button
+                      type="primary"
+                      size="small"
+                      block
+                      onClick={() => onNavigate('resource-list', { searchText: selectedNode.name })}
+                    >
+                      查看資源詳情
+                    </Button>
+                  </div>
                 </div>
-                <Button
-                  type="primary"
-                  icon={<EyeOutlined />}
-                  style={{ marginTop: '16px' }}
-                  onClick={() => message.info('拓撲圖功能開發中...')}
-                >
-                  載入拓撲圖
-                </Button>
-              </div>
+              )}
+            </div>
+
+            {/* 操作說明 */}
+            <div style={{
+              marginTop: '16px',
+              padding: '12px',
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: 'rgba(255, 255, 255, 0.7)'
+            }}>
+              <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>操作說明：</div>
+              <div>• 點擊節點查看詳細資訊 • 拖拽節點調整位置 • 滾輪縮放 • 懸停查看工具提示</div>
             </div>
           </Card>
         </div>
@@ -10107,7 +10361,8 @@
         avgResolutionTime: 2.5,
         escalationRate: 8.3, // 升級率百分比
         automatedResolved: 7, // 自動解決的事件數
-        onCallEngineers: 4 // 值班工程師數量
+        automationRate: 35.2, // 自動化處理率百分比
+        automatedExecutions: 4 // 今日自動化執行次數
       };
 
       return (
@@ -10129,6 +10384,8 @@
                   status={incidentStats.criticalIncidents > 0 ? 'critical' : incidentStats.activeIncidents > 3 ? 'warning' : 'success'}
                   description={`${incidentStats.criticalIncidents} 件嚴重，${incidentStats.acknowledgedIncidents} 件處理中`}
                   icon={<FireOutlined />}
+                  onClick={() => onNavigate('incident-list', { statusFilter: 'active' })}
+                  style={{ cursor: 'pointer' }}
                 />
               </Col>
               <Col xs={24} sm={12} md={6} lg={6}>
@@ -10140,6 +10397,8 @@
                   status="success"
                   description={`${incidentStats.automatedResolved} 件自動解決`}
                   icon={<CheckCircleOutlined />}
+                  onClick={() => onNavigate('incident-list', { statusFilter: 'resolved', timeFilter: 'today' })}
+                  style={{ cursor: 'pointer' }}
                 />
               </Col>
               <Col xs={24} sm={12} md={6} lg={6}>
@@ -10155,12 +10414,14 @@
               </Col>
               <Col xs={24} sm={12} md={6} lg={6}>
                 <ContextualKPICard
-                  title="值班工程師"
-                  value={incidentStats.onCallEngineers}
-                  unit="人"
+                  title="自動化處理率"
+                  value={incidentStats.automationRate}
+                  unit="%"
                   status="success"
-                  description={`升級率 ${incidentStats.escalationRate}%`}
-                  icon={<TeamOutlined />}
+                  description={`今日 ${incidentStats.automatedExecutions} 件自動解決`}
+                  icon={<ThunderboltOutlined />}
+                  onClick={() => onNavigate('automation', { subTab: 'executions', filter: 'alert-triggered' })}
+                  style={{ cursor: 'pointer' }}
                 />
               </Col>
             </Row>
@@ -10336,8 +10597,10 @@
       );
     };
 
-    const AutomationCenterPage = ({ onNavigate, pageKey, scripts, setScripts, addExecution, executions, setExecutions, schedules, setSchedules }) => {
-      const tabKey = ['scripts', 'schedules', 'executions'].includes(pageKey) ? pageKey : 'scripts';
+    const AutomationCenterPage = ({ onNavigate, pageKey, scripts, setScripts, addExecution, executions, setExecutions, schedules, setSchedules, pageParams }) => {
+      // 根據 pageParams 確定預設 Tab
+      const defaultTab = pageParams && pageParams.subTab === 'executions' ? 'executions' : 'scripts';
+      const tabKey = ['scripts', 'schedules', 'executions'].includes(pageKey) ? pageKey : defaultTab;
 
       // 計算自動化 KPI
       const totalScripts = scripts.length;
@@ -10599,7 +10862,7 @@
               }
               key="executions"
             >
-              <ExecutionsPage executions={executions} setExecutions={setExecutions} />
+              <ExecutionsPage executions={executions} setExecutions={setExecutions} pageParams={pageParams} />
             </Tabs.TabPane>
           </Tabs>
         </React.Fragment>
@@ -10784,6 +11047,26 @@
         resourceName: ''
       });
       const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+      // 根據 pageParams 初始化篩選
+      React.useEffect(() => {
+        if (pageParams) {
+          if (pageParams.statusFilter === 'active') {
+            setAdvancedFilters(prev => ({
+              ...prev,
+              status: ['new', 'acknowledged']
+            }));
+            message.info('已篩選顯示活躍事件');
+          } else if (pageParams.statusFilter === 'resolved' && pageParams.timeFilter === 'today') {
+            setAdvancedFilters(prev => ({
+              ...prev,
+              status: ['resolved'],
+              timeRange: [dayjs().startOf('day'), dayjs().endOf('day')]
+            }));
+            message.info('已篩選顯示今日已解決事件');
+          }
+        }
+      }, [pageParams]);
 
       // 欄位自訂功能
       const defaultVisibleColumns = {
@@ -15697,12 +15980,21 @@
       );
     };
 
-    const ExecutionsPage = ({ executions, setExecutions }) => {
+    const ExecutionsPage = ({ executions, setExecutions, pageParams }) => {
       const [logModal, setLogModal] = useState({ open: false, log: '', structuredLogs: [], record: null });
       const [searchText, setSearchText] = useState('');
       const [selectedRowKeys, setSelectedRowKeys] = useState([]);
       const [logLevelFilter, setLogLevelFilter] = useState('');
       const [dateRange, setDateRange] = useState([dayjs().subtract(7, 'days'), dayjs()]);
+
+      // 根據 pageParams 初始化篩選
+      React.useEffect(() => {
+        if (pageParams && pageParams.filter === 'alert-triggered') {
+          // 篩選出由告警事件觸發的執行記錄
+          setLogLevelFilter('Event');
+          message.info('已篩選顯示由告警事件觸發的執行記錄');
+        }
+      }, [pageParams]);
 
       const viewLog = (record) => {
         // 產生結構化的日誌資料
@@ -15858,7 +16150,18 @@
             </Space>
           </Space>
           <div className="table-wrapper">
-            <Table rowSelection={rowSelection} columns={columns} dataSource={executions} rowKey="key" className="transparent-bg" size="small" />
+            <Table
+              rowSelection={rowSelection}
+              columns={columns}
+              dataSource={executions}
+              rowKey="key"
+              className="transparent-bg"
+              size="small"
+              onRow={(record) => ({
+                onClick: () => viewLog(record),
+                style: { cursor: 'pointer' }
+              })}
+            />
           </div>
 
           {hasSelected && (
@@ -21155,7 +21458,7 @@
           return <AnalyzingPage onNavigate={navigateToPage} pageKey={pageKey} themeMode={themeMode} />;
         }
         if (['automation', 'scripts', 'schedules', 'executions'].includes(pageKey)) {
-          return <AutomationCenterPage onNavigate={navigateToPage} pageKey={pageKey} scripts={scripts} setScripts={setScripts} addExecution={addExecution} executions={executions} setExecutions={setExecutions} schedules={schedules} setSchedules={setSchedules} />;
+          return <AutomationCenterPage onNavigate={navigateToPage} pageKey={pageKey} scripts={scripts} setScripts={setScripts} addExecution={addExecution} executions={executions} setExecutions={setExecutions} schedules={schedules} setSchedules={setSchedules} pageParams={pageParams} />;
         }
         if (['user-permissions', 'user-management', 'team-management', 'role-management', 'audit-logs'].includes(pageKey)) {
           return <UserPermissionsPage onNavigate={navigateToPage} pageKey={pageKey} />;
