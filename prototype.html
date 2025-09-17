@@ -7985,10 +7985,11 @@
       };
 
       const initialData = [
-        { key: 'host_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', groups: ['g_1'], tags: ['production', 'database', 'high-priority'], trend: generateTrend(), alarms: [] },
-        { key: 'host_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', groups: ['g_2'], tags: ['production', 'web-server'], trend: generateTrend(), alarms: [{ severity: 'warning', summary: 'Disk space is over 85%' }] },
-        { key: 'host_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', groups: [], tags: ['production', 'high-priority'], trend: generateTrend(), alarms: [{ severity: 'critical', summary: 'API latency > 2s' }, { severity: 'warning', summary: '5xx error rate > 5%' }] },
-        { key: 'host_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', groups: ['g_1', 'g_2'], tags: ['production', 'database'], trend: generateTrend(), alarms: [] },
+        // 註：此為模擬數據，新增 location, cpu_usage, memory_usage 等欄位以符合更新後的 schema
+        { key: 'host_1', name: 'db-prod-01', type: 'database', status: 'healthy', ip_address: '10.0.0.10', location: 'us-east-1', groups: ['g_1'], tags: ['production', 'database', 'high-priority'], cpu_usage: 45.5, memory_usage: 60.2, trend: generateTrend(), alarms: [] },
+        { key: 'host_2', name: 'web-prod-02', type: 'server', status: 'warning', ip_address: '10.0.0.21', location: 'us-west-2', groups: ['g_2'], tags: ['production', 'web-server'], cpu_usage: 88.1, memory_usage: 75.0, trend: generateTrend(), alarms: [{ severity: 'warning', summary: 'Disk space is over 85%' }] },
+        { key: 'host_3', name: 'api-gateway-prod', type: 'gateway', status: 'critical', ip_address: '10.0.0.35', location: 'eu-central-1', groups: [], tags: ['production', 'high-priority'], cpu_usage: 92.3, memory_usage: 50.8, trend: generateTrend(), alarms: [{ severity: 'critical', summary: 'API latency > 2s' }, { severity: 'warning', summary: '5xx error rate > 5%' }] },
+        { key: 'host_4', name: 'cache-redis-prod', type: 'cache', status: 'healthy', ip_address: '10.0.0.40', location: 'ap-northeast-1', groups: ['g_1', 'g_2'], tags: ['production', 'database'], cpu_usage: 25.0, memory_usage: 35.5, trend: generateTrend(), alarms: [] },
       ];
 
       const [resources, setResources] = useLocalStorageState('sre-resources-v3', initialData);
@@ -10692,15 +10693,16 @@
 
     const IncidentListPage = ({ onNavigate, pageParams }) => {
       const initialData = [
-        { key: 'i_1', summary: 'CPU high on db-mysql-prod-02', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'user_2', resource_name: 'db-mysql-prod-02', service: '資料庫服務', business_impact: '高', storm_group: null, ruleName: '高 CPU 使用率', triggerThreshold: 'CPU > 90%' },
-        { key: 'i_2', summary: 'Disk space low on srv-web-prod-02', severity: 'warning', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'hour'), automation_id: 'e_1', assignee: null, resource_name: 'srv-web-prod-02', service: 'Web應用', business_impact: '中', storm_group: null, ruleName: '磁碟空間不足', triggerThreshold: 'Disk < 15%' },
-        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'user_4', resource_name: 'srv-api-prod-01', service: 'API閘道', business_impact: '高', storm_group: null, ruleName: 'API 延遲過高', triggerThreshold: 'P95 Latency > 500ms' },
-        { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'user_1', resource_name: 'mon-prometheus-prod-01', service: '監控系統', business_impact: '中', storm_group: null, ruleName: '基礎設施監控', triggerThreshold: 'Pod is not ready' },
-        { key: 'i_5', summary: '記憶體使用率過高 - staging', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(15, 'minutes'), automation_id: null, assignee: null, resource_name: 'srv-web-stg-01', service: 'Web應用', business_impact: '低', storm_group: null, ruleName: '測試環境資源監控', triggerThreshold: 'Memory > 80%' },
-        { key: 'i_6', summary: 'Cache Redis Memory Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(30, 'minutes'), automation_id: null, assignee: null, resource_name: 'cache-redis-prod-01', service: '快取服務', business_impact: '高', storm_group: null, ruleName: '快取服務監控', triggerThreshold: 'Memory > 95%' },
-        { key: 'i_7', summary: 'Web Server 503 Errors', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'srv-web-prod-01', service: 'Web應用', business_impact: '高', storm_group: 'storm_1', ruleName: 'Web 服務可用性', triggerThreshold: '5xx errors > 5%' },
-        { key: 'i_8', summary: 'Load Balancer High Traffic', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(3, 'minutes'), automation_id: null, assignee: null, resource_name: 'net-lb-prod-01', service: '負載平衡', business_impact: '中', storm_group: 'storm_1', ruleName: '網路流量監控', triggerThreshold: 'Traffic > 1Gbps' },
-        { key: 'i_9', summary: 'Database Connection Pool Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'db-mysql-prod-01', service: '資料庫服務', business_impact: '高', storm_group: 'storm_1', ruleName: '資料庫連線池監控', triggerThreshold: 'Connection Pool > 98%' },
+        // 註：擴充欄位以符合 pages-param.md 和 db_schema.sql v2.0
+        { key: 'i_1', summary: 'CPU high on db-mysql-prod-02', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), automation_id: null, assignee: 'user_2', resource_name: 'db-mysql-prod-02', service: '資料庫服務', business_impact: '高', storm_group: null, rule_id: 'rule_1', ruleName: '高 CPU 使用率', threshold: 90, labels: { "cluster": "prod-db" }, annotations: { "playbook": "http://runbook/cpu" }, triggerThreshold: 'CPU > 90%' },
+        { key: 'i_2', summary: 'Disk space low on srv-web-prod-02', severity: 'warning', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'hour'), automation_id: 'e_1', assignee: null, resource_name: 'srv-web-prod-02', service: 'Web應用', business_impact: '中', storm_group: null, rule_id: 'rule_2', ruleName: '磁碟空間不足', threshold: 15, labels: { "cluster": "prod-web" }, annotations: {}, triggerThreshold: 'Disk < 15%' },
+        { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'user_4', resource_name: 'srv-api-prod-01', service: 'API閘道', business_impact: '高', storm_group: null, rule_id: 'rule_3', ruleName: 'API 延遲過高', threshold: 500, labels: {}, annotations: { "description": "P95 latency is high" }, triggerThreshold: 'P95 Latency > 500ms' },
+        { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'user_1', resource_name: 'mon-prometheus-prod-01', service: '監控系統', business_impact: '中', storm_group: null, rule_id: 'rule_4', ruleName: '基礎設施監控', threshold: 1, labels: { "service": "monitoring" }, annotations: {}, triggerThreshold: 'Pod is not ready' },
+        { key: 'i_5', summary: '記憶體使用率過高 - staging', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(15, 'minutes'), automation_id: null, assignee: null, resource_name: 'srv-web-stg-01', service: 'Web應用', business_impact: '低', storm_group: null, rule_id: 'rule_5', ruleName: '測試環境資源監控', threshold: 80, labels: { "env": "staging" }, annotations: {}, triggerThreshold: 'Memory > 80%' },
+        { key: 'i_6', summary: 'Cache Redis Memory Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(30, 'minutes'), automation_id: null, assignee: null, resource_name: 'cache-redis-prod-01', service: '快取服務', business_impact: '高', storm_group: null, rule_id: 'rule_6', ruleName: '快取服務監控', threshold: 95, labels: { "service": "cache" }, annotations: {}, triggerThreshold: 'Memory > 95%' },
+        { key: 'i_7', summary: 'Web Server 503 Errors', severity: 'critical', source: 'Datadog', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'srv-web-prod-01', service: 'Web應用', business_impact: '高', storm_group: 'storm_1', rule_id: 'rule_7', ruleName: 'Web 服務可用性', threshold: 5, labels: { "error_type": "5xx" }, annotations: {}, triggerThreshold: '5xx errors > 5%' },
+        { key: 'i_8', summary: 'Load Balancer High Traffic', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(3, 'minutes'), automation_id: null, assignee: null, resource_name: 'net-lb-prod-01', service: '負載平衡', business_impact: '中', storm_group: 'storm_1', rule_id: 'rule_8', ruleName: '網路流量監控', threshold: 1000, labels: {}, annotations: {}, triggerThreshold: 'Traffic > 1Gbps' },
+        { key: 'i_9', summary: 'Database Connection Pool Full', severity: 'critical', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'minutes'), automation_id: null, assignee: null, resource_name: 'db-mysql-prod-01', service: '資料庫服務', business_impact: '高', storm_group: 'storm_1', rule_id: 'rule_9', ruleName: '資料庫連線池監控', threshold: 98, labels: {}, annotations: {}, triggerThreshold: 'Connection Pool > 98%' },
       ];
       const [incidents, setIncidents] = useLocalStorageState('sre-incidents-v4', initialData);
       const [searchText, setSearchText] = useState('');
@@ -11733,22 +11735,24 @@
           key: 'rule_1',
           name: '高 CPU 使用率',
           target: 'Production Web Servers',
-          resource_tags: ['production', 'web-server'],
-          conditions: {
+          resource_tags: { "env": "production", "app": "web" }, // 改為物件以對應 JSONB
+          conditions: { // 結構已符合 JSONB 儲存
             operator: 'AND',
             conditions: [
               { metric: 'cpu_utilization', operator: '>', value: 90, duration: 5, durationUnit: 'minutes' },
               { metric: 'memory_usage', operator: '>', value: 85, duration: 3, durationUnit: 'minutes' }
             ]
           },
-          notifications: ['Slack'],
+          notifications: [ // 改為物件陣列以對應 JSONB
+            { type: 'slack', target: '#alerts-critical', template: 'slack-critical-template', enabled: true }
+          ],
           enabled: true
         },
         {
           key: 'rule_2',
           name: '資料庫延遲',
           target: 'Production Database',
-          resource_tags: ['production', 'database', 'high-priority'],
+          resource_tags: { "env": "production", "db": "mysql" },
           conditions: {
             operator: 'OR',
             conditions: [
@@ -11756,14 +11760,17 @@
               { metric: 'cpu_utilization', operator: '>', value: 95, duration: 1, durationUnit: 'minutes' }
             ]
           },
-          notifications: ['Email', 'Slack'],
+          notifications: [
+            { type: 'email', target: 'db-admins@example.com', template: 'default-email', enabled: true },
+            { type: 'slack', target: '#db-alerts', template: 'slack-db-template', enabled: true }
+          ],
           enabled: true
         },
         {
           key: 'rule_3',
           name: '測試環境資源監控',
           target: 'Staging Environment',
-          resource_tags: ['staging', 'team-alpha'],
+          resource_tags: { "env": "staging" },
           conditions: {
             operator: 'AND',
             conditions: [
@@ -11771,7 +11778,9 @@
               { metric: 'disk_space', operator: '<', value: 15, duration: 5, durationUnit: 'minutes' }
             ]
           },
-          notifications: ['Email'],
+          notifications: [
+            { type: 'email', target: 'qa-team@example.com', template: 'default-email', enabled: true }
+          ],
           enabled: false
         },
         {
@@ -14843,8 +14852,9 @@
 
     const SchedulesPage = ({ scripts }) => {
       const initialSchedules = [
-        { key: 'sch_1', name: '每日資料庫備份', cron: '0 2 * * *', scriptId: 's_3', lastRun: dayjs().subtract(1, 'day').hour(2), lastStatus: 'success', enabled: true, creator: 'admin' },
-        { key: 'sch_2', name: '每小時清理臨時文件', cron: '0 * * * *', scriptId: 's_2', lastRun: dayjs().subtract(30, 'minute'), lastStatus: 'failed', enabled: false, creator: 'dev_user' },
+        // 註：新增 scheduleMode 和 frequency 欄位以符合更新後的 DB schema
+        { key: 'sch_1', name: '每日資料庫備份', cron: '0 2 * * *', scheduleMode: 'advanced', frequency: 'daily', scriptId: 's_3', lastRun: dayjs().subtract(1, 'day').hour(2), lastStatus: 'success', enabled: true, creator: 'admin' },
+        { key: 'sch_2', name: '每小時清理臨時文件', cron: '0 * * * *', scheduleMode: 'simple', frequency: 'hourly', scriptId: 's_2', lastRun: dayjs().subtract(30, 'minute'), lastStatus: 'failed', enabled: false, creator: 'dev_user' },
       ];
       // 確保包含creator欄位的資料結構
       const [schedules, setSchedules] = useLocalStorageState('sre-schedules', initialSchedules);
@@ -15986,10 +15996,11 @@
 
     const UserManagementPage = () => {
       const initialUsers = [
-        { key: 'user_1', name: 'Admin User', email: 'admin@example.com', teams: ['team_3'], roles: ['super_admin'], status: 'active', lastLogin: dayjs().subtract(1, 'day'), createdAt: dayjs().subtract(30, 'day') },
-        { key: 'user_2', name: 'Dev User', email: 'dev@example.com', teams: ['team_1'], roles: ['team_manager', 'team_member'], status: 'active', lastLogin: dayjs().subtract(2, 'hours'), createdAt: dayjs().subtract(15, 'day') },
-        { key: 'user_3', name: 'View User', email: 'view@example.com', teams: ['team_2'], roles: ['viewer'], status: 'inactive', lastLogin: dayjs().subtract(7, 'day'), createdAt: dayjs().subtract(45, 'day') },
-        { key: 'user_4', name: 'Ops User', email: 'ops@example.com', teams: ['team_1', 'team_3'], roles: ['team_member'], status: 'active', lastLogin: dayjs().subtract(30, 'minutes'), createdAt: dayjs().subtract(10, 'day') },
+        // 註：此為模擬數據，實際應從 API 獲取。新增 login_count 和 preferences 欄位以符合更新後的 schema。
+        { key: 'user_1', name: 'Admin User', email: 'admin@example.com', teams: ['team_3'], roles: ['super_admin'], status: 'active', lastLogin: dayjs().subtract(1, 'day'), loginCount: 102, preferences: { theme: 'dark' }, createdAt: dayjs().subtract(30, 'day') },
+        { key: 'user_2', name: 'Dev User', email: 'dev@example.com', teams: ['team_1'], roles: ['team_manager', 'team_member'], status: 'active', lastLogin: dayjs().subtract(2, 'hours'), loginCount: 55, preferences: { theme: 'light' }, createdAt: dayjs().subtract(15, 'day') },
+        { key: 'user_3', name: 'View User', email: 'view@example.com', teams: ['team_2'], roles: ['viewer'], status: 'inactive', lastLogin: dayjs().subtract(7, 'day'), loginCount: 12, preferences: {}, createdAt: dayjs().subtract(45, 'day') },
+        { key: 'user_4', name: 'Ops User', email: 'ops@example.com', teams: ['team_1', 'team_3'], roles: ['team_member'], status: 'active', lastLogin: dayjs().subtract(30, 'minutes'), loginCount: 230, preferences: { theme: 'dark' }, createdAt: dayjs().subtract(10, 'day') },
       ];
 
       const [users, setUsers] = useLocalStorageState('sre-users', initialUsers);
@@ -17471,6 +17482,62 @@
         }
       ];
 
+      // Reusable card content component
+      const CardContent = ({ item }) => (
+        <div
+          className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
+          onClick={() => item.enabled && onNavigate(item.key)}
+          style={{ height: '100%', width: '100%' }}
+        >
+          <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
+              <div className="nav-item-icon" style={{
+                background: 'rgba(24, 144, 255, 0.1)',
+                padding: '6px',
+                borderRadius: '8px',
+                fontSize: '20px',
+                opacity: item.enabled ? 1 : 0.5
+              }}>
+                {item.icon}
+              </div>
+              <div className="nav-item-text" style={{ flex: 1 }}>
+                <Title level={5} className="nav-item-title" style={{ marginBottom: '4px' }}>
+                  {item.title}
+                </Title>
+                <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+
+      // Helper to render a category section
+      const renderCategory = (categoryName) => (
+        <div style={{ marginBottom: '24px' }}>
+          <Title level={5} style={{
+            color: 'var(--text-secondary)',
+            fontWeight: '500',
+            marginBottom: '8px',
+            fontSize: '16px'
+          }}>
+            {categoryName}
+          </Title>
+          <Row gutter={[16, 16]}>
+            {settingsCards.filter(item => item.category === categoryName).map(item => (
+              <Col key={item.key} xs={24} md={12} lg={8} style={{ display: 'flex' }}>
+                {item.enabled ? (
+                  <CardContent item={item} />
+                ) : (
+                  <Badge.Ribbon text="即將推出">
+                    <CardContent item={item} />
+                  </Badge.Ribbon>
+                )}
+              </Col>
+            ))}
+          </Row>
+        </div>
+      );
+
 
       return (
         <React.Fragment>
@@ -17480,194 +17547,10 @@
           </Paragraph>
           {/* 分組顯示設定功能 */}
           <div style={{ marginTop: '16px' }}>
-            {/* 用戶與權限組 */}
-            <div style={{ marginBottom: '24px' }}>
-              <Title level={5} style={{
-                color: 'var(--text-secondary)',
-                fontWeight: '500',
-                marginBottom: '8px',
-                fontSize: '16px'
-              }}>
-                用戶與權限
-              </Title>
-              <Row gutter={[16, 16]}>
-                {settingsCards.filter(item => item.category === '用戶與權限').map(item => (
-                  <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon
-                      text="即將推出"
-                      style={{ display: !item.enabled ? 'block' : 'none' }}
-                    >
-                      <div
-                        className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-                        onClick={() => item.enabled && onNavigate(item.key)}
-                        style={{ height: '100%' }}
-                      >
-                        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{
-                              background: 'rgba(24, 144, 255, 0.1)',
-                              padding: '6px',
-                              borderRadius: '8px',
-                              fontSize: '20px',
-                              opacity: item.enabled ? 1 : 0.5
-                            }}>
-                              {item.icon}
-                            </div>
-                            <div className="nav-item-text" style={{ flex: 1 }}>
-                              <Title level={5} className="nav-item-title" style={{ marginBottom: '4px' }}>
-                                {item.title}
-                              </Title>
-                              <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Badge.Ribbon>
-                  </Col>
-                ))}
-              </Row>
-            </div>
-            {/* 通知管理組 */}
-            <div style={{ marginBottom: '24px' }}>
-              <Title level={5} style={{
-                color: 'var(--text-secondary)',
-                fontWeight: '500',
-                marginBottom: '8px',
-                fontSize: '16px'
-              }}>
-                通知管理
-              </Title>
-              <Row gutter={[16, 16]}>
-                {settingsCards.filter(item => item.category === '通知管理').map(item => (
-                  <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon
-                      text="即將推出"
-                      style={{ display: !item.enabled ? 'block' : 'none' }}
-                    >
-                      <div
-                        className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-                        onClick={() => item.enabled && onNavigate(item.key)}
-                        style={{ height: '100%' }}
-                      >
-                        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{
-                              background: 'rgba(24, 144, 255, 0.1)',
-                              padding: '6px',
-                              borderRadius: '8px',
-                              fontSize: '20px',
-                              opacity: item.enabled ? 1 : 0.5
-                            }}>
-                              {item.icon}
-                            </div>
-                            <div className="nav-item-text" style={{ flex: 1 }}>
-                              <Title level={5} className="nav-item-title" style={{ marginBottom: '4px' }}>
-                                {item.title}
-                              </Title>
-                              <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Badge.Ribbon>
-                  </Col>
-                ))}
-              </Row>
-            </div>
-            {/* 平台設定組 */}
-            <div style={{ marginBottom: '24px' }}>
-              <Title level={5} style={{
-                color: 'var(--text-secondary)',
-                fontWeight: '500',
-                marginBottom: '8px',
-                fontSize: '16px'
-              }}>
-                平台設定
-              </Title>
-              <Row gutter={[16, 16]}>
-                {settingsCards.filter(item => item.category === '平台設定').map(item => (
-                  <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon
-                      text="即將推出"
-                      style={{ display: !item.enabled ? 'block' : 'none' }}
-                    >
-                      <div
-                        className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-                        onClick={() => item.enabled && onNavigate(item.key)}
-                        style={{ height: '100%' }}
-                      >
-                        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{
-                              background: 'rgba(24, 144, 255, 0.1)',
-                              padding: '6px',
-                              borderRadius: '8px',
-                              fontSize: '20px',
-                              opacity: item.enabled ? 1 : 0.5
-                            }}>
-                              {item.icon}
-                            </div>
-                            <div className="nav-item-text" style={{ flex: 1 }}>
-                              <Title level={5} className="nav-item-title" style={{ marginBottom: '2px' }}>
-                                {item.title}
-                              </Title>
-                              <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Badge.Ribbon>
-                  </Col>
-                ))}
-              </Row>
-            </div>
-            {/* 平台維運組 */}
-            <div style={{ marginBottom: '24px' }}>
-              <Title level={5} style={{
-                color: 'var(--text-secondary)',
-                fontWeight: '500',
-                marginBottom: '8px',
-                fontSize: '16px'
-              }}>
-                平台維運
-              </Title>
-              <Row gutter={[16, 16]}>
-                {settingsCards.filter(item => item.category === '平台維運').map(item => (
-                  <Col key={item.key} xs={24} md={12} lg={8}>
-                    <Badge.Ribbon
-                      text="即將推出"
-                      style={{ display: !item.enabled ? 'block' : 'none' }}
-                    >
-                      <div
-                        className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-                        onClick={() => item.enabled && onNavigate(item.key)}
-                        style={{ height: '100%' }}
-                      >
-                        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
-                            <div className="nav-item-icon" style={{
-                              background: 'rgba(24, 144, 255, 0.1)',
-                              padding: '6px',
-                              borderRadius: '8px',
-                              fontSize: '20px',
-                              opacity: item.enabled ? 1 : 0.5
-                            }}>
-                              {item.icon}
-                            </div>
-                            <div className="nav-item-text" style={{ flex: 1 }}>
-                              <Title level={5} className="nav-item-title" style={{ marginBottom: '2px' }}>
-                                {item.title}
-                              </Title>
-                              <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </Badge.Ribbon>
-                  </Col>
-                ))}
-              </Row>
-            </div>
+            {renderCategory('用戶與權限')}
+            {renderCategory('通知管理')}
+            {renderCategory('平台設定')}
+            {renderCategory('平台維運')}
           </div>
         </React.Fragment>
       );
@@ -19301,9 +19184,10 @@
 
     const NotificationChannelsPage = () => {
       const initialChannels = [
-        { key: 'nc_1', name: 'Default Email', type: 'Email', enabled: true, lastTest: { result: 'success', time: dayjs().subtract(1, 'day') } },
-        { key: 'nc_2', name: 'On-call Slack', type: 'Slack', enabled: true, lastTest: { result: 'success', time: dayjs().subtract(2, 'hour') } },
-        { key: 'nc_3', name: 'Billing Webhook', type: 'Webhook', enabled: false, lastTest: { result: 'failed', time: dayjs().subtract(3, 'day'), message: 'Connection timed out' } },
+        // 註：新增 template 欄位以符合更新後的 DB schema
+        { key: 'nc_1', name: 'Default Email', type: 'Email', enabled: true, template: 'default-email-template', lastTest: { result: 'success', time: dayjs().subtract(1, 'day') } },
+        { key: 'nc_2', name: 'On-call Slack', type: 'Slack', enabled: true, template: 'default-slack-template', lastTest: { result: 'success', time: dayjs().subtract(2, 'hour') } },
+        { key: 'nc_3', name: 'Billing Webhook', type: 'Webhook', enabled: false, template: null, lastTest: { result: 'failed', time: dayjs().subtract(3, 'day'), message: 'Connection timed out' } },
       ];
 
       const [channels, setChannels] = useLocalStorageState('sre-channels', initialChannels);
@@ -20766,12 +20650,13 @@
       const { message } = antd.App.useApp();
 
       const initialScripts = [
-        { key: 's_1', name: 'Auto-scaling for Web Servers', type: 'Python', description: '自動擴展 Web 伺服器實例', creator: 'admin', code: '# Python script to scale web servers\nprint("Scaling up web servers...")', params: [{ name: 'instance_count', type: 'number', label: '實例數量' }], status: 'active', category: 'deployment', executionCount: 45 },
-        { key: 's_2', name: 'Increase Database Disk Volume', type: 'Bash', description: '增加資料庫磁碟區容量', creator: 'admin', code: '#!/bin/bash\n# Bash script to increase disk volume\necho "Increasing DB disk size..."', params: [{ name: 'increase_gb', type: 'number', label: '增加容量 (GB)' }], status: 'active', category: 'maintenance', executionCount: 32 },
-        { key: 's_3', name: 'Daily Backup', type: 'Python', description: '每日資料庫備份', creator: 'dev_user', code: '# Python script for daily backup\nprint("Starting daily backup...")', status: 'active', category: 'maintenance', executionCount: 28 },
-        { key: 's_4', name: 'System Health Check', type: 'Bash', description: '系統健康狀態檢查', creator: 'ops_team', code: '#!/bin/bash\n# System health check script\necho "Checking system health..."', params: [{ name: 'check_type', type: 'select', label: '檢查類型', options: ['basic', 'detailed', 'comprehensive'] }], status: 'active', category: 'monitoring', executionCount: 156 },
-        { key: 's_5', name: 'Log Rotation', type: 'Python', description: '應用程式日誌輪替', creator: 'dev_team', code: '# Python script for log rotation\nprint("Rotating application logs...")', params: [{ name: 'retention_days', type: 'number', label: '保留天數' }], status: 'active', category: 'maintenance', executionCount: 89 },
-        { key: 's_6', name: 'Cache Warmup', type: 'Bash', description: '快取預熱腳本', creator: 'cache_admin', code: '#!/bin/bash\n# Cache warmup script\necho "Warming up cache..."', params: [{ name: 'warmup_urls', type: 'textarea', label: '預熱 URL 列表' }], status: 'active', category: 'performance', executionCount: 67 },
+        // 註：新增 lastExecuted 欄位以符合更新後的 DB schema
+        { key: 's_1', name: 'Auto-scaling for Web Servers', type: 'Python', description: '自動擴展 Web 伺服器實例', creator: 'admin', code: '# Python script to scale web servers\nprint("Scaling up web servers...")', params: [{ name: 'instance_count', type: 'number', label: '實例數量' }], status: 'active', category: 'deployment', executionCount: 45, lastExecuted: dayjs().subtract(2, 'hours') },
+        { key: 's_2', name: 'Increase Database Disk Volume', type: 'Bash', description: '增加資料庫磁碟區容量', creator: 'admin', code: '#!/bin/bash\n# Bash script to increase disk volume\necho "Increasing DB disk size..."', params: [{ name: 'increase_gb', type: 'number', label: '增加容量 (GB)' }], status: 'active', category: 'maintenance', executionCount: 32, lastExecuted: dayjs().subtract(1, 'day') },
+        { key: 's_3', name: 'Daily Backup', type: 'Python', description: '每日資料庫備份', creator: 'dev_user', code: '# Python script for daily backup\nprint("Starting daily backup...")', status: 'active', category: 'maintenance', executionCount: 28, lastExecuted: dayjs().subtract(22, 'hours') },
+        { key: 's_4', name: 'System Health Check', type: 'Bash', description: '系統健康狀態檢查', creator: 'ops_team', code: '#!/bin/bash\n# System health check script\necho "Checking system health..."', params: [{ name: 'check_type', type: 'select', label: '檢查類型', options: ['basic', 'detailed', 'comprehensive'] }], status: 'active', category: 'monitoring', executionCount: 156, lastExecuted: dayjs().subtract(5, 'minutes') },
+        { key: 's_5', name: 'Log Rotation', type: 'Python', description: '應用程式日誌輪替', creator: 'dev_team', code: '# Python script for log rotation\nprint("Rotating application logs...")', params: [{ name: 'retention_days', type: 'number', label: '保留天數' }], status: 'active', category: 'maintenance', executionCount: 89, lastExecuted: dayjs().subtract(6, 'hours') },
+        { key: 's_6', name: 'Cache Warmup', type: 'Bash', description: '快取預熱腳本', creator: 'cache_admin', code: '#!/bin/bash\n# Cache warmup script\necho "Warming up cache..."', params: [{ name: 'warmup_urls', type: 'textarea', label: '預熱 URL 列表' }], status: 'active', category: 'performance', executionCount: 67, lastExecuted: dayjs().subtract(3, 'days') },
       ];
       const initialExecutions = [
         { key: 'e_1', scriptName: 'Auto-scaling for Web Servers', trigger: { type: 'Event', eventId: 'i_2', eventSummary: 'Disk space low on web-prod-02' }, status: 'success', startTime: dayjs().subtract(2, 'hour'), duration: '5.2s' },

@@ -174,10 +174,11 @@ SRE 平台
   name: string,          // 資源名稱
   type: string,          // 資源類型 ('server' | 'database' | 'cache' | 'gateway')
   status: string,        // 健康狀態 ('healthy' | 'warning' | 'critical')
+  // 註：以下為即時指標，應由 Metrics DB (如 Prometheus) 提供
   cpu_usage: number,     // CPU 使用率 (0-100)
   memory_usage: number,  // 記憶體使用率 (0-100)
-  alarms: Alarm[],       // 活躍告警列表
-  trend: TrendData[],    // 趨勢數據
+  alarms: Alarm[],       // 活躍告警列表 (關聯至事件系統)
+  trend: TrendData[],    // 趨勢數據 (來自 Metrics DB)
   last_updated: string   // 最後更新時間
 }
 ```
@@ -244,10 +245,11 @@ SRE 平台
   team: string,             // 負責團隊
   groups: string[],         // 所屬群組 ID 列表
   tags: string[],           // 標籤列表
+  // 註：以下為即時指標，應由 Metrics DB (如 Prometheus) 提供
   cpu_usage: number,        // CPU 使用率
   memory_usage: number,     // 記憶體使用率
-  alarms: Alarm[],          // 活躍告警
-  trend: TrendData[],       // 趨勢數據
+  alarms: Alarm[],          // 活躍告警 (關聯至事件系統)
+  trend: TrendData[],       // 趨勢數據 (來自 Metrics DB)
   last_updated: string,     // 最後更新時間
   created_at: string,       // 創建時間
   updated_at: string        // 更新時間
