@@ -129,7 +129,7 @@ x-websocket:
       alert_fired:
         payload_schema: "#/components/schemas/Alert"
       incident_updated:
-        payload_schema: "#/components/schemas/Incident"
+        payload_schema: "#/components/schemas/Alert"
       resource_status_changed:
         payload_example:
           resource_id: "res_1"
@@ -274,6 +274,230 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OperationResult"
+
+  # ============================================
+  # Users
+  # ============================================
+  /users:
+    get:
+      tags: [Profile]
+      summary: 獲取用戶列表
+      operationId: listUsers
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, inactive, pending] }
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 用戶列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserList"
+    post:
+      tags: [Profile]
+      summary: 創建用戶
+      operationId: createUser
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/UserCreateRequest"
+      responses:
+        "201":
+          description: 用戶創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+  /users/{userId}:
+    get:
+      tags: [Profile]
+      summary: 獲取用戶詳情
+      operationId: getUser
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 用戶詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    put:
+      tags: [Profile]
+      summary: 更新用戶
+      operationId: updateUser
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/UserUpdateRequest"
+      responses:
+        "200":
+          description: 用戶更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+    delete:
+      tags: [Profile]
+      summary: 刪除用戶
+      operationId: deleteUser
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: 用戶刪除成功
+  /users/{userId}/reset-password:
+    post:
+      tags: [Profile]
+      summary: 重置用戶密碼
+      operationId: resetUserPassword
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 密碼重置成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
+  # ============================================
+  # Teams
+  # ============================================
+  /teams:
+    get:
+      tags: [Admin]
+      summary: 獲取團隊列表
+      operationId: listTeams
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 團隊列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamList"
+    post:
+      tags: [Admin]
+      summary: 創建團隊
+      operationId: createTeam
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/TeamCreateRequest"
+      responses:
+        "201":
+          description: 團隊創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+  /teams/{teamId}:
+    get:
+      tags: [Admin]
+      summary: 獲取團隊詳情
+      operationId: getTeam
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 團隊詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+    put:
+      tags: [Admin]
+      summary: 更新團隊
+      operationId: updateTeam
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/TeamUpdateRequest"
+      responses:
+        "200":
+          description: 團隊更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Team"
+    delete:
+      tags: [Admin]
+      summary: 刪除團隊
+      operationId: deleteTeam
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: 團隊刪除成功
+
+  # ============================================
+  # Roles
+  # ============================================
+  /roles:
+    get:
+      tags: [Admin]
+      summary: 獲取角色列表
+      operationId: listRoles
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      responses:
+        "200":
+          description: 角色列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Role"
 
   # ============================================
   # Search & Autocomplete
@@ -513,7 +737,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/IncidentList"
+                $ref: "#/components/schemas/AlertList"
   /resources/batch:
     post:
       tags: [Resources]
@@ -671,6 +895,137 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OperationResult"
+
+  # ============================================
+  # Tag Keys
+  # ============================================
+  /tag-keys:
+    get:
+      tags: [Resources]
+      summary: 獲取標籤鍵列表
+      operationId: listTagKeys
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 標籤鍵列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TagKey"
+    post:
+      tags: [Resources]
+      summary: 創建標籤鍵
+      operationId: createTagKey
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/TagKeyCreateRequest"
+      responses:
+        "201":
+          description: 標籤鍵創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagKey"
+  /tag-keys/{tagKeyId}:
+    get:
+      tags: [Resources]
+      summary: 獲取標籤鍵詳情
+      operationId: getTagKey
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tagKeyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 標籤鍵詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagKey"
+    put:
+      tags: [Resources]
+      summary: 更新標籤鍵
+      operationId: updateTagKey
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: tagKeyId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/TagKeyUpdateRequest"
+      responses:
+        "200":
+          description: 標籤鍵更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagKey"
+    delete:
+      tags: [Resources]
+      summary: 刪除標籤鍵
+      operationId: deleteTagKey
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      parameters:
+        - name: tagKeyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: 標籤鍵刪除成功
+  /tag-keys/{tagKeyId}/values:
+    get:
+      tags: [Resources]
+      summary: 獲取標籤值列表
+      operationId: listTagValues
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tagKeyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 標籤值列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TagValue"
+    post:
+      tags: [Resources]
+      summary: 新增標籤值
+      operationId: createTagValue
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: tagKeyId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/TagValueCreateRequest"
+      responses:
+        "201":
+          description: 標籤值創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagValue"
+
   # ============================================
   # Incidents
   # ============================================
@@ -700,7 +1055,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/IncidentList"
+                $ref: "#/components/schemas/AlertList"
     post:
       tags: [Incidents]
       summary: 創建事件
@@ -708,14 +1063,14 @@ paths:
       security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       requestBody:
-        $ref: "#/components/requestBodies/IncidentCreateRequest"
+        $ref: "#/components/requestBodies/AlertCreateRequest"
       responses:
         "201":
           description: 事件創建成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Incident"
+                $ref: "#/components/schemas/Alert"
   /incidents/{incidentId}:
     get:
       tags: [Incidents]
@@ -733,7 +1088,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Incident"
+                $ref: "#/components/schemas/Alert"
     put:
       tags: [Incidents]
       summary: 更新事件
@@ -746,14 +1101,14 @@ paths:
           required: true
           schema: { type: string }
       requestBody:
-        $ref: "#/components/requestBodies/IncidentUpdateRequest"
+        $ref: "#/components/requestBodies/AlertUpdateRequest"
       responses:
         "200":
           description: 事件更新成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Incident"
+                $ref: "#/components/schemas/Alert"
   /incidents/{incidentId}/acknowledge:
     post:
       tags: [Incidents]
@@ -772,7 +1127,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Incident"
+                $ref: "#/components/schemas/Alert"
   /incidents/{incidentId}/resolve:
     post:
       tags: [Incidents]
@@ -791,7 +1146,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Incident"
+                $ref: "#/components/schemas/Alert"
   /incidents/{incidentId}/assign:
     post:
       tags: [Incidents]
@@ -1130,6 +1485,41 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/SilenceUpdateRequest" }
+    UserCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/UserCreateRequest" }
+    UserUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/UserUpdateRequest" }
+    TeamCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/TeamCreateRequest" }
+    TeamUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/TeamUpdateRequest" }
+    TagKeyCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/TagKeyCreateRequest" }
+    TagKeyUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/TagKeyUpdateRequest" }
+    TagValueCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/TagValueCreateRequest" }
 
   schemas:
     ErrorResponse:
@@ -1230,7 +1620,9 @@ components:
         type: { type: string }
         status: { type: string }
         ip_address: { type: string }
-        group_id: { type: string }
+        team_id: { type: string }
+        location: { type: string }
+        description: { type: string }
         tags: { type: array, items: { type: string } }
         silences:
           { type: array, items: { $ref: "#/components/schemas/Silence" } }
@@ -1313,33 +1705,51 @@ components:
       properties:
         operation: { type: string, enum: [add, remove] }
         resource_ids: { type: array, items: { type: string } }
-    Incident:
+    Alert:
       type: object
       properties:
         id: { type: string }
-        title: { type: string }
+        summary: { type: string }
+        description: { type: string }
         severity: { type: string }
-        priority: { type: string }
         status: { type: string }
-        affected_resources: { type: array, items: { type: string } }
-        assignee: { type: string }
-        automation_execution_ids: { type: array, items: { type: string } }
+        resource_id: { type: string }
+        rule_id: { type: string }
+        labels: { type: object }
+        annotations: { type: object }
+        value: { type: number }
+        business_impact: { type: string }
+        acknowledged_by_id: { type: string }
+        assigned_to_id: { type: string }
+        starts_at: { type: string, format: "date-time" }
+        ends_at: { type: string, format: "date-time" }
+        acknowledged_at: { type: string, format: "date-time" }
         created_at: { type: string, format: "date-time" }
-    IncidentList:
+        updated_at: { type: string, format: "date-time" }
+    AlertList:
       type: object
       properties:
-        items: { type: array, items: { $ref: "#/components/schemas/Incident" } }
+        items: { type: array, items: { $ref: "#/components/schemas/Alert" } }
         pagination: { $ref: "#/components/schemas/Pagination" }
-    IncidentCreateRequest:
+    AlertCreateRequest:
       type: object
       properties:
-        title: { type: string }
+        summary: { type: string }
+        description: { type: string }
         severity: { type: string }
-    IncidentUpdateRequest:
+        resource_id: { type: string }
+        rule_id: { type: string }
+        labels: { type: object }
+        annotations: { type: object }
+    AlertUpdateRequest:
       type: object
       properties:
-        title: { type: string }
+        summary: { type: string }
+        description: { type: string }
         severity: { type: string }
+        status: { type: string }
+        labels: { type: object }
+        annotations: { type: object }
     AIGeneratedReport:
       type: object
       properties:
@@ -1373,4 +1783,131 @@ components:
         matchers: { type: array, items: { type: object } }
         start_time: { type: string, format: "date-time" }
         end_time: { type: string, format: "date-time" }
-    # ... (other schemas will be fully defined here)
+
+    # User Management Schemas
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        username: { type: string }
+        email: { type: string }
+        name: { type: string }
+        avatar: { type: string }
+        roles: { type: array, items: { type: string } }
+        teams: { type: array, items: { type: string } }
+        teamNames: { type: array, items: { type: string } }
+        status: { type: string }
+        lastLogin: { type: string, format: "date-time" }
+        loginCount: { type: integer }
+        preferences: { type: object }
+        enabled: { type: boolean }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    UserList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/User" } }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    UserCreateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string }
+        password: { type: string }
+        teams: { type: array, items: { type: string } }
+        roles: { type: array, items: { type: string } }
+    UserUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        email: { type: string }
+        teams: { type: array, items: { type: string } }
+        roles: { type: array, items: { type: string } }
+        status: { type: string }
+        enabled: { type: boolean }
+
+    # Team Management Schemas
+    Team:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        owner: { type: string }
+        ownerName: { type: string }
+        members: { type: array, items: { type: string } }
+        memberDetails:
+          { type: array, items: { $ref: "#/components/schemas/User" } }
+        subscribers: { type: array, items: { type: string } }
+        subscriberDetails:
+          { type: array, items: { $ref: "#/components/schemas/User" } }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    TeamList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Team" } }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    TeamCreateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        owner: { type: string }
+        members: { type: array, items: { type: string } }
+        subscribers: { type: array, items: { type: string } }
+    TeamUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        owner: { type: string }
+        members: { type: array, items: { type: string } }
+        subscribers: { type: array, items: { type: string } }
+
+    # Role Management Schemas
+    Role:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        created_at: { type: string, format: "date-time" }
+
+    # Tag Management Schemas
+    TagKey:
+      type: object
+      properties:
+        id: { type: string }
+        key: { type: string }
+        displayName: { type: string }
+        description: { type: string }
+        created_at: { type: string, format: "date-time" }
+    TagValue:
+      type: object
+      properties:
+        id: { type: string }
+        tagKeyId: { type: string }
+        value: { type: string }
+        displayName: { type: string }
+        description: { type: string }
+        usageCount: { type: integer }
+        enabled: { type: boolean }
+        created_at: { type: string, format: "date-time" }
+    TagKeyCreateRequest:
+      type: object
+      properties:
+        key: { type: string }
+        displayName: { type: string }
+        description: { type: string }
+    TagKeyUpdateRequest:
+      type: object
+      properties:
+        displayName: { type: string }
+        description: { type: string }
+    TagValueCreateRequest:
+      type: object
+      properties:
+        value: { type: string }
+        displayName: { type: string }
+        description: { type: string }
