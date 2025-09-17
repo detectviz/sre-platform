@@ -67,6 +67,8 @@
       --bg-container: #141519;
       --bg-elevated: #1A1D23;
       --border-base: rgba(255, 255, 255, 0.12);
+      --radius-xl: 12px;
+      --spacing-lg: 16px;
     }
 
     /* 深色主題樣式 */
@@ -85,6 +87,153 @@
       background: var(--bg-elevated) !important;
       border-color: var(--border-base) !important;
       color: var(--text-primary) !important;
+    }
+
+    /* === 統一標籤系統樣式 === */
+    .ant-tag {
+      border-radius: 12px !important;
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      padding: 2px 8px !important;
+      border: 1px solid transparent !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 2px !important;
+      transition: all 0.2s ease !important;
+    }
+
+    /* 嚴重性標籤 */
+    .ant-tag[color="red"],
+    .ant-tag.severity-critical {
+      background: linear-gradient(135deg, rgba(255, 77, 79, 0.15) 0%, rgba(255, 77, 79, 0.08) 100%) !important;
+      color: #ff4d4f !important;
+      border-color: rgba(255, 77, 79, 0.3) !important;
+    }
+
+    .ant-tag[color="orange"],
+    .ant-tag.severity-warning {
+      background: linear-gradient(135deg, rgba(250, 173, 20, 0.15) 0%, rgba(250, 173, 20, 0.08) 100%) !important;
+      color: #faad14 !important;
+      border-color: rgba(250, 173, 20, 0.3) !important;
+    }
+
+    .ant-tag[color="green"],
+    .ant-tag.severity-success {
+      background: linear-gradient(135deg, rgba(82, 196, 26, 0.15) 0%, rgba(82, 196, 26, 0.08) 100%) !important;
+      color: #52c41a !important;
+      border-color: rgba(82, 196, 26, 0.3) !important;
+    }
+
+    .ant-tag[color="blue"],
+    .ant-tag.severity-info {
+      background: linear-gradient(135deg, rgba(24, 144, 255, 0.15) 0%, rgba(24, 144, 255, 0.08) 100%) !important;
+      color: #1890ff !important;
+      border-color: rgba(24, 144, 255, 0.3) !important;
+    }
+
+    .ant-tag[color="purple"] {
+      background: linear-gradient(135deg, rgba(114, 46, 209, 0.15) 0%, rgba(114, 46, 209, 0.08) 100%) !important;
+      color: #722ed1 !important;
+      border-color: rgba(114, 46, 209, 0.3) !important;
+    }
+
+    .ant-tag[color="gray"],
+    .ant-tag[color="default"] {
+      background: linear-gradient(135deg, rgba(140, 140, 140, 0.15) 0%, rgba(140, 140, 140, 0.08) 100%) !important;
+      color: #8c8c8c !important;
+      border-color: rgba(140, 140, 140, 0.3) !important;
+    }
+
+    /* 小尺寸標籤 */
+    .ant-tag.ant-tag-sm {
+      font-size: 10px !important;
+      padding: 1px 6px !important;
+      border-radius: 10px !important;
+    }
+
+    /* 可點擊標籤 hover 效果 */
+    .ant-tag[style*="cursor: pointer"]:hover,
+    .ant-tag.clickable:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* === 狀態標籤樣式 - 事件列表使用 === */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--radius-xl);
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      transition: all 0.2s ease;
+    }
+
+    .status-badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.6;
+        transform: scale(0.8);
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .status-critical,
+    .status-badge-critical {
+      background: rgba(255, 107, 107, 0.12);
+      color: var(--brand-danger);
+      border: 1px solid rgba(255, 107, 107, 0.24);
+    }
+
+    .status-warning,
+    .status-badge-warning {
+      background: rgba(255, 184, 77, 0.12);
+      color: var(--brand-warning);
+      border: 1px solid rgba(255, 184, 77, 0.24);
+    }
+
+    .status-new {
+      background: rgba(24, 144, 255, 0.12);
+      color: var(--brand-primary);
+      border: 1px solid rgba(24, 144, 255, 0.24);
+    }
+
+    .status-acknowledged {
+      background: rgba(250, 173, 20, 0.12);
+      color: #faad14;
+      border: 1px solid rgba(250, 173, 20, 0.24);
+    }
+
+    .status-resolved {
+      background: rgba(95, 207, 128, 0.12);
+      color: var(--brand-success);
+      border: 1px solid rgba(95, 207, 128, 0.24);
+    }
+
+    .status-silenced {
+      background: rgba(140, 140, 140, 0.12);
+      color: #8c8c8c;
+      border: 1px solid rgba(140, 140, 140, 0.24);
     }
   </style>
 </head>
@@ -353,6 +502,358 @@
         );
       };
 
+      // 事件列表表格示例 - SRE 平台標準實現
+      const IncidentTableDemo = () => {
+        const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+        const [searchText, setSearchText] = useState('');
+        const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+        const [currentIncident, setCurrentIncident] = useState(null);
+
+        // 模擬事件數據
+        const mockIncidents = [
+          { key: 'i_1', summary: 'CPU high on db-mysql-prod-02', severity: 'critical', source: 'Prometheus', status: 'acknowledged', created_at: dayjs().subtract(5, 'minutes'), assignee: 'user_2', resource_name: 'db-mysql-prod-02', service: '資料庫服務', business_impact: '高' },
+          { key: 'i_2', summary: 'Disk space low on srv-web-prod-02', severity: 'warning', source: 'Grafana', status: 'new', created_at: dayjs().subtract(2, 'hour'), assignee: null, resource_name: 'srv-web-prod-02', service: 'Web應用', business_impact: '中' },
+          { key: 'i_3', summary: 'API latency over 500ms', severity: 'warning', source: 'Datadog', status: 'acknowledged', created_at: dayjs().subtract(1, 'day'), assignee: 'user_4', resource_name: 'srv-api-prod-01', service: 'API閘道', business_impact: '高' },
+          { key: 'i_4', summary: 'Prometheus Server Down', severity: 'critical', source: 'Kubernetes', status: 'resolved', created_at: dayjs().subtract(3, 'day'), assignee: 'user_1', resource_name: 'mon-prometheus-prod-01', service: '監控系統', business_impact: '中' },
+          { key: 'i_5', summary: '記憶體使用率過高 - staging', severity: 'warning', source: 'Prometheus', status: 'new', created_at: dayjs().subtract(15, 'minutes'), assignee: null, resource_name: 'srv-web-stg-01', service: 'Web應用', business_impact: '低' },
+        ];
+
+        // 事件狀態處理
+        const handleStatusChange = (keys, newStatus) => {
+          // 在實際實現中，這裡會調用 API 更新狀態
+          message.success(`事件狀態已更新為 ${newStatus === 'acknowledged' ? '已確認' : '已解決'}`);
+        };
+
+        const showDetailModal = (record) => {
+          setCurrentIncident(record);
+          setIsDetailModalOpen(true);
+        };
+
+        // 表格欄位定義
+        const columns = [
+          {
+            title: '嚴重性',
+            dataIndex: 'severity',
+            width: '8%',
+            sorter: (a, b) => a.severity.localeCompare(b.severity),
+            render: (severity) => (
+              <span className={`status-badge status-${severity}`}>
+                {severity ? severity.toUpperCase() : 'UNKNOWN'}
+              </span>
+            )
+          },
+          {
+            title: '摘要',
+            dataIndex: 'summary',
+            width: '25%',
+            sorter: (a, b) => a.summary.localeCompare(b.summary),
+            render: (text, record) => (
+              <a
+                onClick={() => showDetailModal(record)}
+                style={{ color: '#1890ff', textDecoration: 'none', cursor: 'pointer' }}
+                onMouseEnter={(e) => e.target.style.textDecoration = 'underline'}
+                onMouseLeave={(e) => e.target.style.textDecoration = 'none'}
+              >
+                {text}
+              </a>
+            )
+          },
+          {
+            title: '資源名稱',
+            dataIndex: 'resource_name',
+            width: '14%',
+            sorter: (a, b) => (a || '').localeCompare(b || ''),
+            render: name => name || '-'
+          },
+          {
+            title: '業務影響',
+            dataIndex: 'business_impact',
+            width: '10%',
+            sorter: (a, b) => (a.business_impact || '').localeCompare(b.business_impact || ''),
+            render: (impact) => {
+              const color = impact === '高' ? 'red' : impact === '中' ? 'orange' : 'blue';
+              return <Tag color={color}>{impact || '-'}</Tag>;
+            }
+          },
+          {
+            title: '狀態',
+            dataIndex: 'status',
+            width: '8%',
+            render: (status) => {
+              const statusText = {
+                new: 'NEW',
+                acknowledged: 'ACK',
+                resolved: 'RESOLVED',
+                silenced: 'SILENCED'
+              };
+
+              return (
+                <span className={`status-badge status-${status}`}>
+                  {statusText[status] || 'UNKNOWN'}
+                </span>
+              );
+            }
+          },
+          {
+            title: '處理人',
+            dataIndex: 'assignee',
+            width: '8%',
+            sorter: (a, b) => (a || '').localeCompare(b || ''),
+            render: (assignee) => assignee || '-'
+          },
+          {
+            title: '觸發時間',
+            dataIndex: 'created_at',
+            width: '12%',
+            sorter: (a, b) => a.created_at.valueOf() - b.created_at.valueOf(),
+            render: time => (
+              <span title={time ? time.format('YYYY-MM-DD HH:mm:ss') : ''}>
+                {time ? time.fromNow() : '-'}
+              </span>
+            )
+          },
+          {
+            title: '操作',
+            key: 'action',
+            width: '15%',
+            render: (_, record) => (
+              <Space size="small">
+                <Tooltip title="確認事件" placement="top">
+                  <Button
+                    type="text"
+                    icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />}
+                    disabled={record.status !== 'new'}
+                    onClick={() => handleStatusChange([record.key], 'acknowledged')}
+                  />
+                </Tooltip>
+                <Tooltip title="解決事件" placement="top">
+                  <Button
+                    type="text"
+                    icon={<CheckCircleOutlined style={{ color: '#1890ff' }} />}
+                    disabled={record.status === 'resolved'}
+                    onClick={() => handleStatusChange([record.key], 'resolved')}
+                  />
+                </Tooltip>
+                <Tooltip title="查看詳情" placement="top">
+                  <Button
+                    type="text"
+                    icon={<EyeOutlined />}
+                    onClick={() => showDetailModal(record)}
+                  />
+                </Tooltip>
+              </Space>
+            )
+          }
+        ];
+
+        // 篩選邏輯
+        const filteredIncidents = mockIncidents.filter(incident =>
+          incident.summary.toLowerCase().includes(searchText.toLowerCase()) ||
+          incident.resource_name.toLowerCase().includes(searchText.toLowerCase()) ||
+          (incident.assignee && incident.assignee.toLowerCase().includes(searchText.toLowerCase()))
+        );
+
+        const rowSelection = {
+          selectedRowKeys,
+          onChange: setSelectedRowKeys,
+          columnWidth: 32
+        };
+
+        return (
+          <div className="component-demo">
+            <Title level={4} style={{ marginBottom: '16px' }}>事件列表表格 - SRE 平台標準實現</Title>
+
+            <Paragraph>
+              這是 SRE 平台的事件管理核心組件，包含完整的篩選、排序、分頁和批量操作功能。
+            </Paragraph>
+
+            {/* 工具列 */}
+            <Space style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 'var(--spacing-lg)',
+              width: '100%'
+            }}>
+              <Space>
+                <Input.Search
+                  placeholder="搜尋事件摘要、資源或處理人..."
+                  value={searchText}
+                  onChange={e => setSearchText(e.target.value)}
+                  style={{ width: 300 }}
+                  allowClear
+                />
+                <Button icon={<FilterOutlined />}>
+                  篩選
+                </Button>
+              </Space>
+              <Space>
+                <Button icon={<DownloadOutlined />}>匯出</Button>
+                <Button type="primary" icon={<RobotOutlined />}>
+                  AI 分析
+                </Button>
+              </Space>
+            </Space>
+
+            {/* 批量操作提示 */}
+            {selectedRowKeys.length > 0 && (
+              <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(24, 144, 255, 0.1)', borderRadius: '6px' }}>
+                <Text strong>已選擇 {selectedRowKeys.length} 個事件</Text>
+                <Button type="link" size="small" style={{ marginLeft: '16px' }} onClick={() => setSelectedRowKeys([])}>
+                  清除選擇
+                </Button>
+                <Button type="primary" size="small" style={{ marginLeft: '8px' }} onClick={() => handleStatusChange(selectedRowKeys, 'acknowledged')}>
+                  批量確認
+                </Button>
+                <Button size="small" style={{ marginLeft: '8px' }} onClick={() => handleStatusChange(selectedRowKeys, 'resolved')}>
+                  批量解決
+                </Button>
+              </div>
+            )}
+
+            {/* 事件表格 */}
+            <Table
+              rowSelection={rowSelection}
+              columns={columns}
+              dataSource={filteredIncidents}
+              rowKey="key"
+              className="transparent-bg"
+              size="small"
+              pagination={{
+                pageSize: 10,
+                position: ['bottomRight'],
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`
+              }}
+              scroll={{ x: 'max-content' }}
+            />
+
+            {/* 事件詳情模態框 */}
+            <Modal
+              title={
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <InfoCircleOutlined style={{ color: '#1890ff' }} />
+                  <span>事件詳情</span>
+                </div>
+              }
+              open={isDetailModalOpen}
+              onCancel={() => setIsDetailModalOpen(false)}
+              footer={
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                  <Button onClick={() => setIsDetailModalOpen(false)}>關閉</Button>
+                  {currentIncident && currentIncident.status === 'new' && (
+                    <Button type="primary" onClick={() => {
+                      handleStatusChange([currentIncident.key], 'acknowledged');
+                      setIsDetailModalOpen(false);
+                    }}>
+                      確認收到 (Ack)
+                    </Button>
+                  )}
+                </div>
+              }
+              width={800}
+            >
+              {currentIncident && (
+                <div>
+                  <Descriptions bordered column={1} size="small">
+                    <Descriptions.Item label="摘要">{currentIncident.summary}</Descriptions.Item>
+                    <Descriptions.Item label="嚴重性">
+                      <Tag color={currentIncident.severity === 'critical' ? 'red' : 'orange'}>
+                        {currentIncident.severity ? currentIncident.severity.toUpperCase() : 'UNKNOWN'}
+                      </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="狀態">
+                      <span className={`status-badge status-${currentIncident.status}`}>
+                        {currentIncident.status ? currentIncident.status.toUpperCase() : 'UNKNOWN'}
+                      </span>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="來源">{currentIncident.source}</Descriptions.Item>
+                    <Descriptions.Item label="觸發時間">
+                      {currentIncident.created_at ? currentIncident.created_at.format('YYYY-MM-DD HH:mm:ss') : '-'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="資源名稱">{currentIncident.resource_name || '-'}</Descriptions.Item>
+                    <Descriptions.Item label="業務影響">
+                      <Tag color={currentIncident.business_impact === '高' ? 'red' : currentIncident.business_impact === '中' ? 'orange' : 'blue'}>
+                        {currentIncident.business_impact || '-'}
+                      </Tag>
+                    </Descriptions.Item>
+                    <Descriptions.Item label="處理人">{currentIncident.assignee || '-'}</Descriptions.Item>
+                  </Descriptions>
+                </div>
+              )}
+            </Modal>
+
+            <Divider />
+
+            <div style={{ marginTop: '16px' }}>
+              <Title level={5}>實現特點</Title>
+              <ul style={{ paddingLeft: '20px', margin: 0 }}>
+                <li><strong>狀態管理：</strong> 使用統一的狀態標籤系統，支援動畫效果</li>
+                <li><strong>交互設計：</strong> 摘要欄位可點擊查看詳情，操作按鈕有清晰的工具提示</li>
+                <li><strong>批量操作：</strong> 支援多選和批量狀態更新</li>
+                <li><strong>響應式設計：</strong> 表格支援橫向滾動，適配不同螢幕尺寸</li>
+                <li><strong>搜尋篩選：</strong> 即時搜尋功能，支援多欄位匹配</li>
+                <li><strong>詳情展示：</strong> 模態框詳情頁面，包含完整的事件資訊</li>
+              </ul>
+            </div>
+
+            <div style={{ marginTop: '16px' }}>
+              <Title level={5}>代碼結構</Title>
+              <div style={{
+                background: isDarkTheme ? '#0f1419' : '#f6f8fa',
+                padding: '16px',
+                borderRadius: '8px',
+                fontFamily: 'Monaco, Consolas, monospace',
+                fontSize: '12px',
+                overflow: 'auto'
+              }}>
+                <pre style={{ margin: 0, color: isDarkTheme ? '#e6e6e6' : '#333' }}>{`// 事件列表組件核心結構
+const IncidentTableDemo = () => {
+  const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+  const [searchText, setSearchText] = useState('');
+
+  // 表格欄位定義
+  const columns = [
+    {
+      title: '嚴重性',
+      render: (severity) => (
+        <span className={\`status-badge status-\${severity}\`}>
+          {severity.toUpperCase()}
+        </span>
+      )
+    },
+    {
+      title: '摘要',
+      render: (text, record) => (
+        <a onClick={() => showDetailModal(record)}>
+          {text}
+        </a>
+      )
+    },
+    // ... 其他欄位
+  ];
+
+  // 批量操作處理
+  const handleStatusChange = (keys, newStatus) => {
+    // 更新狀態邏輯
+  };
+
+  return (
+    <Table
+      rowSelection={rowSelection}
+      columns={columns}
+      dataSource={filteredIncidents}
+      className="transparent-bg"
+    />
+  );
+};`}</pre>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
       // 表格組件示例
       const TableDemo = () => {
         const [selectedRowKeys, setSelectedRowKeys] = useState([]);
@@ -405,7 +906,7 @@
 
         return (
           <div className="component-demo">
-            <Title level={4} style={{ marginBottom: '16px' }}>表格組件示例</Title>
+            <Title level={4} style={{ marginBottom: '16px' }}>基礎表格組件示例</Title>
 
             {selectedRowKeys.length > 0 && (
               <div style={{ marginBottom: '16px', padding: '8px', background: 'rgba(24, 144, 255, 0.1)', borderRadius: '4px' }}>
@@ -549,12 +1050,215 @@
         );
       };
 
+      // 標籤系統示例
+      const TagSystemDemo = () => {
+        const [selectedDemo, setSelectedDemo] = useState('severity');
+
+        return (
+          <div className="component-demo">
+            <Title level={4} style={{ marginBottom: '16px' }}>🏷️ 統一標籤系統</Title>
+
+            <Paragraph>
+              SRE 平台使用統一的標籤系統，所有標籤都遵循一致的視覺設計和語義。
+              標籤採用漸變背景、圓角邊框和統一的字體樣式。
+            </Paragraph>
+
+            <Tabs activeKey={selectedDemo} onChange={setSelectedDemo} style={{ marginBottom: '24px' }}>
+              <Tabs.TabPane tab="嚴重性標籤" key="severity">
+                <div style={{ marginBottom: '16px' }}>
+                  <Title level={5}>嚴重性等級</Title>
+                  <Space wrap>
+                    <Tag color="red">CRITICAL</Tag>
+                    <Tag color="orange">WARNING</Tag>
+                    <Tag color="blue">INFO</Tag>
+                    <Tag color="green">SUCCESS</Tag>
+                  </Space>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Text strong>使用案例：</Text>
+                  <div style={{ marginTop: '8px' }}>
+                    <Tag color="red">🔴 CRITICAL</Tag> 系統宕機、資料遺失
+                  </div>
+                  <div style={{ marginTop: '4px' }}>
+                    <Tag color="orange">🟡 WARNING</Tag> 效能下降、資源不足
+                  </div>
+                  <div style={{ marginTop: '4px' }}>
+                    <Tag color="blue">🔵 INFO</Tag> 一般資訊、狀態變更
+                  </div>
+                  <div style={{ marginTop: '4px' }}>
+                    <Tag color="green">🟢 SUCCESS</Tag> 操作成功、系統正常
+                  </div>
+                </div>
+              </Tabs.TabPane>
+
+              <Tabs.TabPane tab="狀態標籤" key="status">
+                <div style={{ marginBottom: '16px' }}>
+                  <Title level={5}>系統狀態</Title>
+                  <Space wrap>
+                    <Tag color="green">HEALTHY</Tag>
+                    <Tag color="orange">WARNING</Tag>
+                    <Tag color="red">CRITICAL</Tag>
+                    <Tag color="gray">UNKNOWN</Tag>
+                  </Space>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Title level={5}>處理狀態</Title>
+                  <Space wrap>
+                    <Tag color="blue">NEW</Tag>
+                    <Tag color="orange">ACKNOWLEDGED</Tag>
+                    <Tag color="green">RESOLVED</Tag>
+                    <Tag color="red">FAILED</Tag>
+                  </Space>
+                </div>
+              </Tabs.TabPane>
+
+              <Tabs.TabPane tab="業務標籤" key="business">
+                <div style={{ marginBottom: '16px' }}>
+                  <Title level={5}>業務影響等級</Title>
+                  <Space wrap>
+                    <Tag color="red">高影響</Tag>
+                    <Tag color="orange">中影響</Tag>
+                    <Tag color="blue">低影響</Tag>
+                  </Space>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Title level={5}>環境標籤</Title>
+                  <Space wrap>
+                    <Tag color="red">PRODUCTION</Tag>
+                    <Tag color="orange">STAGING</Tag>
+                    <Tag color="blue">DEVELOPMENT</Tag>
+                    <Tag color="green">TEST</Tag>
+                  </Space>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Title level={5}>團隊標籤</Title>
+                  <Space wrap>
+                    <Tag color="purple">PLATFORM</Tag>
+                    <Tag color="blue">FRONTEND</Tag>
+                    <Tag color="green">BACKEND</Tag>
+                    <Tag color="orange">DEVOPS</Tag>
+                  </Space>
+                </div>
+              </Tabs.TabPane>
+
+              <Tabs.TabPane tab="尺寸規格" key="sizes">
+                <div style={{ marginBottom: '16px' }}>
+                  <Title level={5}>標籤尺寸</Title>
+                  <Space direction="vertical" size="middle">
+                    <div>
+                      <Text strong>默認尺寸：</Text>
+                      <Tag color="blue" style={{ marginLeft: 8 }}>標準標籤</Tag>
+                    </div>
+                    <div>
+                      <Text strong>小尺寸：</Text>
+                      <Tag color="green" size="small" style={{ marginLeft: 8 }}>小標籤</Tag>
+                    </div>
+                  </Space>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Title level={5}>交互狀態</Title>
+                  <Space direction="vertical" size="middle">
+                    <div>
+                      <Text strong>可點擊標籤：</Text>
+                      <Tag color="blue" style={{ marginLeft: 8, cursor: 'pointer' }} className="clickable">
+                        點擊我
+                      </Tag>
+                    </div>
+                    <div>
+                      <Text strong>帶數量的標籤：</Text>
+                      <Tag color="orange" style={{ marginLeft: 8 }}>告警 (3)</Tag>
+                    </div>
+                  </Space>
+                </div>
+              </Tabs.TabPane>
+            </Tabs>
+
+            <Divider />
+
+            <div style={{ marginBottom: '16px' }}>
+              <Title level={5}>CSS 樣式規範</Title>
+              <div style={{
+                background: isDarkTheme ? '#0f1419' : '#f6f8fa',
+                padding: '16px',
+                borderRadius: '8px',
+                fontFamily: 'Monaco, Consolas, monospace',
+                fontSize: '12px',
+                overflow: 'auto'
+              }}>
+                <pre style={{ margin: 0, color: isDarkTheme ? '#e6e6e6' : '#333' }}>{`/* 統一標籤系統 */
+.ant-tag {
+  border-radius: 12px !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  padding: 2px 8px !important;
+  border: 1px solid transparent !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px !important;
+  transition: all 0.2s ease !important;
+}
+
+/* 嚴重性標籤 */
+.ant-tag[color="red"] {
+  background: linear-gradient(135deg, rgba(255, 77, 79, 0.15) 0%,
+              rgba(255, 77, 79, 0.08) 100%) !important;
+  color: #ff4d4f !important;
+  border-color: rgba(255, 77, 79, 0.3) !important;
+}
+
+.ant-tag[color="orange"] {
+  background: linear-gradient(135deg, rgba(250, 173, 20, 0.15) 0%,
+              rgba(250, 173, 20, 0.08) 100%) !important;
+  color: #faad14 !important;
+  border-color: rgba(250, 173, 20, 0.3) !important;
+}
+
+/* 可點擊標籤 hover 效果 */
+.ant-tag.clickable:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}`}</pre>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '16px' }}>
+              <Title level={5}>使用指南</Title>
+              <div style={{
+                background: isDarkTheme ? 'rgba(24, 144, 255, 0.1)' : '#e6f7ff',
+                padding: '16px',
+                borderRadius: '8px',
+                border: `1px solid ${isDarkTheme ? 'rgba(24, 144, 255, 0.3)' : '#91d5ff'}`
+              }}>
+                <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                  <li><strong>嚴重性標籤</strong>：使用 red, orange, blue, green 顏色</li>
+                  <li><strong>狀態標籤</strong>：根據實際狀態選擇對應顏色</li>
+                  <li><strong>業務標籤</strong>：使用語義化的顏色分類</li>
+                  <li><strong>一致性</strong>：所有標籤都使用統一的樣式系統</li>
+                  <li><strong>可讀性</strong>：確保在深色和淺色主題下都清晰可見</li>
+                </ul>
+              </div>
+            </div>
+
+            <Text type="secondary" style={{ marginTop: '16px', display: 'block' }}>
+              💡 提示：標籤系統已自動應用到所有列表、表格和詳情頁面，無需額外配置
+            </Text>
+          </div>
+        );
+      };
+
       const sections = [
         { key: 'overview', title: '📋 總覽', component: OverviewDemo },
         { key: 'page-structure', title: '🏗️ 頁面結構', component: PageStructureDemo },
         { key: 'buttons', title: '🔘 按鈕系統', component: ButtonSystemDemo },
         { key: 'tables', title: '📊 表格組件', component: TableDemo },
+        { key: 'incident-table', title: '🚨 事件列表表格', component: IncidentTableDemo },
         { key: 'forms', title: '📝 表單設計', component: FormDemo },
+        { key: 'tags', title: '🏷️ 標籤系統', component: TagSystemDemo },
       ];
 
       return (

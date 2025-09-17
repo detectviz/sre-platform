@@ -167,8 +167,12 @@
     }
 
     /* === 表頭優化 === */
+    .table-wrapper .ant-table-thead>tr {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
     .table-wrapper .ant-table-thead>tr>th {
-      background: var(--bg-elevated);
+      background: transparent !important;
       color: var(--text-primary);
       font-weight: 600;
       font-size: 12px;
@@ -1540,14 +1544,27 @@
       color: var(--text-secondary) !important;
     }
 
+    .login-page .login-submit-btn {
+      height: 44px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: var(--radius-lg);
+      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+      border: none;
+      box-shadow: 0 6px 24px rgba(24, 144, 255, 0.3);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      color: white !important;
+    }
+
     .login-page .login-submit-btn:hover {
-      transform: translateY(-1px) !important;
-      box-shadow: 0 8px 32px rgba(108, 117, 125, 0.4) !important;
+      transform: translateY(-2px) !important;
+      box-shadow: 0 8px 32px rgba(24, 144, 255, 0.4) !important;
+      background: linear-gradient(135deg, var(--brand-primary-hover) 0%, var(--brand-primary) 100%);
     }
 
     .login-page .login-submit-btn:active {
       transform: translateY(0) !important;
-      box-shadow: 0 4px 16px rgba(108, 117, 125, 0.3) !important;
+      box-shadow: 0 4px 16px rgba(24, 144, 255, 0.3) !important;
     }
 
     /* 使用者團隊容器樣式 */
@@ -2172,7 +2189,7 @@
     }
 
     .platform-table .ant-table-thead>tr>th {
-      background: var(--bg-elevated);
+      background: rgba(255, 255, 255, 0.05) !important;
       color: var(--text-primary);
       font-weight: 600;
       font-size: 12px;
@@ -2208,7 +2225,7 @@
     }
 
     .platform-enhanced-table .ant-table-thead>tr>th {
-      background: var(--bg-elevated);
+      background: rgba(255, 255, 255, 0.05) !important;
       color: var(--text-primary);
       font-weight: 600;
       font-size: 12px;
@@ -2818,7 +2835,7 @@
     /* === 📊 表格和數據展示優化 === */
     .ant-table-thead>tr>th {
       padding: var(--spacing-md) var(--spacing-lg);
-      background: var(--bg-secondary);
+      background: rgba(255, 255, 255, 0.05) !important;
       font-weight: 600;
     }
 
@@ -2913,9 +2930,22 @@
     /* === 🎨 視覺層次最後調整 === */
     /* 統一文字對比和層次 */
     .ant-table-thead>tr>th {
+      background: rgba(255, 255, 255, 0.05) !important;
       color: var(--text-primary);
       font-weight: 600;
       font-size: 14px;
+    }
+
+    /* 強制統一所有表頭背景色 */
+    .ant-table .ant-table-thead>tr>th,
+    .ant-table-thead th,
+    th.ant-table-cell,
+    .ant-table-thead>tr>th.ant-table-cell,
+    .ant-table-thead>tr>th.ant-table-column-has-sorters,
+    .ant-table-thead>tr>th.ant-table-column-has-sorters:hover,
+    .ant-table-thead>tr>th.ant-table-column-sort {
+      background: rgba(255, 255, 255, 0.05) !important;
+      background-color: rgba(255, 255, 255, 0.05) !important;
     }
 
     .ant-table-tbody>tr>td {
@@ -4596,8 +4626,8 @@
     .table-wrapper .ant-table-thead>tr>th.ant-table-cell-fix-right,
     .table-wrapper .ant-table-thead>tr>th.ant-table-cell-fix-right-first,
     .table-wrapper .ant-table-thead>tr>th.ant-table-cell-fix-right-last {
-      background: var(--bg-elevated) !important;
-      background-color: var(--bg-elevated) !important;
+      background: rgba(255, 255, 255, 0.05) !important;
+      background-color: rgba(255, 255, 255, 0.05) !important;
     }
 
     /* 表格內容固定欄位 */
@@ -6541,23 +6571,12 @@
               </Form.Item>
               <Form.Item style={{ marginTop: 16, marginBottom: 8 }}>
                 <Button
-                  type="primary"
                   htmlType="submit"
                   block
                   size="large"
-                  style={{
-                    height: '44px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    borderRadius: 'var(--radius-lg)',
-                    background: 'linear-gradient(135deg, #6c757d 0%, #495057 100%)',
-                    border: 'none',
-                    boxShadow: '0 6px 24px rgba(108, 117, 125, 0.3)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                  }}
-                  className="login-submit-button"
+                  className="login-submit-btn"
                 >
-                  登入系統
+                  登入
                 </Button>
               </Form.Item>
               <div style={{
@@ -7170,10 +7189,10 @@
       return (
         <div style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 48px - 48px)', paddingBottom: 'var(--spacing-xl)' }}>
 
-          {/* 區塊 A: 告警戰情 (Alert Status) */}
+          {/* 區塊 A: 事件戰情 (Incident Status) */}
           <div style={{ marginBottom: '16px' }}>
             <Row gutter={[16, 12]}>
-              {/* 主卡片 - 待處理告警 */}
+              {/* 主卡片 - 待處理事件 */}
               <Col xs={24} sm={12} md={8} lg={8}>
                 <div
                   className="stat-card padding-md"
@@ -7184,7 +7203,7 @@
                 >
                   <div className="card-content">
                     <div>
-                      <div className="card-title" style={{ fontSize: '14px' }}>待處理告警</div>
+                      <div className="card-title" style={{ fontSize: '14px' }}>待處理事件</div>
                       <div className="card-value" style={{ color: '#ff4d4f', fontSize: '40px' }}>5</div>
                       <div className="card-description">
                         其中 <span style={{ color: '#ff4d4f', fontWeight: '600' }}>2</span> 嚴重
@@ -8263,7 +8282,7 @@
           )
         },
         alarms: {
-          title: '即時告警',
+          title: '關聯事件',
           dataIndex: 'alarms',
           width: '10%',
           render: (alarms, record) => {
@@ -8284,7 +8303,7 @@
             );
 
             return (
-              <Popover content={content} title="活躍告警" trigger="hover">
+              <Popover content={content} title="活躍事件" trigger="hover">
                 <Tag
                   color={color}
                   onClick={() => onNavigate && onNavigate('incident-list', { resourceFilter: record.name })}
@@ -8644,84 +8663,54 @@
       return (
         <React.Fragment>
 
-          {/* 工具列 - 僅在列表視圖顯示 */}
-          {viewMode === 'list' && (
-            <Space style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 'var(--spacing-lg)',
-              width: '100%'
-            }}>
-              <Space>
+          {/* 主內容區條件渲染 */}
+          {viewMode === 'dashboard' ? <DashboardView /> : (
+            <PlatformTableContainer
+              title="資源列表"
+              actions={
+                <ToolbarActions
+                  onRefresh={() => message.info('重新整理資源列表...')}
+                  onExport={() => message.info('匯出資源列表...')}
+                  onAdd={() => showModal()}
+                  onFilter={() => setIsFilterOpen(true)}
+                  filterActive={filterStatus.length > 0 || filterType.length > 0 || filterResourceName}
+                  customActions={[
+                    {
+                      icon: <SearchOutlined />,
+                      tooltip: '掃描網路',
+                      onClick: handleOpenScanModal,
+                      text: '掃描網路'
+                    },
+                    {
+                      icon: <EyeOutlined />,
+                      tooltip: '欄位設定',
+                      onClick: () => setIsColumnSettingsOpen(true),
+                      text: '欄位'
+                    }
+                  ]}
+                />
+              }
+            >
+              <div style={{ padding: '0 16px 16px' }}>
                 <Input.Search
                   placeholder="搜尋資源名稱、IP 或標籤..."
                   value={searchText}
                   onChange={e => setSearchText(e.target.value)}
-                  style={{ width: 300 }}
+                  style={{ width: '100%' }}
                   allowClear
                 />
-                <Popover
-                  content={<ResourceFilterPopover />}
-                  title="篩選條件"
-                  trigger="click"
-                  open={isFilterOpen}
-                  onOpenChange={setIsFilterOpen}
-                  placement="bottomLeft"
-                >
-                  <Button className="toolbar-btn" icon={<FilterOutlined />}>
-                    篩選
-                    <Badge count={filterStatus.length + filterType.length + (filterResourceName ? 1 : 0)} style={{ marginLeft: 8 }} />
-                  </Button>
-                </Popover>
-              </Space>
-              <Space>
-                <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
-                <Popover
-                  content={
-                    <div style={{ width: '200px' }}>
-                      <div style={{ marginBottom: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)' }}>
-                        欄位顯示設定
-                      </div>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {Object.keys(allColumns).map(key => (
-                          <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <Checkbox
-                              checked={visibleColumns[key]}
-                              onChange={(e) => setVisibleColumns(prev => ({ ...prev, [key]: e.target.checked }))}
-                              style={{ marginRight: '8px' }}
-                            />
-                            <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px' }}>
-                              {allColumns[key].title}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  }
-                  title={null}
-                  trigger="click"
-                  open={isColumnSettingsOpen}
-                  onOpenChange={setIsColumnSettingsOpen}
-                  placement="bottomRight"
-                  overlayStyle={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    backdropFilter: 'blur(8px)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
-                  }}
-                >
-                  <Button className="toolbar-btn" icon={<EyeOutlined />}>
-                    欄位設定
-                  </Button>
-                </Popover>
-                <Button className="toolbar-btn" icon={<SearchOutlined />} onClick={handleOpenScanModal}>掃描網路</Button>
-                <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增資源</Button>
-              </Space>
-            </Space>
+              </div>
+              <Table
+                rowSelection={rowSelection}
+                columns={columns}
+                dataSource={filteredResources}
+                rowKey="key"
+                className="transparent-bg"
+                rowClassName={(record) => record.name === highlightedResource ? 'highlighted-row' : ''}
+                size="small"
+              />
+            </PlatformTableContainer>
           )}
-
-          {/* 主內容區條件渲染 */}
-          {viewMode === 'dashboard' ? <DashboardView /> : <ListView />}
 
           {/* 批次操作工具列 (僅在列表視圖且有選中項目時顯示) */}
           {viewMode === 'list' && (
@@ -9101,7 +9090,7 @@
         { key: 'g_2', name: 'Production Web Servers', description: '所有生產環境的 Web 伺服器', members: ['host_2'], responsibleTeam: 'team_5' },
         { key: 'g_3', name: 'Staging Environment', description: '測試環境所有資源', members: ['host_5', 'host_6'], responsibleTeam: 'team_1' },
         { key: 'g_4', name: 'Network Infrastructure', description: '網路基礎設施資源', members: ['host_3', 'host_7'], responsibleTeam: 'team_7' },
-        { key: 'g_5', name: 'Monitoring Systems', description: '監控系統與告警資源', members: ['host_4', 'host_8', 'host_9'], responsibleTeam: 'team_9' },
+        { key: 'g_5', name: 'Monitoring Systems', description: '監控系統與事件資源', members: ['host_4', 'host_8', 'host_9'], responsibleTeam: 'team_9' },
         { key: 'g_6', name: 'Security Resources', description: '安全相關的資源與工具', members: [], responsibleTeam: 'team_8' },
         { key: 'g_7', name: 'Development Tools', description: '開發環境與工具資源', members: ['host_10', 'host_11'], responsibleTeam: 'team_10' },
       ];
@@ -9894,7 +9883,7 @@
       );
     };
 
-    // === 📊 告警與資源洞察頁面 ===
+    // === 📊 事件與資源洞察頁面 ===
     const AlertsInsightsPage = ({ themeMode, onNavigate }) => {
       // 資源統計資料 - 從 ResourceOverviewTab 移動過來
       const resourceStats = {
@@ -9911,7 +9900,7 @@
       return (
         <React.Fragment>
           <PageHeader
-            title="告警與資源洞察"
+            title="事件與資源洞察"
             subtitle="即時監控業務核心指標，掌握營運狀態與服務品質"
             icon={<ExclamationCircleOutlined />}
           />
@@ -10824,7 +10813,7 @@
         const silenceRule = {
           key: `s_temp_${Date.now()}`,
           name: `臨時靜音 - ${silenceIncident.summary}`,
-          description: `臨時靜音規則，由告警列表快速建立`,
+          description: `臨時靜音規則，由事件列表快速建立`,
           type: 'once',
           timeRange: [
             dayjs(),
@@ -10841,7 +10830,7 @@
         existingSilences.push(silenceRule);
         localStorage.setItem('sre-silences-v2', JSON.stringify(existingSilences));
 
-        // 更新當前告警的狀態為靜音
+        // 更新當前事件的狀態為靜音
         setIncidents(incidents.map(inc =>
           inc.key === silenceIncident.key
             ? { ...inc, status: 'silenced', silencedUntil: dayjs().add(silenceDuration, 'hour') }
@@ -11158,10 +11147,10 @@
                       <Descriptions.Item label="規則名稱">{currentIncident.ruleName || '-'}</Descriptions.Item>
                       <Descriptions.Item label="觸發閾值">{currentIncident.triggerThreshold || '-'}</Descriptions.Item>
                       {currentIncident.storm_group && (
-                        <Descriptions.Item label="告警風暴">
+                        <Descriptions.Item label="事件風暴">
                           <Tag color="orange">風暴群組: {currentIncident.storm_group}</Tag>
                           <Button size="small" type="link" style={{ padding: '0 4px', height: 'auto', marginLeft: '8px' }}>
-                            查看相關告警
+                            查看相關事件
                           </Button>
                         </Descriptions.Item>
                       )}
@@ -11276,7 +11265,7 @@
                   </div>
                 </Tabs.TabPane>
                 <Tabs.TabPane tab="關聯事件" key="3">
-                  {/* 關聯告警區塊 */}
+                  {/* 關聯事件區塊 */}
                   <div style={{
                     background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(200, 200, 200, 0.02) 100%)',
                     border: '1px solid rgba(255, 255, 255, 0.08)',
@@ -11724,10 +11713,10 @@
     const AlertingRulesPage = () => {
       const [metrics, setMetrics] = useState([]);
 
-      // 定義告警規則建立的步驟
+      // 定義事件規則建立的步驟
       const steps = [
         { title: '基本資訊', description: '設定規則名稱和目標' },
-        { title: '觸發條件', description: '定義告警觸發條件' },
+        { title: '觸發條件', description: '定義事件觸發條件' },
         { title: '通知設定', description: '配置通知管道和策略' },
         { title: '確認設定', description: '檢查並保存規則' }
       ];
@@ -11801,7 +11790,7 @@
         },
         {
           key: 'rule_5',
-          name: '複雜告警規則',
+          name: '複雜事件規則',
           target: 'Monitoring Systems',
           conditions: {
             operator: 'AND',
@@ -12158,9 +12147,9 @@
         setTimeout(() => {
           const success = Math.random() > 0.3; // 70% success rate
           if (success) {
-            message.success({ content: '測試成功：規則已成功觸發模擬告警。', key: 'test_rule' });
+            message.success({ content: '測試成功：規則已成功觸發模擬事件。', key: 'test_rule' });
           } else {
-            message.error({ content: '測試失敗：無法觸發告警，請檢查條件設定。', key: 'test_rule' });
+            message.error({ content: '測試失敗：無法觸發事件，請檢查條件設定。', key: 'test_rule' });
           }
         }, 1500);
       };
@@ -12352,7 +12341,7 @@
             {
               filteredRules.length > 0 ?
                 <Table rowSelection={rowSelection} columns={columns} dataSource={filteredRules} rowKey="key" className="transparent-bg" size="small" /> :
-                <Empty description="尚無任何告警規則">
+                <Empty description="尚無任何事件規則">
                   <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增規則</Button>
                 </Empty>
             }
@@ -12502,7 +12491,7 @@
                     <div style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', marginBottom: '32px' }}>
                       <Space wrap size={[12, 8]}>
                         {[
-                          { key: 'cpu_multi_level', label: 'CPU 多等級告警', icon: '🎯' },
+                          { key: 'cpu_multi_level', label: 'CPU 多等級事件', icon: '🎯' },
                           { key: 'cpu_high', label: 'CPU 使用率過高', icon: '🖥️' },
                           { key: 'memory_high', label: '記憶體使用率過高', icon: '🧠' },
                           { key: 'disk_space_low', label: '磁碟空間不足', icon: '💾' },
@@ -12526,12 +12515,12 @@
                     </div>
                     <div style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', marginBottom: '32px' }}>
                       <Form.Item name="name" label="規則名稱" rules={[{ required: true, message: '請輸入規則名稱' }]}>
-                        <Input placeholder="例如：Web 伺服器 CPU 使用率告警" />
+                        <Input placeholder="例如：Web 伺服器 CPU 使用率事件" />
                       </Form.Item>
                       <Form.Item name="description" label="描述">
-                        <TextArea rows={2} placeholder="當 CPU 使用率超過 80% 時觸發告警，並自動擴展實例" />
+                        <TextArea rows={2} placeholder="當 CPU 使用率超過 80% 時觸發事件，並自動擴展實例" />
                       </Form.Item>
-                      <Form.Item name="resource_tags" label="監控資源標籤" tooltip="選擇要監控的資源標籤，告警規則將應用於具有這些標籤的所有資源">
+                      <Form.Item name="resource_tags" label="監控資源標籤" tooltip="選擇要監控的資源標籤，事件規則將應用於具有這些標籤的所有資源">
                         <SmartTagInput
                           placeholder="選擇資源標籤..."
                           style={{ width: '100%' }}
@@ -12562,7 +12551,7 @@
                                     條件群組 {name + 1}
                                   </span>
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px', fontWeight: '400' }}>告警等級:</span>
+                                    <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px', fontWeight: '400' }}>事件等級:</span>
                                     <Form.Item
                                       noStyle
                                       shouldUpdate={(prevValues, currentValues) => {
@@ -13772,7 +13761,7 @@
         {
           key: 's_4',
           name: '每月第二個週二發布',
-          description: '每月第二個週二進行例行性發布，期間相關服務告警靜音',
+          description: '每月第二個週二進行例行性發布，期間相關服務事件靜音',
           type: 'recurring',
           recurringPattern: 'monthly',
           monthlyType: 'weekday',
@@ -13825,7 +13814,7 @@
       const steps = [
         { title: '基本資訊', description: '設定規則名稱和描述' },
         { title: '設定排程', description: '設定靜音生效的時間' },
-        { title: '設定範圍', description: '設定要靜音的告警條件' }
+        { title: '設定範圍', description: '設定要靜音的事件條件' }
       ];
 
       // 快速範本
@@ -16663,7 +16652,7 @@
                 <Title level={4} style={{ margin: 0, color: 'rgba(255, 255, 255, 0.9)' }}>通知訂閱者</Title>
               </div>
               <div style={{ padding: '20px', background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '8px', marginBottom: '32px' }}>
-                <Form.Item label="選擇通知訂閱者" extra="團隊的告警將發送給選中的訂閱者">
+                <Form.Item label="選擇通知訂閱者" extra="團隊的事件將發送給選中的訂閱者">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     {/* 按類型分組顯示選項 */}
                     {[
@@ -16762,8 +16751,8 @@
           title: '事件管理', key: 'incidents', children: [
             { title: '讀取事件', key: 'inc:list:read' },
             { title: '確認/解決事件', key: 'inc:list:update' },
-            { title: '讀取告警規則', key: 'inc:rule:read' },
-            { title: '寫入告警規則', key: 'inc:rule:write' },
+            { title: '讀取事件規則', key: 'inc:rule:read' },
+            { title: '寫入事件規則', key: 'inc:rule:write' },
           ]
         },
       ];
@@ -17421,7 +17410,7 @@
           key: 'notification-strategies',
           icon: <ApartmentOutlined />,
           title: '通知策略',
-          description: '設定告警通知的路由策略。',
+          description: '設定事件通知的路由策略。',
           category: '通知管理',
           features: ['智能路由', '升級規則', '值班整合'],
           enabled: true
@@ -17737,7 +17726,7 @@
           id: 'team_3',
           name: 'priority',
           displayName: '優先級',
-          description: '資源或告警的優先級別',
+          description: '資源或事件的優先級別',
           category: 'business',
           required: false,
           values: [
@@ -20225,7 +20214,7 @@
       const getResourceName = (type, id) => {
         const resourceMap = {
           'Script': { 's_1': '每日備份腳本', 's_2': '清理腳本', 's_3': '監控腳本' },
-          'AlertRule': { 'rule_1': 'CPU告警規則', 'rule_2': '記憶體告警規則', 'rule_3': '磁碟告警規則' },
+          'AlertRule': { 'rule_1': 'CPU事件規則', 'rule_2': '記憶體事件規則', 'rule_3': '磁碟事件規則' },
           'User': { 'admin': '管理員', 'dev_user': '開發人員', 'system': '系統' },
           'Incident': { 'i_1': '服務中斷事件', 'i_2': '效能問題', 'i_3': '配置錯誤', 'i_4': '網路問題' }
         };
@@ -20828,7 +20817,7 @@
       const sideMenuItems = [
         getItem('首頁', 'home', <DashboardOutlined />),
         getItem('儀表板', 'dashboard', <BarChartOutlined />, [
-          getItem('告警與資源洞察', 'alerts-insights', <ExclamationCircleOutlined />),
+          getItem('事件與資源洞察', 'alerts-insights', <ExclamationCircleOutlined />),
         ]),
         getItem('事件', 'incidents', <HistoryOutlined />),
         getItem('資源', 'resources', <HddOutlined />),

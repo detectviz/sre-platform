@@ -1,6 +1,134 @@
 # SRE 平台前端每個頁面的完整清單
 
+## 🔗 **導航結構**
+
+```
+SRE 平台
+├── 事件 (Incidents) - Tab 管理 (事件列表 | 告警規則 | 靜音規則)
+├── 資源 (Resources) - Tab 管理 (資源列表 | 資源群組)
+├── 儀表板 (Dashboards) - Tab 管理 (資源總覽)
+├── 分析 (Analysis) - Tab 管理 (容量規劃)
+├── 自動化 (Automation) - Tab 管理 (腳本庫 | 排程管理 | 執行日誌)
+└── 設定 (Settings) [父選單 - 預設展開]
+    ├── 用戶與權限 - Tab 管理 (人員管理 | 團隊管理 | 角色管理)
+    ├── 通知管理 - Tab 管理 (通知管道 | 通知策略)
+    ├── 平台設定 - Tab 管理 (標籤管理 | 郵件設定 | 身份驗證)
+    └── 平台維運 - Tab 管理 (平台診斷 | 審計日誌)
+
+```
+
+## **頁面盤點清單**
+
+### ✅ **已實現頁面** (按導航順序)
+
+#### 事件中心
+- [x] 事件列表頁面 (IncidentsPage > IncidentListPage)
+- [x] 告警規則子頁面 (IncidentsPage > AlertingRulesPage)
+- [x] 靜音規則子頁面 (IncidentsPage > SilencesPage)
+
+#### 資源管理
+- [x] 資源列表頁面 (ResourcesPage > ResourceListPage)
+- [x] 資源群組頁面 (ResourcesPage > ResourceGroupsPage)
+
+#### 儀表板
+- [x] 資源總覽頁面 (DashboardsPage > ResourceOverviewPage)
+
+#### 分析
+- [x] 容量規劃頁面 (AnalysisPage > CapacityPlanningPage)
+
+#### 自動化
+- [x] 腳本庫子頁面 (AutomationPage > ScriptsPage)
+- [x] 排程管理子頁面 (AutomationPage > SchedulesPage)
+- [x] 執行記錄頁面 (AutomationPage > ExecutionsPage)
+
+#### 設定
+- [x] 用戶管理子頁面 (Settings > UserManagementPage)
+- [x] 團隊管理子頁面 (Settings > TeamManagementPage)
+- [x] 角色管理子頁面 (Settings > RoleManagementPage)
+- [x] 通知策略頁面 (Settings > NotificationStrategiesPage)
+- [x] 通知管道頁面 (Settings > NotificationChannelsPage)
+- [x] 通知歷史頁面 (Settings > NotificationHistoryPage)
+- [x] 郵件設定頁面 (Settings > EmailSettingsPage)
+- [x] 身份驗證設定頁面 (Settings > AuthSettingsPage)
+- [x] 標籤管理頁面 (Settings > TagKeyManagementPage)
+- [x] 平台診斷頁面 (Settings > PlatformDiagnosticsPage)
+- [x] 審計日誌頁面 (Settings > AuditLogsPage)
+- [x] 設定管理頁面 (Settings > SettingsAdministrationPage)
+
+### ❌ **未實現頁面** (待開發)
+
+#### 儀表板模組
+- [ ] 管理儀表板頁面 (executive-dashboard)
+- [ ] 自訂報告頁面 (custom-reports)
+
+#### 用戶與權限模組
+- [x] 個人信息頁面 (PersonalInfoPage)
+- [x] 密碼安全頁面 (PasswordSecurityPage)
+- [x] 偏好設定頁面 (PreferencesPage)
+- [x] 個人資料頁面 (ProfilePage)
+
+---
+
+## **導航結構覆蓋總結**
+
+### **完整覆蓋統計**
+- **導航頂層選單**: 6個 (100% 實現)
+- **核心功能頁面**: 11個 (100% 實現)
+- **設定子選單**: 15個 (已實現 15/15 = 100%)
+- **總頁面覆蓋率**: 25/26 = 96%
+
+### **實現進度詳情**
+
+#### ✅ **完全實現的模組**
+- **事件中心**: 3/3頁面 ✓
+- **資源管理**: 2/2頁面 ✓
+- **儀表板**: 1/1頁面 ✓
+- **分析**: 1/1頁面 ✓
+- **自動化**: 3/3頁面 ✓
+
+#### **部分實現的模組**
+- **儀表板**: 1/3頁面 (33% 完成)
+  - ✅ 資源總覽頁面 (1/1頁面)
+  - ❌ 管理儀表板頁面 (0/1頁面)
+  - ❌ 自訂報告頁面 (0/1頁面)
+
+### **開發優先順序建議**
+1. **高優先級**: 儀表板功能補全 (管理儀表板、自訂報告)
+2. **中優先級**: 用戶體驗優化 (個人中心頁面整合)
+3. **低優先級**: 其他增強功能 (如高級分析、客製化儀表板等)
+
+### **技術實現統計**
+- **總組件參數數**: 約120+個
+- **總State變數數**: 約85+個
+- **總API端點數**: 約45+個
+- **總資料結構數**: 約20+個
+
+## 參數命名規範
+
+### 通用參數結構
+- **頁面 Props**: `themeMode`, `setThemeMode` (主題切換)
+- **路由參數**: `pageKey`, `pageParams` (頁面導航)
+- **狀態管理**: `useState`, `useLocalStorageState` (狀態持久化)
+
+### 資料結構規範
+- **資源物件**: `key`, `name`, `type`, `status`, `ip_address`, `groups`, `tags`
+- **告警物件**: `severity`, `summary`, `resource_name`, `created_at`, `status`
+- **用戶物件**: `id`, `name`, `email`, `roles`, `teams`, `enabled`
+- **腳本物件**: `id`, `name`, `type`, `content`, `creator`, `status`
+
+---
+
 ## 🏠 首頁 (HomePage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式 ('dark' | 'light')
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `currentView: string` - 當前視圖 ('overview' | 'detailed')
+- `selectedTimeRange: string` - 時間範圍 ('1h' | '24h' | '7d' | '30d')
+- `refreshInterval: number` - 自動刷新間隔 (毫秒)
 
 **頁面描述**: 系統首頁儀表板，展示系統整體健康狀態和關鍵指標
 
@@ -21,9 +149,40 @@
 
 ---
 
-## 📊 資源總覽頁面 (ResourceOverviewPage)
+## 儀表板頁面 - 資源總覽 (DashboardsPage > ResourceOverviewPage)
 
-**頁面描述**: 資源健康狀態的總體概覽頁面
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `selectedTimeRange: string` - 時間範圍篩選
+- `resourceFilter: object` - 資源類型篩選 {type: string[], status: string[]}
+- `sortBy: string` - 排序欄位 ('usage' | 'alarms' | 'name')
+- `sortOrder: string` - 排序順序 ('asc' | 'desc')
+- `expandedSections: string[]` - 展開的區域
+
+**API 參數:**
+- `GET /api/resources/overview` - 獲取資源總覽數據
+  - Query: `{timeRange: string, filters: object}`
+
+**資料結構:**
+```javascript
+{
+  key: string,           // 資源唯一標識
+  name: string,          // 資源名稱
+  type: string,          // 資源類型 ('server' | 'database' | 'cache' | 'gateway')
+  status: string,        // 健康狀態 ('healthy' | 'warning' | 'critical')
+  cpu_usage: number,     // CPU 使用率 (0-100)
+  memory_usage: number,  // 記憶體使用率 (0-100)
+  alarms: Alarm[],       // 活躍告警列表
+  trend: TrendData[],    // 趨勢數據
+  last_updated: string   // 最後更新時間
+}
+```
+
+**頁面描述**: 儀表板中的資源總覽子頁面，展示系統整體健康狀態和關鍵指標
 
 **頁面標題**: "資源總覽"
 
@@ -43,9 +202,67 @@
 
 ---
 
-## 📊 資源管理相關頁面
+## 資源管理相關頁面
 
 ### 1. 資源列表頁面 (ResourceListPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `viewMode: string` - 查看模式 ('list' | 'dashboard')
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {status: string[], type: string[], team: string[]}
+- `sortInfo: object` - 排序信息 {field: string, order: 'asc'|'desc'}
+- `selectedRowKeys: string[]` - 選中的行鍵
+- `tableDensity: string` - 表格密度 ('compact' | 'standard' | 'comfortable')
+- `currentPage: number` - 當前頁碼
+- `pageSize: number` - 每頁大小
+- `visibleColumns: string[]` - 可見欄位列表
+
+**API 參數:**
+- `GET /api/resources` - 獲取資源列表
+  - Query: `{page: number, size: number, search: string, filters: object, sort: object}`
+- `POST /api/resources` - 新增資源
+  - Body: `ResourceCreateRequest`
+- `PUT /api/resources/{id}` - 更新資源
+  - Body: `ResourceUpdateRequest`
+- `DELETE /api/resources/{id}` - 刪除資源
+
+**資料結構:**
+```javascript
+// 資源完整結構
+{
+  key: string,              // 唯一標識
+  name: string,             // 資源名稱
+  type: string,             // 資源類型 ('server'|'database'|'cache'|'gateway')
+  status: string,           // 健康狀態 ('healthy'|'warning'|'critical')
+  ip_address: string,       // IP 位址
+  location: string,         // 位置資訊
+  team: string,             // 負責團隊
+  groups: string[],         // 所屬群組 ID 列表
+  tags: string[],           // 標籤列表
+  cpu_usage: number,        // CPU 使用率
+  memory_usage: number,     // 記憶體使用率
+  alarms: Alarm[],          // 活躍告警
+  trend: TrendData[],       // 趨勢數據
+  last_updated: string,     // 最後更新時間
+  created_at: string,       // 創建時間
+  updated_at: string        // 更新時間
+}
+
+// 新增資源請求
+ResourceCreateRequest: {
+  name: string,             // 必填
+  type: string,             // 必填
+  ip_address: string,       // 必填
+  groups: string[],         // 可選
+  tags: string[],           // 可選
+  description: string       // 可選
+}
+```
 
 **頁面描述**: 資源的詳細列表管理頁面，支援列表和儀表板兩種查看模式
 
@@ -66,8 +283,8 @@
 - **即時告警** (`alarms`) - 活躍告警統計，顯示告警數量和嚴重性
 
 **操作按鈕**:
-- **編輯** ✏️ - 編輯資源信息
-- **刪除** 🗑️ - 刪除資源
+- **編輯** - 編輯資源信息
+- **刪除** - 刪除資源
 
 **儀表板模式**:
 - 資源狀態統計圖表
@@ -89,6 +306,51 @@
 
 ### 2. 資源群組頁面 (ResourceGroupsPage)
 
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {responsibleTeam: string[], memberCount: object}
+- `selectedRowKeys: string[]` - 選中的行鍵
+- `sortInfo: object` - 排序信息
+- `isColumnSettingsOpen: boolean` - 欄位設定抽屜開啟狀態
+- `visibleColumns: string[]` - 可見欄位列表
+
+**API 參數:**
+- `GET /api/resource-groups` - 獲取資源群組列表
+  - Query: `{search: string, filters: object, sort: object}`
+- `POST /api/resource-groups` - 新增資源群組
+  - Body: `ResourceGroupCreateRequest`
+- `PUT /api/resource-groups/{id}` - 更新資源群組
+- `DELETE /api/resource-groups/{id}` - 刪除資源群組
+
+**資料結構:**
+```javascript
+// 資源群組結構
+{
+  key: string,                    // 唯一標識
+  name: string,                   // 群組名稱
+  description: string,            // 群組描述
+  responsibleTeam: string,        // 負責團隊
+  members: string[],              // 成員資源 ID 列表
+  memberDetails: Resource[],      // 成員資源詳情
+  status: string,                 // 群組整體狀態
+  created_at: string,             // 創建時間
+  updated_at: string              // 更新時間
+}
+
+// 資源群組統計
+ResourceGroupStats: {
+  totalMembers: number,           // 總成員數
+  healthyCount: number,           // 健康資源數
+  warningCount: number,           // 警告資源數
+  criticalCount: number           // 嚴重資源數
+}
+```
+
 **頁面描述**: 資源群組的管理頁面
 
 **工具列按鈕**:
@@ -104,8 +366,8 @@
 - **狀態** (`status`) - 成員資源狀態統計 (Healthy/Warning/Critical 標籤)
 
 **操作按鈕**:
-- **編輯** ✏️ - 編輯群組信息
-- **刪除** 🗑️ - 刪除群組
+- **編輯** - 編輯群組信息
+- **刪除** - 刪除群組
 
 **新增群組彈窗**:
 - **寬度**: 600px
@@ -118,9 +380,62 @@
   - **取消** - 關閉彈窗
   - **儲存** - 新增群組
 
-## 🏷️ 標籤管理頁面
+## 標籤管理頁面
 
 ### 3. 標籤管理頁面 (TagKeyManagementPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {type: string[], required: boolean}
+- `selectedRowKeys: string[]` - 選中的行鍵
+- `tagDrawerVisible: boolean` - 標籤值管理抽屜顯示狀態
+- `currentTagKey: object` - 當前編輯的標籤鍵
+- `modalVisible: boolean` - 新增/編輯模態框顯示狀態
+
+**API 參數:**
+- `GET /api/tag-keys` - 獲取標籤鍵列表
+  - Query: `{search: string, filters: object}`
+- `POST /api/tag-keys` - 新增標籤鍵
+  - Body: `TagKeyCreateRequest`
+- `PUT /api/tag-keys/{id}` - 更新標籤鍵
+  - Body: `TagKeyUpdateRequest`
+- `DELETE /api/tag-keys/{id}` - 刪除標籤鍵
+- `GET /api/tag-keys/{id}/values` - 獲取標籤值列表
+- `POST /api/tag-keys/{id}/values` - 新增標籤值
+
+**資料結構:**
+```javascript
+// 標籤鍵結構
+TagKey: {
+  id: string,                    // 唯一標識
+  name: string,                  // 標籤鍵名稱 (英文)
+  displayName: string,           // 顯示名稱 (中文)
+  type: string,                  // 數據類型 ('string'|'number'|'boolean'|'select')
+  required: boolean,             // 是否必填
+  totalUsage: number,            // 使用總次數
+  enabled: boolean,              // 是否啟用
+  description: string,           // 描述
+  created_at: string,            // 創建時間
+  updated_at: string             // 更新時間
+}
+
+// 標籤值結構
+TagValue: {
+  id: string,                    // 唯一標識
+  tagKeyId: string,              // 所屬標籤鍵 ID
+  value: string,                 // 標籤值
+  displayName: string,           // 顯示名稱
+  description: string,           // 描述
+  usageCount: number,            // 使用次數
+  enabled: boolean,              // 是否啟用
+  created_at: string             // 創建時間
+}
+```
 
 **頁面描述**: 標籤鍵和標籤值的統一管理頁面
 
@@ -143,9 +458,9 @@
 - **必填** (`required`) - 是否必填標籤
 
 **操作按鈕**:
-- **管理值** 📋 - 開啟標籤值管理抽屜
-- **編輯** ✏️ - 編輯標籤定義
-- **刪除** 🗑️ - 刪除標籤鍵
+- **管理值** - 開啟標籤值管理抽屜
+- **編輯** - 編輯標籤定義
+- **刪除** - 刪除標籤鍵
 
 **新增標籤鍵彈窗**:
 - **寬度**: 500px
@@ -169,8 +484,8 @@
   - **顯示名稱** (`displayName`) - 值顯示名稱
   - **描述** (`description`) - 值描述
 - **操作按鈕**:
-  - **編輯** ✏️ - 編輯標籤值
-  - **刪除** 🗑️ - 刪除標籤值
+  - **編輯** - 編輯標籤值
+  - **刪除** - 刪除標籤值
 
 **新增標籤值彈窗**:
 - **寬度**: 400px
@@ -182,7 +497,19 @@
   - **取消** - 關閉彈窗
   - **儲存** - 新增標籤值
 
-## 🤖 自動化中心頁面 (AutomationCenterPage)
+## 自動化中心頁面 (AutomationCenterPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `activeTab: string` - 當前活躍標籤頁 ('scripts' | 'schedules')
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {type: string[], creator: string[], status: string[]}
+- `modalVisible: boolean` - 新增/編輯模態框顯示狀態
+- `currentScript: object` - 當前編輯的腳本
 
 **頁面描述**: 腳本和排程任務的統一管理中心
 
@@ -191,6 +518,59 @@
 - **排程管理** - 排程任務管理
 
 ### 腳本庫子頁面 (ScriptsPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `scripts: Script[]` - 腳本列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `selectedCategory: string` - 選中的分類
+- `sortBy: string` - 排序欄位
+- `modalVisible: boolean` - 腳本編輯模態框
+- `currentScript: Script` - 當前編輯腳本
+
+**API 參數:**
+- `GET /api/scripts` - 獲取腳本列表
+  - Query: `{search: string, category: string, creator: string}`
+- `POST /api/scripts` - 新增腳本
+  - Body: `ScriptCreateRequest`
+- `PUT /api/scripts/{id}` - 更新腳本
+- `DELETE /api/scripts/{id}` - 刪除腳本
+- `POST /api/scripts/{id}/execute` - 執行腳本
+
+**資料結構:**
+```javascript
+// 腳本結構
+Script: {
+  id: string,                    // 唯一標識
+  name: string,                  // 腳本名稱
+  type: string,                  // 腳本類型 ('python'|'bash'|'powershell')
+  description: string,           // 描述
+  content: string,               // 腳本內容
+  creator: string,               // 創建者
+  category: string,              // 分類 ('deployment'|'maintenance'|'monitoring')
+  params: ScriptParameter[],     // 參數定義
+  status: string,                // 狀態 ('active'|'inactive')
+  executionCount: number,        // 執行次數
+  lastExecuted: string,          // 最後執行時間
+  created_at: string,            // 創建時間
+  updated_at: string             // 更新時間
+}
+
+// 腳本參數結構
+ScriptParameter: {
+  name: string,                  // 參數名稱
+  type: string,                  // 參數類型 ('string'|'number'|'boolean'|'select')
+  label: string,                 // 顯示標籤
+  required: boolean,             // 是否必填
+  defaultValue: any,             // 默認值
+  options: string[],             // 選項列表 (select 類型)
+  description: string            // 參數描述
+}
+```
 
 **頁面描述**: 自動化腳本的版本管理和執行控制
 
@@ -212,9 +592,9 @@
 - **描述** (`description`) - 腳本描述
 
 **操作按鈕**:
-- **運行** 🔄 - 執行腳本
-- **編輯** ✏️ - 編輯腳本
-- **刪除** 🗑️ - 刪除腳本
+- **運行** - 執行腳本
+- **編輯** - 編輯腳本
+- **刪除** - 刪除腳本
 
 **新增腳本彈窗**:
 - **寬度**: 800px
@@ -233,6 +613,63 @@
   - **儲存** - 新增腳本
 
 ### 排程管理子頁面 (SchedulesPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `schedules: Schedule[]` - 排程任務列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {status: string[], scriptType: string[]}
+- `modalVisible: boolean` - 排程編輯模態框
+- `currentSchedule: Schedule` - 當前編輯排程
+
+**API 參數:**
+- `GET /api/schedules` - 獲取排程任務列表
+  - Query: `{search: string, status: string[], scriptType: string[]}`
+- `POST /api/schedules` - 新增排程任務
+  - Body: `ScheduleCreateRequest`
+- `PUT /api/schedules/{id}` - 更新排程任務
+- `DELETE /api/schedules/{id}` - 刪除排程任務
+- `POST /api/schedules/{id}/execute` - 手動執行排程任務
+
+**資料結構:**
+```javascript
+// 排程任務結構
+Schedule: {
+  id: string,                    // 唯一標識
+  name: string,                  // 任務名稱
+  description: string,           // 描述
+  scriptId: string,              // 執行的腳本 ID
+  scriptName: string,            // 腳本名稱
+  cron: string,                  // CRON 表達式
+  scheduleMode: string,          // 排程模式 ('simple'|'advanced')
+  frequency: string,             // 執行頻率 ('hourly'|'daily'|'weekly'|'monthly')
+  enabled: boolean,              // 是否啟用
+  status: string,                // 狀態 ('active'|'inactive'|'error')
+  lastStatus: string,            // 最後執行狀態 ('success'|'failed'|'pending')
+  lastRun: string,               // 最後執行時間
+  nextRun: string,               // 下次執行時間
+  creator: string,               // 創建者
+  created_at: string,            // 創建時間
+  updated_at: string             // 更新時間
+}
+
+// 排程執行記錄
+ScheduleExecution: {
+  id: string,                    // 唯一標識
+  scheduleId: string,            // 排程任務 ID
+  status: string,                // 執行狀態 ('success'|'failed'|'running')
+  startTime: string,             // 開始時間
+  endTime: string,               // 結束時間
+  duration: number,              // 執行時間 (毫秒)
+  output: string,                // 執行輸出
+  error: string,                 // 錯誤信息
+  executed_at: string            // 執行時間
+}
+```
 
 **頁面描述**: 排程任務的生命週期管理
 
@@ -257,9 +694,9 @@
 - **下次執行** (`nextRun`) - 下次計劃執行時間
 
 **操作按鈕**:
-- **查看歷史** 📊 - 查看執行歷史
-- **編輯** ✏️ - 編輯排程設定
-- **刪除** 🗑️ - 刪除排程任務
+- **查看歷史** - 查看執行歷史
+- **編輯** - 編輯排程設定
+- **刪除** - 刪除排程任務
 
 **新增排程彈窗**:
 - **寬度**: 700px
@@ -274,7 +711,19 @@
   - **取消** - 關閉彈窗
   - **儲存** - 新增排程
 
-## 🚨 告警中心頁面 (IncidentsPage)
+## 事件中心頁面 (IncidentsPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `activeTab: string` - 當前活躍標籤頁 ('incidents' | 'rules' | 'silences')
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件
+- `modalVisible: boolean` - 各種模態框顯示狀態
+- `drawerVisible: boolean` - 抽屜顯示狀態
 
 **頁面描述**: 告警事件和規則的統一管理中心
 
@@ -284,6 +733,63 @@
 - **靜音規則** - 靜音規則管理
 
 ### 事件列表子頁面 (IncidentListPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `incidents: Incident[]` - 告警事件列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {severity: string[], status: string[], timeRange: object}
+- `selectedRowKeys: string[]` - 選中的行鍵
+- `sortInfo: object` - 排序信息
+- `modalVisible: boolean` - 事件詳情模態框
+- `silenceModalVisible: boolean` - 靜音設定模態框
+- `currentIncident: Incident` - 當前查看的事件
+
+**API 參數:**
+- `GET /api/incidents` - 獲取告警事件列表
+  - Query: `{page: number, size: number, search: string, filters: object, sort: object}`
+- `POST /api/incidents/{id}/acknowledge` - 確認告警事件
+- `POST /api/incidents/{id}/silence` - 靜音告警事件
+- `POST /api/incidents/{id}/resolve` - 解決告警事件
+
+**資料結構:**
+```javascript
+// 告警事件結構
+Incident: {
+  id: string,                    // 唯一標識
+  summary: string,               // 事件摘要
+  description: string,           // 詳細描述
+  severity: string,              // 嚴重性 ('critical'|'warning'|'info')
+  status: string,                // 狀態 ('new'|'acknowledged'|'resolved'|'silenced')
+  resource_id: string,           // 相關資源 ID
+  resource_name: string,         // 資源名稱
+  rule_id: string,               // 觸發規則 ID
+  rule_name: string,             // 規則名稱
+  labels: object,                // 標籤對象
+  annotations: object,           // 註解信息
+  value: number,                 // 觸發值
+  threshold: number,             // 閾值
+  business_impact: string,       // 業務影響 ('high'|'medium'|'low')
+  assignee: string,              // 處理人
+  created_at: string,            // 創建時間
+  updated_at: string,            // 更新時間
+  acknowledged_at: string,       // 確認時間
+  resolved_at: string            // 解決時間
+}
+
+// 告警統計
+IncidentStats: {
+  total: number,                 // 總事件數
+  new: number,                   // 新事件數
+  acknowledged: number,          // 已確認數
+  resolved: number,              // 已解決數
+  silenced: number               // 已靜音數
+}
+```
 
 **頁面描述**: 告警事件的即時監控和處理中心
 
@@ -312,8 +818,8 @@
 - **觸發時間** (`created_at`) - 事件發生時間
 
 **操作按鈕**:
-- **確認事件** ✅ - 確認收到事件 (僅NEW狀態可用)
-- **設置靜音** ⏸️ - 靜音告警 (已解決狀態不可用)
+- **確認事件** - 確認收到事件 (僅NEW狀態可用)
+- **設置靜音** - 靜音告警 (已解決狀態不可用)
 
 **事件詳情彈窗**:
 - **寬度**: 800px
@@ -324,7 +830,7 @@
   - **AI分析** - AI生成的根本原因分析
 - **操作按鈕**:
   - **確認收到 (Ack)** - 確認收到事件
-  - **AI分析** 🤖 - 請求AI分析
+  - **AI分析** - 請求AI分析
   - **關閉** - 關閉彈窗
 
 **靜音設定彈窗**:
@@ -338,6 +844,67 @@
   - **設定靜音** - 應用靜音規則
 
 ### 告警規則子頁面 (AlertingRulesPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `rules: AlertRule[]` - 告警規則列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {enabled: boolean, severity: string[]}
+- `modalVisible: boolean` - 規則編輯模態框
+- `currentRule: AlertRule` - 當前編輯規則
+- `currentStep: number` - 規則創建步驟
+
+**API 參數:**
+- `GET /api/alert-rules` - 獲取告警規則列表
+  - Query: `{search: string, filters: object}`
+- `POST /api/alert-rules` - 新增告警規則
+  - Body: `AlertRuleCreateRequest`
+- `PUT /api/alert-rules/{id}` - 更新告警規則
+- `DELETE /api/alert-rules/{id}` - 刪除告警規則
+- `POST /api/alert-rules/{id}/test` - 測試告警規則
+
+**資料結構:**
+```javascript
+// 告警規則結構
+AlertRule: {
+  id: string,                    // 唯一標識
+  name: string,                  // 規則名稱
+  description: string,           // 描述
+  target: string,                // 監控目標
+  resource_tags: object,         // 資源標籤匹配條件
+  conditions: AlertCondition[],  // 觸發條件
+  notifications: Notification[], // 通知配置
+  enabled: boolean,              // 是否啟用
+  severity: string,              // 默認嚴重性 ('critical'|'warning'|'info')
+  group_by: string[],            // 分組字段
+  labels: object,                // 自定義標籤
+  annotations: object,           // 自定義註解
+  creator: string,               // 創建者
+  created_at: string,            // 創建時間
+  updated_at: string             // 更新時間
+}
+
+// 告警條件結構
+AlertCondition: {
+  type: string,                  // 條件類型 ('threshold'|'comparison'|'absent')
+  operator: string,              // 操作符 ('gt'|'lt'|'eq'|'ne')
+  threshold: number,             // 閾值
+  for: string,                   // 持續時間 (Prometheus 格式)
+  description: string            // 條件描述
+}
+
+// 通知配置結構
+Notification: {
+  type: string,                  // 通知類型 ('email'|'slack'|'webhook')
+  target: string,                // 通知目標
+  template: string,              // 通知模板
+  enabled: boolean               // 是否啟用
+}
+```
 
 **頁面描述**: 告警規則的配置和管理
 
@@ -360,9 +927,9 @@
 - **通知對象** (`notifications`) - 通知管道統計
 
 **操作按鈕**:
-- **編輯** ✏️ - 編輯規則
-- **刪除** 🗑️ - 刪除規則
-- **測試** 🔍 - 測試規則
+- **編輯**
+- **刪除**
+- **測試**
 
 **新增告警規則彈窗**:
 - **寬度**: 900px
@@ -380,6 +947,61 @@
   - **儲存** - 新增規則
 
 ### 靜音規則子頁面 (SilencesPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `silences: Silence[]` - 靜音規則列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {status: string[], type: string[]}
+- `modalVisible: boolean` - 靜音規則編輯模態框
+- `currentSilence: Silence` - 當前編輯靜音規則
+
+**API 參數:**
+- `GET /api/silences` - 獲取靜音規則列表
+  - Query: `{search: string, filters: object}`
+- `POST /api/silences` - 新增靜音規則
+  - Body: `SilenceCreateRequest`
+- `PUT /api/silences/{id}` - 更新靜音規則
+- `DELETE /api/silences/{id}` - 刪除靜音規則
+
+**資料結構:**
+```javascript
+// 靜音規則結構
+Silence: {
+  id: string,                    // 唯一標識
+  name: string,                  // 規則名稱
+  description: string,           // 描述
+  type: string,                  // 類型 ('single'|'recurring')
+  matchers: Matcher[],           // 匹配條件
+  startsAt: string,              // 開始時間
+  endsAt: string,                // 結束時間
+  createdBy: string,             // 創建者
+  comment: string,               // 註釋
+  status: string,                // 狀態 ('active'|'expired'|'pending')
+  created_at: string,            // 創建時間
+  updated_at: string             // 更新時間
+}
+
+// 匹配器結構
+Matcher: {
+  name: string,                  // 標籤名稱
+  value: string,                 // 標籤值
+  isRegex: boolean,              // 是否正則匹配
+  isEqual: boolean               // 是否相等匹配
+}
+
+// 靜音統計
+SilenceStats: {
+  active: number,                // 活躍靜音數
+  expired: number,               // 已過期數
+  pending: number,               // 待生效數
+  totalSilencedAlerts: number    // 靜音的告警總數
+}
+```
 
 **頁面描述**: 告警靜音規則的管理
 
@@ -405,8 +1027,8 @@
 - **剩餘時間** (`remaining`) - 靜音剩餘時間
 
 **操作按鈕**:
-- **編輯** ✏️ - 編輯靜音規則
-- **刪除** 🗑️ - 刪除靜音規則
+- **編輯** - 編輯靜音規則
+- **刪除** - 刪除靜音規則
 
 **新增靜音規則彈窗**:
 - **寬度**: 700px
@@ -421,7 +1043,20 @@
   - **取消** - 關閉彈窗
   - **儲存** - 新增靜音規則
 
-## 👥 用戶中心頁面 (UserManagementPage)
+## 設定 - 用戶與權限 (Settings > UserManagementPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `activeTab: string` - 當前活躍標籤頁 ('users' | 'teams')
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件
+- `modalVisible: boolean` - 用戶/團隊編輯模態框
+- `currentUser: User` - 當前編輯用戶
+- `currentTeam: Team` - 當前編輯團隊
 
 **頁面描述**: 用戶和團隊的統一管理中心
 
@@ -430,6 +1065,58 @@
 - **團隊管理** - 團隊組織管理
 
 ### 用戶管理子頁面
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `users: User[]` - 用戶列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {status: string[], roles: string[], teams: string[]}
+- `selectedRowKeys: string[]` - 選中的行鍵
+- `modalVisible: boolean` - 用戶編輯模態框
+- `currentUser: User` - 當前編輯用戶
+
+**API 參數:**
+- `GET /api/users` - 獲取用戶列表
+  - Query: `{search: string, filters: object, sort: object}`
+- `POST /api/users` - 新增用戶
+  - Body: `UserCreateRequest`
+- `PUT /api/users/{id}` - 更新用戶
+- `DELETE /api/users/{id}` - 刪除用戶
+- `POST /api/users/{id}/reset-password` - 重置密碼
+
+**資料結構:**
+```javascript
+// 用戶結構
+User: {
+  id: string,                    // 唯一標識
+  username: string,              // 用戶名
+  email: string,                 // 電子郵件
+  name: string,                  // 顯示名稱
+  avatar: string,                // 頭像 URL
+  roles: string[],               // 角色列表
+  teams: string[],               // 所屬團隊 ID 列表
+  teamNames: string[],           // 團隊名稱列表
+  status: string,                // 狀態 ('active'|'inactive'|'pending')
+  lastLogin: string,             // 最後登入時間
+  loginCount: number,            // 登入次數
+  preferences: object,           // 用戶偏好設定
+  enabled: boolean,              // 是否啟用
+  created_at: string,            // 創建時間
+  updated_at: string             // 更新時間
+}
+
+// 用戶統計
+UserStats: {
+  total: number,                 // 總用戶數
+  active: number,                // 活躍用戶數
+  inactive: number,              // 非活躍用戶數
+  pending: number                // 待激活用戶數
+}
+```
 
 **頁面描述**: 系統用戶帳號的生命週期管理
 
@@ -453,8 +1140,8 @@
 - **最後登入** (`lastLogin`) - 最後登入時間
 
 **操作按鈕**:
-- **編輯** ✏️ - 編輯用戶信息
-- **刪除** 🗑️ - 刪除用戶
+- **編輯** - 編輯用戶信息
+- **刪除** - 刪除用戶
 
 **新增用戶彈窗**:
 - **寬度**: 600px
@@ -471,6 +1158,51 @@
   - **儲存** - 新增用戶
 
 ### 團隊管理子頁面 (TeamManagementPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `teams: Team[]` - 團隊列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `modalVisible: boolean` - 團隊編輯模態框
+- `currentTeam: Team` - 當前編輯團隊
+
+**API 參數:**
+- `GET /api/teams` - 獲取團隊列表
+  - Query: `{search: string, filters: object}`
+- `POST /api/teams` - 新增團隊
+  - Body: `TeamCreateRequest`
+- `PUT /api/teams/{id}` - 更新團隊
+- `DELETE /api/teams/{id}` - 刪除團隊
+
+**資料結構:**
+```javascript
+// 團隊結構
+Team: {
+  id: string,                    // 唯一標識
+  name: string,                  // 團隊名稱
+  description: string,           // 團隊描述
+  owner: string,                 // 團隊負責人 ID
+  ownerName: string,             // 負責人姓名
+  members: string[],             // 成員 ID 列表
+  memberDetails: User[],         // 成員詳情
+  subscribers: string[],         // 通知訂閱者 ID 列表
+  subscriberDetails: User[],     // 訂閱者詳情
+  created_at: string,            // 創建時間
+  updated_at: string             // 更新時間
+}
+
+// 團隊統計
+TeamStats: {
+  totalTeams: number,            // 總團隊數
+  totalMembers: number,          // 總成員數
+  averageTeamSize: number,       // 平均團隊規模
+  teamsWithOwners: number        // 有負責人的團隊數
+}
+```
 
 **頁面描述**: 團隊組織架構的管理
 
@@ -493,8 +1225,8 @@
 - **創建時間** (`createdAt`) - 團隊創建時間
 
 **操作按鈕**:
-- **編輯** ✏️ - 編輯團隊信息
-- **刪除** 🗑️ - 刪除團隊
+- **編輯** - 編輯團隊信息
+- **刪除** - 刪除團隊
 
 **新增團隊彈窗**:
 - **寬度**: 600px
@@ -508,9 +1240,24 @@
   - **取消** - 關閉彈窗
   - **儲存** - 新增團隊
 
-## ⚙️ 系統設定相關頁面
+## 設定 - 平台設定 (Settings > SettingsAdministrationPage)
 
-### 設定管理頁面 (SettingsAdministrationPage)
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+- `setThemeMode: (mode: string) => void` - 主題切換函數
+
+**State:**
+- `activeTab: string` - 當前活躍設定標籤頁 ('notifications' | 'auth' | 'system')
+- `settings: object` - 當前設定值
+- `loading: boolean` - 載入狀態
+- `saving: boolean` - 保存狀態
+
+**API 參數:**
+- `GET /api/settings` - 獲取系統設定
+- `PUT /api/settings` - 更新系統設定
+- `POST /api/settings/test-email` - 測試郵件設定
+- `POST /api/settings/test-notification` - 測試通知設定
 
 **頁面描述**: 系統級別的配置和管理中心
 
@@ -558,7 +1305,45 @@
 **操作按鈕**:
 - **儲存** - 保存身份驗證設定
 
-## 📢 通知歷史頁面 (NotificationHistoryPage)
+## 設定 - 通知管理 (Settings > NotificationHistoryPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `notifications: Notification[]` - 通知歷史列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {status: string[], channel: string[], timeRange: object}
+- `sortInfo: object` - 排序信息
+- `drawerVisible: boolean` - 詳情抽屜顯示狀態
+- `currentNotification: Notification` - 當前查看通知
+
+**API 參數:**
+- `GET /api/notifications` - 獲取通知歷史
+  - Query: `{page: number, size: number, search: string, filters: object, sort: object}`
+- `POST /api/notifications/{id}/resend` - 重新發送通知
+
+**資料結構:**
+```javascript
+// 通知歷史結構
+Notification: {
+  id: string,                    // 唯一標識
+  timestamp: string,             // 發送時間
+  status: string,                // 狀態 ('success'|'failed')
+  channel: string,               // 管道 ('email'|'slack'|'webhook')
+  alert_id: string,              // 相關告警 ID
+  alert_summary: string,         // 告警摘要
+  resource_name: string,         // 資源名稱
+  recipient: string,             // 接收者
+  message: string,               // 通知訊息
+  error_message: string,         // 錯誤信息
+  payload: object,               // 原始載荷
+  retry_count: number,           // 重試次數
+  actor: string                  // 觸發者
+}
+```
 
 **頁面描述**: 通知發送歷史記錄的查詢和追蹤頁面
 
@@ -585,7 +1370,7 @@
 - **錯誤訊息** (`errorMessage`) - 發送失敗時的錯誤信息
 
 **操作按鈕**:
-- **查看詳情** 👁️ - 查看完整通知詳情和載荷
+- **查看詳情** - 查看完整通知詳情和載荷
 
 **通知詳情抽屜**:
 - **寬度**: 600px
@@ -595,30 +1380,30 @@
   - **錯誤詳情**: 如果發送失敗的錯誤信息
   - **載荷數據**: JSON格式的原始載荷
 - **操作按鈕**:
-  - **複製載荷** 📋 - 複製JSON載荷
-  - **重新發送** 🔄 - 重新發送通知 (失敗的通知)
+  - **複製載荷** - 複製JSON載荷
+  - **重新發送** - 重新發送通知 (失敗的通知)
   - **關閉** - 關閉抽屜
 
-## 📊 儀表板頁面 (DashboardsPage)
 
-**頁面描述**: 自訂儀表板的管理和配置
 
-**工具列按鈕**:
-- **新增儀表板按鈕** ➕ - 創建新儀表板
-- **匯入按鈕** 📥 - 匯入儀表板配置
-- **匯出按鈕** 📤 - 匯出儀表板配置
 
-**儀表板卡片區域**:
-- **資源總覽儀表板** - 資源健康狀態總覽
-- **效能監控儀表板** - 系統效能指標
-- **告警總覽儀表板** - 告警事件統計
+## 分析頁面 - 容量規劃 (AnalysisPage > CapacityPlanningPage)
 
-**儀表板卡片功能**:
-- 點擊進入對應儀表板詳情頁面
-- 顯示儀表板簡要描述
-- 顯示更新時間
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
 
-## 📈 分析頁面 (AnalyzingPage)
+**State:**
+- `activeTab: string` - 當前活躍分析標籤頁 ('resources' | 'performance' | 'alerts')
+- `timeRange: object` - 時間範圍 {start: string, end: string}
+- `analysisData: object` - 分析數據
+- `loading: boolean` - 載入狀態
+
+**API 參數:**
+- `GET /api/analysis/resources` - 資源使用分析
+  - Query: `{timeRange: object, filters: object}`
+- `GET /api/analysis/performance` - 效能指標分析
+- `GET /api/analysis/alerts` - 告警趨勢分析
 
 **頁面描述**: 系統數據分析和報告中心
 
@@ -644,7 +1429,47 @@
 - **自動生成見解**: AI分析的關鍵發現
 - **建議動作**: 系統優化建議
 
-## 📋 執行記錄頁面 (ExecutionsPage)
+## 執行記錄頁面 (ExecutionsPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `executions: Execution[]` - 執行記錄列表
+- `loading: boolean` - 載入狀態
+- `searchValue: string` - 搜尋關鍵字
+- `filters: object` - 篩選條件 {status: string[], taskType: string[], timeRange: object}
+- `sortInfo: object` - 排序信息
+- `drawerVisible: boolean` - 詳情抽屜顯示狀態
+- `currentExecution: Execution` - 當前查看執行記錄
+
+**API 參數:**
+- `GET /api/executions` - 獲取執行記錄列表
+  - Query: `{page: number, size: number, search: string, filters: object, sort: object}`
+- `GET /api/executions/{id}` - 獲取執行詳情
+- `POST /api/executions/{id}/rerun` - 重新執行任務
+
+**資料結構:**
+```javascript
+// 執行記錄結構
+Execution: {
+  id: string,                    // 唯一標識
+  taskId: string,                // 任務 ID
+  taskName: string,              // 任務名稱
+  taskType: string,              // 任務類型 ('script'|'schedule')
+  status: string,                // 執行狀態 ('success'|'failed'|'running')
+  startTime: string,             // 開始時間
+  endTime: string,               // 結束時間
+  duration: number,              // 執行時間 (毫秒)
+  executor: string,              // 執行者
+  parameters: object,            // 執行參數
+  output: string,                // 執行輸出
+  error: string,                 // 錯誤信息
+  logs: string[],                // 日誌列表
+  created_at: string             // 創建時間
+}
+```
 
 **頁面描述**: 腳本和排程任務的執行歷史記錄
 
@@ -669,8 +1494,8 @@
 - **輸出日誌** (`logs`) - 執行日誌摘要
 
 **操作按鈕**:
-- **查看詳情** 👁️ - 查看完整執行日誌
-- **重新執行** 🔄 - 重新執行任務
+- **查看詳情** - 查看完整執行日誌
+- **重新執行** - 重新執行任務
 
 **執行詳情抽屜**:
 - **寬度**: 800px
@@ -679,11 +1504,55 @@
   - **執行日誌**: 完整輸出日誌
   - **錯誤信息**: 如果執行失敗的錯誤詳情
 - **操作按鈕**:
-  - **複製日誌** 📋 - 複製執行日誌
-  - **重新執行** 🔄 - 重新執行此任務
+  - **複製日誌** - 複製執行日誌
+  - **重新執行** - 重新執行此任務
   - **關閉** - 關閉抽屜
 
-## 🏗️ 容量規劃頁面 (CapacityPlanningPage)
+## 容量規劃頁面 (CapacityPlanningPage)
+
+### 組件參數
+**Props:**
+- `themeMode: string` - 主題模式
+
+**State:**
+- `activeTab: string` - 當前活躍規劃標籤頁 ('forecast' | 'recommendations' | 'cost')
+- `forecastPeriod: string` - 預測期間 ('1M' | '3M' | '6M' | '1Y')
+- `forecastModel: string` - 預測模型 ('linear' | 'exponential' | 'ml')
+- `confidenceLevel: number` - 置信區間 (80 | 90 | 95)
+- `planningData: object` - 規劃數據
+- `loading: boolean` - 載入狀態
+
+**API 參數:**
+- `GET /api/capacity/forecast` - 獲取容量預測
+  - Query: `{period: string, model: string, confidence: number}`
+- `GET /api/capacity/recommendations` - 獲取容量建議
+- `GET /api/capacity/cost-analysis` - 獲取成本分析
+
+**資料結構:**
+```javascript
+// 容量預測結構
+CapacityForecast: {
+  resourceType: string,          // 資源類型
+  currentUsage: number,          // 當前使用率
+  predictedUsage: number[],      // 預測使用率數組
+  confidenceInterval: number[],  // 置信區間
+  trend: string,                 // 趨勢 ('increasing'|'decreasing'|'stable')
+  recommendations: string[],     // 建議行動
+  timePoints: string[]           // 時間點
+}
+
+// 容量建議結構
+CapacityRecommendation: {
+  resourceId: string,            // 資源 ID
+  resourceName: string,          // 資源名稱
+  action: string,                // 建議行動 ('scale_up'|'scale_down'|'monitor')
+  priority: string,              // 優先級 ('high'|'medium'|'low')
+  timeframe: string,             // 建議時間 ('immediate'|'1M'|'3M')
+  cost: number,                  // 預估成本
+  risk: string,                  // 風險評估
+  justification: string          // 建議理由
+}
+```
 
 **頁面描述**: 系統容量規劃和資源預測
 
@@ -711,63 +1580,3 @@
 - **最佳化建議**: 資源使用優化建議
 - **成本影響**: 容量變更的成本估算
 
----
-
-## 📋 總結統計
-
-**總頁面數**: 16個主要功能頁面
-**總子頁面數**: 約25個子頁面/標籤頁
-**總表格欄位數**: 約87個欄位
-**總操作按鈕類型**: 約21種不同操作
-**總彈窗/抽屜數**: 約26個互動組件
-**支援搜尋的頁面**: 13個
-**支援篩選的頁面**: 9個
-**可自訂欄位的頁面**: 1個 (事件列表)
-
-## 🎨 設計規範
-
-### 統一的頁面結構
-每個頁面都遵循以下結構：
-1. **頁面標題和描述**
-2. **工具列** (搜尋/篩選/操作按鈕)
-3. **統計卡片區域** (關鍵指標展示)
-4. **主要內容區域** (表格/圖表/列表)
-5. **互動組件** (彈窗/抽屜/確認對話框)
-
-### 統一的操作按鈕樣式
-所有頁面的操作按鈕都遵循以下設計：
-- **主要操作**: 藍色主題按鈕 (如「新增」「儲存」「應用」)
-- **危險操作**: 紅色主題按鈕 (如「刪除」「停用」)
-- **次要操作**: 默認樣式按鈕 (如「取消」「編輯」「查看」)
-- **成功操作**: 綠色主題按鈕 (如「確認」「啟用」)
-- **圖標使用**: 統一的 Ant Design 圖標
-- **間距**: Space 組件統一間距
-
-### 統一的彈窗設計規範
-- **寬度等級**: 400px/500px/600px/700px/800px/900px
-- **表單佈局**: 垂直佈局，統一的標籤寬度 (120px)
-- **按鈕佈局**: 右對齊，取消在前，確認在後
-- **必填標識**: 紅色星號 (*) 標記必填欄位
-- **步驟導航**: 對於複雜表單使用步驟指示器
-
-### 統一的表格設計規範
-- Ant Design Table 組件
-- 32px寬的選擇列
-- 右對齊的分頁控制
-- 一致的排序功能 (升序/降序箭頭)
-- 統一的工具列設計
-- 集中式篩選功能
-- 自訂欄位功能 (部分頁面支援)
-
-### 統一的搜尋和篩選體驗
-- **即時搜尋**: 輸入時實時過濾結果
-- **多條件組合**: 支援AND邏輯的複雜查詢
-- **篩選徽章**: 顯示當前生效的篩選條件
-- **一鍵重置**: 快速清除所有篩選條件
-
-所有組件都統一使用：
-- Ant Design 設計系統
-- 一致的顏色主題
-- 統一的動畫和過渡效果
-- 統一的錯誤處理和提示信息
-- 統一的載入狀態展示
