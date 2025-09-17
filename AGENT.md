@@ -10,12 +10,12 @@
 ## 2. 文件處理規範
 
 ### 2.1. 文件定位理解
-- **specs.md**: 前端 UI/UX 開發規格書 (SSOT)，專注於界面設計和用戶體驗
-- **openapi.yaml**: 後端 API 介面規範，定義數據契約和接口標準
+- **frontend/docs/specs.md**: 前端 UI/UX 開發規格書 (SSOT)，專注於界面設計和用戶體驗
+- **backend/docs/openapi.yaml**: 後端 API 介面規範，定義數據契約和接口標準
 - **README.md**: 項目概述和快速入門指南
-- **development.md**: 整合的開發總規劃
-- **Architecture.md**: 系統架構設計文檔
-- **sitemap.md**: 網站結構和導航規範
+- **docs/development.md**: 整合的開發總規劃
+- **docs/architecture.md**: 系統架構設計文檔
+- **frontend/docs/sitemap.md**: 網站結構和導航規範
 - **AGENT.md**: AI 開發守則與規範
 
 ### 2.2. 術語一致性要求
@@ -23,7 +23,7 @@ AI 代理必須使用統一的術語：
 - "靜音規則" (而非維護窗口/維護視窗)
 - "資源群組" (而非資源分組)
 - "事件" (而非告警/警告)
-- "角色" 與 "權限" 的定義需參照 specs.md 第 17 節
+- "角色" 與 "權限" 的定義需參照 docs/specs.md 第 17 節
 
 ### 2.4. 繁體中文規範
 - 所有UI文字必須使用繁體中文
@@ -49,10 +49,10 @@ AI 代理必須使用統一的術語：
 - 枚舉值需與 API 規範保持一致
 
 ### 3.3. UI/UX 設計規範
-- 組件設計需參照 specs.md 中的描述
+- 組件設計需參照 docs/specs.md 中的描述
 - 頁面佈局需遵循 Ant Design 設計原則
-- 交互設計需符合 specs.md 中的功能規格
-- 導航結構需參照 sitemap.md 中的定義
+- 交互設計需符合 docs/specs.md 中的功能規格
+- 導航結構需參照 docs/sitemap.md 中的定義
 - 所有UI文字必須使用繁體中文
 
 ## 4. 輸出品質規範
@@ -76,18 +76,18 @@ AI 代理必須使用統一的術語：
 
 ### 5.1. 文件處理前檢查
 - [ ] 確認理解任務需求和目標
-- [ ] 確認已閱讀相關的現有文件 (specs.md, development.md, sitemap.md, openapi.yaml)
+- [ ] 確認已閱讀相關的現有文件 (frontend/docs/specs.md, docs/development.md, frontend/docs/sitemap.md, backend/docs/openapi.yaml)
 - [ ] 確認了解文件的定位和作用
 - [ ] 確認文檔整合後的最新結構
 
 ### 5.2. 內容生成中檢查
-- [ ] 術語使用是否與 specs.md 和 openapi.yaml 一致
+- [ ] 術語使用是否與 frontend/docs/specs.md 和 backend/docs/openapi.yaml 一致
 - [ ] 技術規範是否符合項目要求
 - [ ] 內容結構是否清晰合理
 - [ ] 是否有與現有規範衝突的地方
 - [ ] UI文字是否全部使用繁體中文
 - [ ] 註解文字是否全部使用繁體中文
-- [ ] 導航結構是否與 sitemap.md 保持一致
+- [ ] 導航結構是否與 frontend/docs/sitemap.md 保持一致
 - [ ] 開發任務是否已在 development.md 中記錄
 
 ### 5.3. 輸出完成後檢查
@@ -95,7 +95,7 @@ AI 代理必須使用統一的術語：
 - [ ] 內容是否完整無缺漏
 - [ ] 技術細節是否準確
 - [ ] 是否符合項目整體風格
-- [ ] 所有文檔引用是否正確 (README.md, specs.md, development.md, sitemap.md)
+- [ ] 所有文檔引用是否正確 (README.md, frontend/docs/specs.md, docs/development.md, frontend/docs/sitemap.md)
 - [ ] 繁體中文使用是否一致
 - [ ] prototype.html 的實現是否與文檔保持同步
 
@@ -122,7 +122,7 @@ AI 代理必須使用統一的術語：
 
 ### 6.2. 規範衝突處理
 當發現規範衝突時應：
-1. 優先遵循 specs.md 和 openapi.yaml 中明確定義的規範
+1. 優先遵循 frontend/docs/specs.md 和 backend/docs/openapi.yaml 中明確定義的規範
 2. 如需調整，應提出明確建議並說明理由
 3. 保持與項目整體架構的一致性
 
@@ -141,15 +141,15 @@ AI 代理必須使用統一的術語：
 ## 6. 文檔整合更新說明
 
 ### 6.1. 文檔結構變更
-- **development.md**: 整合了原 plan.md、roadmap.md、todo.md 的內容
+- **docs/development.md**: 整合了原 plan.md、roadmap.md、todo.md 的內容
 - **README.md**: 更新了文檔鏈接和項目概述
-- **sitemap.md**: 網站結構和導航規範
-- **Architecture.md**: 系統架構設計文檔
+- **frontend/docs/sitemap.md**: 網站結構和導航規範
+- **docs/architecture.md**: 系統架構設計文檔
 
 ### 6.2. 最新規範要求
 - 所有UI文字必須使用繁體中文
 - 註解文字必須使用繁體中文
-- 開發任務記錄在 development.md 中
+- 開發任務記錄在 docs/development.md 中
 - 確保所有文檔與 prototype.html 保持同步
 
 ## 7. 持續改進

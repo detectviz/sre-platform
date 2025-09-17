@@ -2,13 +2,14 @@
 
 [![React](https://img.shields.io/badge/React-18+-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Go](https://img.shields.io/badge/Go-1.21+-00ADD8?logo=go&logoColor=white)](https://golang.org/)
 [![Ant Design](https://img.shields.io/badge/Ant%20Design-5.0+-0170FE?logo=antdesign&logoColor=white)](https://ant.design/)
 [![ECharts](https://img.shields.io/badge/ECharts-5.0+-AA344D)](https://echarts.apache.org/)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 
 > 🚀 **現代化 SRE 工作流程的智能化平台 - 從被動故障應對到主動系統管理的完美轉型**
 
-這是一個基於 React、TypeScript 和 Ant Design 的 SRE 平台前端項目，實現了 specs.md 中定義的所有功能頁面。
+這是一個**前後端分離架構**的 SRE 平台 monorepo，包含完整的後端服務和前端應用程式，實現了 docs/specs.md 中定義的所有功能。
 
 ---
 
@@ -45,10 +46,10 @@ SRE 平台是一個現代化的維運平台，專為企業級 SRE 團隊設計�
 
 本平台遵循 [Google SRE Book](https://sre.google/sre-book/) 的最佳實踐，主要參考章節：
 
-- **[Chapter 4: Service Level Objectives](google-sre-book/Chapter-04-Service-Level-Objectives.md)** - SLO/SLA 管理框架
-- **[Chapter 6: Monitoring Distributed Systems](google-sre-book/Chapter-06-Monitoring-Distributed-Systems.md)** - 四個黃金信號監控
-- **[Chapter 7: The Evolution of Automation at Google](google-sre-book/Chapter-07-The-Evolution-of-Automation-at-Google.md)** - 自動化哲學
-- **[Chapter 14: Managing Incidents](google-sre-book/Chapter-14-Managing-Incidents.md)** - 事件管理實踐
+- **[Chapter 4: Service Level Objectives](docs/google-sre-book/Chapter-04-Service-Level-Objectives.md)** - SLO/SLA 管理框架
+- **[Chapter 6: Monitoring Distributed Systems](docs/google-sre-book/Chapter-06-Monitoring-Distributed-Systems.md)** - 四個黃金信號監控
+- **[Chapter 7: The Evolution of Automation at Google](docs/google-sre-book/Chapter-07-The-Evolution-of-Automation-at-Google.md)** - 自動化哲學
+- **[Chapter 14: Managing Incidents](docs/google-sre-book/Chapter-14-Managing-Incidents.md)** - 事件管理實踐
 
 實現服務水準目標 (SLO) 管理、錯誤預算控制、四個黃金信號監控等核心功能。
 
@@ -70,10 +71,11 @@ SRE 平台是一個現代化的維運平台，專為企業級 SRE 團隊設計�
 </td>
 <td width="50%">
 
-**🔧 後端服務 (API)**
+**🔧 後端服務 (Go)**
 - **角色**: RESTful API 服務與智慧告警處理中樞
-- **技術**: 整合現有後端服務 + Webhook服務
+- **技術**: Go 1.21+ + Gin 框架 + GORM
 - **職責**:
+  - RESTful API 實現
   - 業務邏輯處理
   - 數據存儲與管理
   - 外部系統整合
@@ -183,6 +185,14 @@ graph TB
 
 ## 技術棧
 
+### 🔧 後端框架
+- **Go 1.21+** - 高性能、並發安全的後端語言
+- **Gin** - 高性能的 HTTP Web 框架
+- **GORM** - 全功能的 ORM 庫
+- **Viper** - 配置管理
+- **Zap** - 高性能結構化日誌記錄
+- **OpenTelemetry** - 分散式追蹤、指標和日誌收集
+
 ### 🎨 前端框架
 - **React 18** - 最新的 React 版本，提供更好的性能和開發體驗
 - **TypeScript 5.0+** - 提供類型安全和更好的開發體驗
@@ -197,6 +207,17 @@ graph TB
 - **Redux Toolkit** - 現代化的 Redux 狀態管理方案
 - **React Query** - 強大的數據獲取和快取庫
 - **Axios** - HTTP 客戶端，支持請求攔截和響應處理
+
+### 🔍 前端觀測性
+- **Sentry** - 前端錯誤追蹤和性能監控
+- **OpenTelemetry JavaScript** - 前端追蹤和指標收集
+- **Web Vitals** - 核心 Web 指標監控
+
+### 🧪 測試工具
+- **K6** - 高性能負載測試和性能監控
+- **Jest** - JavaScript 測試框架
+- **React Testing Library** - React 組件測試
+- **Playwright** - 端到端測試框架
 
 ### 🛠️ 開發工具
 - **Vite** - 快速的現代化構建工具
@@ -223,32 +244,60 @@ graph TB
 
 | 項目 | 版本要求 | 說明 |
 |------|----------|------|
+| **Go** | 1.21+ | 運行後端服務 |
 | **Node.js** | 18.0+ | 運行 React 應用 |
-| **npm** | 8.0+ | 包管理工具 |
+| **npm** | 8.0+ | 前端包管理工具 |
+| **Docker** | 20.0+ | 容器化部署 (可選) |
 | **Git** | 2.0+ | 版本控制 |
 
 ### 🚀 一鍵啟動
 
+#### 選項一：使用 Docker Compose (推薦)
+
 ```bash
 # 📥 1. 下載專案
-git clone https://github.com/detectviz/sre-platform-frontend
-cd sre-platform-frontend
+git clone https://github.com/detectviz/sre-platform
+cd sre-platform
 
-# ⚡ 2. 安裝依賴
+# 🚀 2. 一鍵啟動所有服務
+docker-compose up -d
+
+# ✅ 3. 訪問應用
+# 前端: http://localhost:3001
+# 後端 API: http://localhost:8080
+# API 文檔: http://localhost:8080/swagger/index.html
+```
+
+#### 選項二：手動啟動 (開發環境)
+
+```bash
+# 📥 1. 下載專案
+git clone https://github.com/detectviz/sre-platform
+cd sre-platform
+
+# 🔧 2. 啟動後端服務
+cd backend
+go mod download
+go run main.go
+
+# 🎨 3. 啟動前端應用 (新終端)
+cd frontend
 npm install
-
-# 🚀 3. 啟動開發服務器
 npm run dev
 
 # ✅ 4. 訪問應用
-# 打開瀏覽器訪問 http://localhost:5173
+# 前端: http://localhost:5173
+# 後端 API: http://localhost:8080
 ```
 
 ### 🛠️ 常用指令
 
+#### 前端指令
 ```bash
+cd frontend
+
 # 📊 開發服務器
-npm run dev          # 啟動開發服務器
+npm run dev          # 啟動前端開發服務器
 npm run build        # 構建生產版本
 npm run preview      # 預覽生產版本
 
@@ -256,10 +305,47 @@ npm run preview      # 預覽生產版本
 npm run lint         # ESLint 代碼檢查
 npm run lint:fix     # 自動修復 ESLint 錯誤
 npm run format       # Prettier 代碼格式化
+npm run test         # 運行單元測試
+npm run test:e2e     # 運行端到端測試 (Playwright)
+
+# 🔍 性能測試 (K6)
+k6 run tests/performance/load-test.js    # 運行負載測試
+k6 run --out json=results.json tests/performance/load-test.js  # 輸出測試結果
 
 # 🔧 其他工具
 npm run clean        # 清理快取和構建文件
 npm run analyze      # 分析包大小
+```
+
+#### 後端指令
+```bash
+cd backend
+
+# 🔧 開發與構建
+go run main.go        # 啟動開發服務器
+go build -o bin/app   # 構建二進制檔案
+go mod tidy           # 整理依賴
+go mod download       # 下載依賴
+
+# 🧪 測試
+go test ./...         # 運行所有測試
+go test -v ./internal/api  # 運行 API 測試
+
+# 📚 文檔
+swag init            # 生成 Swagger 文檔
+```
+
+#### Docker 指令
+```bash
+# 構建和運行
+docker-compose up -d                 # 啟動所有服務
+docker-compose up -d backend         # 只啟動後端
+docker-compose up -d frontend        # 只啟動前端
+
+# 開發環境
+docker-compose -f docker-compose.dev.yml up -d  # 開發環境配置
+docker-compose logs -f backend       # 查看後端日誌
+docker-compose logs -f frontend      # 查看前端日誌
 ```
 
 ---
@@ -336,39 +422,70 @@ sequenceDiagram
 
 ## 開發指南
 
-### 📂 專案結構
+### 📂 專案結構 (Monorepo)
 
 ```
-sre-platform-frontend/
-├── 📁 public/                    # 靜態資源
-├── 📁 src/
-│   ├── 📁 components/            # 可複用組件
-│   │   ├── common/              # 通用組件
-│   │   └── layout/              # 佈局組件
-│   ├── 📁 pages/                # 頁面組件
-│   │   ├── dashboard/           # 儀表板頁面
-│   │   ├── resources/           # 資源管理頁面
-│   │   ├── incidents/           # 事件管理頁面
-│   │   └── settings/            # 設定頁面
-│   ├── 📁 features/             # 功能模組
-│   │   ├── auth/                # 認證功能
-│   │   ├── monitoring/          # 監控功能
-│   │   └── notifications/       # 通知功能
-│   ├── 📁 hooks/                # 自訂 React Hooks
-│   ├── 📁 utils/                # 工具函數
-│   ├── 📁 types/                # TypeScript 類型定義
-│   ├── 📁 constants/            # 常量定義
-│   ├── 📁 services/             # API 服務
-│   ├── 📁 store/                # Redux 狀態管理
-│   ├── 📁 styles/               # 全局樣式
-│   ├── App.tsx                  # 應用入口
-│   └── main.tsx                 # React 入口
-├── 📁 docs/                     # 文檔目錄
-├── 📁 scripts/                  # 構建腳本
-├── package.json                 # 項目配置
-├── tsconfig.json                # TypeScript 配置
-├── vite.config.ts               # Vite 配置
-└── tailwind.config.js           # Tailwind CSS 配置
+sre-platform/
+├── 📁 backend/                  # Go 後端服務
+│   ├── 📁 cmd/                  # 應用入口
+│   ├── 📁 internal/             # 私有應用程式和庫代碼
+│   │   ├── 📁 api/              # API 路由和處理器
+│   │   ├── 📁 models/           # 數據模型
+│   │   ├── 📁 services/         # 業務邏輯服務
+│   │   └── 📁 middleware/       # 中間件
+│   ├── 📁 pkg/                  # 可重用的庫代碼
+│   ├── 📁 configs/              # 配置檔案
+│   ├── 📁 migrations/           # 數據庫遷移
+│   ├── 📁 docs/                 # API 文檔
+│   ├── go.mod                   # Go 模組定義
+│   ├── go.sum                   # Go 依賴校驗和
+│   └── main.go                  # 應用程式入口
+│
+├── 📁 frontend/                 # React 前端應用
+│   ├── 📁 public/               # 靜態資源
+│   ├── 📁 src/
+│   │   ├── 📁 components/       # 可複用組件
+│   │   │   ├── common/          # 通用組件
+│   │   │   └── layout/          # 佈局組件
+│   │   ├── 📁 pages/            # 頁面組件
+│   │   │   ├── dashboard/       # 儀表板頁面
+│   │   │   ├── resources/       # 資源管理頁面
+│   │   │   ├── incidents/       # 事件管理頁面
+│   │   │   └── settings/        # 設定頁面
+│   │   ├── 📁 features/         # 功能模組
+│   │   │   ├── auth/            # 認證功能
+│   │   │   ├── monitoring/      # 監控功能
+│   │   │   └── notifications/   # 通知功能
+│   │   ├── 📁 hooks/            # 自訂 React Hooks
+│   │   ├── 📁 utils/            # 工具函數
+│   │   ├── 📁 types/            # TypeScript 類型定義
+│   │   ├── 📁 constants/        # 常量定義
+│   │   ├── 📁 services/         # API 服務
+│   │   ├── 📁 store/            # Redux 狀態管理
+│   │   ├── 📁 styles/           # 全局樣式
+│   │   ├── App.tsx              # 應用入口
+│   │   └── main.tsx             # React 入口
+│   ├── 📁 docs/                 # 前端文檔
+│   ├── package.json             # 前端項目配置
+│   ├── tsconfig.json            # TypeScript 配置
+│   ├── vite.config.ts           # Vite 配置
+│   └── tailwind.config.js       # Tailwind CSS 配置
+│
+├── 📁 docs/                     # 專案整體文檔
+│   ├── 📁 architecture/         # 架構設計文檔
+│   ├── 📁 api/                  # API 規範文檔
+│   ├── 📁 development/          # 開發指南
+│   └── 📁 ui/                   # UI/UX 設計規範
+│
+├── 📁 docker/                   # Docker 配置
+│   ├── 📁 backend/              # 後端 Docker 配置
+│   ├── 📁 frontend/             # 前端 Docker 配置
+│   └── docker-compose.yml       # 完整應用程式編排
+│
+├── 📁 scripts/                  # 部署和構建腳本
+├── 📁 .github/                  # GitHub Actions 配置
+├── go.work                      # Go workspace 配置
+└── README.md                    # 專案總體說明
 ```
 
 ### 🔄 開發工作流程
@@ -415,9 +532,9 @@ refactor: 重構狀態管理邏輯
 | 文件 | 目標讀者 | 內容概述 |
 |------|----------|----------|
 | **[📋 架構設計書](Architecture.md)** | 技術架構師、開發者 | 系統架構、設計理念、技術選型、重要決策 |
-| **[🎯 使用者指南](specs.md)** | SRE 工程師、運維人員 | 功能說明、操作指南、互動原型 |
+| **[🎯 使用者指南](docs/specs.md)** | SRE 工程師、運維人員 | 功能說明、操作指南、互動原型 |
 | **[🛠️ 開發總規劃](development.md)** | 專案經理、開發團隊 | 開發階段、任務規劃、里程碑 |
-| **[🔧 組件文檔](ui-guide.md)** | UI/UX 設計師、前端開發者 | 組件設計規範、互動模式 |
+| **[🔧 組件文檔](docs/ui)** | UI/UX 設計師、前端開發者 | 組件設計規範、互動模式 |
 | **[🤖 AI代理指南](AGENT.md)** | AI 開發者、代理系統 | AI 代理操作指南、自動化流程 |
 
 ### 📖 專業文件

@@ -18280,9 +18280,9 @@
           key: 'email-settings',
           icon: <MailOutlined />,
           title: '郵件設定',
-          description: '配置 SMTP 伺服器與郵件模板。',
+          description: '配置 SMTP 伺服器。',
           category: '平台設定',
-          features: ['SMTP設定', '郵件模板', '發送記錄'],
+          features: ['SMTP設定', '發送記錄'],
           enabled: true
         },
         {
@@ -20568,12 +20568,12 @@
               </Col>
               <Col xs={24} sm={12} lg={6}>
                 <ContextualKPICard
-                  title="郵件模板"
+                  title="通知管道"
                   value={settingsStats.emailTemplates}
                   unit="個"
                   trend="0%"
                   status="info"
-                  description="通知模板配置"
+                  description="通知管道配置"
                   icon={<MailOutlined />}
                 />
               </Col>
