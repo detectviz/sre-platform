@@ -172,16 +172,14 @@
     }
 
     .table-wrapper .ant-table-thead>tr>th {
-      background: transparent !important;
+      background: rgba(255, 255, 255, 0.05) !important;
       color: var(--text-primary);
       font-weight: 600;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.8px;
       padding: var(--spacing-lg) var(--spacing-lg);
-      height: 48px;
-      /* 統一表頭高度 */
-      line-height: 1.2;
+      line-height: 1.4;
       border-bottom: 2px solid var(--border-base);
       white-space: nowrap;
       overflow: hidden;
@@ -2196,7 +2194,6 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
       padding: var(--spacing-lg);
-      height: 48px;
       border-bottom: 1px solid var(--border-light);
       white-space: nowrap;
     }
@@ -2936,7 +2933,7 @@
       font-size: 14px;
     }
 
-    /* 強制統一所有表頭背景色 */
+    /* 強制統一所有表頭背景色和移除固定高度 */
     .ant-table .ant-table-thead>tr>th,
     .ant-table-thead th,
     th.ant-table-cell,
@@ -2946,6 +2943,8 @@
     .ant-table-thead>tr>th.ant-table-column-sort {
       background: rgba(255, 255, 255, 0.05) !important;
       background-color: rgba(255, 255, 255, 0.05) !important;
+      height: auto !important;
+      min-height: auto !important;
     }
 
     .ant-table-tbody>tr>td {
@@ -4829,7 +4828,7 @@
   <script type="text/babel">
     const { useState, useEffect, useRef, useMemo, useCallback } = React;
     const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert } = antd;
-    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, ArrowUpOutlined, ArrowDownOutlined, AlignCenterOutlined, CompressOutlined, ExpandOutlined, MinusOutlined, UnorderedListOutlined, WarningOutlined, GlobalOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } = icons;
+    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, HomeOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, ArrowUpOutlined, ArrowDownOutlined, AlignCenterOutlined, CompressOutlined, ExpandOutlined, MinusOutlined, UnorderedListOutlined, WarningOutlined, GlobalOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } = icons;
     const { Title, Text, Paragraph } = Typography;
     const { TextArea } = Input;
     const { RangePicker } = DatePicker;
@@ -8666,75 +8665,137 @@
 
           {/* 主內容區條件渲染 */}
           {viewMode === 'dashboard' ? <DashboardView /> : (
-            <PlatformTableContainer
-              title="資源列表"
-              actions={
-                <ToolbarActions
-                  onRefresh={() => message.info('重新整理資源列表...')}
-                  onExport={() => message.info('匯出資源列表...')}
-                  onAdd={() => showModal()}
-                  onFilter={() => setIsFilterOpen(true)}
-                  filterActive={filterStatus.length > 0 || filterType.length > 0 || filterResourceName}
-                  customActions={[
-                    {
-                      icon: <SearchOutlined />,
-                      tooltip: '掃描網路',
-                      onClick: handleOpenScanModal,
-                      text: '掃描網路'
-                    },
-                    {
-                      icon: <EyeOutlined />,
-                      tooltip: '欄位設定',
-                      onClick: () => setIsColumnSettingsOpen(true),
-                      text: '欄位'
+            <React.Fragment>
+              {/* 工具列 - 參考資源群組佈局 */}
+              <Space style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 'var(--spacing-lg)',
+                width: '100%'
+              }}>
+                <Space>
+                  <Input.Search
+                    placeholder="搜尋資源名稱、IP 或標籤..."
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    style={{ width: 300 }}
+                    allowClear
+                  />
+                  <Popover
+                    content={<ResourceFilterPopover />}
+                    title="篩選條件"
+                    trigger="click"
+                    open={isFilterOpen}
+                    onOpenChange={setIsFilterOpen}
+                    placement="bottomLeft"
+                    overlayStyle={{
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '8px',
+                      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)'
+                    }}
+                    overlayInnerStyle={{
+                      padding: 0,
+                      backgroundColor: 'transparent'
+                    }}
+                  >
+                    <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                      篩選
+                      <Badge count={filterStatus.length + filterType.length + (filterResourceName ? 1 : 0)} style={{ marginLeft: 8 }} />
+                    </Button>
+                  </Popover>
+                </Space>
+                <Space>
+                  <Button className="toolbar-btn" icon={<DownloadOutlined />} onClick={() => message.info('匯出資源列表...')}>匯出</Button>
+                  <Button className="toolbar-btn" icon={<ReloadOutlined />} onClick={() => message.info('重新整理資源列表...')}>重新整理</Button>
+                  <Popover
+                    content={
+                      <div style={{ width: '200px' }}>
+                        <div style={{ marginBottom: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)' }}>
+                          欄位顯示設定
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {Object.keys(allColumns).map(key => (
+                            <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Checkbox
+                                checked={visibleColumns[key]}
+                                onChange={(e) => setVisibleColumns(prev => ({ ...prev, [key]: e.target.checked }))}
+                                style={{ marginRight: '8px' }}
+                              />
+                              <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px' }}>
+                                {allColumns[key].title}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     }
-                  ]}
-                />
-              }
-            >
-              <div style={{ padding: '0 16px 16px' }}>
-                <Input.Search
-                  placeholder="搜尋資源名稱、IP 或標籤..."
-                  value={searchText}
-                  onChange={e => setSearchText(e.target.value)}
-                  style={{ width: '100%' }}
-                  allowClear
-                />
+                    title={null}
+                    trigger="click"
+                    open={isColumnSettingsOpen}
+                    onOpenChange={setIsColumnSettingsOpen}
+                    placement="bottomRight"
+                    overlayStyle={{
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)'
+                    }}
+                  >
+                    <Button className="toolbar-btn" icon={<EyeOutlined />}>
+                      欄位設定
+                    </Button>
+                  </Popover>
+                  <Button className="toolbar-btn" icon={<SearchOutlined />} onClick={handleOpenScanModal}>掃描網路</Button>
+                  <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>新增資源</Button>
+                </Space>
+              </Space>
+
+              {/* 表格區域 - 使用 table-wrapper 包裹 */}
+              <div className="table-wrapper">
+                {resources.length > 0 ? (
+                  <Table
+                    rowSelection={rowSelection}
+                    columns={columns}
+                    dataSource={filteredResources}
+                    rowKey="key"
+                    className="transparent-bg"
+                    rowClassName={(record) => record.name === highlightedResource ? 'highlighted-row' : ''}
+                    size="small"
+                  />
+                ) : (
+                  <Empty description="尚無任何資源">
+                    <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增資源</Button>
+                  </Empty>
+                )}
               </div>
-              <Table
-                rowSelection={rowSelection}
-                columns={columns}
-                dataSource={filteredResources}
-                rowKey="key"
-                className="transparent-bg"
-                rowClassName={(record) => record.name === highlightedResource ? 'highlighted-row' : ''}
-                size="small"
-              />
-            </PlatformTableContainer>
+            </React.Fragment>
           )}
 
-          {/* 批次操作工具列 (僅在列表視圖且有選中項目時顯示) */}
-          {viewMode === 'list' && (
-            <BatchActionToolbar
-              selectedCount={selectedRowKeys.length}
-              onClear={() => setSelectedRowKeys([])}
-              actions={[
-                {
-                  icon: <TeamOutlined />,
-                  text: '加入群組',
-                  tooltip: '將選中的資源加入群組',
-                  variant: 'secondary',
-                  onClick: () => handleBatchAddToGroup()
-                },
-                {
-                  icon: <DeleteOutlined />,
-                  text: '批次刪除',
-                  tooltip: '刪除選中的資源',
-                  variant: 'secondary',
-                  onClick: () => handleBatchDelete()
-                }
-              ]}
-            />
+          {/* 批次操作工具列 - 參考資源群組佈局 */}
+          {selectedRowKeys.length > 0 && (
+            <div className="batch-actions-floating">
+              <div className="batch-info">
+                <CheckCircleOutlined style={{ color: 'var(--brand-primary)' }} />
+                <span>已選擇 <span className="batch-count">{selectedRowKeys.length}</span> 項</span>
+              </div>
+              <Space>
+                <Button
+                  className="batch-action-button secondary-button"
+                  onClick={() => handleBatchAddToGroup()}
+                >
+                  <TeamOutlined /> 加入群組
+                </Button>
+                <Button
+                  className="batch-action-button danger-button"
+                  onClick={() => handleBatchDelete()}
+                >
+                  <DeleteOutlined /> 批次刪除
+                </Button>
+              </Space>
+              <Button type="text" icon={<CloseOutlined />} onClick={() => setSelectedRowKeys([])} />
+            </div>
           )}
 
           {/* Modal */}
@@ -9097,16 +9158,16 @@
       ];
 
       const initialTeams = [
-        { key: 'team_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], createdAt: dayjs().subtract(60, 'day'), owner: 'user_2' },
-        { key: 'team_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['user_3'], subscribers: ['user_2'], createdAt: dayjs().subtract(45, 'day'), owner: 'user_1' },
-        { key: 'team_3', name: 'Administrators', description: '平台最高權限管理者', members: ['user_1', 'user_4'], subscribers: ['user_1', 'slack_network', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(90, 'day'), owner: 'user_1' },
-        { key: 'team_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['user_3', 'email_ops'], createdAt: dayjs().subtract(20, 'day'), owner: 'user_1' },
-        { key: 'team_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], createdAt: dayjs().subtract(30, 'day'), owner: 'user_2' },
-        { key: 'team_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['user_1'], subscribers: ['user_1', 'slack_database'], createdAt: dayjs().subtract(40, 'day'), owner: 'user_1' },
-        { key: 'team_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['user_3'], subscribers: ['user_3', 'slack_network'], createdAt: dayjs().subtract(50, 'day'), owner: 'user_3' },
-        { key: 'team_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['user_4'], subscribers: ['user_4', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(35, 'day'), owner: 'user_4' },
-        { key: 'team_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['user_1', 'user_2', 'user_3'], subscribers: ['user_1', 'slack_operations'], createdAt: dayjs().subtract(25, 'day'), owner: 'user_1' },
-        { key: 'team_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_platform'], createdAt: dayjs().subtract(15, 'day'), owner: 'user_2' },
+        { key: 'team_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], created_at: dayjs().subtract(60, 'day'), owner: 'user_2' },
+        { key: 'team_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['user_3'], subscribers: ['user_2'], created_at: dayjs().subtract(45, 'day'), owner: 'user_1' },
+        { key: 'team_3', name: 'Administrators', description: '平台最高權限管理者', members: ['user_1', 'user_4'], subscribers: ['user_1', 'slack_network', 'email_security', 'oncall_security'], created_at: dayjs().subtract(90, 'day'), owner: 'user_1' },
+        { key: 'team_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['user_3', 'email_ops'], created_at: dayjs().subtract(20, 'day'), owner: 'user_1' },
+        { key: 'team_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], created_at: dayjs().subtract(30, 'day'), owner: 'user_2' },
+        { key: 'team_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['user_1'], subscribers: ['user_1', 'slack_database'], created_at: dayjs().subtract(40, 'day'), owner: 'user_1' },
+        { key: 'team_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['user_3'], subscribers: ['user_3', 'slack_network'], created_at: dayjs().subtract(50, 'day'), owner: 'user_3' },
+        { key: 'team_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['user_4'], subscribers: ['user_4', 'email_security', 'oncall_security'], created_at: dayjs().subtract(35, 'day'), owner: 'user_4' },
+        { key: 'team_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['user_1', 'user_2', 'user_3'], subscribers: ['user_1', 'slack_operations'], created_at: dayjs().subtract(25, 'day'), owner: 'user_1' },
+        { key: 'team_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_platform'], created_at: dayjs().subtract(15, 'day'), owner: 'user_2' },
       ];
 
       const [groups, setGroups] = useLocalStorageState('sre-groups', initialGroups);
@@ -9884,7 +9945,7 @@
       );
     };
 
-    // === 📊 事件與資源洞察頁面 ===
+    // === 📊 基礎設施洞察頁面 ===
     const AlertsInsightsPage = ({ themeMode, onNavigate }) => {
       // 資源統計資料 - 從 ResourceOverviewTab 移動過來
       const resourceStats = {
@@ -9900,12 +9961,6 @@
 
       return (
         <React.Fragment>
-          <PageHeader
-            title="事件與資源洞察"
-            subtitle="即時監控業務核心指標，掌握營運狀態與服務品質"
-            icon={<ExclamationCircleOutlined />}
-          />
-
           {/* 資源概覽 KPI */}
           <div style={{ marginBottom: 'var(--spacing-xl)' }}>
             <Row gutter={[16, 16]}>
@@ -9921,37 +9976,43 @@
                 />
               </Col>
               <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="資料庫"
-                  value={resourceStats.databases}
-                  unit="個"
-                  trend="stable"
-                  status="info"
-                  description="各類型資料庫實例"
-                  icon={<DatabaseOutlined />}
-                />
+                <div style={{ height: '140px' }}>
+                  <ContextualKPICard
+                    title="資料庫"
+                    value={resourceStats.databases}
+                    unit="個"
+                    trend="stable"
+                    status="info"
+                    description="各類型資料庫實例"
+                    icon={<DatabaseOutlined />}
+                  />
+                </div>
               </Col>
               <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="容器"
-                  value={resourceStats.containers}
-                  unit="個"
-                  trend="up"
-                  status="info"
-                  description="運行中的容器實例"
-                  icon={<DeploymentUnitOutlined />}
-                />
+                <div style={{ height: '140px' }}>
+                  <ContextualKPICard
+                    title="容器"
+                    value={resourceStats.containers}
+                    unit="個"
+                    trend="up"
+                    status="info"
+                    description="運行中的容器實例"
+                    icon={<DeploymentUnitOutlined />}
+                  />
+                </div>
               </Col>
               <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="服務"
-                  value={resourceStats.services}
-                  unit="個"
-                  trend="stable"
-                  status="info"
-                  description="註冊的微服務"
-                  icon={<GlobalOutlined />}
-                />
+                <div style={{ height: '140px' }}>
+                  <ContextualKPICard
+                    title="服務"
+                    value={resourceStats.services}
+                    unit="個"
+                    trend="stable"
+                    status="info"
+                    description="註冊的微服務"
+                    icon={<GlobalOutlined />}
+                  />
+                </div>
               </Col>
             </Row>
           </div>
@@ -10058,54 +10119,52 @@
           />
 
           {/* 🎯 事件處理流程儀表板 - 專注處理效率 */}
-          {tabKey === 'incident-list' && (
-            <div className="kpi-grid" style={{ marginBottom: 'var(--spacing-xl)' }}>
-              <Row gutter={[16, 16]}>
-                <Col xs={24} sm={12} md={6} lg={6}>
-                  <ContextualKPICard
-                    title="活躍事件"
-                    value={incidentStats.activeIncidents}
-                    unit="件"
-                    status={incidentStats.criticalIncidents > 0 ? 'critical' : incidentStats.activeIncidents > 3 ? 'warning' : 'success'}
-                    description={`${incidentStats.criticalIncidents} 件嚴重，${incidentStats.acknowledgedIncidents} 件處理中`}
-                    icon={<FireOutlined />}
-                  />
-                </Col>
-                <Col xs={24} sm={12} md={6} lg={6}>
-                  <ContextualKPICard
-                    title="今日已解決"
-                    value={incidentStats.todayResolved}
-                    unit="件"
-                    trend="+8%"
-                    status="success"
-                    description={`${incidentStats.automatedResolved} 件自動解決`}
-                    icon={<CheckCircleOutlined />}
-                  />
-                </Col>
-                <Col xs={24} sm={12} md={6} lg={6}>
-                  <ContextualKPICard
-                    title="平均解決時間"
-                    value={incidentStats.avgResolutionTime}
-                    unit="小時"
-                    trend="-15%"
-                    status="success"
-                    description="較上週大幅改善"
-                    icon={<ClockCircleOutlined />}
-                  />
-                </Col>
-                <Col xs={24} sm={12} md={6} lg={6}>
-                  <ContextualKPICard
-                    title="值班工程師"
-                    value={incidentStats.onCallEngineers}
-                    unit="人"
-                    status="success"
-                    description={`升級率 ${incidentStats.escalationRate}%`}
-                    icon={<TeamOutlined />}
-                  />
-                </Col>
-              </Row>
-            </div>
-          )}
+          <div className="kpi-grid" style={{ marginBottom: 'var(--spacing-xl)' }}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6} lg={6}>
+                <ContextualKPICard
+                  title="活躍事件"
+                  value={incidentStats.activeIncidents}
+                  unit="件"
+                  status={incidentStats.criticalIncidents > 0 ? 'critical' : incidentStats.activeIncidents > 3 ? 'warning' : 'success'}
+                  description={`${incidentStats.criticalIncidents} 件嚴重，${incidentStats.acknowledgedIncidents} 件處理中`}
+                  icon={<FireOutlined />}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6} lg={6}>
+                <ContextualKPICard
+                  title="今日已解決"
+                  value={incidentStats.todayResolved}
+                  unit="件"
+                  trend="+8%"
+                  status="success"
+                  description={`${incidentStats.automatedResolved} 件自動解決`}
+                  icon={<CheckCircleOutlined />}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6} lg={6}>
+                <ContextualKPICard
+                  title="平均解決時間"
+                  value={incidentStats.avgResolutionTime}
+                  unit="小時"
+                  trend="-15%"
+                  status="success"
+                  description="較上週大幅改善"
+                  icon={<ClockCircleOutlined />}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6} lg={6}>
+                <ContextualKPICard
+                  title="值班工程師"
+                  value={incidentStats.onCallEngineers}
+                  unit="人"
+                  status="success"
+                  description={`升級率 ${incidentStats.escalationRate}%`}
+                  icon={<TeamOutlined />}
+                />
+              </Col>
+            </Row>
+          </div>
           <Tabs defaultActiveKey={tabKey} onChange={(key) => onNavigate(key)}>
             <Tabs.TabPane tab="事件列表" key="incident-list">
               <IncidentListPage onNavigate={onNavigate} />
@@ -10277,7 +10336,7 @@
       );
     };
 
-    const AutomationCenterPage = ({ onNavigate, pageKey, scripts, setScripts, addExecution, executions, setExecutions }) => {
+    const AutomationCenterPage = ({ onNavigate, pageKey, scripts, setScripts, addExecution, executions, setExecutions, schedules, setSchedules }) => {
       const tabKey = ['scripts', 'schedules', 'executions'].includes(pageKey) ? pageKey : 'scripts';
 
       // 計算自動化 KPI
@@ -10287,7 +10346,7 @@
       const totalExecutions = executions.length;
       const successRate = totalExecutions > 0 ? ((successfulExecutions / totalExecutions) * 100) : 100;
       const recentExecutions = executions.filter(e =>
-        dayjs().diff(dayjs(e.executedAt), 'hours') <= 24
+        dayjs().diff(dayjs(e.start_time), 'hours') <= 24
       ).length;
 
       return (
@@ -10366,7 +10425,7 @@
               >
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                   {executions.slice(0, 5).map(execution => (
-                    <div key={execution.id} style={{
+                    <div key={execution.key} style={{
                       display: 'flex',
                       alignItems: 'center',
                       padding: '8px 12px',
@@ -10386,10 +10445,10 @@
                       </div>
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 500, marginBottom: '2px' }}>
-                          {scripts.find(s => s.id === execution.scriptId)?.name || `腳本 ${execution.scriptId}`}
+                          {scripts.find(s => s.id === execution.script_id)?.name || `腳本 ${execution.script_id}`}
                         </div>
                         <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                          {dayjs(execution.executedAt).format('MM-DD HH:mm')} •
+                          {dayjs(execution.start_time).format('MM-DD HH:mm')} •
                           耗時 {execution.duration}ms
                         </div>
                       </div>
@@ -10421,7 +10480,7 @@
                     .sort((a, b) => (b.executionCount || 0) - (a.executionCount || 0))
                     .slice(0, 3)
                     .map((script, index) => (
-                      <div key={script.key} style={{
+                      <div key={`hot-script-${script.key}-${index}`} style={{
                         display: 'flex',
                         alignItems: 'center',
                         padding: '8px',
@@ -10518,7 +10577,7 @@
               }
               key="scripts"
             >
-              <ScriptsPage scripts={scripts} setScripts={setScripts} addExecution={addExecution} />
+              <ScriptsPage scripts={scripts} setScripts={setScripts} addExecution={addExecution} schedules={schedules} />
             </Tabs.TabPane>
             <Tabs.TabPane
               tab={
@@ -10529,7 +10588,7 @@
               }
               key="schedules"
             >
-              <SchedulesPage scripts={scripts} />
+              <SchedulesPage scripts={scripts} schedules={schedules} setSchedules={setSchedules} onNavigate={onNavigate} />
             </Tabs.TabPane>
             <Tabs.TabPane
               tab={
@@ -11835,6 +11894,25 @@
       });
       const [isFilterOpen, setIsFilterOpen] = useState(false);
 
+      // Column settings state
+      const [isColumnSettingsOpen, setIsColumnSettingsOpen] = useState(false);
+      const [visibleColumns, setVisibleColumns] = useState(() => {
+        const saved = localStorage.getItem('alert-rules-visible-columns');
+        return saved ? JSON.parse(saved) : {
+          enabled: true,
+          name: true,
+          target: true,
+          resource_tags: true,
+          conditions: true,
+          notifications: true
+        };
+      });
+
+      // Save column settings to localStorage when changed
+      useEffect(() => {
+        localStorage.setItem('alert-rules-visible-columns', JSON.stringify(visibleColumns));
+      }, [visibleColumns]);
+
       // Filter functions
       const applyFilters = () => {
         setIsFilterOpen(false);
@@ -12174,16 +12252,16 @@
           width: '15%',
           render: (tags) => (
             <Space size={[4, 4]} wrap>
-              {tags && Array.isArray(tags) && tags.length > 0 ? tags.map(tag => {
+              {tags && typeof tags === 'object' && Object.keys(tags).length > 0 ? Object.entries(tags).map(([key, value]) => {
                 const tagColorMap = {
                   'production': 'red',
                   'staging': 'orange',
                   'database': 'blue',
-                  'web-server': 'green',
-                  'high-priority': 'red',
-                  'team-alpha': 'purple'
+                  'web': 'green',
+                  'mysql': 'purple',
+                  'env': 'cyan'
                 };
-                return <Tag key={tag} color={tagColorMap[tag] || 'default'} size="small">{tag}</Tag>;
+                return <Tag key={key} color={tagColorMap[value] || tagColorMap[key] || 'default'} size="small">{key}: {value}</Tag>;
               }) : <span style={{ color: 'var(--text-secondary)' }}>無標籤</span>}
             </Space>
           )
@@ -12262,7 +12340,13 @@
           width: '12%',
           render: (notifications) => (
             <Space size={[4, 4]} wrap>
-              {notifications && notifications.length > 0 ? notifications.map(n => <Tag key={n}>{n}</Tag>) : '-'}
+              {notifications && notifications.length > 0 ?
+                notifications.map((n, index) => (
+                  typeof n === 'string' ?
+                    <Tag key={index}>{n}</Tag> :
+                    <Tag key={index}>{n.type}: {n.target}</Tag>
+                )) : '-'
+              }
             </Space>
           )
         },
@@ -12279,6 +12363,18 @@
           )
         }
       ];
+
+      // 根据可见列设置过滤表格列
+      const filteredColumns = columns.filter(col => {
+        if (col.key === 'action') return true; // 操作列始终显示
+        if (col.dataIndex === 'enabled') return visibleColumns.enabled;
+        if (col.dataIndex === 'name') return visibleColumns.name;
+        if (col.dataIndex === 'target') return visibleColumns.target;
+        if (col.dataIndex === 'resource_tags') return visibleColumns.resource_tags;
+        if (col.dataIndex === 'conditions') return visibleColumns.conditions;
+        if (col.dataIndex === 'notifications') return visibleColumns.notifications;
+        return true; // 默认显示
+      });
 
       const onSelectChange = (newSelectedRowKeys) => setSelectedRowKeys(newSelectedRowKeys);
       const rowSelection = { selectedRowKeys, onChange: onSelectChange, columnWidth: 32 };
@@ -12340,6 +12436,57 @@
               </Popover>
             </Space>
             <Space>
+              <Popover
+                content={
+                  <div style={{ width: '200px' }}>
+                    <div style={{ marginBottom: '12px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.9)' }}>
+                      欄位顯示設定
+                    </div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {Object.keys({
+                        enabled: '啟用狀態',
+                        name: '規則名稱',
+                        target: '監控對象',
+                        resource_tags: '資源標籤',
+                        conditions: '觸發條件',
+                        notifications: '通知對象'
+                      }).map(key => (
+                        <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Checkbox
+                            checked={visibleColumns[key]}
+                            onChange={(e) => setVisibleColumns(prev => ({ ...prev, [key]: e.target.checked }))}
+                            style={{ marginRight: '8px' }}
+                          />
+                          <span style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '13px' }}>
+                            {{
+                              enabled: '啟用狀態',
+                              name: '規則名稱',
+                              target: '監控對象',
+                              resource_tags: '資源標籤',
+                              conditions: '觸發條件',
+                              notifications: '通知對象'
+                            }[key]}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                }
+                title={null}
+                trigger="click"
+                open={isColumnSettingsOpen}
+                onOpenChange={setIsColumnSettingsOpen}
+                placement="bottomRight"
+                overlayStyle={{
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+              >
+                <Button className="toolbar-btn" icon={<EyeOutlined />}>
+                  欄位設定
+                </Button>
+              </Popover>
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
               <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>
                 新增規則
@@ -12349,7 +12496,7 @@
           <div className="table-wrapper">
             {
               filteredRules.length > 0 ?
-                <Table rowSelection={rowSelection} columns={columns} dataSource={filteredRules} rowKey="key" className="transparent-bg" size="small" /> :
+                <Table rowSelection={rowSelection} columns={filteredColumns} dataSource={filteredRules} rowKey="key" className="transparent-bg" size="small" /> :
                 <Empty description="尚無任何事件規則">
                   <Button type="primary" icon={<PlusOutlined />} onClick={() => showModal()}>立即新增規則</Button>
                 </Empty>
@@ -12886,6 +13033,7 @@
               </div>
             </Form>
           </Modal>
+
         </React.Fragment >
       );
     };
@@ -12909,7 +13057,7 @@
           ],
           priority: 'high',
           enabled: true,
-          createdAt: dayjs().subtract(15, 'day'),
+          created_at: dayjs().subtract(15, 'day'),
           lastTriggered: dayjs().subtract(2, 'hour'),
           triggerCount: 8
         },
@@ -12930,7 +13078,7 @@
           ],
           priority: 'high',
           enabled: true,
-          createdAt: dayjs().subtract(8, 'day'),
+          created_at: dayjs().subtract(8, 'day'),
           lastTriggered: dayjs().subtract(25, 'minute'),
           triggerCount: 23
         },
@@ -12950,7 +13098,7 @@
           ],
           priority: 'medium',
           enabled: true,
-          createdAt: dayjs().subtract(22, 'day'),
+          created_at: dayjs().subtract(22, 'day'),
           lastTriggered: dayjs().subtract(3, 'hour'),
           triggerCount: 12
         },
@@ -12970,7 +13118,7 @@
           ],
           priority: 'critical',
           enabled: true,
-          createdAt: dayjs().subtract(30, 'day'),
+          created_at: dayjs().subtract(30, 'day'),
           lastTriggered: dayjs().subtract(1, 'day'),
           triggerCount: 3
         },
@@ -12989,7 +13137,7 @@
           ],
           priority: 'low',
           enabled: false,
-          createdAt: dayjs().subtract(5, 'day'),
+          created_at: dayjs().subtract(5, 'day'),
           lastTriggered: dayjs().subtract(6, 'hour'),
           triggerCount: 15
         },
@@ -13010,7 +13158,7 @@
           ],
           priority: 'high',
           enabled: true,
-          createdAt: dayjs().subtract(12, 'day'),
+          created_at: dayjs().subtract(12, 'day'),
           lastTriggered: dayjs().subtract(45, 'minute'),
           triggerCount: 19
         }
@@ -13146,7 +13294,7 @@
           team: selectedTeam,
           channels: selectedChannels,
           matchConditions: matchConditions.filter(cond => cond.key && cond.value),
-          createdAt: editingStrategy ? editingStrategy.createdAt : dayjs(),
+          created_at: editingStrategy ? editingStrategy.created_at : dayjs(),
           enabled: true
         };
 
@@ -14637,13 +14785,62 @@
       );
     };
 
-    const ScriptsPage = ({ scripts, setScripts, addExecution }) => {
+    const ScriptsPage = ({ scripts, setScripts, addExecution, schedules }) => {
       const [isModalOpen, setIsModalOpen] = useState(false);
       const [editingScript, setEditingScript] = useState(null);
       const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+      const [scheduleReferenceModal, setScheduleReferenceModal] = useState({ visible: false, script: null, schedules: [] });
       const [form] = Form.useForm();
       const { message, modal } = antd.App.useApp();
       const confirmDelete = useDeleteConfirm();
+
+      const getHumanReadableCron = (cron) => {
+        try {
+          const parts = cron.split(' ');
+          if (parts.length !== 5) return cron;
+
+          const [minute, hour, day, month, weekday] = parts;
+
+          // 每日模式
+          if (minute === '0' && hour !== '*' && day === '*' && month === '*' && weekday === '*') {
+            return `每日 ${hour}:00`;
+          }
+
+          // 每小時模式
+          if (minute !== '*' && hour === '*' && day === '*' && month === '*' && weekday === '*') {
+            return `每小時第 ${minute} 分`;
+          }
+
+          // 每周模式
+          if (weekday !== '*' && day === '*' && month === '*') {
+            const weekdayMap = { '0': '日', '1': '一', '2': '二', '3': '三', '4': '四', '5': '五', '6': '六' };
+            const weekdays = weekday.split(',').map(w => weekdayMap[w] || w).join('、');
+            return `每週 ${weekdays} ${hour}:${minute.padStart(2, '0')}`;
+          }
+
+          // 每月模式
+          if (day !== '*' && month === '*' && weekday === '*') {
+            return `每月 ${day} 日 ${hour}:${minute.padStart(2, '0')}`;
+          }
+
+          return cron; // 如果不匹配任何模式，返回原始CRON
+        } catch (e) {
+          return cron;
+        }
+      };
+
+      const showScheduleReference = (script) => {
+        const relatedSchedules = schedules.filter(s => s.script_id === script.key);
+        setScheduleReferenceModal({
+          visible: true,
+          script: script,
+          schedules: relatedSchedules
+        });
+      };
+
+      const hideScheduleReference = () => {
+        setScheduleReferenceModal({ visible: false, script: null, schedules: [] });
+      };
 
       const showModal = (script = null) => {
         setEditingScript(script);
@@ -14674,10 +14871,10 @@
             setTimeout(() => {
               addExecution({
                 key: `e_${Date.now()}`,
-                scriptName: script.name,
+                script_name: script.name,
                 trigger: { type: 'Manual', user: 'admin' },
                 status: 'success',
-                startTime: dayjs(),
+                start_time: dayjs(),
                 duration: `${(Math.random() * 5).toFixed(1)}s`
               });
               message.success({ content: '執行成功', key: 'run_script' });
@@ -14716,10 +14913,29 @@
       const hasSelected = selectedRowKeys.length > 0;
 
       const columns = [
-        { title: '腳本名稱', dataIndex: 'name', width: '25%' },
-        { title: '類型', dataIndex: 'type', width: '12%', render: t => <Tag>{t}</Tag> },
-        { title: '創建者', dataIndex: 'creator', width: '12%' },
-        { title: '描述', dataIndex: 'description', width: '30%' },
+        { title: '腳本名稱', dataIndex: 'name', width: '20%' },
+        { title: '類型', dataIndex: 'type', width: '10%', render: t => <Tag>{t}</Tag> },
+        { title: '創建者', dataIndex: 'creator', width: '10%' },
+        {
+          title: '排程引用',
+          dataIndex: 'scheduleCount',
+          width: '15%',
+          render: (count, record) => {
+            const scheduleCount = schedules.filter(s => s.script_id === record.key).length;
+            return scheduleCount > 0 ? (
+              <Button
+                type="link"
+                style={{ padding: 0, height: 'auto' }}
+                onClick={() => showScheduleReference(record)}
+              >
+                {`已被 ${scheduleCount} 個排程使用`}
+              </Button>
+            ) : (
+              <Text type="secondary">未被引用</Text>
+            );
+          }
+        },
+        { title: '描述', dataIndex: 'description', width: '25%' },
         {
           title: '操作', key: 'action', width: '21%', render: (_, record) => (
             <Space size="small">
@@ -14846,18 +15062,101 @@
               </Form.Item>
             </Form>
           </Modal>
+
+          {/* 排程引用Modal */}
+          <Modal
+            title={
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <ScheduleOutlined />
+                排程引用詳情
+              </div>
+            }
+            open={scheduleReferenceModal.visible}
+            onCancel={hideScheduleReference}
+            footer={[
+              <Button key="close" onClick={hideScheduleReference}>
+                關閉
+              </Button>
+            ]}
+            width={700}
+          >
+            {scheduleReferenceModal.script && (
+              <div>
+                <div style={{ marginBottom: '16px', padding: '12px', background: 'rgba(24, 144, 255, 0.1)', borderRadius: '6px' }}>
+                  <Text strong style={{ display: 'block', marginBottom: '4px' }}>
+                    腳本：{scheduleReferenceModal.script.name}
+                  </Text>
+                  <Text type="secondary">
+                    類型：{scheduleReferenceModal.script.type} • 創建者：{scheduleReferenceModal.script.creator}
+                  </Text>
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <Text strong style={{ fontSize: '16px' }}>
+                    引用排程 ({scheduleReferenceModal.schedules.length} 個)
+                  </Text>
+                </div>
+
+                {scheduleReferenceModal.schedules.length > 0 ? (
+                  <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                    <List
+                      dataSource={scheduleReferenceModal.schedules}
+                      renderItem={(schedule) => (
+                        <List.Item style={{
+                          padding: '12px 16px',
+                          marginBottom: '8px',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          borderRadius: '6px',
+                          border: '1px solid rgba(255, 255, 255, 0.06)'
+                        }}>
+                          <List.Item.Meta
+                            title={
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <Text strong>{schedule.name}</Text>
+                              </div>
+                            }
+                            description={
+                              <div style={{ marginTop: '4px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '4px' }}>
+                                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                                    <ClockCircleOutlined style={{ marginRight: '4px' }} />
+                                    {getHumanReadableCron(schedule.cron)}
+                                  </Text>
+                                  <Text type="secondary" style={{ fontSize: '12px' }}>
+                                    創建者：{schedule.creator}
+                                  </Text>
+                                </div>
+                                {schedule.last_run && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                                      上次執行：{dayjs(schedule.last_run).format('YYYY-MM-DD HH:mm')}
+                                    </Text>
+                                    <Tag
+                                      size="small"
+                                      color={schedule.last_status === 'success' ? 'green' : schedule.last_status === 'failed' ? 'red' : 'orange'}
+                                    >
+                                      {schedule.last_status === 'success' ? '成功' : schedule.last_status === 'failed' ? '失敗' : '進行中'}
+                                    </Tag>
+                                  </div>
+                                )}
+                              </div>
+                            }
+                          />
+                        </List.Item>
+                      )}
+                    />
+                  </div>
+                ) : (
+                  <Empty description="沒有找到相關的排程任務" />
+                )}
+              </div>
+            )}
+          </Modal>
         </React.Fragment >
       );
     };
 
-    const SchedulesPage = ({ scripts }) => {
-      const initialSchedules = [
-        // 註：新增 scheduleMode 和 frequency 欄位以符合更新後的 DB schema
-        { key: 'sch_1', name: '每日資料庫備份', cron: '0 2 * * *', scheduleMode: 'advanced', frequency: 'daily', scriptId: 's_3', lastRun: dayjs().subtract(1, 'day').hour(2), lastStatus: 'success', enabled: true, creator: 'admin' },
-        { key: 'sch_2', name: '每小時清理臨時文件', cron: '0 * * * *', scheduleMode: 'simple', frequency: 'hourly', scriptId: 's_2', lastRun: dayjs().subtract(30, 'minute'), lastStatus: 'failed', enabled: false, creator: 'dev_user' },
-      ];
-      // 確保包含creator欄位的資料結構
-      const [schedules, setSchedules] = useLocalStorageState('sre-schedules', initialSchedules);
+    const SchedulesPage = ({ scripts, schedules, setSchedules, onNavigate }) => {
 
       // 如果資料沒有creator欄位，新增預設值
       React.useEffect(() => {
@@ -14894,7 +15193,7 @@
           }
         });
       };
-      const selectedScriptId = Form.useWatch('scriptId', form);
+      const selectedScriptId = Form.useWatch('script_id', form);
       const selectedScript = scripts.find(function (s) { return s.key === selectedScriptId; });
 
       // 監聽表單值變化，實時更新CRON表達式
@@ -15079,7 +15378,28 @@
       const columns = [
         { title: '啟用', dataIndex: 'enabled', width: '5%', render: e => <Switch defaultChecked={e} /> },
         { title: '任務名稱', dataIndex: 'name', width: '15%', render: name => <Text style={{ fontSize: '13px' }}>{name}</Text> },
-        { title: '腳本名稱', dataIndex: 'scriptId', width: '10%', render: id => <Text style={{ fontSize: '13px' }}>{getScriptName(id)}</Text> },
+        {
+          title: '腳本名稱',
+          dataIndex: 'script_id',
+          width: '10%',
+          render: id => {
+            const scriptName = getScriptName(id);
+            return (
+              <Button
+                type="link"
+                style={{ padding: 0, height: 'auto', fontSize: '13px' }}
+                onClick={() => {
+                  // 跳转到腳本庫Tab
+                  onNavigate('scripts');
+                  // 这里可以添加高亮逻辑，但由于是函数式组件，我们可以通过URL参数或全局状态来实现
+                  message.info(`已跳轉到腳本庫，腳本：${scriptName}`);
+                }}
+              >
+                {scriptName}
+              </Button>
+            );
+          }
+        },
         {
           title: 'CRON 條件',
           dataIndex: 'cron',
@@ -15093,7 +15413,7 @@
           )
         },
         {
-          title: '上次狀態', dataIndex: 'lastStatus', width: '10%', render: status => (
+          title: '上次狀態', dataIndex: 'last_status', width: '10%', render: status => (
             status === 'success' ? (
               <Tag color="green" style={{ fontSize: '13px' }}>SUCCESS</Tag>
             ) : status === 'failed' ? (
@@ -15104,7 +15424,7 @@
           )
         },
         {
-          title: '上次執行時間', dataIndex: 'lastRun', width: '12%', render: lastRun => (
+          title: '上次執行時間', dataIndex: 'last_run', width: '12%', render: lastRun => (
             lastRun ? (
               <Text style={{ fontSize: '13px' }}>
                 {lastRun.format('MM-DD HH:mm')}
@@ -15205,7 +15525,7 @@
             <Form form={form} layout="vertical" onFinish={onFinish} style={{ marginTop: 8 }}>
               <Form.Item name="name" label="任務名稱" rules={[{ required: true }]} style={{ marginBottom: 8 }}><Input /></Form.Item>
               <Form.Item name="description" label="描述" style={{ marginBottom: 8 }}><TextArea rows={2} /></Form.Item>
-              <Form.Item name="scriptId" label="執行腳本" rules={[{ required: true }]} style={{ marginBottom: 8 }}>
+              <Form.Item name="script_id" label="執行腳本" rules={[{ required: true }]} style={{ marginBottom: 8 }}>
                 <Select showSearch options={scripts.map(s => ({ label: s.name, value: s.key }))} />
               </Form.Item>
               <Form.Item name="target_resources" label="目標資源" style={{ marginBottom: 10 }}>
@@ -15386,18 +15706,18 @@
 
       const viewLog = (record) => {
         // 產生結構化的日誌資料
-        const baseTime = record.startTime || dayjs();
+        const baseTime = record.start_time || dayjs();
         const structuredLogs = [
           {
             timestamp: baseTime.format('HH:mm:ss.SSS'),
             level: 'INFO',
-            message: `Starting execution for script: ${record.scriptName}`,
+            message: `Starting execution for script: ${record.script_name}`,
             color: '#1890ff'
           },
           {
             timestamp: baseTime.add(100, 'millisecond').format('HH:mm:ss.SSS'),
             level: 'INFO',
-            message: `Triggered by: ${record.trigger.type}${record.trigger.type === 'Manual' ? ` (${record.trigger.user})` : record.trigger.type === 'Event' ? ` - ${record.trigger.eventSummary || 'High CPU usage alert'}` : ''}`,
+            message: `Triggered by: ${record.trigger.type}${record.trigger.type === 'Manual' ? ` (${record.trigger.user})` : record.trigger.type === 'Event' ? ` - ${record.trigger.event_summary || 'High CPU usage alert'}` : ''}`,
             color: '#1890ff'
           },
           {
@@ -15493,9 +15813,9 @@
 
       const columns = [
         { title: '狀態', dataIndex: 'status', render: s => <Tag color={s === 'success' ? 'green' : 'red'}>{s ? s.toUpperCase() : 'UNKNOWN'}</Tag> },
-        { title: '腳本名稱', dataIndex: 'scriptName' },
+        { title: '腳本名稱', dataIndex: 'script_name' },
         { title: '觸發方式', dataIndex: 'trigger', render: t => t.type === 'Manual' ? `手動 (${t.user})` : t.type },
-        { title: '開始時間', dataIndex: 'startTime', render: t => t ? t.format('YYYY-MM-DD HH:mm:ss') : '-' },
+        { title: '開始時間', dataIndex: 'start_time', render: t => t ? t.format('YYYY-MM-DD HH:mm:ss') : '-' },
         { title: '執行耗時', dataIndex: 'duration' },
         {
           title: '操作', key: 'action', render: (_, record) => (
@@ -15584,10 +15904,10 @@
                           }}
                           onClick={() => {
                             // 這裏可以跳轉到腳本定義頁面
-                            message.info(`正在打開腳本: ${logModal.record?.scriptName}`);
+                            message.info(`正在打開腳本: ${logModal.record?.script_name}`);
                           }}
                         >
-                          {logModal.record?.scriptName || '未知腳本'}
+                          {logModal.record?.script_name || '未知腳本'}
                         </Button>
                       </div>
                     </div>
@@ -15610,13 +15930,13 @@
                             }}
                             onClick={() => {
                               // 這裏可以跳轉到事件詳情頁面
-                              message.info(`正在打開事件詳情: ${logModal.record?.trigger?.eventId || '未知事件'}`);
+                              message.info(`正在打開事件詳情: ${logModal.record?.trigger?.event_id || '未知事件'}`);
                             }}
                           >
                             <Tag color="orange" style={{ marginRight: '4px' }}>
                               事件觸發
                             </Tag>
-                            {logModal.record?.trigger?.eventSummary || '查看事件詳情'}
+                            {logModal.record?.trigger?.event_summary || '查看事件詳情'}
                           </Button>
                         ) : (
                           <Tag color="green">
@@ -15997,10 +16317,10 @@
     const UserManagementPage = () => {
       const initialUsers = [
         // 註：此為模擬數據，實際應從 API 獲取。新增 login_count 和 preferences 欄位以符合更新後的 schema。
-        { key: 'user_1', name: 'Admin User', email: 'admin@example.com', teams: ['team_3'], roles: ['super_admin'], status: 'active', lastLogin: dayjs().subtract(1, 'day'), loginCount: 102, preferences: { theme: 'dark' }, createdAt: dayjs().subtract(30, 'day') },
-        { key: 'user_2', name: 'Dev User', email: 'dev@example.com', teams: ['team_1'], roles: ['team_manager', 'team_member'], status: 'active', lastLogin: dayjs().subtract(2, 'hours'), loginCount: 55, preferences: { theme: 'light' }, createdAt: dayjs().subtract(15, 'day') },
-        { key: 'user_3', name: 'View User', email: 'view@example.com', teams: ['team_2'], roles: ['viewer'], status: 'inactive', lastLogin: dayjs().subtract(7, 'day'), loginCount: 12, preferences: {}, createdAt: dayjs().subtract(45, 'day') },
-        { key: 'user_4', name: 'Ops User', email: 'ops@example.com', teams: ['team_1', 'team_3'], roles: ['team_member'], status: 'active', lastLogin: dayjs().subtract(30, 'minutes'), loginCount: 230, preferences: { theme: 'dark' }, createdAt: dayjs().subtract(10, 'day') },
+        { key: 'user_1', name: 'Admin User', email: 'admin@example.com', teams: ['team_3'], roles: ['super_admin'], status: 'active', last_login: dayjs().subtract(1, 'day'), loginCount: 102, preferences: { theme: 'dark' }, created_at: dayjs().subtract(30, 'day') },
+        { key: 'user_2', name: 'Dev User', email: 'dev@example.com', teams: ['team_1'], roles: ['team_manager', 'team_member'], status: 'active', last_login: dayjs().subtract(2, 'hours'), loginCount: 55, preferences: { theme: 'light' }, created_at: dayjs().subtract(15, 'day') },
+        { key: 'user_3', name: 'View User', email: 'view@example.com', teams: ['team_2'], roles: ['viewer'], status: 'inactive', last_login: dayjs().subtract(7, 'day'), loginCount: 12, preferences: {}, created_at: dayjs().subtract(45, 'day') },
+        { key: 'user_4', name: 'Ops User', email: 'ops@example.com', teams: ['team_1', 'team_3'], roles: ['team_member'], status: 'active', last_login: dayjs().subtract(30, 'minutes'), loginCount: 230, preferences: { theme: 'dark' }, created_at: dayjs().subtract(10, 'day') },
       ];
 
       const [users, setUsers] = useLocalStorageState('sre-users', initialUsers);
@@ -16047,8 +16367,8 @@
         const newUser = {
           ...values,
           key: editingUser ? editingUser.key : `u_${Date.now()}`,
-          createdAt: editingUser ? editingUser.createdAt : dayjs(),
-          lastLogin: editingUser ? editingUser.lastLogin : null
+          created_at: editingUser ? editingUser.created_at : dayjs(),
+          last_login: editingUser ? editingUser.last_login : null
         };
         if (editingUser) {
           setUsers(users.map(u => u.key === editingUser.key ? newUser : u));
@@ -16129,7 +16449,7 @@
             return <Tag key={id} color={role && role.color}>{getRoleNames([id])}</Tag>;
           })
         },
-        { title: '最後登入', dataIndex: 'lastLogin', render: time => time ? time.fromNow() : '從未登入', sorter: (a, b) => (a.lastLogin || dayjs(0)).valueOf() - (b.lastLogin || dayjs(0)).valueOf() },
+        { title: '最後登入', dataIndex: 'last_login', render: time => time ? time.fromNow() : '從未登入', sorter: (a, b) => (a.last_login || dayjs(0)).valueOf() - (b.last_login || dayjs(0)).valueOf() },
         {
           title: '管理', key: 'action', width: 120, render: (_, record) => (
             <Space>
@@ -16377,16 +16697,16 @@
 
     const TeamManagementPage = () => {
       const initialTeams = [
-        { key: 'team_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], createdAt: dayjs().subtract(60, 'day'), owner: 'user_2' },
-        { key: 'team_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['user_3'], subscribers: ['user_2'], createdAt: dayjs().subtract(45, 'day'), owner: 'user_1' },
-        { key: 'team_3', name: 'Administrators', description: '平台最高權限管理者', members: ['user_1', 'user_4'], subscribers: ['user_1', 'slack_network', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(90, 'day'), owner: 'user_1' },
-        { key: 'team_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['user_3', 'email_ops'], createdAt: dayjs().subtract(20, 'day'), owner: 'user_1' },
-        { key: 'team_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], createdAt: dayjs().subtract(30, 'day'), owner: 'user_2' },
-        { key: 'team_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['user_1'], subscribers: ['user_1', 'slack_database'], createdAt: dayjs().subtract(40, 'day'), owner: 'user_1' },
-        { key: 'team_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['user_3'], subscribers: ['user_3', 'slack_network'], createdAt: dayjs().subtract(50, 'day'), owner: 'user_3' },
-        { key: 'team_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['user_4'], subscribers: ['user_4', 'email_security', 'oncall_security'], createdAt: dayjs().subtract(35, 'day'), owner: 'user_4' },
-        { key: 'team_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['user_1', 'user_2', 'user_3'], subscribers: ['user_1', 'slack_operations'], createdAt: dayjs().subtract(25, 'day'), owner: 'user_1' },
-        { key: 'team_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_platform'], createdAt: dayjs().subtract(15, 'day'), owner: 'user_2' },
+        { key: 'team_1', name: 'Developers', description: '負責開發與維護的核心團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], created_at: dayjs().subtract(60, 'day'), owner: 'user_2' },
+        { key: 'team_2', name: 'Viewers', description: '僅有檢視權限的觀察員', members: ['user_3'], subscribers: ['user_2'], created_at: dayjs().subtract(45, 'day'), owner: 'user_1' },
+        { key: 'team_3', name: 'Administrators', description: '平台最高權限管理者', members: ['user_1', 'user_4'], subscribers: ['user_1', 'slack_network', 'email_security', 'oncall_security'], created_at: dayjs().subtract(90, 'day'), owner: 'user_1' },
+        { key: 'team_4', name: 'QA Team', description: '品質保證與測試團隊', members: [], subscribers: ['user_3', 'email_ops'], created_at: dayjs().subtract(20, 'day'), owner: 'user_1' },
+        { key: 'team_5', name: 'DevOps Team', description: '負責CI/CD和基礎設施自動化的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_devops'], created_at: dayjs().subtract(30, 'day'), owner: 'user_2' },
+        { key: 'team_6', name: 'Database Team', description: '負責資料庫管理與優化的團隊', members: ['user_1'], subscribers: ['user_1', 'slack_database'], created_at: dayjs().subtract(40, 'day'), owner: 'user_1' },
+        { key: 'team_7', name: 'Network Team', description: '負責網路基礎設施與安全的團隊', members: ['user_3'], subscribers: ['user_3', 'slack_network'], created_at: dayjs().subtract(50, 'day'), owner: 'user_3' },
+        { key: 'team_8', name: 'Security Team', description: '負責資訊安全與合規的團隊', members: ['user_4'], subscribers: ['user_4', 'email_security', 'oncall_security'], created_at: dayjs().subtract(35, 'day'), owner: 'user_4' },
+        { key: 'team_9', name: 'Operations Team', description: '負責系統運營與監控的團隊', members: ['user_1', 'user_2', 'user_3'], subscribers: ['user_1', 'slack_operations'], created_at: dayjs().subtract(25, 'day'), owner: 'user_1' },
+        { key: 'team_10', name: 'Platform Team', description: '負責平台架構與技術基礎設施的團隊', members: ['user_2', 'user_4'], subscribers: ['user_1', 'slack_platform'], created_at: dayjs().subtract(15, 'day'), owner: 'user_2' },
       ];
 
       const [teams, setTeams] = useLocalStorageState('sre-teams', initialTeams);
@@ -16454,7 +16774,7 @@
           members: selectedMembers,
           subscribers: selectedSubscribers,
           key: editingTeam ? editingTeam.key : `t_${Date.now()}`,
-          createdAt: editingTeam ? editingTeam.createdAt : dayjs(),
+          created_at: editingTeam ? editingTeam.created_at : dayjs(),
           owner: editingTeam ? editingTeam.owner : 'user_1' // 預設創建者為管理員
         };
         if (editingTeam) {
@@ -16513,7 +16833,7 @@
         { title: '訂閱者數', dataIndex: 'subscribers', render: s => s ? s.length : 0, sorter: (a, b) => (a.subscribers?.length || 0) - (b.subscribers?.length || 0) },
         { title: '負責人', dataIndex: 'owner', render: owner => getUserName(owner) || '未設定' },
         { title: '描述', dataIndex: 'description', render: desc => desc || '無描述' },
-        { title: '創建時間', dataIndex: 'createdAt', render: time => time ? time.format('YYYY-MM-DD') : '未知', sorter: (a, b) => (a.createdAt || dayjs(0)).valueOf() - (b.createdAt || dayjs(0)).valueOf() },
+        { title: '創建時間', dataIndex: 'created_at', render: time => time ? time.format('YYYY-MM-DD') : '未知', sorter: (a, b) => (a.created_at || dayjs(0)).valueOf() - (b.created_at || dayjs(0)).valueOf() },
         {
           title: '操作', key: 'action', width: 120, render: (_, record) => (
             <Space>
@@ -17386,6 +17706,206 @@
     };
 
 
+    // Dashboard Administration Page - Card navigation style
+    const DashboardAdministrationPage = ({ onNavigate }) => {
+      // State for default dashboard setting
+      const [defaultDashboard, setDefaultDashboard] = useState(() => {
+        return localStorage.getItem('default-dashboard') || 'business-dashboard';
+      });
+
+      // Function to set a dashboard as default
+      const setAsDefaultDashboard = (dashboardKey) => {
+        setDefaultDashboard(dashboardKey);
+        localStorage.setItem('default-dashboard', dashboardKey);
+        antd.message.success(`已將「${dashboardCards.find(d => d.key === dashboardKey)?.title}」設為預設首頁`);
+      };
+
+      // Define dashboard cards using the exact pattern from Settings
+      const dashboardCards = [
+        {
+          key: 'alerts-insights',
+          icon: <ExclamationCircleOutlined />,
+          title: '基礎設施洞察',
+          description: '整合事件監控與資源健康度分析。',
+          category: '資源監控',
+          features: ['即時告警', '資源健康度', '趨勢分析'],
+          enabled: true
+        },
+        {
+          key: 'resource-overview',
+          icon: <HddOutlined />,
+          title: '資源總覽',
+          description: '資源使用情況與健康狀態總覽。',
+          category: '資源管理',
+          features: ['資源健康度', '使用率統計', '負載分佈'],
+          enabled: true
+        },
+        {
+          key: 'business-dashboard',
+          icon: <BarChartOutlined />,
+          title: 'SRE 戰情室',
+          description: '業務指標與效能監控儀表板。',
+          category: '業務監控',
+          features: ['KPI追蹤', '效能指標', '業務健康度'],
+          enabled: true
+        },
+        {
+          key: 'integrated-resource-overview',
+          icon: <GlobalOutlined />,
+          title: '整合資源總覽',
+          description: '跨集群資源整合視圖。',
+          category: '資源管理',
+          features: ['多集群視圖', '統一監控', '資源調度'],
+          enabled: true
+        }
+      ];
+
+      // Reusable card content component
+      const CardContent = ({ item }) => (
+        <div
+          className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
+          style={{ height: '90px', width: '100%', position: 'relative' }}
+        >
+          {/* Default dashboard indicator */}
+          {defaultDashboard === item.key && (
+            <div style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              background: '#52c41a',
+              color: 'white',
+              padding: '2px 6px',
+              borderRadius: '10px',
+              fontSize: '10px',
+              fontWeight: 600,
+              zIndex: 10,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+              whiteSpace: 'nowrap'
+            }}>
+              <HomeOutlined style={{ marginRight: '2px', fontSize: '10px' }} />
+              預設首頁
+            </div>
+          )}
+
+          {/* Main card content */}
+          <div
+            className="nav-item-content"
+            onClick={() => item.enabled && onNavigate(item.key)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              height: '100%',
+              cursor: item.enabled ? 'pointer' : 'not-allowed',
+              position: 'relative'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
+                <div className="nav-item-icon" style={{
+                  background: 'rgba(24, 144, 255, 0.1)',
+                  padding: '8px',
+                  borderRadius: '8px',
+                  fontSize: '24px',
+                  color: item.enabled ? '#1890ff' : 'rgba(255, 255, 255, 0.3)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0
+                }}>
+                  {item.icon}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="nav-item-title" style={{
+                    color: item.enabled ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.5)',
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    marginBottom: '4px',
+                    lineHeight: '1.2'
+                  }}>
+                    {item.title}
+                  </div>
+                  <div className="nav-item-description" style={{
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    fontSize: '14px',
+                    lineHeight: '1.4'
+                  }}>
+                    {item.description}
+                  </div>
+                </div>
+              </div>
+
+              {/* Set as default button */}
+              {item.enabled && (
+                <Tooltip title={defaultDashboard === item.key ? "已是預設首頁" : "設為預設首頁"}>
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<HomeOutlined />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (defaultDashboard !== item.key) {
+                        setAsDefaultDashboard(item.key);
+                      }
+                    }}
+                    style={{
+                      color: defaultDashboard === item.key ? '#52c41a' : 'rgba(255, 255, 255, 0.6)',
+                      padding: '4px',
+                      borderRadius: '4px',
+                      transition: 'all 0.2s',
+                      alignSelf: 'flex-end',
+                      marginBottom: '-2px'
+                    }}
+                    className="set-default-btn"
+                  />
+                </Tooltip>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+
+      // Helper to render a category section
+      const renderCategory = (categoryName) => (
+        <div style={{ marginBottom: '24px' }}>
+          <Title level={5} style={{
+            color: 'var(--text-secondary)',
+            fontWeight: '500',
+            marginBottom: '8px',
+            fontSize: '16px'
+          }}>
+            {categoryName}
+          </Title>
+          <Row gutter={[16, 16]}>
+            {dashboardCards.filter(item => item.category === categoryName).map(item => (
+              <Col key={item.key} xs={24} md={12} lg={8} style={{ display: 'flex' }}>
+                {item.enabled ? (
+                  <CardContent item={item} />
+                ) : (
+                  <Badge.Ribbon text="即將推出">
+                    <CardContent item={item} />
+                  </Badge.Ribbon>
+                )}
+              </Col>
+            ))}
+          </Row>
+        </div>
+      );
+
+      return (
+        <React.Fragment>
+          <Title level={2} className="page-title" style={{ marginBottom: '2px' }}>儀表板</Title>
+          <Paragraph className="page-subtitle" type="secondary" style={{ marginBottom: '4px' }}>
+            統一的系統監控與業務洞察儀表板入口。
+          </Paragraph>
+          {/* 分組顯示儀表板功能 */}
+          <div style={{ marginTop: '16px' }}>
+            {renderCategory('資源監控')}
+            {renderCategory('業務監控')}
+          </div>
+        </React.Fragment>
+      );
+    };
+
     // Settings Administration Page - Card navigation style
     const SettingsAdministrationPage = ({ onNavigate }) => {
       // Define settings cards using the exact pattern from Management Center
@@ -17415,6 +17935,15 @@
           description: '定義系統角色與其權限。',
           category: '用戶與權限',
           features: ['RBAC控制', '自訂角色', '權限模板'],
+          enabled: true
+        },
+        {
+          key: 'audit-logs',
+          icon: <AuditOutlined />,
+          title: '審計日誌',
+          description: '查看系統操作審計記錄。',
+          category: '用戶與權限',
+          features: ['操作追蹤', '安全審計', '日誌分析'],
           enabled: true
         },
         {
@@ -17462,24 +17991,6 @@
           features: ['SSO整合', '多因素認證', '密碼策略'],
           enabled: true
         },
-        {
-          key: 'platform-diagnostics',
-          icon: <MonitorOutlined />,
-          title: '平台診斷',
-          description: '監控平台健康狀態與效能。',
-          category: '平台維運',
-          features: ['健康檢查', '效能監控', '系統資源'],
-          enabled: true
-        },
-        {
-          key: 'audit-logs',
-          icon: <AuditOutlined />,
-          title: '審計日誌',
-          description: '追蹤平台操作與安全事件。',
-          category: '平台維運',
-          features: ['操作追蹤', '安全分析', '合規報告'],
-          enabled: true
-        }
       ];
 
       // Reusable card content component
@@ -17550,7 +18061,6 @@
             {renderCategory('用戶與權限')}
             {renderCategory('通知管理')}
             {renderCategory('平台設定')}
-            {renderCategory('平台維運')}
           </div>
         </React.Fragment>
       );
@@ -17578,14 +18088,14 @@
           category: 'infrastructure',
           required: true,
           values: [
-            { id: 'env_prod', value: 'production', displayName: '生產環境', color: '#f5222d', usageCount: 45, createdAt: dayjs().subtract(30, 'day') },
-            { id: 'env_stage', value: 'staging', displayName: '預發環境', color: '#fa8c16', usageCount: 32, createdAt: dayjs().subtract(25, 'day') },
-            { id: 'env_dev', value: 'development', displayName: '開發環境', color: '#52c41a', usageCount: 28, createdAt: dayjs().subtract(20, 'day') },
-            { id: 'env_test', value: 'testing', displayName: '測試環境', color: '#1890ff', usageCount: 15, createdAt: dayjs().subtract(15, 'day') }
+            { id: 'env_prod', value: 'production', displayName: '生產環境', color: '#f5222d', usageCount: 45, created_at: dayjs().subtract(30, 'day') },
+            { id: 'env_stage', value: 'staging', displayName: '預發環境', color: '#fa8c16', usageCount: 32, created_at: dayjs().subtract(25, 'day') },
+            { id: 'env_dev', value: 'development', displayName: '開發環境', color: '#52c41a', usageCount: 28, created_at: dayjs().subtract(20, 'day') },
+            { id: 'env_test', value: 'testing', displayName: '測試環境', color: '#1890ff', usageCount: 15, created_at: dayjs().subtract(15, 'day') }
           ],
           totalUsage: 120,
-          createdAt: dayjs().subtract(30, 'day'),
-          updatedAt: dayjs().subtract(5, 'day')
+          created_at: dayjs().subtract(30, 'day'),
+          updated_at: dayjs().subtract(5, 'day')
         },
         {
           id: 'team_2',
@@ -17595,15 +18105,15 @@
           category: 'organization',
           required: false,
           values: [
-            { id: 'team_fe', value: 'frontend', displayName: '前端團隊', color: '#722ed1', usageCount: 25, createdAt: dayjs().subtract(20, 'day') },
-            { id: 'team_be', value: 'backend', displayName: '後端團隊', color: '#52c41a', usageCount: 35, createdAt: dayjs().subtract(18, 'day') },
-            { id: 'team_ops', value: 'devops', displayName: 'DevOps 團隊', color: '#1890ff', usageCount: 18, createdAt: dayjs().subtract(15, 'day') },
-            { id: 'team_qa', value: 'qa', displayName: 'QA 團隊', color: '#fa8c16', usageCount: 12, createdAt: dayjs().subtract(12, 'day') },
-            { id: 'team_data', value: 'data', displayName: '數據團隊', color: '#13c2c2', usageCount: 8, createdAt: dayjs().subtract(10, 'day') }
+            { id: 'team_fe', value: 'frontend', displayName: '前端團隊', color: '#722ed1', usageCount: 25, created_at: dayjs().subtract(20, 'day') },
+            { id: 'team_be', value: 'backend', displayName: '後端團隊', color: '#52c41a', usageCount: 35, created_at: dayjs().subtract(18, 'day') },
+            { id: 'team_ops', value: 'devops', displayName: 'DevOps 團隊', color: '#1890ff', usageCount: 18, created_at: dayjs().subtract(15, 'day') },
+            { id: 'team_qa', value: 'qa', displayName: 'QA 團隊', color: '#fa8c16', usageCount: 12, created_at: dayjs().subtract(12, 'day') },
+            { id: 'team_data', value: 'data', displayName: '數據團隊', color: '#13c2c2', usageCount: 8, created_at: dayjs().subtract(10, 'day') }
           ],
           totalUsage: 98,
-          createdAt: dayjs().subtract(25, 'day'),
-          updatedAt: dayjs().subtract(3, 'day')
+          created_at: dayjs().subtract(25, 'day'),
+          updated_at: dayjs().subtract(3, 'day')
         },
         {
           id: 'team_3',
@@ -17613,14 +18123,14 @@
           category: 'business',
           required: false,
           values: [
-            { id: 'pri_crit', value: 'critical', displayName: '緊急', color: '#f5222d', usageCount: 8, createdAt: dayjs().subtract(15, 'day') },
-            { id: 'pri_high', value: 'high', displayName: '高', color: '#fa8c16', usageCount: 22, createdAt: dayjs().subtract(12, 'day') },
-            { id: 'pri_med', value: 'medium', displayName: '中', color: '#1890ff', usageCount: 45, createdAt: dayjs().subtract(10, 'day') },
-            { id: 'pri_low', value: 'low', displayName: '低', color: '#52c41a', usageCount: 31, createdAt: dayjs().subtract(8, 'day') }
+            { id: 'pri_crit', value: 'critical', displayName: '緊急', color: '#f5222d', usageCount: 8, created_at: dayjs().subtract(15, 'day') },
+            { id: 'pri_high', value: 'high', displayName: '高', color: '#fa8c16', usageCount: 22, created_at: dayjs().subtract(12, 'day') },
+            { id: 'pri_med', value: 'medium', displayName: '中', color: '#1890ff', usageCount: 45, created_at: dayjs().subtract(10, 'day') },
+            { id: 'pri_low', value: 'low', displayName: '低', color: '#52c41a', usageCount: 31, created_at: dayjs().subtract(8, 'day') }
           ],
           totalUsage: 106,
-          createdAt: dayjs().subtract(15, 'day'),
-          updatedAt: dayjs().subtract(2, 'day')
+          created_at: dayjs().subtract(15, 'day'),
+          updated_at: dayjs().subtract(2, 'day')
         },
         {
           id: 'team_4',
@@ -17630,14 +18140,14 @@
           category: 'security',
           required: true,
           values: [
-            { id: 'sec_pub', value: 'public', displayName: '公開', color: '#52c41a', usageCount: 45, createdAt: dayjs().subtract(35, 'day') },
-            { id: 'sec_int', value: 'internal', displayName: '內部', color: '#1890ff', usageCount: 38, createdAt: dayjs().subtract(30, 'day') },
-            { id: 'sec_conf', value: 'confidential', displayName: '機密', color: '#fa8c16', usageCount: 25, createdAt: dayjs().subtract(25, 'day') },
-            { id: 'sec_rest', value: 'restricted', displayName: '限制', color: '#f5222d', usageCount: 12, createdAt: dayjs().subtract(20, 'day') }
+            { id: 'sec_pub', value: 'public', displayName: '公開', color: '#52c41a', usageCount: 45, created_at: dayjs().subtract(35, 'day') },
+            { id: 'sec_int', value: 'internal', displayName: '內部', color: '#1890ff', usageCount: 38, created_at: dayjs().subtract(30, 'day') },
+            { id: 'sec_conf', value: 'confidential', displayName: '機密', color: '#fa8c16', usageCount: 25, created_at: dayjs().subtract(25, 'day') },
+            { id: 'sec_rest', value: 'restricted', displayName: '限制', color: '#f5222d', usageCount: 12, created_at: dayjs().subtract(20, 'day') }
           ],
           totalUsage: 120,
-          createdAt: dayjs().subtract(35, 'day'),
-          updatedAt: dayjs().subtract(7, 'day')
+          created_at: dayjs().subtract(35, 'day'),
+          updated_at: dayjs().subtract(7, 'day')
         },
         {
           id: 'team_5',
@@ -17647,15 +18157,15 @@
           category: 'application',
           required: false,
           values: [
-            { id: 'svc_web', value: 'web-server', displayName: 'Web 服務器', color: '#52c41a', usageCount: 32, createdAt: dayjs().subtract(25, 'day') },
-            { id: 'svc_db', value: 'database', displayName: '數據庫', color: '#1890ff', usageCount: 28, createdAt: dayjs().subtract(22, 'day') },
-            { id: 'svc_cache', value: 'cache', displayName: '緩存服務', color: '#fa8c16', usageCount: 15, createdAt: dayjs().subtract(18, 'day') },
-            { id: 'svc_lb', value: 'load-balancer', displayName: '負載均衡器', color: '#722ed1', usageCount: 12, createdAt: dayjs().subtract(15, 'day') },
-            { id: 'svc_api', value: 'api-gateway', displayName: 'API 網關', color: '#13c2c2', usageCount: 8, createdAt: dayjs().subtract(12, 'day') }
+            { id: 'svc_web', value: 'web-server', displayName: 'Web 服務器', color: '#52c41a', usageCount: 32, created_at: dayjs().subtract(25, 'day') },
+            { id: 'svc_db', value: 'database', displayName: '數據庫', color: '#1890ff', usageCount: 28, created_at: dayjs().subtract(22, 'day') },
+            { id: 'svc_cache', value: 'cache', displayName: '緩存服務', color: '#fa8c16', usageCount: 15, created_at: dayjs().subtract(18, 'day') },
+            { id: 'svc_lb', value: 'load-balancer', displayName: '負載均衡器', color: '#722ed1', usageCount: 12, created_at: dayjs().subtract(15, 'day') },
+            { id: 'svc_api', value: 'api-gateway', displayName: 'API 網關', color: '#13c2c2', usageCount: 8, created_at: dayjs().subtract(12, 'day') }
           ],
           totalUsage: 95,
-          createdAt: dayjs().subtract(28, 'day'),
-          updatedAt: dayjs().subtract(4, 'day')
+          created_at: dayjs().subtract(28, 'day'),
+          updated_at: dayjs().subtract(4, 'day')
         }
       ];
 
@@ -17746,7 +18256,7 @@
           // 編輯現有標籤
           setTags(prev => prev.map(item =>
             item.id === editingTag.id
-              ? { ...item, ...values, updatedAt: dayjs() }
+              ? { ...item, ...values, updated_at: dayjs() }
               : item
           ));
         } else {
@@ -17756,8 +18266,8 @@
             id: `t_${Date.now()}`,
             values: [],
             totalUsage: 0,
-            createdAt: dayjs(),
-            updatedAt: dayjs()
+            created_at: dayjs(),
+            updated_at: dayjs()
           };
           setTags(prev => [...prev, newTag]);
         }
@@ -17857,7 +18367,7 @@
               ...tag,
               values: tag.values.filter(val => val.id !== valueId),
               totalUsage: tag.values.filter(val => val.id !== valueId).reduce((sum, val) => sum + val.usageCount, 0),
-              updatedAt: dayjs()
+              updated_at: dayjs()
             }
             : tag
         ));
@@ -17866,7 +18376,7 @@
       const handleToggleRequired = (tagId, checked) => {
         setTags(prev => prev.map(tag =>
           tag.id === tagId
-            ? { ...tag, required: checked, updatedAt: dayjs() }
+            ? { ...tag, required: checked, updated_at: dayjs() }
             : tag
         ));
       };
@@ -17876,7 +18386,7 @@
           ...values,
           id: editingValue ? editingValue.id : `val_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           usageCount: editingValue ? editingValue.usageCount : 0,
-          createdAt: editingValue ? editingValue.createdAt : dayjs()
+          created_at: editingValue ? editingValue.createdAt : dayjs()
         };
 
         setTags(prev => prev.map(tag => {
@@ -17889,7 +18399,7 @@
               ...tag,
               values: updatedValues,
               totalUsage: updatedValues.reduce((sum, val) => sum + val.usageCount, 0),
-              updatedAt: dayjs()
+              updated_at: dayjs()
             };
           }
           return tag;
@@ -19734,7 +20244,7 @@
       return (
         <React.Fragment>
           <PageHeader
-            title="平台設定管理"
+            title="平台設定"
             subtitle="管理平台基本配置，包括標籤系統、郵件設定和身份驗證機制"
             icon={<SettingOutlined />}
           />
@@ -19971,114 +20481,6 @@
             </Form.Item>
           </SettingsSection>
         </SettingsLayout>
-      );
-    };
-    const PlatformDiagnosticsPage = () => {
-      const scriptHealthData = [
-        { key: 1, name: 'Auto-scaling for Web Servers', total: 150, failed: 8, rate: 5.3 },
-        { key: 2, name: 'Increase Database Disk Volume', total: 30, failed: 0, rate: 0 },
-        { key: 3, name: 'Daily Backup', total: 7, failed: 1, rate: 14.3 },
-      ];
-      const channelHealthData = [
-        { key: 1, name: 'On-call Slack', total: 532, failed: 1, rate: 0.2 },
-        { key: 2, name: 'Default Email', total: 1024, failed: 0, rate: 0 },
-        { key: 3, name: 'Billing Webhook', total: 50, failed: 6, rate: 12.0 },
-      ];
-
-      const healthColumns = [
-        {
-          title: <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '600' }}>名稱</span>,
-          dataIndex: 'name',
-          width: '40%',
-          render: (name) => (
-            <span style={{ color: 'rgba(255, 255, 255, 0.85)', fontWeight: '500' }}>{name}</span>
-          )
-        },
-        {
-          title: <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '600' }}>總次數</span>,
-          dataIndex: 'total',
-          width: '20%',
-          align: 'center',
-          render: (total) => (
-            <span style={{ color: 'rgba(255, 255, 255, 0.75)', fontWeight: '500' }}>{total}</span>
-          )
-        },
-        {
-          title: <span style={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: '600' }}>失敗率</span>,
-          dataIndex: 'rate',
-          width: '40%',
-          align: 'center',
-          render: (rate) => (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Progress
-                percent={rate}
-                status={rate > 5 ? 'exception' : 'normal'}
-                size="small"
-                style={{ flex: 1, minWidth: '80px' }}
-                strokeColor={rate > 10 ? '#ff4d4f' : rate > 5 ? '#faad14' : '#52c41a'}
-                trailColor="rgba(255, 255, 255, 0.1)"
-              />
-              <span style={{
-                color: rate > 10 ? '#ff4d4f' : rate > 5 ? '#faad14' : '#52c41a',
-                fontSize: '13px',
-                fontWeight: '600',
-                minWidth: '35px'
-              }}>
-                {rate}%
-              </span>
-            </div>
-          )
-        }
-      ];
-
-      return (
-        <React.Fragment>
-          <div style={{ marginBottom: 24 }}>
-            <Radio.Group defaultValue="24h">
-              <Radio.Button value="24h">過去 24 小時</Radio.Button>
-              <Radio.Button value="7d">過去 7 天</Radio.Button>
-            </Radio.Group>
-          </div>
-
-          <Row gutter={[24, 24]}>
-            <Col span={12}>
-              <div style={{ marginBottom: '24px' }}>
-                <Title level={4} style={{ marginBottom: '16px', color: 'rgba(255, 255, 255, 0.85)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: '#52c41a', fontSize: '8px' }}>●</span>
-                  自動化健康度
-                </Title>
-                <div className="table-wrapper" style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px' }}>
-                  <Table
-                    columns={healthColumns}
-                    dataSource={scriptHealthData}
-                    rowClassName={(record) => record.rate > 10 ? 'row-highlight' : ''}
-                    pagination={false}
-                    className="transparent-bg"
-                    size="small"
-                  />
-                </div>
-              </div>
-            </Col>
-            <Col span={12}>
-              <div style={{ marginBottom: '24px' }}>
-                <Title level={4} style={{ marginBottom: '16px', color: 'rgba(255, 255, 255, 0.85)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ color: '#1890ff', fontSize: '8px' }}>●</span>
-                  通知管道健康度
-                </Title>
-                <div className="table-wrapper" style={{ background: 'rgba(255, 255, 255, 0.05)', borderRadius: '8px' }}>
-                  <Table
-                    columns={healthColumns}
-                    dataSource={channelHealthData}
-                    rowClassName={(record) => record.rate > 10 ? 'row-highlight' : ''}
-                    pagination={false}
-                    className="transparent-bg"
-                    size="small"
-                  />
-                </div>
-              </div>
-            </Col>
-          </Row>
-        </React.Fragment>
       );
     };
 
@@ -20336,7 +20738,7 @@
     };
 
     const UserPermissionsPage = ({ onNavigate, pageKey }) => {
-      const tabKey = ['user-management', 'team-management', 'role-management'].includes(pageKey) ? pageKey : 'user-management';
+      const tabKey = ['user-management', 'team-management', 'role-management', 'audit-logs'].includes(pageKey) ? pageKey : 'user-management';
 
       // 用戶與權限統計資料
       const userStats = {
@@ -20444,6 +20846,17 @@
               key="role-management"
             >
               <RoleManagementPage />
+            </Tabs.TabPane>
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <AuditOutlined />
+                  審計日誌
+                </span>
+              }
+              key="audit-logs"
+            >
+              <AuditLogsPage />
             </Tabs.TabPane>
           </Tabs>
         </React.Fragment>
@@ -20611,29 +21024,6 @@
       );
     };
 
-    const PlatformOperationsPage = ({ onNavigate, pageKey }) => {
-      const tabKey = ['platform-diagnostics', 'audit-logs'].includes(pageKey) ? pageKey : 'platform-diagnostics';
-
-      return (
-        <React.Fragment>
-          <PageHeader
-            title="平台維運"
-            subtitle="監控和審計平台自身的健康與活動"
-            icon={<ControlOutlined />}
-          />
-          <Tabs defaultActiveKey={tabKey} onChange={(key) => onNavigate(key)}>
-            <Tabs.TabPane tab="平台診斷" key="platform-diagnostics">
-              <PlatformDiagnosticsPage />
-            </Tabs.TabPane>
-            <Tabs.TabPane tab="審計日誌" key="audit-logs">
-              <AuditLogsPage />
-            </Tabs.TabPane>
-          </Tabs>
-        </React.Fragment>
-      );
-    };
-
-
     // --- Main App Component ---
     const MainApp = ({ themeMode, setThemeMode }) => {
       const [currentPage, setCurrentPage] = useState('home');
@@ -20649,23 +21039,41 @@
 
       const { message } = antd.App.useApp();
 
+      // Check for default dashboard on app start
+      React.useEffect(() => {
+        const defaultDashboard = localStorage.getItem('default-dashboard');
+        if (defaultDashboard && currentPage === 'home') {
+          // Small delay to ensure smooth transition
+          setTimeout(() => {
+            setCurrentPage(defaultDashboard);
+          }, 100);
+        }
+      }, []);
+
       const initialScripts = [
         // 註：新增 lastExecuted 欄位以符合更新後的 DB schema
-        { key: 's_1', name: 'Auto-scaling for Web Servers', type: 'Python', description: '自動擴展 Web 伺服器實例', creator: 'admin', code: '# Python script to scale web servers\nprint("Scaling up web servers...")', params: [{ name: 'instance_count', type: 'number', label: '實例數量' }], status: 'active', category: 'deployment', executionCount: 45, lastExecuted: dayjs().subtract(2, 'hours') },
-        { key: 's_2', name: 'Increase Database Disk Volume', type: 'Bash', description: '增加資料庫磁碟區容量', creator: 'admin', code: '#!/bin/bash\n# Bash script to increase disk volume\necho "Increasing DB disk size..."', params: [{ name: 'increase_gb', type: 'number', label: '增加容量 (GB)' }], status: 'active', category: 'maintenance', executionCount: 32, lastExecuted: dayjs().subtract(1, 'day') },
-        { key: 's_3', name: 'Daily Backup', type: 'Python', description: '每日資料庫備份', creator: 'dev_user', code: '# Python script for daily backup\nprint("Starting daily backup...")', status: 'active', category: 'maintenance', executionCount: 28, lastExecuted: dayjs().subtract(22, 'hours') },
-        { key: 's_4', name: 'System Health Check', type: 'Bash', description: '系統健康狀態檢查', creator: 'ops_team', code: '#!/bin/bash\n# System health check script\necho "Checking system health..."', params: [{ name: 'check_type', type: 'select', label: '檢查類型', options: ['basic', 'detailed', 'comprehensive'] }], status: 'active', category: 'monitoring', executionCount: 156, lastExecuted: dayjs().subtract(5, 'minutes') },
-        { key: 's_5', name: 'Log Rotation', type: 'Python', description: '應用程式日誌輪替', creator: 'dev_team', code: '# Python script for log rotation\nprint("Rotating application logs...")', params: [{ name: 'retention_days', type: 'number', label: '保留天數' }], status: 'active', category: 'maintenance', executionCount: 89, lastExecuted: dayjs().subtract(6, 'hours') },
-        { key: 's_6', name: 'Cache Warmup', type: 'Bash', description: '快取預熱腳本', creator: 'cache_admin', code: '#!/bin/bash\n# Cache warmup script\necho "Warming up cache..."', params: [{ name: 'warmup_urls', type: 'textarea', label: '預熱 URL 列表' }], status: 'active', category: 'performance', executionCount: 67, lastExecuted: dayjs().subtract(3, 'days') },
+        { key: 's_1', name: 'Auto-scaling for Web Servers', type: 'Python', description: '自動擴展 Web 伺服器實例', creator: 'admin', code: '# Python script to scale web servers\nprint("Scaling up web servers...")', params: [{ name: 'instance_count', type: 'number', label: '實例數量' }], status: 'active', category: 'deployment', executionCount: 45, last_executed: dayjs().subtract(2, 'hours') },
+        { key: 's_2', name: 'Increase Database Disk Volume', type: 'Bash', description: '增加資料庫磁碟區容量', creator: 'admin', code: '#!/bin/bash\n# Bash script to increase disk volume\necho "Increasing DB disk size..."', params: [{ name: 'increase_gb', type: 'number', label: '增加容量 (GB)' }], status: 'active', category: 'maintenance', executionCount: 32, last_executed: dayjs().subtract(1, 'day') },
+        { key: 's_3', name: 'Daily Backup', type: 'Python', description: '每日資料庫備份', creator: 'dev_user', code: '# Python script for daily backup\nprint("Starting daily backup...")', status: 'active', category: 'maintenance', executionCount: 28, last_executed: dayjs().subtract(22, 'hours') },
+        { key: 's_4', name: 'System Health Check', type: 'Bash', description: '系統健康狀態檢查', creator: 'ops_team', code: '#!/bin/bash\n# System health check script\necho "Checking system health..."', params: [{ name: 'check_type', type: 'select', label: '檢查類型', options: ['basic', 'detailed', 'comprehensive'] }], status: 'active', category: 'monitoring', executionCount: 156, last_executed: dayjs().subtract(5, 'minutes') },
+        { key: 's_5', name: 'Log Rotation', type: 'Python', description: '應用程式日誌輪替', creator: 'dev_team', code: '# Python script for log rotation\nprint("Rotating application logs...")', params: [{ name: 'retention_days', type: 'number', label: '保留天數' }], status: 'active', category: 'maintenance', executionCount: 89, last_executed: dayjs().subtract(6, 'hours') },
+        { key: 's_6', name: 'Cache Warmup', type: 'Bash', description: '快取預熱腳本', creator: 'cache_admin', code: '#!/bin/bash\n# Cache warmup script\necho "Warming up cache..."', params: [{ name: 'warmup_urls', type: 'textarea', label: '預熱 URL 列表' }], status: 'active', category: 'performance', executionCount: 67, last_executed: dayjs().subtract(3, 'days') },
+      ];
+
+      const initialSchedules = [
+        // 註：新增 scheduleMode 和 frequency 欄位以符合更新後的 DB schema
+        { key: 'sch_1', name: '每日資料庫備份', cron: '0 2 * * *', schedule_mode: 'advanced', frequency: 'daily', script_id: 's_3', last_run: dayjs().subtract(1, 'day').hour(2), last_status: 'success', enabled: true, creator: 'admin' },
+        { key: 'sch_2', name: '每小時清理臨時文件', cron: '0 * * * *', schedule_mode: 'simple', frequency: 'hourly', script_id: 's_2', last_run: dayjs().subtract(30, 'minute'), last_status: 'failed', enabled: false, creator: 'dev_user' },
       ];
       const initialExecutions = [
-        { key: 'e_1', scriptName: 'Auto-scaling for Web Servers', trigger: { type: 'Event', eventId: 'i_2', eventSummary: 'Disk space low on web-prod-02' }, status: 'success', startTime: dayjs().subtract(2, 'hour'), duration: '5.2s' },
-        { key: 'e_2', scriptName: 'Increase Database Disk Volume', trigger: { type: 'Manual', user: 'admin' }, status: 'failed', startTime: dayjs().subtract(1, 'day'), duration: '2.1s' },
-        { key: 'e_3', scriptName: 'Daily Backup', trigger: { type: 'Schedule', id: 'sch_1' }, status: 'success', startTime: dayjs().subtract(1, 'day').hour(2), duration: '15m 30s' },
+        { key: 'e_1', script_name: 'Auto-scaling for Web Servers', trigger: { type: 'Event', event_id: 'i_2', event_summary: 'Disk space low on web-prod-02' }, status: 'success', start_time: dayjs().subtract(2, 'hour'), duration: '5.2s' },
+        { key: 'e_2', script_name: 'Increase Database Disk Volume', trigger: { type: 'Manual', user: 'admin' }, status: 'failed', start_time: dayjs().subtract(1, 'day'), duration: '2.1s' },
+        { key: 'e_3', script_name: 'Daily Backup', trigger: { type: 'Schedule', id: 'sch_1' }, status: 'success', start_time: dayjs().subtract(1, 'day').hour(2), duration: '15m 30s' },
       ];
 
       const [scripts, setScripts] = useLocalStorageState('sre-scripts', initialScripts);
       const [executions, setExecutions] = useLocalStorageState('sre-executions', initialExecutions);
+      const [schedules, setSchedules] = useLocalStorageState('sre-schedules', initialSchedules);
 
       const addExecution = (newExecution) => {
         setExecutions(function (prev) { return [newExecution, ...prev] });
@@ -20701,18 +21109,15 @@
       };
       const sideMenuItems = [
         getItem('首頁', 'home', <DashboardOutlined />),
-        getItem('儀表板', 'dashboard', <BarChartOutlined />, [
-          getItem('事件與資源洞察', 'alerts-insights', <ExclamationCircleOutlined />),
-        ]),
-        getItem('事件', 'incidents', <HistoryOutlined />),
-        getItem('資源', 'resources', <HddOutlined />),
-        getItem('分析', 'analyzing', <BarChartOutlined />),
-        getItem('自動化', 'automation', <CodeOutlined />),
+        getItem('事件管理', 'incidents', <HistoryOutlined />),
+        getItem('資源管理', 'resources', <HddOutlined />),
+        getItem('儀表板', 'dashboard', <BarChartOutlined />),
+        getItem('分析中心', 'analyzing', <BarChartOutlined />),
+        getItem('自動化中心', 'automation', <CodeOutlined />),
         getItem('設定', 'settings', <SettingOutlined />, [
           getItem('用戶與權限', 'user-permissions', <UserOutlined />),
           getItem('通知管理', 'notification-management', <BellOutlined />),
           getItem('平台設定', 'platform-settings', <SettingOutlined />),
-          getItem('平台維運', 'platform-operations', <ControlOutlined />),
         ]),
       ];
 
@@ -20742,20 +21147,21 @@
         if (['resources', 'resource-overview', 'resource-list', 'resource-groups', 'resource-topology'].includes(pageKey)) {
           return <ResourcesPage onNavigate={navigateToPage} pageKey={pageKey} themeMode={themeMode} />;
         }
+        // Dashboard administration page with card navigation
+        if (pageKey === 'dashboard') {
+          return <DashboardAdministrationPage onNavigate={navigateToPage} />;
+        }
         if (['analyzing', 'capacity-planning', 'performance-insights', 'cost-analysis', 'incident-trends', 'mttr-analysis', 'sla-reports'].includes(pageKey)) {
           return <AnalyzingPage onNavigate={navigateToPage} pageKey={pageKey} themeMode={themeMode} />;
         }
         if (['automation', 'scripts', 'schedules', 'executions'].includes(pageKey)) {
-          return <AutomationCenterPage onNavigate={navigateToPage} pageKey={pageKey} scripts={scripts} setScripts={setScripts} addExecution={addExecution} executions={executions} setExecutions={setExecutions} />;
+          return <AutomationCenterPage onNavigate={navigateToPage} pageKey={pageKey} scripts={scripts} setScripts={setScripts} addExecution={addExecution} executions={executions} setExecutions={setExecutions} schedules={schedules} setSchedules={setSchedules} />;
         }
-        if (['user-permissions', 'user-management', 'team-management', 'role-management'].includes(pageKey)) {
+        if (['user-permissions', 'user-management', 'team-management', 'role-management', 'audit-logs'].includes(pageKey)) {
           return <UserPermissionsPage onNavigate={navigateToPage} pageKey={pageKey} />;
         }
         if (['notification-management', 'notification-strategies', 'notification-channels', 'notification-history'].includes(pageKey)) {
           return <NotificationManagementPage onNavigate={navigateToPage} pageKey={pageKey} />;
-        }
-        if (['platform-operations', 'platform-diagnostics', 'audit-logs'].includes(pageKey)) {
-          return <PlatformOperationsPage onNavigate={navigateToPage} pageKey={pageKey} />;
         }
         // Settings administration page with card navigation
         if (pageKey === 'settings') {

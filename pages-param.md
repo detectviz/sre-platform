@@ -4,16 +4,15 @@
 
 ```
 SRE 平台
-├── 事件 (Incidents) - Tab 管理 (事件列表 | 告警規則 | 靜音規則)
-├── 資源 (Resources) - Tab 管理 (資源列表 | 資源群組)
-├── 儀表板 (Dashboards) - Tab 管理 (資源總覽)
-├── 分析 (Analysis) - Tab 管理 (容量規劃)
-├── 自動化 (Automation) - Tab 管理 (腳本庫 | 排程管理 | 執行日誌)
+├── 事件管理 (Incidents) - Tab 管理 (事件列表 | 告警規則 | 靜音規則)
+├── 資源管理 (Resources) - Tab 管理 (資源列表 | 資源群組)
+├── 儀表板 (Dashboards)
+├── 分析中心 (Analysis) - Tab 管理 (容量規劃)
+├── 自動化中心 (Automation) - Tab 管理 (腳本庫 | 排程管理 | 執行日誌)
 └── 設定 (Settings) [父選單 - 預設展開]
-    ├── 用戶與權限 - Tab 管理 (人員管理 | 團隊管理 | 角色管理)
+    ├── 用戶與權限 - Tab 管理 (人員管理 | 團隊管理 | 角色管理 | 審計日誌)
     ├── 通知管理 - Tab 管理 (通知管道 | 通知策略)
-    ├── 平台設定 - Tab 管理 (標籤管理 | 郵件設定 | 身份驗證)
-    └── 平台維運 - Tab 管理 (平台診斷 | 審計日誌)
+    └── 平台設定 - Tab 管理 (標籤管理 | 郵件設定 | 身份驗證)
 
 ```
 
@@ -31,7 +30,11 @@ SRE 平台
 - [x] 資源群組頁面 (ResourcesPage > ResourceGroupsPage)
 
 #### 儀表板
-- [x] 資源總覽頁面 (DashboardsPage > ResourceOverviewPage)
+- [x] 儀表板中心頁面 (DashboardAdministrationPage) - 卡片導航入口，支援設為預設首頁
+- [x] 基礎設施洞察頁面 (AlertsInsightsPage) - 資源監控
+- [x] SRE 戰情室頁面 (BusinessDashboardPage) - 業務監控儀表板
+- [ ] 管理儀表板頁面 (executive-dashboard) - 待實現
+- [ ] 自訂報告頁面 (custom-reports) - 待實現
 
 #### 分析
 - [x] 容量規劃頁面 (AnalysisPage > CapacityPlanningPage)
@@ -51,8 +54,6 @@ SRE 平台
 - [x] 郵件設定頁面 (Settings > EmailSettingsPage)
 - [x] 身份驗證設定頁面 (Settings > AuthSettingsPage)
 - [x] 標籤管理頁面 (Settings > TagKeyManagementPage)
-- [x] 平台診斷頁面 (Settings > PlatformDiagnosticsPage)
-- [x] 審計日誌頁面 (Settings > AuditLogsPage)
 - [x] 設定管理頁面 (Settings > SettingsAdministrationPage)
 
 ### ❌ **未實現頁面** (待開發)
@@ -67,15 +68,24 @@ SRE 平台
 - [x] 偏好設定頁面 (PreferencesPage)
 - [x] 個人資料頁面 (ProfilePage)
 
+#### 其他實現頁面
+- [x] 業務儀表板頁面 (BusinessDashboardPage)
+- [x] 整合資源總覽頁面 (IntegratedResourceOverviewPage)
+- [x] 資源群組詳情頁面 (ResourceGroupsDetailPage)
+- [x] 資源拓撲詳情頁面 (ResourceTopologyDetailPage)
+- [x] 告警洞察頁面 (AlertsInsightsPage)
+
 ---
 
 ## **導航結構覆蓋總結**
 
 ### **完整覆蓋統計**
-- **導航頂層選單**: 6個 (100% 實現)
-- **核心功能頁面**: 11個 (100% 實現)
-- **設定子選單**: 15個 (已實現 15/15 = 100%)
-- **總頁面覆蓋率**: 25/26 = 96%
+- **導航頂層選單**: 7個 (100% 實現)
+- **核心功能頁面**: 16個 (已實現 16/16 = 100%)
+- **設定子選單**: 14個 (已實現 14/14 = 100%)
+- **儀表板子頁面**: 5個 (已實現 4/5 = 80%)
+- **額外實現頁面**: 5個
+- **總頁面覆蓋率**: 35/37 = 95%
 
 ### **實現進度詳情**
 
@@ -87,8 +97,12 @@ SRE 平台
 - **自動化**: 3/3頁面 ✓
 
 #### **部分實現的模組**
-- **儀表板**: 1/3頁面 (33% 完成)
+- **儀表板**: 4/6頁面 (67% 完成)
+  - ✅ 儀表板中心頁面 (1/1頁面) - 卡片導航入口
+  - ✅ 基礎設施洞察頁面 (1/1頁面) - 資源監控
   - ✅ 資源總覽頁面 (1/1頁面)
+  - ✅ 業務儀表板頁面 (1/1頁面)
+  - ✅ 整合資源總覽頁面 (1/1頁面)
   - ❌ 管理儀表板頁面 (0/1頁面)
   - ❌ 自訂報告頁面 (0/1頁面)
 
@@ -98,12 +112,38 @@ SRE 平台
 3. **低優先級**: 其他增強功能 (如高級分析、客製化儀表板等)
 
 ### **技術實現統計**
-- **總組件參數數**: 約120+個
-- **總State變數數**: 約85+個
-- **總API端點數**: 約45+個
-- **總資料結構數**: 約20+個
+- **總組件參數數**: 約150+個
+- **總State變數數**: 約110+個
+- **總API端點數**: 約55+個
+- **總資料結構數**: 約25+個
+- **總實現頁面數**: 35個
+- **新增功能**: 預設首頁設定功能
 
 ## 參數命名規範
+
+### 命名規範原則
+
+#### **分層命名規範**
+- **API/資料層**: 使用 `snake_case` (底線式) - 與後端 API 保持一致
+- **JavaScript/React層**: 使用 `camelCase` (駝峰式) - 符合 JavaScript 慣例
+- **組件名稱**: 使用 `PascalCase` (帕斯卡式) - React 組件慣例
+
+#### **資料流轉命名轉換**
+```javascript
+// API 響應 (snake_case)
+{
+  "resource_name": "web-server-01",
+  "ip_address": "192.168.1.1",
+  "created_at": "2024-01-01T00:00:00Z"
+}
+
+// JavaScript 處理 (camelCase)
+{
+  resourceName: "web-server-01",
+  ipAddress: "192.168.1.1",
+  createdAt: "2024-01-01T00:00:00Z"
+}
+```
 
 ### 通用參數結構
 - **頁面 Props**: `themeMode`, `setThemeMode` (主題切換)
@@ -111,10 +151,18 @@ SRE 平台
 - **狀態管理**: `useState`, `useLocalStorageState` (狀態持久化)
 
 ### 資料結構規範
-- **資源物件**: `key`, `name`, `type`, `status`, `ip_address`, `groups`, `tags`
-- **告警物件**: `severity`, `summary`, `resource_name`, `created_at`, `status`
-- **用戶物件**: `id`, `name`, `email`, `roles`, `teams`, `enabled`
-- **腳本物件**: `id`, `name`, `type`, `content`, `creator`, `status`
+
+#### **API 資料結構** (snake_case)
+- **資源物件**: `key`, `name`, `type`, `status`, `ip_address`, `groups`, `tags`, `cpu_usage`, `memory_usage`, `created_at`, `updated_at`
+- **告警物件**: `id`, `severity`, `summary`, `resource_name`, `created_at`, `status`, `business_impact`
+- **用戶物件**: `id`, `username`, `email`, `name`, `roles`, `teams`, `enabled`, `last_login`, `created_at`
+- **腳本物件**: `id`, `name`, `type`, `content`, `creator`, `status`, `created_at`, `updated_at`
+
+#### **JavaScript 物件** (camelCase)
+- **資源物件**: `key`, `name`, `type`, `status`, `ipAddress`, `groups`, `tags`, `cpuUsage`, `memoryUsage`, `createdAt`, `updatedAt`
+- **告警物件**: `id`, `severity`, `summary`, `resourceName`, `createdAt`, `status`, `businessImpact`
+- **用戶物件**: `id`, `username`, `email`, `name`, `roles`, `teams`, `enabled`, `lastLogin`, `createdAt`
+- **腳本物件**: `id`, `name`, `type`, `content`, `creator`, `status`, `createdAt`, `updatedAt`
 
 ---
 
@@ -591,6 +639,7 @@ ScriptParameter: {
 - **腳本名稱** (`name`) - 腳本名稱
 - **類型** (`type`) - 腳本類型標籤
 - **創建者** (`creator`) - 腳本創建者
+- **排程引用** (`scheduleCount`) - 被排程使用的次數 (可點擊查看詳情)
 - **描述** (`description`) - 腳本描述
 
 **操作按鈕**:
@@ -689,7 +738,7 @@ ScheduleExecution: {
 **表格欄位**:
 - **啟用** (`enabled`) - 切換開關
 - **任務名稱** (`name`) - 排程任務名稱
-- **腳本名稱** (`scriptId`) - 執行的腳本名稱
+- **腳本名稱** (`scriptId`) - 執行的腳本名稱 (可點擊超連結，跳轉到腳本庫)
 - **CRON 條件** (`cron`) - 可讀的CRON表達式
 - **上次狀態** (`lastStatus`) - 執行狀態標籤 (SUCCESS/FAILED/PENDING)
 - **上次執行時間** (`lastRun`) - 最後執行時間
@@ -856,6 +905,8 @@ IncidentStats: {
 - `loading: boolean` - 載入狀態
 - `searchValue: string` - 搜尋關鍵字
 - `filters: object` - 篩選條件 {enabled: boolean, severity: string[]}
+- `isColumnSettingsOpen: boolean` - 欄位設定抽屜開啟狀態
+- `visibleColumns: string[]` - 可見欄位列表
 - `modalVisible: boolean` - 規則編輯模態框
 - `currentRule: AlertRule` - 當前編輯規則
 - `currentStep: number` - 規則創建步驟
@@ -912,6 +963,7 @@ Notification: {
 
 **工具列按鈕**:
 - **搜尋框**: 搜尋規則名稱或目標
+- **欄位設定按鈕**: 自訂顯示欄位
 - **新增規則按鈕**: 開啟新增告警規則彈窗
 
 **統計卡片區域**:
@@ -923,6 +975,14 @@ Notification: {
 **表格欄位**:
 - **啟用** (`enabled`) - 規則啟用狀態切換
 - **規則名稱** (`name`) - 告警規則名稱
+- **監控對象** (`target`) - 監控目標描述
+- **資源標籤** (`resource_tags`) - 規則匹配的資源標籤
+- **觸發條件** (`conditions`) - 觸發條件數量
+- **通知對象** (`notifications`) - 通知管道統計
+
+**可自訂欄位 (動態顯示)**:
+- **啟用** (`enabled`) - 規則啟用狀態切換
+- **規則名稱** (`name`) - 告警規則名稱 (可點擊鏈接，藍色+懸停下劃線)
 - **監控對象** (`target`) - 監控目標描述
 - **資源標籤** (`resource_tags`) - 規則匹配的資源標籤
 - **觸發條件** (`conditions`) - 觸發條件數量
