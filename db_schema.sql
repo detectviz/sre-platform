@@ -367,6 +367,95 @@ CREATE TABLE execution_logs (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='腳本執行日誌表';
 
 -- ===========================================
+-- 通知管理模塊 (Notification Management)
+-- ===========================================
+
+-- 通知管道表
+CREATE TABLE notification_channels (
+    id VARCHAR(36) PRIMARY KEY COMMENT '通知管道唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '管道名稱',
+    type ENUM('email', 'slack', 'webhook', 'sms', 'pagerduty', 'wechat') NOT NULL COMMENT '管道類型',
+    config JSON NOT NULL COMMENT '管道配置信息',
+    description TEXT COMMENT '管道描述',
+    enabled BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
+    creator_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (creator_id) REFERENCES users(id) COMMENT '創建者外鍵',
+    INDEX idx_type (type) COMMENT '管道類型索引',
+    INDEX idx_enabled (enabled) COMMENT '啟用狀態索引',
+    INDEX idx_creator (creator_id) COMMENT '創建者索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知管道表';
+
+-- 通知模板表
+CREATE TABLE notification_templates (
+    id VARCHAR(36) PRIMARY KEY COMMENT '模板唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '模板名稱',
+    type ENUM('email', 'slack', 'webhook', 'sms') NOT NULL COMMENT '模板類型',
+    subject VARCHAR(500) COMMENT '郵件主題模板',
+    content TEXT NOT NULL COMMENT '模板內容',
+    variables JSON COMMENT '模板變數定義',
+    description TEXT COMMENT '模板描述',
+    enabled BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
+    creator_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (creator_id) REFERENCES users(id) COMMENT '創建者外鍵',
+    INDEX idx_type (type) COMMENT '模板類型索引',
+    INDEX idx_enabled (enabled) COMMENT '啟用狀態索引',
+    INDEX idx_creator (creator_id) COMMENT '創建者索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知模板表';
+
+-- 通知策略表
+CREATE TABLE notification_policies (
+    id VARCHAR(36) PRIMARY KEY COMMENT '策略唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '策略名稱',
+    description TEXT COMMENT '策略描述',
+    resource_type VARCHAR(100) COMMENT '資源類型過濾',
+    resource_tags JSON COMMENT '資源標籤匹配條件',
+    alert_conditions JSON COMMENT '告警條件匹配',
+    channels JSON NOT NULL COMMENT '通知管道列表',
+    escalation JSON COMMENT '升級策略',
+    enabled BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
+    creator_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (creator_id) REFERENCES users(id) COMMENT '創建者外鍵',
+    INDEX idx_enabled (enabled) COMMENT '啟用狀態索引',
+    INDEX idx_creator (creator_id) COMMENT '創建者索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知策略表';
+
+-- 通知歷史記錄表
+CREATE TABLE notification_history (
+    id VARCHAR(36) PRIMARY KEY COMMENT '通知記錄唯一標識',
+    alert_id VARCHAR(36) COMMENT '關聯告警ID',
+    channel_id VARCHAR(36) COMMENT '使用的管道ID',
+    template_id VARCHAR(36) COMMENT '使用的模板ID',
+    policy_id VARCHAR(36) COMMENT '使用的策略ID',
+    recipient VARCHAR(500) NOT NULL COMMENT '接收者',
+    subject VARCHAR(500) COMMENT '通知主題',
+    content TEXT NOT NULL COMMENT '通知內容',
+    status ENUM('pending', 'sent', 'delivered', 'failed') DEFAULT 'pending' COMMENT '發送狀態',
+    error_message TEXT COMMENT '錯誤信息',
+    sent_at TIMESTAMP NULL COMMENT '發送時間',
+    delivered_at TIMESTAMP NULL COMMENT '送達時間',
+    retry_count INT DEFAULT 0 COMMENT '重試次數',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+
+    FOREIGN KEY (alert_id) REFERENCES alerts(id) COMMENT '告警外鍵',
+    FOREIGN KEY (channel_id) REFERENCES notification_channels(id) COMMENT '管道外鍵',
+    FOREIGN KEY (template_id) REFERENCES notification_templates(id) COMMENT '模板外鍵',
+    FOREIGN KEY (policy_id) REFERENCES notification_policies(id) COMMENT '策略外鍵',
+    INDEX idx_alert (alert_id) COMMENT '告警索引',
+    INDEX idx_channel (channel_id) COMMENT '管道索引',
+    INDEX idx_status (status) COMMENT '狀態索引',
+    INDEX idx_sent_at (sent_at) COMMENT '發送時間索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知歷史記錄表';
+
+-- ===========================================
 -- 審計日誌模塊 (Audit Logs)
 -- ===========================================
 
@@ -409,6 +498,62 @@ CREATE TABLE system_settings (
     INDEX idx_category (category) COMMENT '分類索引',
     INDEX idx_key (key) COMMENT '鍵索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系統設定表';
+
+-- 用戶偏好設定表
+CREATE TABLE user_preferences (
+    id VARCHAR(36) PRIMARY KEY COMMENT '偏好設定唯一標識',
+    user_id VARCHAR(36) NOT NULL COMMENT '用戶ID',
+    category VARCHAR(100) NOT NULL COMMENT '設定分類',
+    key VARCHAR(255) NOT NULL COMMENT '設定鍵',
+    value JSON NOT NULL COMMENT '設定值',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE COMMENT '用戶外鍵',
+    UNIQUE KEY unique_user_category_key (user_id, category, key) COMMENT '用戶分類鍵唯一約束',
+    INDEX idx_user (user_id) COMMENT '用戶索引',
+    INDEX idx_category (category) COMMENT '分類索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用戶偏好設定表';
+
+-- 系統配置模板表
+CREATE TABLE system_config_templates (
+    id VARCHAR(36) PRIMARY KEY COMMENT '配置模板唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '模板名稱',
+    description TEXT COMMENT '模板描述',
+    category VARCHAR(100) NOT NULL COMMENT '配置分類',
+    template_data JSON NOT NULL COMMENT '模板配置數據',
+    is_default BOOLEAN DEFAULT FALSE COMMENT '是否為默認模板',
+    creator_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (creator_id) REFERENCES users(id) COMMENT '創建者外鍵',
+    INDEX idx_category (category) COMMENT '分類索引',
+    INDEX idx_default (is_default) COMMENT '默認模板索引',
+    INDEX idx_creator (creator_id) COMMENT '創建者索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系統配置模板表';
+
+-- 系統維護窗口表
+CREATE TABLE maintenance_windows (
+    id VARCHAR(36) PRIMARY KEY COMMENT '維護窗口唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '窗口名稱',
+    description TEXT COMMENT '窗口描述',
+    start_time TIMESTAMP NOT NULL COMMENT '開始時間',
+    end_time TIMESTAMP NOT NULL COMMENT '結束時間',
+    timezone VARCHAR(50) DEFAULT 'UTC' COMMENT '時區',
+    recurrence JSON COMMENT '重複規則',
+    affected_resources JSON COMMENT '受影響資源',
+    notification_settings JSON COMMENT '通知設定',
+    status ENUM('scheduled', 'active', 'completed', 'cancelled') DEFAULT 'scheduled' COMMENT '狀態',
+    creator_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (creator_id) REFERENCES users(id) COMMENT '創建者外鍵',
+    INDEX idx_status (status) COMMENT '狀態索引',
+    INDEX idx_time_range (start_time, end_time) COMMENT '時間範圍索引',
+    INDEX idx_creator (creator_id) COMMENT '創建者索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系統維護窗口表';
 
 -- ===========================================
 -- 儀表板統計表 (Dashboard Statistics)

@@ -1356,6 +1356,568 @@ paths:
                 $ref: "#/components/schemas/OperationResult"
 
   # ============================================
+  # Automation Scripts
+  # ============================================
+  /automation/scripts:
+    get:
+      tags: [Automation]
+      summary: 獲取自動化腳本列表
+      operationId: listAutomationScripts
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: category
+          in: query
+          schema: { type: string, enum: [deployment, maintenance, monitoring] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, inactive] }
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 腳本列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScriptList"
+    post:
+      tags: [Automation]
+      summary: 創建自動化腳本
+      operationId: createAutomationScript
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/AutomationScriptCreateRequest"
+      responses:
+        "201":
+          description: 腳本創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScript"
+  /automation/scripts/{scriptId}:
+    get:
+      tags: [Automation]
+      summary: 獲取腳本詳情
+      operationId: getAutomationScript
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 腳本詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScript"
+    put:
+      tags: [Automation]
+      summary: 更新腳本
+      operationId: updateAutomationScript
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/AutomationScriptUpdateRequest"
+      responses:
+        "200":
+          description: 腳本更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScript"
+    delete:
+      tags: [Automation]
+      summary: 刪除腳本
+      operationId: deleteAutomationScript
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: 腳本刪除成功
+  /automation/scripts/{scriptId}/execute:
+    post:
+      tags: [Automation]
+      summary: 執行腳本
+      operationId: executeAutomationScript
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_member, team_manager, super_admin]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                params:
+                  type: object
+                  description: 腳本執行參數
+                async:
+                  type: boolean
+                  default: true
+                  description: 是否異步執行
+      responses:
+        "202":
+          description: 腳本執行已接受
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScriptExecutionResponse"
+
+  # ============================================
+  # Automation Schedules
+  # ============================================
+  /automation/schedules:
+    get:
+      tags: [Automation]
+      summary: 獲取排程任務列表
+      operationId: listAutomationSchedules
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          schema: { type: string, enum: [active, inactive, error] }
+        - name: enabled
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: 排程任務列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScheduleList"
+    post:
+      tags: [Automation]
+      summary: 創建排程任務
+      operationId: createAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/ScheduleCreateRequest"
+      responses:
+        "201":
+          description: 排程任務創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schedule"
+  /automation/schedules/{scheduleId}:
+    get:
+      tags: [Automation]
+      summary: 獲取排程任務詳情
+      operationId: getAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 排程任務詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schedule"
+    put:
+      tags: [Automation]
+      summary: 更新排程任務
+      operationId: updateAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/ScheduleUpdateRequest"
+      responses:
+        "200":
+          description: 排程任務更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Schedule"
+    delete:
+      tags: [Automation]
+      summary: 刪除排程任務
+      operationId: deleteAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: 排程任務刪除成功
+  /automation/schedules/{scheduleId}/enable:
+    post:
+      tags: [Automation]
+      summary: 啟用排程任務
+      operationId: enableAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 排程任務已啟用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+  /automation/schedules/{scheduleId}/disable:
+    post:
+      tags: [Automation]
+      summary: 停用排程任務
+      operationId: disableAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 排程任務已停用
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
+  # ============================================
+  # Notification Management
+  # ============================================
+  /notifications/channels:
+    get:
+      tags: [Notifications]
+      summary: 獲取通知管道列表
+      operationId: listNotificationChannels
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: type
+          in: query
+          schema:
+            {
+              type: string,
+              enum: [email, slack, webhook, sms, pagerduty, wechat],
+            }
+        - name: enabled
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: 通知管道列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelList"
+    post:
+      tags: [Notifications]
+      summary: 創建通知管道
+      operationId: createNotificationChannel
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/NotificationChannelCreateRequest"
+      responses:
+        "201":
+          description: 通知管道創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+  /notifications/channels/{channelId}:
+    get:
+      tags: [Notifications]
+      summary: 獲取通知管道詳情
+      operationId: getNotificationChannel
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 通知管道詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+    put:
+      tags: [Notifications]
+      summary: 更新通知管道
+      operationId: updateNotificationChannel
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/NotificationChannelUpdateRequest"
+      responses:
+        "200":
+          description: 通知管道更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+    delete:
+      tags: [Notifications]
+      summary: 刪除通知管道
+      operationId: deleteNotificationChannel
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: 通知管道刪除成功
+  /notifications/channels/{channelId}/test:
+    post:
+      tags: [Notifications]
+      summary: 測試通知管道
+      operationId: testNotificationChannel
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 測試成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
+  # ============================================
+  # Notification Policies
+  # ============================================
+  /notifications/policies:
+    get:
+      tags: [Notifications]
+      summary: 獲取通知策略列表
+      operationId: listNotificationPolicies
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: enabled
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: 通知策略列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPolicyList"
+    post:
+      tags: [Notifications]
+      summary: 創建通知策略
+      operationId: createNotificationPolicy
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/NotificationPolicyCreateRequest"
+      responses:
+        "201":
+          description: 通知策略創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPolicy"
+
+  # ============================================
+  # System Settings
+  # ============================================
+  /settings:
+    get:
+      tags: [Admin]
+      summary: 獲取系統設定列表
+      operationId: listSystemSettings
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 系統設定列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SystemSetting"
+    post:
+      tags: [Admin]
+      summary: 創建或更新系統設定
+      operationId: createOrUpdateSystemSetting
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/SystemSettingCreateRequest"
+      responses:
+        "200":
+          description: 設定創建或更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSetting"
+  /settings/{settingId}:
+    get:
+      tags: [Admin]
+      summary: 獲取系統設定詳情
+      operationId: getSystemSetting
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      parameters:
+        - name: settingId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 系統設定詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSetting"
+    delete:
+      tags: [Admin]
+      summary: 刪除系統設定
+      operationId: deleteSystemSetting
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      parameters:
+        - name: settingId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: 設定刪除成功
+
+  # ============================================
+  # User Preferences
+  # ============================================
+  /user/preferences:
+    get:
+      tags: [Profile]
+      summary: 獲取用戶偏好設定
+      operationId: getUserPreferences
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 用戶偏好設定列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserPreference"
+    post:
+      tags: [Profile]
+      summary: 創建或更新用戶偏好設定
+      operationId: createOrUpdateUserPreference
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        $ref: "#/components/requestBodies/UserPreferenceCreateRequest"
+      responses:
+        "200":
+          description: 偏好設定創建或更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserPreference"
+
+  # ============================================
+  # Maintenance Windows
+  # ============================================
+  /maintenance/windows:
+    get:
+      tags: [Admin]
+      summary: 獲取維護窗口列表
+      operationId: listMaintenanceWindows
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          schema:
+            { type: string, enum: [scheduled, active, completed, cancelled] }
+      responses:
+        "200":
+          description: 維護窗口列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceWindowList"
+    post:
+      tags: [Admin]
+      summary: 創建維護窗口
+      operationId: createMaintenanceWindow
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/MaintenanceWindowCreateRequest"
+      responses:
+        "201":
+          description: 維護窗口創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MaintenanceWindow"
+
+  # ============================================
   # Fallback for omitted paths
   # ============================================
   # ... (other paths are omitted for brevity but would be fully defined here)
@@ -1520,6 +2082,60 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/TagValueCreateRequest" }
+    AutomationScriptCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/AutomationScriptCreateRequest" }
+    AutomationScriptUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/AutomationScriptUpdateRequest" }
+    ScheduleCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ScheduleCreateRequest" }
+    ScheduleUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ScheduleUpdateRequest" }
+    NotificationChannelCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            { $ref: "#/components/schemas/NotificationChannelCreateRequest" }
+    NotificationChannelUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            { $ref: "#/components/schemas/NotificationChannelUpdateRequest" }
+    NotificationPolicyCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            { $ref: "#/components/schemas/NotificationPolicyCreateRequest" }
+    SystemSettingCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/SystemSettingCreateRequest" }
+    UserPreferenceCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/UserPreferenceCreateRequest" }
+    MaintenanceWindowCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            { $ref: "#/components/schemas/MaintenanceWindowCreateRequest" }
 
   schemas:
     ErrorResponse:
@@ -1911,3 +2527,264 @@ components:
         value: { type: string }
         displayName: { type: string }
         description: { type: string }
+
+    # Automation Schemas
+    AutomationScript:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [python, bash, powershell] }
+        description: { type: string }
+        content: { type: string }
+        creator_id: { type: string }
+        category: { type: string, enum: [deployment, maintenance, monitoring] }
+        params: { type: object }
+        status: { type: string, enum: [active, inactive] }
+        execution_count: { type: integer }
+        last_executed_at: { type: string, format: "date-time" }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    AutomationScriptList:
+      type: object
+      properties:
+        items:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/AutomationScript" },
+          }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    AutomationScriptCreateRequest:
+      type: object
+      required: [name, type, content]
+      properties:
+        name: { type: string }
+        type: { type: string, enum: [python, bash, powershell] }
+        description: { type: string }
+        content: { type: string }
+        category: { type: string, enum: [deployment, maintenance, monitoring] }
+        params: { type: object }
+        status: { type: string, enum: [active, inactive] }
+    AutomationScriptUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        content: { type: string }
+        category: { type: string, enum: [deployment, maintenance, monitoring] }
+        params: { type: object }
+        status: { type: string, enum: [active, inactive] }
+    ScriptExecutionResponse:
+      type: object
+      properties:
+        execution_id: { type: string }
+        status: { type: string }
+        message: { type: string }
+
+    # Schedule Schemas
+    Schedule:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        script_id: { type: string }
+        cron: { type: string }
+        schedule_mode: { type: string, enum: [simple, advanced] }
+        frequency: { type: string, enum: [hourly, daily, weekly, monthly] }
+        enabled: { type: boolean }
+        status: { type: string, enum: [active, inactive, error] }
+        last_status: { type: string, enum: [success, failed, pending] }
+        last_run_at: { type: string, format: "date-time" }
+        next_run_at: { type: string, format: "date-time" }
+        creator_id: { type: string }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    ScheduleList:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: "#/components/schemas/Schedule" } }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    ScheduleCreateRequest:
+      type: object
+      required: [name, script_id, cron]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        script_id: { type: string }
+        cron: { type: string }
+        schedule_mode: { type: string, enum: [simple, advanced] }
+        frequency: { type: string, enum: [hourly, daily, weekly, monthly] }
+        enabled: { type: boolean }
+    ScheduleUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        cron: { type: string }
+        schedule_mode: { type: string, enum: [simple, advanced] }
+        frequency: { type: string, enum: [hourly, daily, weekly, monthly] }
+        enabled: { type: boolean }
+
+    # Notification Schemas
+    NotificationChannel:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type:
+          {
+            type: string,
+            enum: [email, slack, webhook, sms, pagerduty, wechat],
+          }
+        config: { type: object }
+        description: { type: string }
+        enabled: { type: boolean }
+        creator_id: { type: string }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    NotificationChannelList:
+      type: object
+      properties:
+        items:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/NotificationChannel" },
+          }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    NotificationChannelCreateRequest:
+      type: object
+      required: [name, type, config]
+      properties:
+        name: { type: string }
+        type:
+          {
+            type: string,
+            enum: [email, slack, webhook, sms, pagerduty, wechat],
+          }
+        config: { type: object }
+        description: { type: string }
+        enabled: { type: boolean }
+    NotificationChannelUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        config: { type: object }
+        description: { type: string }
+        enabled: { type: boolean }
+
+    NotificationPolicy:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        resource_type: { type: string }
+        resource_tags: { type: object }
+        alert_conditions: { type: object }
+        channels: { type: array, items: { type: string } }
+        escalation: { type: object }
+        enabled: { type: boolean }
+        creator_id: { type: string }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    NotificationPolicyList:
+      type: object
+      properties:
+        items:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/NotificationPolicy" },
+          }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    NotificationPolicyCreateRequest:
+      type: object
+      required: [name, channels]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        resource_type: { type: string }
+        resource_tags: { type: object }
+        alert_conditions: { type: object }
+        channels: { type: array, items: { type: string } }
+        escalation: { type: object }
+        enabled: { type: boolean }
+
+    # System Settings Schemas
+    SystemSetting:
+      type: object
+      properties:
+        id: { type: string }
+        category: { type: string }
+        key: { type: string }
+        value: { type: object }
+        description: { type: string }
+        updated_by_id: { type: string }
+        updated_at: { type: string, format: "date-time" }
+    SystemSettingCreateRequest:
+      type: object
+      required: [category, key, value]
+      properties:
+        category: { type: string }
+        key: { type: string }
+        value: { type: object }
+        description: { type: string }
+
+    # User Preferences Schemas
+    UserPreference:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        category: { type: string }
+        key: { type: string }
+        value: { type: object }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    UserPreferenceCreateRequest:
+      type: object
+      required: [category, key, value]
+      properties:
+        category: { type: string }
+        key: { type: string }
+        value: { type: object }
+
+    # Maintenance Window Schemas
+    MaintenanceWindow:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        start_time: { type: string, format: "date-time" }
+        end_time: { type: string, format: "date-time" }
+        timezone: { type: string }
+        recurrence: { type: object }
+        affected_resources: { type: array, items: { type: string } }
+        notification_settings: { type: object }
+        status:
+          { type: string, enum: [scheduled, active, completed, cancelled] }
+        creator_id: { type: string }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    MaintenanceWindowList:
+      type: object
+      properties:
+        items:
+          {
+            type: array,
+            items: { $ref: "#/components/schemas/MaintenanceWindow" },
+          }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    MaintenanceWindowCreateRequest:
+      type: object
+      required: [name, start_time, end_time]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        start_time: { type: string, format: "date-time" }
+        end_time: { type: string, format: "date-time" }
+        timezone: { type: string }
+        recurrence: { type: object }
+        affected_resources: { type: array, items: { type: string } }
+        notification_settings: { type: object }
