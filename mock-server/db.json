@@ -1,220 +1,6585 @@
 {
   "users": [
     {
-      "id": "usr_1",
-      "username": "admin",
-      "email": "admin@sre-platform.com",
-      "name": "Admin User",
-      "avatar_url": "https://i.pravatar.cc/150?u=admin",
-      "is_active": true,
-      "last_login_at": "2025-09-18T08:00:00Z",
-      "roles": ["super_admin"],
-      "teams": ["team_1"]
+      "key": "user_1",
+      "id": "user_1",
+      "name": "John Jones",
+      "email": "bhzg3i44@example.com",
+      "status": "inactive",
+      "last_login": "2025-06-01T19:44:21.063Z",
+      "created_at": "2024-07-21T10:52:51.237Z",
+      "teams": [],
+      "roles": [
+        "team_manager",
+        "team_manager"
+      ]
     },
     {
-      "id": "usr_2",
-      "username": "jdoe",
-      "email": "john.doe@sre-platform.com",
-      "name": "John Doe",
-      "avatar_url": "https://i.pravatar.cc/150?u=jdoe",
-      "is_active": true,
-      "last_login_at": "2025-09-18T09:00:00Z",
-      "roles": ["team_manager", "team_member"],
-      "teams": ["team_2"]
+      "key": "user_2",
+      "id": "user_2",
+      "name": "Robert Jones",
+      "email": "66to438h@example.com",
+      "status": "active",
+      "last_login": "2025-06-16T22:21:44.151Z",
+      "created_at": "2024-09-16T10:10:05.060Z",
+      "teams": [
+        "team_8"
+      ],
+      "roles": [
+        "super_admin"
+      ]
     },
     {
-      "id": "usr_3",
-      "username": "s.smith",
-      "email": "sara.smith@sre-platform.com",
-      "name": "Sara Smith",
-      "avatar_url": "https://i.pravatar.cc/150?u=s.smith",
-      "is_active": false,
-      "last_login_at": "2025-09-10T11:20:00Z",
-      "roles": ["team_member"],
-      "teams": ["team_2", "team_3"]
+      "key": "user_3",
+      "id": "user_3",
+      "name": "John Jones",
+      "email": "1pgjc8fb@example.com",
+      "status": "pending",
+      "last_login": "2025-05-17T10:32:44.136Z",
+      "created_at": "2024-11-04T10:47:22.120Z",
+      "teams": [
+        "team_4",
+        "team_7",
+        "team_8"
+      ],
+      "roles": [
+        "viewer"
+      ]
+    },
+    {
+      "key": "user_4",
+      "id": "user_4",
+      "name": "John Jones",
+      "email": "2pd09385@example.com",
+      "status": "inactive",
+      "last_login": "2025-04-06T21:17:36.669Z",
+      "created_at": "2024-03-14T17:46:32.100Z",
+      "teams": [
+        "team_2",
+        "team_5",
+        "team_8"
+      ],
+      "roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "key": "user_5",
+      "id": "user_5",
+      "name": "Patricia Williams",
+      "email": "cx59gtmz@example.com",
+      "status": "active",
+      "last_login": "2025-03-11T23:59:57.744Z",
+      "created_at": "2024-10-24T04:40:56.018Z",
+      "teams": [
+        "team_5",
+        "team_7"
+      ],
+      "roles": [
+        "team_manager"
+      ]
+    },
+    {
+      "key": "user_6",
+      "id": "user_6",
+      "name": "Jennifer Williams",
+      "email": "gfv8rrx7@example.com",
+      "status": "pending",
+      "last_login": "2025-02-02T10:35:42.998Z",
+      "created_at": "2024-07-30T12:41:28.121Z",
+      "teams": [],
+      "roles": [
+        "viewer"
+      ]
+    },
+    {
+      "key": "user_7",
+      "id": "user_7",
+      "name": "Robert Williams",
+      "email": "s10sqdbm@example.com",
+      "status": "pending",
+      "last_login": "2025-04-03T15:58:52.414Z",
+      "created_at": "2024-10-04T03:22:44.907Z",
+      "teams": [
+        "team_3",
+        "team_7"
+      ],
+      "roles": [
+        "team_manager"
+      ]
+    },
+    {
+      "key": "user_8",
+      "id": "user_8",
+      "name": "John Johnson",
+      "email": "zveinbfa@example.com",
+      "status": "pending",
+      "last_login": "2025-09-17T07:34:15.740Z",
+      "created_at": "2024-04-07T11:19:18.445Z",
+      "teams": [],
+      "roles": [
+        "team_manager"
+      ]
+    },
+    {
+      "key": "user_9",
+      "id": "user_9",
+      "name": "Jennifer Williams",
+      "email": "opv1pvch@example.com",
+      "status": "inactive",
+      "last_login": "2025-01-26T00:32:31.264Z",
+      "created_at": "2024-01-31T22:07:43.718Z",
+      "teams": [
+        "team_3"
+      ],
+      "roles": [
+        "team_manager",
+        "team_member"
+      ]
+    },
+    {
+      "key": "user_10",
+      "id": "user_10",
+      "name": "Mary Johnson",
+      "email": "zoear2c9@example.com",
+      "status": "inactive",
+      "last_login": "2025-01-09T13:40:18.028Z",
+      "created_at": "2024-12-11T09:59:01.212Z",
+      "teams": [
+        "team_2",
+        "team_6",
+        "team_8"
+      ],
+      "roles": [
+        "viewer"
+      ]
+    },
+    {
+      "key": "user_11",
+      "id": "user_11",
+      "name": "Mary Smith",
+      "email": "agqkjnt1@example.com",
+      "status": "pending",
+      "last_login": "2025-07-27T10:54:20.378Z",
+      "created_at": "2024-07-11T11:42:45.741Z",
+      "teams": [
+        "team_4"
+      ],
+      "roles": [
+        "super_admin",
+        "super_admin"
+      ]
+    },
+    {
+      "key": "user_12",
+      "id": "user_12",
+      "name": "Jennifer Williams",
+      "email": "7dpeoyh3@example.com",
+      "status": "inactive",
+      "last_login": "2025-03-29T20:00:23.033Z",
+      "created_at": "2024-03-08T04:02:06.982Z",
+      "teams": [
+        "team_4"
+      ],
+      "roles": [
+        "team_manager"
+      ]
+    },
+    {
+      "key": "user_13",
+      "id": "user_13",
+      "name": "James Jones",
+      "email": "u1tdqfj2@example.com",
+      "status": "pending",
+      "last_login": "2025-05-02T02:39:18.923Z",
+      "created_at": "2024-12-17T13:25:41.240Z",
+      "teams": [
+        "team_6"
+      ],
+      "roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "key": "user_14",
+      "id": "user_14",
+      "name": "John Smith",
+      "email": "ctsf25tv@example.com",
+      "status": "active",
+      "last_login": "2025-04-18T07:23:08.325Z",
+      "created_at": "2024-08-15T17:59:58.014Z",
+      "teams": [
+        "team_1",
+        "team_2"
+      ],
+      "roles": [
+        "super_admin",
+        "team_manager"
+      ]
+    },
+    {
+      "key": "user_15",
+      "id": "user_15",
+      "name": "Jennifer Williams",
+      "email": "afgl2cts@example.com",
+      "status": "inactive",
+      "last_login": "2025-05-07T13:59:35.563Z",
+      "created_at": "2024-01-08T20:12:24.347Z",
+      "teams": [
+        "team_3",
+        "team_8"
+      ],
+      "roles": [
+        "super_admin"
+      ]
+    },
+    {
+      "key": "user_16",
+      "id": "user_16",
+      "name": "Jennifer Johnson",
+      "email": "vbmo5yp0@example.com",
+      "status": "pending",
+      "last_login": "2025-07-31T23:45:52.074Z",
+      "created_at": "2024-12-06T12:46:33.650Z",
+      "teams": [],
+      "roles": [
+        "viewer",
+        "viewer"
+      ]
+    },
+    {
+      "key": "user_17",
+      "id": "user_17",
+      "name": "Robert Smith",
+      "email": "lj2idris@example.com",
+      "status": "active",
+      "last_login": "2025-03-12T23:44:24.122Z",
+      "created_at": "2024-11-13T21:49:22.359Z",
+      "teams": [],
+      "roles": [
+        "viewer"
+      ]
+    },
+    {
+      "key": "user_18",
+      "id": "user_18",
+      "name": "Jennifer Smith",
+      "email": "6uq0lobv@example.com",
+      "status": "active",
+      "last_login": "2025-02-09T20:30:03.126Z",
+      "created_at": "2024-10-30T02:40:11.169Z",
+      "teams": [
+        "team_4"
+      ],
+      "roles": [
+        "team_manager"
+      ]
+    },
+    {
+      "key": "user_19",
+      "id": "user_19",
+      "name": "Robert Johnson",
+      "email": "d4ldc1ir@example.com",
+      "status": "pending",
+      "last_login": "2025-07-28T17:03:04.068Z",
+      "created_at": "2024-01-19T06:31:46.781Z",
+      "teams": [],
+      "roles": [
+        "team_manager",
+        "team_member"
+      ]
+    },
+    {
+      "key": "user_20",
+      "id": "user_20",
+      "name": "Jennifer Brown",
+      "email": "tp3uh5n1@example.com",
+      "status": "inactive",
+      "last_login": "2025-04-23T16:22:24.960Z",
+      "created_at": "2024-10-15T11:44:19.572Z",
+      "teams": [
+        "team_3"
+      ],
+      "roles": [
+        "team_manager"
+      ]
     }
   ],
   "teams": [
     {
+      "key": "team_1",
       "id": "team_1",
-      "name": "SRE Core Team",
-      "description": "平台核心維運團隊",
-      "leader_id": "usr_1",
-      "member_count": 1,
-      "subscriber_count": 0
+      "name": "Core Team",
+      "description": "Update the server",
+      "members": [
+        "user_14"
+      ],
+      "owner": "user_12",
+      "created_at": "2024-08-20T07:56:23.953Z"
     },
     {
+      "key": "team_2",
       "id": "team_2",
-      "name": "Database Operations",
-      "description": "資料庫維運團隊",
-      "leader_id": "usr_2",
-      "member_count": 2,
-      "subscriber_count": 1
+      "name": "Core Team",
+      "description": "Fix an database",
+      "members": [
+        "user_14",
+        "user_10",
+        "user_4"
+      ],
+      "owner": "user_13",
+      "created_at": "2024-03-17T00:32:55.237Z"
     },
     {
+      "key": "team_3",
       "id": "team_3",
-      "name": "Web Services Team",
-      "description": "Web 應用服務團隊",
-      "leader_id": null,
-      "member_count": 1,
-      "subscriber_count": 0
+      "name": "Web Team",
+      "description": "Fix the server",
+      "members": [
+        "user_9",
+        "user_15",
+        "user_7",
+        "user_20"
+      ],
+      "owner": "user_14",
+      "created_at": "2024-02-10T19:20:39.522Z"
+    },
+    {
+      "key": "team_4",
+      "id": "team_4",
+      "name": "Core Team",
+      "description": "Deploy the server",
+      "members": [
+        "user_18",
+        "user_11",
+        "user_12",
+        "user_3"
+      ],
+      "owner": "user_11",
+      "created_at": "2024-12-10T22:41:23.761Z"
+    },
+    {
+      "key": "team_5",
+      "id": "team_5",
+      "name": "Web Team",
+      "description": "Deploy an cache",
+      "members": [
+        "user_5",
+        "user_4"
+      ],
+      "owner": "user_15",
+      "created_at": "2024-05-11T13:39:12.483Z"
+    },
+    {
+      "key": "team_6",
+      "id": "team_6",
+      "name": "Web Team",
+      "description": "Implement an frontend",
+      "members": [
+        "user_10",
+        "user_10",
+        "user_13"
+      ],
+      "owner": "user_4",
+      "created_at": "2024-01-30T03:04:22.077Z"
+    },
+    {
+      "key": "team_7",
+      "id": "team_7",
+      "name": "Infra Team",
+      "description": "Deploy the cache",
+      "members": [
+        "user_3",
+        "user_7",
+        "user_5"
+      ],
+      "owner": "user_12",
+      "created_at": "2024-05-14T13:17:43.540Z"
+    },
+    {
+      "key": "team_8",
+      "id": "team_8",
+      "name": "Mobile Team",
+      "description": "Implement an cache",
+      "members": [
+        "user_15",
+        "user_2",
+        "user_4",
+        "user_10",
+        "user_3"
+      ],
+      "owner": "user_9",
+      "created_at": "2024-10-31T10:19:08.961Z"
     }
   ],
   "roles": [
     {
       "id": "super_admin",
       "name": "超級管理員",
-      "description": "擁有所有權限",
-      "is_built_in": true,
-      "user_count": 1
+      "color": "red"
     },
     {
       "id": "team_manager",
       "name": "團隊管理員",
-      "description": "可管理團隊內部資源與設定",
-      "is_built_in": true,
-      "user_count": 1
+      "color": "orange"
     },
     {
       "id": "team_member",
       "name": "團隊成員",
-      "description": "可處理事件與執行自動化腳本",
-      "is_built_in": true,
-      "user_count": 2
+      "color": "blue"
+    },
+    {
+      "id": "viewer",
+      "name": "唯讀人員",
+      "color": "gray"
+    }
+  ],
+  "resources": [
+    {
+      "id": "res_1",
+      "key": "res_1",
+      "name": "gateway-yr910-1",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "206.46.58.138",
+      "location": "eu-central-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 15,
+      "memory_usage": 33,
+      "disk_usage": 27,
+      "alarms": [],
+      "created_at": "2025-04-20T13:32:43.537Z",
+      "last_check": "2025-09-08T02:59:06.716Z"
+    },
+    {
+      "id": "res_2",
+      "key": "res_2",
+      "name": "server-5s6kr-2",
+      "type": "server",
+      "status": "warning",
+      "ip_address": "80.76.57.229",
+      "location": "us-east-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 56,
+      "memory_usage": 52,
+      "disk_usage": 96,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "server warning alert"
+        }
+      ],
+      "created_at": "2023-04-21T06:44:23.932Z",
+      "last_check": "2025-09-13T22:12:41.671Z"
+    },
+    {
+      "id": "res_3",
+      "key": "res_3",
+      "name": "database-1cgr4-3",
+      "type": "database",
+      "status": "healthy",
+      "ip_address": "175.162.178.215",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 34,
+      "memory_usage": 77,
+      "disk_usage": 28,
+      "alarms": [],
+      "created_at": "2023-10-08T10:01:31.623Z",
+      "last_check": "2025-09-01T14:09:23.877Z"
+    },
+    {
+      "id": "res_4",
+      "key": "res_4",
+      "name": "gateway-yx048-4",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "191.194.184.236",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 24,
+      "memory_usage": 25,
+      "disk_usage": 98,
+      "alarms": [],
+      "created_at": "2023-07-29T04:12:07.563Z",
+      "last_check": "2025-09-03T08:13:39.137Z"
+    },
+    {
+      "id": "res_5",
+      "key": "res_5",
+      "name": "server-z7a4m-5",
+      "type": "server",
+      "status": "critical",
+      "ip_address": "167.28.133.214",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "devops",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 27,
+      "memory_usage": 87,
+      "disk_usage": 5,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "server critical alert"
+        }
+      ],
+      "created_at": "2023-03-22T05:49:28.404Z",
+      "last_check": "2025-09-14T20:25:49.185Z"
+    },
+    {
+      "id": "res_6",
+      "key": "res_6",
+      "name": "cache-yq7bk-6",
+      "type": "cache",
+      "status": "critical",
+      "ip_address": "246.46.9.10",
+      "location": "us-west-2",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 33,
+      "memory_usage": 70,
+      "disk_usage": 8,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "cache critical alert"
+        }
+      ],
+      "created_at": "2024-12-20T13:23:38.165Z",
+      "last_check": "2025-09-06T21:56:46.328Z"
+    },
+    {
+      "id": "res_7",
+      "key": "res_7",
+      "name": "gateway-3a2r3-7",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "222.253.30.4",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 20,
+      "memory_usage": 39,
+      "disk_usage": 36,
+      "alarms": [],
+      "created_at": "2025-06-03T10:23:38.926Z",
+      "last_check": "2025-09-03T08:13:33.238Z"
+    },
+    {
+      "id": "res_8",
+      "key": "res_8",
+      "name": "container-rjp09-8",
+      "type": "container",
+      "status": "healthy",
+      "ip_address": "245.58.125.53",
+      "location": "us-west-2",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 42,
+      "memory_usage": 86,
+      "disk_usage": 46,
+      "alarms": [],
+      "created_at": "2024-02-05T07:00:52.415Z",
+      "last_check": "2025-09-01T18:13:56.218Z"
+    },
+    {
+      "id": "res_9",
+      "key": "res_9",
+      "name": "database-s2c0s-9",
+      "type": "database",
+      "status": "healthy",
+      "ip_address": "78.111.226.50",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 42,
+      "memory_usage": 74,
+      "disk_usage": 45,
+      "alarms": [],
+      "created_at": "2023-03-17T15:32:03.069Z",
+      "last_check": "2025-09-14T06:39:28.122Z"
+    },
+    {
+      "id": "res_10",
+      "key": "res_10",
+      "name": "server-cmxyc-10",
+      "type": "server",
+      "status": "critical",
+      "ip_address": "55.98.102.24",
+      "location": "eu-central-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 31,
+      "memory_usage": 51,
+      "disk_usage": 31,
+      "alarms": [],
+      "created_at": "2023-04-21T23:38:47.660Z",
+      "last_check": "2025-09-10T12:18:30.036Z"
+    },
+    {
+      "id": "res_11",
+      "key": "res_11",
+      "name": "gateway-6q7fm-11",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "141.176.154.104",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 40,
+      "memory_usage": 87,
+      "disk_usage": 73,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "gateway critical alert"
+        }
+      ],
+      "created_at": "2024-09-20T06:23:44.110Z",
+      "last_check": "2025-09-03T19:04:10.705Z"
+    },
+    {
+      "id": "res_12",
+      "key": "res_12",
+      "name": "gateway-dhtde-12",
+      "type": "gateway",
+      "status": "warning",
+      "ip_address": "20.212.6.193",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 79,
+      "memory_usage": 83,
+      "disk_usage": 99,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "gateway warning alert"
+        }
+      ],
+      "created_at": "2023-01-02T22:48:48.394Z",
+      "last_check": "2025-09-10T08:19:14.134Z"
+    },
+    {
+      "id": "res_13",
+      "key": "res_13",
+      "name": "gateway-69nko-13",
+      "type": "gateway",
+      "status": "warning",
+      "ip_address": "174.29.213.97",
+      "location": "us-west-2",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 48,
+      "memory_usage": 20,
+      "disk_usage": 40,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "gateway warning alert"
+        }
+      ],
+      "created_at": "2024-08-23T17:26:51.022Z",
+      "last_check": "2025-09-04T00:34:51.538Z"
+    },
+    {
+      "id": "res_14",
+      "key": "res_14",
+      "name": "database-17ilg-14",
+      "type": "database",
+      "status": "healthy",
+      "ip_address": "158.97.105.42",
+      "location": "us-west-2",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 28,
+      "memory_usage": 64,
+      "disk_usage": 24,
+      "alarms": [],
+      "created_at": "2024-06-23T16:48:21.328Z",
+      "last_check": "2025-09-02T13:42:14.944Z"
+    },
+    {
+      "id": "res_15",
+      "key": "res_15",
+      "name": "database-3t5zg-15",
+      "type": "database",
+      "status": "warning",
+      "ip_address": "151.165.210.202",
+      "location": "us-east-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 93,
+      "memory_usage": 78,
+      "disk_usage": 31,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "database warning alert"
+        }
+      ],
+      "created_at": "2023-09-14T10:47:46.075Z",
+      "last_check": "2025-09-15T12:15:48.774Z"
+    },
+    {
+      "id": "res_16",
+      "key": "res_16",
+      "name": "server-am86r-16",
+      "type": "server",
+      "status": "healthy",
+      "ip_address": "81.119.252.23",
+      "location": "us-west-2",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 21,
+      "memory_usage": 58,
+      "disk_usage": 28,
+      "alarms": [],
+      "created_at": "2023-04-19T00:42:26.347Z",
+      "last_check": "2025-09-12T10:17:24.322Z"
+    },
+    {
+      "id": "res_17",
+      "key": "res_17",
+      "name": "database-j94yr-17",
+      "type": "database",
+      "status": "healthy",
+      "ip_address": "244.104.225.236",
+      "location": "us-east-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 78,
+      "memory_usage": 63,
+      "disk_usage": 85,
+      "alarms": [],
+      "created_at": "2025-07-02T23:49:47.476Z",
+      "last_check": "2025-09-17T02:12:26.326Z"
+    },
+    {
+      "id": "res_18",
+      "key": "res_18",
+      "name": "cache-nh7qh-18",
+      "type": "cache",
+      "status": "healthy",
+      "ip_address": "141.23.65.185",
+      "location": "us-east-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 94,
+      "memory_usage": 55,
+      "disk_usage": 32,
+      "alarms": [],
+      "created_at": "2023-06-07T18:35:51.354Z",
+      "last_check": "2025-09-16T06:35:41.143Z"
+    },
+    {
+      "id": "res_19",
+      "key": "res_19",
+      "name": "container-838h1-19",
+      "type": "container",
+      "status": "healthy",
+      "ip_address": "223.62.212.46",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 72,
+      "memory_usage": 49,
+      "disk_usage": 70,
+      "alarms": [],
+      "created_at": "2025-06-21T12:58:55.710Z",
+      "last_check": "2025-09-05T13:25:40.342Z"
+    },
+    {
+      "id": "res_20",
+      "key": "res_20",
+      "name": "server-jza2o-20",
+      "type": "server",
+      "status": "healthy",
+      "ip_address": "71.13.15.61",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 23,
+      "memory_usage": 28,
+      "disk_usage": 12,
+      "alarms": [],
+      "created_at": "2024-06-08T19:39:36.133Z",
+      "last_check": "2025-09-08T19:40:47.893Z"
+    },
+    {
+      "id": "res_21",
+      "key": "res_21",
+      "name": "cache-sexqc-21",
+      "type": "cache",
+      "status": "critical",
+      "ip_address": "191.173.223.156",
+      "location": "us-west-2",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 69,
+      "memory_usage": 74,
+      "disk_usage": 52,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "cache critical alert"
+        }
+      ],
+      "created_at": "2023-03-27T06:19:29.339Z",
+      "last_check": "2025-09-13T04:43:19.265Z"
+    },
+    {
+      "id": "res_22",
+      "key": "res_22",
+      "name": "cache-4dkhd-22",
+      "type": "cache",
+      "status": "critical",
+      "ip_address": "2.251.115.69",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 77,
+      "memory_usage": 36,
+      "disk_usage": 27,
+      "alarms": [],
+      "created_at": "2023-03-09T10:15:58.396Z",
+      "last_check": "2025-09-05T05:32:40.359Z"
+    },
+    {
+      "id": "res_23",
+      "key": "res_23",
+      "name": "database-gxj31-23",
+      "type": "database",
+      "status": "healthy",
+      "ip_address": "168.176.223.198",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 62,
+      "memory_usage": 78,
+      "disk_usage": 47,
+      "alarms": [],
+      "created_at": "2024-11-09T21:10:37.973Z",
+      "last_check": "2025-09-06T22:17:20.927Z"
+    },
+    {
+      "id": "res_24",
+      "key": "res_24",
+      "name": "server-u7ezi-24",
+      "type": "server",
+      "status": "healthy",
+      "ip_address": "115.199.139.204",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 28,
+      "memory_usage": 56,
+      "disk_usage": 33,
+      "alarms": [],
+      "created_at": "2024-10-09T22:47:03.122Z",
+      "last_check": "2025-09-01T23:48:26.478Z"
+    },
+    {
+      "id": "res_25",
+      "key": "res_25",
+      "name": "server-5ykd7-25",
+      "type": "server",
+      "status": "critical",
+      "ip_address": "13.113.24.153",
+      "location": "us-west-2",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 94,
+      "memory_usage": 56,
+      "disk_usage": 63,
+      "alarms": [],
+      "created_at": "2024-04-09T21:04:58.382Z",
+      "last_check": "2025-09-16T09:35:15.312Z"
+    },
+    {
+      "id": "res_26",
+      "key": "res_26",
+      "name": "database-3itbd-26",
+      "type": "database",
+      "status": "healthy",
+      "ip_address": "182.169.228.6",
+      "location": "us-east-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 76,
+      "memory_usage": 39,
+      "disk_usage": 5,
+      "alarms": [],
+      "created_at": "2025-01-31T02:06:58.810Z",
+      "last_check": "2025-09-03T14:17:05.805Z"
+    },
+    {
+      "id": "res_27",
+      "key": "res_27",
+      "name": "gateway-frkii-27",
+      "type": "gateway",
+      "status": "warning",
+      "ip_address": "226.66.19.118",
+      "location": "eu-central-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 52,
+      "memory_usage": 74,
+      "disk_usage": 22,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "gateway warning alert"
+        }
+      ],
+      "created_at": "2024-09-10T03:51:35.015Z",
+      "last_check": "2025-09-06T20:36:38.825Z"
+    },
+    {
+      "id": "res_28",
+      "key": "res_28",
+      "name": "database-6erng-28",
+      "type": "database",
+      "status": "critical",
+      "ip_address": "247.36.227.246",
+      "location": "eu-central-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 39,
+      "memory_usage": 36,
+      "disk_usage": 26,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "database critical alert"
+        }
+      ],
+      "created_at": "2025-09-15T17:21:56.870Z",
+      "last_check": "2025-09-06T14:46:43.845Z"
+    },
+    {
+      "id": "res_29",
+      "key": "res_29",
+      "name": "gateway-3l8o8-29",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "42.145.81.68",
+      "location": "us-west-2",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 30,
+      "memory_usage": 88,
+      "disk_usage": 76,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "gateway critical alert"
+        }
+      ],
+      "created_at": "2023-07-30T07:07:52.627Z",
+      "last_check": "2025-09-02T13:19:31.334Z"
+    },
+    {
+      "id": "res_30",
+      "key": "res_30",
+      "name": "cache-vr35l-30",
+      "type": "cache",
+      "status": "critical",
+      "ip_address": "133.111.43.176",
+      "location": "us-east-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 82,
+      "memory_usage": 33,
+      "disk_usage": 56,
+      "alarms": [],
+      "created_at": "2024-11-04T04:00:22.523Z",
+      "last_check": "2025-09-03T19:30:33.207Z"
+    },
+    {
+      "id": "res_31",
+      "key": "res_31",
+      "name": "container-ke84m-31",
+      "type": "container",
+      "status": "warning",
+      "ip_address": "32.247.212.31",
+      "location": "us-west-2",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 50,
+      "memory_usage": 88,
+      "disk_usage": 50,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "container warning alert"
+        }
+      ],
+      "created_at": "2024-04-03T04:48:05.403Z",
+      "last_check": "2025-09-05T15:25:29.877Z"
+    },
+    {
+      "id": "res_32",
+      "key": "res_32",
+      "name": "database-m24my-32",
+      "type": "database",
+      "status": "warning",
+      "ip_address": "34.181.32.146",
+      "location": "us-east-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 52,
+      "memory_usage": 30,
+      "disk_usage": 79,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "database warning alert"
+        }
+      ],
+      "created_at": "2023-11-26T05:14:48.047Z",
+      "last_check": "2025-09-08T21:39:25.910Z"
+    },
+    {
+      "id": "res_33",
+      "key": "res_33",
+      "name": "cache-1iwur-33",
+      "type": "cache",
+      "status": "healthy",
+      "ip_address": "177.148.124.22",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 82,
+      "memory_usage": 52,
+      "disk_usage": 77,
+      "alarms": [],
+      "created_at": "2025-05-03T15:56:21.892Z",
+      "last_check": "2025-09-01T01:17:07.741Z"
+    },
+    {
+      "id": "res_34",
+      "key": "res_34",
+      "name": "gateway-v0knl-34",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "246.72.142.2",
+      "location": "us-east-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 63,
+      "memory_usage": 47,
+      "disk_usage": 12,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "gateway critical alert"
+        }
+      ],
+      "created_at": "2025-08-18T03:49:42.508Z",
+      "last_check": "2025-09-06T01:07:36.484Z"
+    },
+    {
+      "id": "res_35",
+      "key": "res_35",
+      "name": "database-ybaop-35",
+      "type": "database",
+      "status": "warning",
+      "ip_address": "111.27.230.206",
+      "location": "us-west-2",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 86,
+      "memory_usage": 51,
+      "disk_usage": 51,
+      "alarms": [],
+      "created_at": "2023-08-16T04:23:36.959Z",
+      "last_check": "2025-09-03T03:49:08.789Z"
+    },
+    {
+      "id": "res_36",
+      "key": "res_36",
+      "name": "server-faji0-36",
+      "type": "server",
+      "status": "healthy",
+      "ip_address": "163.141.74.161",
+      "location": "eu-central-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "devops",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 48,
+      "memory_usage": 42,
+      "disk_usage": 49,
+      "alarms": [],
+      "created_at": "2023-02-12T21:12:52.239Z",
+      "last_check": "2025-09-05T14:55:59.916Z"
+    },
+    {
+      "id": "res_37",
+      "key": "res_37",
+      "name": "container-tbp3b-37",
+      "type": "container",
+      "status": "critical",
+      "ip_address": "59.234.39.191",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 30,
+      "memory_usage": 94,
+      "disk_usage": 98,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "container critical alert"
+        }
+      ],
+      "created_at": "2024-02-19T03:28:27.927Z",
+      "last_check": "2025-09-06T15:09:58.855Z"
+    },
+    {
+      "id": "res_38",
+      "key": "res_38",
+      "name": "server-6nk12-38",
+      "type": "server",
+      "status": "critical",
+      "ip_address": "223.126.244.102",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 43,
+      "memory_usage": 26,
+      "disk_usage": 97,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "server critical alert"
+        }
+      ],
+      "created_at": "2025-04-19T10:09:54.506Z",
+      "last_check": "2025-09-06T05:00:19.652Z"
+    },
+    {
+      "id": "res_39",
+      "key": "res_39",
+      "name": "gateway-dyxcw-39",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "147.15.169.32",
+      "location": "us-east-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 50,
+      "memory_usage": 73,
+      "disk_usage": 14,
+      "alarms": [],
+      "created_at": "2023-01-22T06:14:47.948Z",
+      "last_check": "2025-09-15T07:09:00.524Z"
+    },
+    {
+      "id": "res_40",
+      "key": "res_40",
+      "name": "gateway-pz6ji-40",
+      "type": "gateway",
+      "status": "warning",
+      "ip_address": "250.191.218.111",
+      "location": "eu-central-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 78,
+      "memory_usage": 38,
+      "disk_usage": 32,
+      "alarms": [],
+      "created_at": "2025-01-19T11:42:34.528Z",
+      "last_check": "2025-09-01T14:00:07.812Z"
+    },
+    {
+      "id": "res_41",
+      "key": "res_41",
+      "name": "gateway-mmno0-41",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "19.168.134.221",
+      "location": "us-west-2",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 25,
+      "memory_usage": 41,
+      "disk_usage": 8,
+      "alarms": [],
+      "created_at": "2024-08-22T04:37:16.270Z",
+      "last_check": "2025-09-17T07:49:51.349Z"
+    },
+    {
+      "id": "res_42",
+      "key": "res_42",
+      "name": "server-dp6ct-42",
+      "type": "server",
+      "status": "critical",
+      "ip_address": "207.73.52.208",
+      "location": "eu-central-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 82,
+      "memory_usage": 77,
+      "disk_usage": 51,
+      "alarms": [],
+      "created_at": "2024-10-19T15:05:10.526Z",
+      "last_check": "2025-09-18T12:44:03.903Z"
+    },
+    {
+      "id": "res_43",
+      "key": "res_43",
+      "name": "container-1t54g-43",
+      "type": "container",
+      "status": "critical",
+      "ip_address": "231.61.246.240",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 45,
+      "memory_usage": 71,
+      "disk_usage": 81,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "container critical alert"
+        }
+      ],
+      "created_at": "2024-07-24T13:08:50.562Z",
+      "last_check": "2025-09-17T17:53:40.386Z"
+    },
+    {
+      "id": "res_44",
+      "key": "res_44",
+      "name": "gateway-nv5g8-44",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "60.137.247.209",
+      "location": "eu-central-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 59,
+      "memory_usage": 63,
+      "disk_usage": 78,
+      "alarms": [],
+      "created_at": "2025-05-03T10:14:32.875Z",
+      "last_check": "2025-09-01T06:09:39.458Z"
+    },
+    {
+      "id": "res_45",
+      "key": "res_45",
+      "name": "database-d7gmi-45",
+      "type": "database",
+      "status": "warning",
+      "ip_address": "250.78.1.44",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 19,
+      "memory_usage": 36,
+      "disk_usage": 71,
+      "alarms": [],
+      "created_at": "2024-08-17T20:49:57.821Z",
+      "last_check": "2025-09-04T05:31:13.131Z"
+    },
+    {
+      "id": "res_46",
+      "key": "res_46",
+      "name": "database-x2s7y-46",
+      "type": "database",
+      "status": "warning",
+      "ip_address": "58.154.232.12",
+      "location": "us-west-2",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 35,
+      "memory_usage": 70,
+      "disk_usage": 71,
+      "alarms": [],
+      "created_at": "2025-07-16T11:24:59.956Z",
+      "last_check": "2025-09-10T23:09:42.782Z"
+    },
+    {
+      "id": "res_47",
+      "key": "res_47",
+      "name": "cache-xwlc4-47",
+      "type": "cache",
+      "status": "warning",
+      "ip_address": "91.26.109.138",
+      "location": "eu-central-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 58,
+      "memory_usage": 40,
+      "disk_usage": 32,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "cache warning alert"
+        }
+      ],
+      "created_at": "2024-09-18T10:24:10.219Z",
+      "last_check": "2025-09-06T03:06:29.270Z"
+    },
+    {
+      "id": "res_48",
+      "key": "res_48",
+      "name": "gateway-03wb0-48",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "210.30.134.17",
+      "location": "us-east-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "devops",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 45,
+      "memory_usage": 54,
+      "disk_usage": 21,
+      "alarms": [],
+      "created_at": "2024-09-26T10:54:25.367Z",
+      "last_check": "2025-09-11T19:10:13.141Z"
+    },
+    {
+      "id": "res_49",
+      "key": "res_49",
+      "name": "database-9aq92-49",
+      "type": "database",
+      "status": "critical",
+      "ip_address": "242.24.27.25",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 57,
+      "memory_usage": 61,
+      "disk_usage": 90,
+      "alarms": [],
+      "created_at": "2025-09-02T08:49:10.090Z",
+      "last_check": "2025-09-16T02:57:59.600Z"
+    },
+    {
+      "id": "res_50",
+      "key": "res_50",
+      "name": "gateway-7apra-50",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "168.119.210.75",
+      "location": "us-east-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 38,
+      "memory_usage": 80,
+      "disk_usage": 92,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "gateway critical alert"
+        }
+      ],
+      "created_at": "2023-06-01T17:44:31.837Z",
+      "last_check": "2025-09-15T05:05:09.308Z"
+    },
+    {
+      "id": "res_51",
+      "key": "res_51",
+      "name": "database-hsfk7-51",
+      "type": "database",
+      "status": "warning",
+      "ip_address": "4.127.39.39",
+      "location": "us-east-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 75,
+      "memory_usage": 69,
+      "disk_usage": 59,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "database warning alert"
+        }
+      ],
+      "created_at": "2024-11-08T10:52:31.105Z",
+      "last_check": "2025-09-03T21:42:03.962Z"
+    },
+    {
+      "id": "res_52",
+      "key": "res_52",
+      "name": "gateway-x791o-52",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "79.130.149.112",
+      "location": "us-east-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 68,
+      "memory_usage": 40,
+      "disk_usage": 59,
+      "alarms": [],
+      "created_at": "2024-02-22T14:11:20.027Z",
+      "last_check": "2025-09-18T04:48:46.910Z"
+    },
+    {
+      "id": "res_53",
+      "key": "res_53",
+      "name": "server-kwx5y-53",
+      "type": "server",
+      "status": "warning",
+      "ip_address": "14.201.29.91",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 82,
+      "memory_usage": 40,
+      "disk_usage": 35,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "server warning alert"
+        }
+      ],
+      "created_at": "2023-04-30T23:09:42.684Z",
+      "last_check": "2025-09-15T22:55:21.510Z"
+    },
+    {
+      "id": "res_54",
+      "key": "res_54",
+      "name": "container-onk4x-54",
+      "type": "container",
+      "status": "warning",
+      "ip_address": "77.7.244.34",
+      "location": "us-east-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 32,
+      "memory_usage": 76,
+      "disk_usage": 57,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "container warning alert"
+        }
+      ],
+      "created_at": "2023-07-15T18:26:29.485Z",
+      "last_check": "2025-09-01T19:11:41.236Z"
+    },
+    {
+      "id": "res_55",
+      "key": "res_55",
+      "name": "container-d8ry0-55",
+      "type": "container",
+      "status": "healthy",
+      "ip_address": "118.46.196.215",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 89,
+      "memory_usage": 79,
+      "disk_usage": 51,
+      "alarms": [],
+      "created_at": "2024-05-22T09:16:51.516Z",
+      "last_check": "2025-09-16T23:09:35.498Z"
+    },
+    {
+      "id": "res_56",
+      "key": "res_56",
+      "name": "gateway-l5ji1-56",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "195.26.20.252",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 72,
+      "memory_usage": 36,
+      "disk_usage": 30,
+      "alarms": [],
+      "created_at": "2023-12-22T06:01:26.581Z",
+      "last_check": "2025-09-13T04:26:18.716Z"
+    },
+    {
+      "id": "res_57",
+      "key": "res_57",
+      "name": "container-swq59-57",
+      "type": "container",
+      "status": "healthy",
+      "ip_address": "130.241.104.82",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 77,
+      "memory_usage": 43,
+      "disk_usage": 43,
+      "alarms": [],
+      "created_at": "2023-07-18T09:20:29.233Z",
+      "last_check": "2025-09-11T01:41:33.378Z"
+    },
+    {
+      "id": "res_58",
+      "key": "res_58",
+      "name": "cache-5en5y-58",
+      "type": "cache",
+      "status": "warning",
+      "ip_address": "114.142.206.179",
+      "location": "us-east-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 73,
+      "memory_usage": 29,
+      "disk_usage": 5,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "cache warning alert"
+        }
+      ],
+      "created_at": "2023-11-19T06:51:19.547Z",
+      "last_check": "2025-09-12T12:28:15.241Z"
+    },
+    {
+      "id": "res_59",
+      "key": "res_59",
+      "name": "gateway-i1h0y-59",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "230.200.220.250",
+      "location": "us-east-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "devops",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 84,
+      "memory_usage": 94,
+      "disk_usage": 62,
+      "alarms": [],
+      "created_at": "2024-09-22T04:16:33.132Z",
+      "last_check": "2025-09-12T23:23:33.176Z"
+    },
+    {
+      "id": "res_60",
+      "key": "res_60",
+      "name": "database-s6ocp-60",
+      "type": "database",
+      "status": "warning",
+      "ip_address": "211.82.226.82",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 36,
+      "memory_usage": 37,
+      "disk_usage": 96,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "database warning alert"
+        }
+      ],
+      "created_at": "2025-04-17T04:41:59.891Z",
+      "last_check": "2025-09-15T00:36:35.020Z"
+    },
+    {
+      "id": "res_61",
+      "key": "res_61",
+      "name": "container-s4l13-61",
+      "type": "container",
+      "status": "critical",
+      "ip_address": "197.87.38.216",
+      "location": "us-east-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 53,
+      "memory_usage": 37,
+      "disk_usage": 21,
+      "alarms": [],
+      "created_at": "2023-09-22T13:25:49.889Z",
+      "last_check": "2025-09-03T13:44:26.588Z"
+    },
+    {
+      "id": "res_62",
+      "key": "res_62",
+      "name": "cache-mea8m-62",
+      "type": "cache",
+      "status": "healthy",
+      "ip_address": "25.58.112.16",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 68,
+      "memory_usage": 73,
+      "disk_usage": 51,
+      "alarms": [],
+      "created_at": "2024-03-15T09:26:37.651Z",
+      "last_check": "2025-09-16T09:07:53.011Z"
+    },
+    {
+      "id": "res_63",
+      "key": "res_63",
+      "name": "container-heyod-63",
+      "type": "container",
+      "status": "critical",
+      "ip_address": "39.34.239.233",
+      "location": "us-east-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 92,
+      "memory_usage": 24,
+      "disk_usage": 31,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "container critical alert"
+        }
+      ],
+      "created_at": "2024-12-20T14:09:07.531Z",
+      "last_check": "2025-09-16T00:30:28.420Z"
+    },
+    {
+      "id": "res_64",
+      "key": "res_64",
+      "name": "gateway-nd1v7-64",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "118.217.166.49",
+      "location": "us-east-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "devops",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 83,
+      "memory_usage": 73,
+      "disk_usage": 90,
+      "alarms": [],
+      "created_at": "2023-04-08T01:05:33.884Z",
+      "last_check": "2025-09-01T01:10:20.867Z"
+    },
+    {
+      "id": "res_65",
+      "key": "res_65",
+      "name": "cache-29xaf-65",
+      "type": "cache",
+      "status": "critical",
+      "ip_address": "10.129.97.237",
+      "location": "eu-central-1",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 65,
+      "memory_usage": 69,
+      "disk_usage": 54,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "cache critical alert"
+        }
+      ],
+      "created_at": "2023-05-20T02:59:35.431Z",
+      "last_check": "2025-09-13T12:47:31.301Z"
+    },
+    {
+      "id": "res_66",
+      "key": "res_66",
+      "name": "cache-bmgr6-66",
+      "type": "cache",
+      "status": "warning",
+      "ip_address": "123.86.217.179",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 62,
+      "memory_usage": 67,
+      "disk_usage": 81,
+      "alarms": [],
+      "created_at": "2024-11-30T07:01:06.467Z",
+      "last_check": "2025-09-17T04:55:12.596Z"
+    },
+    {
+      "id": "res_67",
+      "key": "res_67",
+      "name": "cache-ydep1-67",
+      "type": "cache",
+      "status": "healthy",
+      "ip_address": "116.172.161.102",
+      "location": "us-west-2",
+      "groups": [
+        "g_1"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 36,
+      "memory_usage": 77,
+      "disk_usage": 35,
+      "alarms": [],
+      "created_at": "2023-03-15T21:14:48.177Z",
+      "last_check": "2025-09-12T11:32:49.309Z"
+    },
+    {
+      "id": "res_68",
+      "key": "res_68",
+      "name": "gateway-sdsgu-68",
+      "type": "gateway",
+      "status": "healthy",
+      "ip_address": "106.59.202.44",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "frontend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 58,
+      "memory_usage": 78,
+      "disk_usage": 23,
+      "alarms": [],
+      "created_at": "2025-01-01T12:28:19.433Z",
+      "last_check": "2025-09-03T04:50:28.929Z"
+    },
+    {
+      "id": "res_69",
+      "key": "res_69",
+      "name": "container-ql0ap-69",
+      "type": "container",
+      "status": "healthy",
+      "ip_address": "33.223.204.75",
+      "location": "us-west-2",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "devops",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 85,
+      "memory_usage": 84,
+      "disk_usage": 67,
+      "alarms": [],
+      "created_at": "2024-10-30T21:21:22.568Z",
+      "last_check": "2025-09-04T15:48:43.502Z"
+    },
+    {
+      "id": "res_70",
+      "key": "res_70",
+      "name": "gateway-rtk6c-70",
+      "type": "gateway",
+      "status": "critical",
+      "ip_address": "84.147.171.11",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "frontend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 44,
+      "memory_usage": 30,
+      "disk_usage": 86,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "gateway critical alert"
+        }
+      ],
+      "created_at": "2024-11-05T17:40:04.641Z",
+      "last_check": "2025-09-18T10:43:14.363Z"
+    },
+    {
+      "id": "res_71",
+      "key": "res_71",
+      "name": "container-bg2dd-71",
+      "type": "container",
+      "status": "critical",
+      "ip_address": "155.212.223.61",
+      "location": "us-east-1",
+      "groups": [
+        "g_3"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 18,
+      "memory_usage": 90,
+      "disk_usage": 54,
+      "alarms": [
+        {
+          "severity": "critical",
+          "summary": "container critical alert"
+        }
+      ],
+      "created_at": "2025-08-28T09:22:51.903Z",
+      "last_check": "2025-09-09T05:00:56.501Z"
+    },
+    {
+      "id": "res_72",
+      "key": "res_72",
+      "name": "gateway-vhmlw-72",
+      "type": "gateway",
+      "status": "warning",
+      "ip_address": "198.126.162.246",
+      "location": "us-west-2",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "ubuntu-22.04",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 88,
+      "memory_usage": 69,
+      "disk_usage": 65,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "gateway warning alert"
+        }
+      ],
+      "created_at": "2023-10-28T08:50:30.879Z",
+      "last_check": "2025-09-16T22:49:45.019Z"
+    },
+    {
+      "id": "res_73",
+      "key": "res_73",
+      "name": "cache-1cr71-73",
+      "type": "cache",
+      "status": "warning",
+      "ip_address": "26.205.161.254",
+      "location": "us-east-1",
+      "groups": [
+        "g_4"
+      ],
+      "tags": {
+        "environment": "staging",
+        "team": "backend",
+        "os": "debian-11",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 71,
+      "memory_usage": 78,
+      "disk_usage": 89,
+      "alarms": [
+        {
+          "severity": "warning",
+          "summary": "cache warning alert"
+        }
+      ],
+      "created_at": "2025-06-10T02:01:15.368Z",
+      "last_check": "2025-09-17T06:00:58.474Z"
+    },
+    {
+      "id": "res_74",
+      "key": "res_74",
+      "name": "cache-ozpr4-74",
+      "type": "cache",
+      "status": "critical",
+      "ip_address": "112.80.71.115",
+      "location": "eu-central-1",
+      "groups": [
+        "g_5"
+      ],
+      "tags": {
+        "environment": "production",
+        "team": "backend",
+        "os": "centos-9",
+        "data-center": "dc-02"
+      },
+      "cpu_usage": 90,
+      "memory_usage": 68,
+      "disk_usage": 79,
+      "alarms": [],
+      "created_at": "2023-02-08T07:03:09.924Z",
+      "last_check": "2025-09-11T17:35:51.661Z"
+    },
+    {
+      "id": "res_75",
+      "key": "res_75",
+      "name": "container-2pt71-75",
+      "type": "container",
+      "status": "warning",
+      "ip_address": "89.213.61.135",
+      "location": "ap-northeast-1",
+      "groups": [
+        "g_2"
+      ],
+      "tags": {
+        "environment": "development",
+        "team": "frontend",
+        "os": "debian-11",
+        "data-center": "dc-01"
+      },
+      "cpu_usage": 92,
+      "memory_usage": 26,
+      "disk_usage": 94,
+      "alarms": [],
+      "created_at": "2025-02-25T20:37:36.533Z",
+      "last_check": "2025-09-08T03:04:05.914Z"
+    }
+  ],
+  "groups": [
+    {
+      "id": "g_1",
+      "key": "g_1",
+      "name": "Resource Group 1",
+      "description": "Description for group 1",
+      "members": [
+        "res_1",
+        "res_11",
+        "res_21",
+        "res_31",
+        "res_40",
+        "res_44",
+        "res_46",
+        "res_49",
+        "res_50",
+        "res_52",
+        "res_53",
+        "res_54",
+        "res_64",
+        "res_65",
+        "res_67"
+      ],
+      "responsibleTeam": "team_4"
+    },
+    {
+      "id": "g_2",
+      "key": "g_2",
+      "name": "Resource Group 2",
+      "description": "Description for group 2",
+      "members": [
+        "res_3",
+        "res_5",
+        "res_6",
+        "res_8",
+        "res_10",
+        "res_15",
+        "res_16",
+        "res_18",
+        "res_22",
+        "res_27",
+        "res_42",
+        "res_57",
+        "res_60",
+        "res_69",
+        "res_75"
+      ],
+      "responsibleTeam": "team_3"
+    },
+    {
+      "id": "g_3",
+      "key": "g_3",
+      "name": "Resource Group 3",
+      "description": "Description for group 3",
+      "members": [
+        "res_2",
+        "res_17",
+        "res_20",
+        "res_26",
+        "res_30",
+        "res_34",
+        "res_36",
+        "res_48",
+        "res_55",
+        "res_56",
+        "res_59",
+        "res_71"
+      ],
+      "responsibleTeam": "team_8"
+    },
+    {
+      "id": "g_4",
+      "key": "g_4",
+      "name": "Resource Group 4",
+      "description": "Description for group 4",
+      "members": [
+        "res_7",
+        "res_14",
+        "res_25",
+        "res_28",
+        "res_38",
+        "res_39",
+        "res_43",
+        "res_47",
+        "res_61",
+        "res_66",
+        "res_70",
+        "res_73"
+      ],
+      "responsibleTeam": "team_2"
+    },
+    {
+      "id": "g_5",
+      "key": "g_5",
+      "name": "Resource Group 5",
+      "description": "Description for group 5",
+      "members": [
+        "res_4",
+        "res_9",
+        "res_12",
+        "res_13",
+        "res_19",
+        "res_23",
+        "res_24",
+        "res_29",
+        "res_32",
+        "res_33",
+        "res_35",
+        "res_37",
+        "res_41",
+        "res_45",
+        "res_51",
+        "res_58",
+        "res_62",
+        "res_63",
+        "res_68",
+        "res_72",
+        "res_74"
+      ],
+      "responsibleTeam": "team_3"
     }
   ],
   "events": [
     {
       "id": "evt_1",
-      "summary": "CPU 使用率過高 on db-mysql-prod-01",
-      "severity": "CRITICAL",
-      "status": "FIRING",
-      "source": "Prometheus",
-      "triggered_at": "2025-09-18T09:00:00Z",
-      "assignee": null,
-      "resource": {
-        "id": "res_1",
-        "name": "db-mysql-prod-01",
-        "type": "DATABASE"
-      },
-      "rule": {
-        "id": "rule_cpu_high",
-        "name": "高 CPU 使用率"
-      },
-      "trigger_details": {
-        "threshold": "CPU > 90%",
-        "value": "92.5%"
-      },
-      "tags": [
-        { "key": "env", "value": "production", "color": "#f5222d" },
-        { "key": "service", "value": "user-database", "color": "#52c41a" }
-      ],
-      "quick_links": [
-        { "name": "資源儀表板", "url": "#" },
-        { "name": "相關日誌", "url": "#" }
-      ],
-      "available_actions": [
-        { "key": "acknowledge", "label": "確認 (Acknowledge)", "api_endpoint": "/api/v1/events/evt_1/status", "method": "PUT", "payload": { "status": "acknowledged" } },
-        { "key": "silence", "label": "建立靜音", "api_endpoint": "/api/v1/silence-rules", "method": "POST" }
-      ]
+      "key": "evt_1",
+      "summary": "5xx error rate on database-6erng-28",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-06T18:59:35.486Z",
+      "assignee": "user_2",
+      "resource_name": "database-6erng-28",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
     },
     {
       "id": "evt_2",
-      "summary": "API latency over 500ms on api-gateway-prod",
-      "severity": "WARNING",
-      "status": "ACKNOWLEDGED",
+      "key": "evt_2",
+      "summary": "5xx error rate on container-ql0ap-69",
+      "severity": "info",
       "source": "Grafana",
-      "triggered_at": "2025-09-18T08:30:00Z",
-      "acknowledged_at": "2025-09-18T08:35:00Z",
-      "assignee": {
-        "id": "usr_2",
-        "name": "John Doe"
-      },
-      "resource": {
-        "id": "res_3",
-        "name": "api-gateway-prod",
-        "type": "GATEWAY"
-      },
-      "rule": {
-        "id": "rule_api_latency",
-        "name": "API 延遲過高"
-      },
-      "trigger_details": {
-        "threshold": "P95 Latency > 500ms",
-        "value": "580ms"
-      },
-      "tags": [
-        { "key": "env", "value": "production", "color": "#f5222d" }
-      ],
-      "quick_links": [],
-      "available_actions": [
-        { "key": "resolve", "label": "解決 (Resolve)", "api_endpoint": "/api/v1/events/evt_2/status", "method": "PUT", "payload": { "status": "resolved" } }
-      ]
-    }
-  ],
-  "notification-history": [
-    {
-      "id": "nh_1",
-      "event_id": "evt_1",
-      "policy_id": "np_1",
-      "channel_name": "Slack: #sre-critical",
-      "recipient": "#sre-critical",
-      "status": "sent",
-      "error_message": null,
-      "sent_at": "2025-09-18T09:00:05Z",
-      "created_at": "2025-09-18T09:00:02Z"
+      "status": "new",
+      "created_at": "2025-09-16T17:06:38.807Z",
+      "assignee": "user_11",
+      "resource_name": "container-ql0ap-69",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
     },
     {
-      "id": "nh_2",
-      "event_id": "evt_2",
-      "policy_id": "np_2",
-      "channel_name": "Email: sre-team@example.com",
-      "recipient": "sre-team@example.com",
-      "status": "failed",
-      "error_message": "SMTP server connection timeout",
-      "sent_at": "2025-09-18T08:30:10Z",
-      "created_at": "2025-09-18T08:30:05Z"
+      "id": "evt_3",
+      "key": "evt_3",
+      "summary": "API latency high on gateway-03wb0-48",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-12T05:38:29.966Z",
+      "assignee": "user_4",
+      "resource_name": "gateway-03wb0-48",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_4",
+      "key": "evt_4",
+      "summary": "API latency high on gateway-dhtde-12",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-07T10:35:38.049Z",
+      "assignee": "user_12",
+      "resource_name": "gateway-dhtde-12",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_5",
+      "key": "evt_5",
+      "summary": "Memory low on container-tbp3b-37",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-12T07:28:15.876Z",
+      "assignee": "user_15",
+      "resource_name": "container-tbp3b-37",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_6",
+      "key": "evt_6",
+      "summary": "API latency high on server-jza2o-20",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-11T09:34:31.510Z",
+      "assignee": "user_13",
+      "resource_name": "server-jza2o-20",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_7",
+      "key": "evt_7",
+      "summary": "CPU high on server-6nk12-38",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-11T04:33:11.187Z",
+      "assignee": "user_3",
+      "resource_name": "server-6nk12-38",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_8",
+      "key": "evt_8",
+      "summary": "Disk space full on gateway-v0knl-34",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-06T22:38:32.376Z",
+      "assignee": "user_6",
+      "resource_name": "gateway-v0knl-34",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_9",
+      "key": "evt_9",
+      "summary": "API latency high on gateway-dhtde-12",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-11T20:31:14.737Z",
+      "assignee": "user_9",
+      "resource_name": "gateway-dhtde-12",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_10",
+      "key": "evt_10",
+      "summary": "Disk space full on cache-4dkhd-22",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-01T06:59:42.741Z",
+      "assignee": "user_2",
+      "resource_name": "cache-4dkhd-22",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_11",
+      "key": "evt_11",
+      "summary": "API latency high on server-6nk12-38",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-12T15:49:15.982Z",
+      "assignee": "user_11",
+      "resource_name": "server-6nk12-38",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_12",
+      "key": "evt_12",
+      "summary": "CPU high on gateway-vhmlw-72",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-17T05:02:16.416Z",
+      "assignee": "user_1",
+      "resource_name": "gateway-vhmlw-72",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_13",
+      "key": "evt_13",
+      "summary": "5xx error rate on gateway-nd1v7-64",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-12T01:50:31.259Z",
+      "assignee": "user_5",
+      "resource_name": "gateway-nd1v7-64",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_14",
+      "key": "evt_14",
+      "summary": "API latency high on container-ke84m-31",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-07T14:40:36.943Z",
+      "assignee": "user_2",
+      "resource_name": "container-ke84m-31",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_15",
+      "key": "evt_15",
+      "summary": "Disk space full on database-m24my-32",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-16T23:44:50.086Z",
+      "assignee": "user_2",
+      "resource_name": "database-m24my-32",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_16",
+      "key": "evt_16",
+      "summary": "Memory low on gateway-3a2r3-7",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-16T01:01:05.103Z",
+      "assignee": "user_11",
+      "resource_name": "gateway-3a2r3-7",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_17",
+      "key": "evt_17",
+      "summary": "5xx error rate on container-s4l13-61",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-18T16:19:14.051Z",
+      "assignee": "user_3",
+      "resource_name": "container-s4l13-61",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_18",
+      "key": "evt_18",
+      "summary": "Memory low on gateway-dhtde-12",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-18T14:52:40.525Z",
+      "assignee": "user_6",
+      "resource_name": "gateway-dhtde-12",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_19",
+      "key": "evt_19",
+      "summary": "Memory low on container-s4l13-61",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-14T19:01:19.255Z",
+      "assignee": "user_20",
+      "resource_name": "container-s4l13-61",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_20",
+      "key": "evt_20",
+      "summary": "Disk space full on gateway-dyxcw-39",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-12T08:28:53.347Z",
+      "assignee": "user_19",
+      "resource_name": "gateway-dyxcw-39",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_21",
+      "key": "evt_21",
+      "summary": "Memory low on gateway-sdsgu-68",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-10T17:00:02.245Z",
+      "assignee": "user_14",
+      "resource_name": "gateway-sdsgu-68",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_22",
+      "key": "evt_22",
+      "summary": "5xx error rate on gateway-6q7fm-11",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-16T12:28:39.369Z",
+      "assignee": "user_11",
+      "resource_name": "gateway-6q7fm-11",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_23",
+      "key": "evt_23",
+      "summary": "Memory low on container-2pt71-75",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-18T13:46:00.928Z",
+      "assignee": "user_10",
+      "resource_name": "container-2pt71-75",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_24",
+      "key": "evt_24",
+      "summary": "Memory low on cache-sexqc-21",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-16T14:11:54.549Z",
+      "assignee": "user_20",
+      "resource_name": "cache-sexqc-21",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_25",
+      "key": "evt_25",
+      "summary": "Disk space full on cache-mea8m-62",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "new",
+      "created_at": "2025-09-12T15:33:46.060Z",
+      "assignee": "user_15",
+      "resource_name": "cache-mea8m-62",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_26",
+      "key": "evt_26",
+      "summary": "API latency high on cache-29xaf-65",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "new",
+      "created_at": "2025-09-15T13:36:35.971Z",
+      "assignee": "user_1",
+      "resource_name": "cache-29xaf-65",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_27",
+      "key": "evt_27",
+      "summary": "API latency high on database-j94yr-17",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-05T17:36:05.088Z",
+      "assignee": "user_18",
+      "resource_name": "database-j94yr-17",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_28",
+      "key": "evt_28",
+      "summary": "CPU high on database-j94yr-17",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-10T06:32:59.963Z",
+      "assignee": "user_20",
+      "resource_name": "database-j94yr-17",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_29",
+      "key": "evt_29",
+      "summary": "API latency high on server-dp6ct-42",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-06T09:25:29.043Z",
+      "assignee": "user_9",
+      "resource_name": "server-dp6ct-42",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_30",
+      "key": "evt_30",
+      "summary": "API latency high on database-gxj31-23",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-03T21:31:45.772Z",
+      "assignee": "user_2",
+      "resource_name": "database-gxj31-23",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_31",
+      "key": "evt_31",
+      "summary": "API latency high on cache-5en5y-58",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-05T03:25:43.560Z",
+      "assignee": "user_8",
+      "resource_name": "cache-5en5y-58",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_32",
+      "key": "evt_32",
+      "summary": "5xx error rate on database-1cgr4-3",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-16T21:40:05.981Z",
+      "assignee": "user_13",
+      "resource_name": "database-1cgr4-3",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_33",
+      "key": "evt_33",
+      "summary": "API latency high on gateway-dyxcw-39",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-05T08:40:21.791Z",
+      "assignee": "user_19",
+      "resource_name": "gateway-dyxcw-39",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_34",
+      "key": "evt_34",
+      "summary": "Disk space full on gateway-rtk6c-70",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-18T09:24:06.130Z",
+      "assignee": "user_7",
+      "resource_name": "gateway-rtk6c-70",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_35",
+      "key": "evt_35",
+      "summary": "Disk space full on database-x2s7y-46",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-07T17:31:20.824Z",
+      "assignee": "user_13",
+      "resource_name": "database-x2s7y-46",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_36",
+      "key": "evt_36",
+      "summary": "API latency high on cache-nh7qh-18",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-18T13:30:42.858Z",
+      "assignee": "user_12",
+      "resource_name": "cache-nh7qh-18",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_37",
+      "key": "evt_37",
+      "summary": "Memory low on gateway-yx048-4",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-12T22:54:05.264Z",
+      "assignee": "user_18",
+      "resource_name": "gateway-yx048-4",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_38",
+      "key": "evt_38",
+      "summary": "API latency high on gateway-7apra-50",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-14T03:58:35.022Z",
+      "assignee": "user_18",
+      "resource_name": "gateway-7apra-50",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_39",
+      "key": "evt_39",
+      "summary": "Disk space full on server-dp6ct-42",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-02T00:11:45.755Z",
+      "assignee": "user_10",
+      "resource_name": "server-dp6ct-42",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_40",
+      "key": "evt_40",
+      "summary": "CPU high on database-gxj31-23",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-01T02:58:47.632Z",
+      "assignee": "user_13",
+      "resource_name": "database-gxj31-23",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_41",
+      "key": "evt_41",
+      "summary": "5xx error rate on database-ybaop-35",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-14T03:10:39.894Z",
+      "assignee": "user_4",
+      "resource_name": "database-ybaop-35",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_42",
+      "key": "evt_42",
+      "summary": "CPU high on database-ybaop-35",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-05T02:44:19.813Z",
+      "assignee": "user_11",
+      "resource_name": "database-ybaop-35",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_43",
+      "key": "evt_43",
+      "summary": "Disk space full on cache-4dkhd-22",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-04T19:59:03.622Z",
+      "assignee": "user_8",
+      "resource_name": "cache-4dkhd-22",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_44",
+      "key": "evt_44",
+      "summary": "Memory low on cache-yq7bk-6",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-17T15:46:41.783Z",
+      "assignee": "user_2",
+      "resource_name": "cache-yq7bk-6",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_45",
+      "key": "evt_45",
+      "summary": "Disk space full on gateway-frkii-27",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-15T07:23:19.545Z",
+      "assignee": "user_5",
+      "resource_name": "gateway-frkii-27",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_46",
+      "key": "evt_46",
+      "summary": "Memory low on server-u7ezi-24",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-01T11:55:54.453Z",
+      "assignee": "user_18",
+      "resource_name": "server-u7ezi-24",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_47",
+      "key": "evt_47",
+      "summary": "5xx error rate on server-z7a4m-5",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-02T04:10:10.539Z",
+      "assignee": "user_8",
+      "resource_name": "server-z7a4m-5",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_48",
+      "key": "evt_48",
+      "summary": "5xx error rate on cache-sexqc-21",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-06T23:44:25.136Z",
+      "assignee": "user_9",
+      "resource_name": "cache-sexqc-21",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_49",
+      "key": "evt_49",
+      "summary": "5xx error rate on container-ke84m-31",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-14T11:02:34.852Z",
+      "assignee": "user_3",
+      "resource_name": "container-ke84m-31",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_50",
+      "key": "evt_50",
+      "summary": "Disk space full on gateway-mmno0-41",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-02T16:19:48.860Z",
+      "assignee": "user_20",
+      "resource_name": "gateway-mmno0-41",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_51",
+      "key": "evt_51",
+      "summary": "Memory low on gateway-l5ji1-56",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-09T05:54:45.330Z",
+      "assignee": "user_7",
+      "resource_name": "gateway-l5ji1-56",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_52",
+      "key": "evt_52",
+      "summary": "API latency high on server-dp6ct-42",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-04T10:54:31.233Z",
+      "assignee": "user_19",
+      "resource_name": "server-dp6ct-42",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_53",
+      "key": "evt_53",
+      "summary": "Memory low on database-m24my-32",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-09T20:05:20.656Z",
+      "assignee": "user_12",
+      "resource_name": "database-m24my-32",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_54",
+      "key": "evt_54",
+      "summary": "API latency high on container-tbp3b-37",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-05T16:42:39.142Z",
+      "assignee": "user_10",
+      "resource_name": "container-tbp3b-37",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_55",
+      "key": "evt_55",
+      "summary": "API latency high on database-hsfk7-51",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-06T22:30:23.931Z",
+      "assignee": "user_11",
+      "resource_name": "database-hsfk7-51",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_56",
+      "key": "evt_56",
+      "summary": "Memory low on gateway-pz6ji-40",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-13T14:37:36.347Z",
+      "assignee": "user_7",
+      "resource_name": "gateway-pz6ji-40",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_57",
+      "key": "evt_57",
+      "summary": "Disk space full on cache-29xaf-65",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-05T07:03:03.067Z",
+      "assignee": "user_11",
+      "resource_name": "cache-29xaf-65",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_58",
+      "key": "evt_58",
+      "summary": "5xx error rate on gateway-dhtde-12",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-16T17:09:58.826Z",
+      "assignee": "user_4",
+      "resource_name": "gateway-dhtde-12",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_59",
+      "key": "evt_59",
+      "summary": "5xx error rate on database-17ilg-14",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-03T02:27:02.049Z",
+      "assignee": "user_5",
+      "resource_name": "database-17ilg-14",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_60",
+      "key": "evt_60",
+      "summary": "CPU high on container-d8ry0-55",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-11T02:28:37.173Z",
+      "assignee": null,
+      "resource_name": "container-d8ry0-55",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_61",
+      "key": "evt_61",
+      "summary": "CPU high on gateway-x791o-52",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-02T04:07:58.877Z",
+      "assignee": "user_5",
+      "resource_name": "gateway-x791o-52",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_62",
+      "key": "evt_62",
+      "summary": "Memory low on server-6nk12-38",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-02T12:58:53.936Z",
+      "assignee": "user_1",
+      "resource_name": "server-6nk12-38",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_63",
+      "key": "evt_63",
+      "summary": "5xx error rate on container-tbp3b-37",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-16T12:58:44.941Z",
+      "assignee": "user_18",
+      "resource_name": "container-tbp3b-37",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_64",
+      "key": "evt_64",
+      "summary": "Disk space full on cache-ydep1-67",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-01T01:40:10.416Z",
+      "assignee": "user_20",
+      "resource_name": "cache-ydep1-67",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_65",
+      "key": "evt_65",
+      "summary": "Memory low on gateway-nv5g8-44",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-14T17:25:48.764Z",
+      "assignee": "user_17",
+      "resource_name": "gateway-nv5g8-44",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_66",
+      "key": "evt_66",
+      "summary": "CPU high on gateway-dhtde-12",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-04T06:20:47.863Z",
+      "assignee": "user_4",
+      "resource_name": "gateway-dhtde-12",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_67",
+      "key": "evt_67",
+      "summary": "5xx error rate on cache-sexqc-21",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-13T01:55:41.378Z",
+      "assignee": "user_14",
+      "resource_name": "cache-sexqc-21",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_68",
+      "key": "evt_68",
+      "summary": "API latency high on cache-sexqc-21",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-05T09:46:51.351Z",
+      "assignee": "user_4",
+      "resource_name": "cache-sexqc-21",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_69",
+      "key": "evt_69",
+      "summary": "Memory low on gateway-69nko-13",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-16T15:13:23.593Z",
+      "assignee": "user_20",
+      "resource_name": "gateway-69nko-13",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_70",
+      "key": "evt_70",
+      "summary": "Memory low on gateway-dhtde-12",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-13T17:05:12.506Z",
+      "assignee": "user_1",
+      "resource_name": "gateway-dhtde-12",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_71",
+      "key": "evt_71",
+      "summary": "Memory low on server-faji0-36",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-03T05:33:17.444Z",
+      "assignee": "user_1",
+      "resource_name": "server-faji0-36",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_72",
+      "key": "evt_72",
+      "summary": "Disk space full on database-6erng-28",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-17T18:48:30.564Z",
+      "assignee": "user_9",
+      "resource_name": "database-6erng-28",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_73",
+      "key": "evt_73",
+      "summary": "Memory low on gateway-69nko-13",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-12T20:26:58.328Z",
+      "assignee": "user_13",
+      "resource_name": "gateway-69nko-13",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_74",
+      "key": "evt_74",
+      "summary": "CPU high on cache-yq7bk-6",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-01T16:29:48.841Z",
+      "assignee": "user_15",
+      "resource_name": "cache-yq7bk-6",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_75",
+      "key": "evt_75",
+      "summary": "Disk space full on gateway-03wb0-48",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "new",
+      "created_at": "2025-09-15T08:57:01.922Z",
+      "assignee": "user_8",
+      "resource_name": "gateway-03wb0-48",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_76",
+      "key": "evt_76",
+      "summary": "Disk space full on database-m24my-32",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-01T19:57:54.818Z",
+      "assignee": "user_10",
+      "resource_name": "database-m24my-32",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_77",
+      "key": "evt_77",
+      "summary": "API latency high on server-cmxyc-10",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-02T22:39:08.832Z",
+      "assignee": "user_1",
+      "resource_name": "server-cmxyc-10",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_78",
+      "key": "evt_78",
+      "summary": "API latency high on gateway-pz6ji-40",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-16T20:22:00.064Z",
+      "assignee": "user_12",
+      "resource_name": "gateway-pz6ji-40",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_79",
+      "key": "evt_79",
+      "summary": "Memory low on container-swq59-57",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-04T05:04:17.071Z",
+      "assignee": "user_7",
+      "resource_name": "container-swq59-57",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_80",
+      "key": "evt_80",
+      "summary": "Memory low on database-1cgr4-3",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-12T02:43:38.191Z",
+      "assignee": "user_10",
+      "resource_name": "database-1cgr4-3",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_81",
+      "key": "evt_81",
+      "summary": "Memory low on cache-mea8m-62",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-14T02:12:04.621Z",
+      "assignee": "user_4",
+      "resource_name": "cache-mea8m-62",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_82",
+      "key": "evt_82",
+      "summary": "CPU high on cache-1iwur-33",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-10T05:59:23.527Z",
+      "assignee": "user_3",
+      "resource_name": "cache-1iwur-33",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_83",
+      "key": "evt_83",
+      "summary": "Memory low on gateway-rtk6c-70",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-13T05:35:33.956Z",
+      "assignee": "user_16",
+      "resource_name": "gateway-rtk6c-70",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_84",
+      "key": "evt_84",
+      "summary": "API latency high on gateway-v0knl-34",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-01T20:38:48.977Z",
+      "assignee": "user_14",
+      "resource_name": "gateway-v0knl-34",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_85",
+      "key": "evt_85",
+      "summary": "CPU high on container-heyod-63",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "new",
+      "created_at": "2025-09-08T17:53:52.189Z",
+      "assignee": "user_7",
+      "resource_name": "container-heyod-63",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_86",
+      "key": "evt_86",
+      "summary": "CPU high on gateway-mmno0-41",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-06T06:50:12.437Z",
+      "assignee": "user_5",
+      "resource_name": "gateway-mmno0-41",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_87",
+      "key": "evt_87",
+      "summary": "Memory low on database-d7gmi-45",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-16T15:27:23.543Z",
+      "assignee": "user_10",
+      "resource_name": "database-d7gmi-45",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_88",
+      "key": "evt_88",
+      "summary": "API latency high on database-hsfk7-51",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-10T17:00:03.141Z",
+      "assignee": "user_7",
+      "resource_name": "database-hsfk7-51",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_89",
+      "key": "evt_89",
+      "summary": "CPU high on cache-xwlc4-47",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-02T11:50:05.219Z",
+      "assignee": "user_7",
+      "resource_name": "cache-xwlc4-47",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_90",
+      "key": "evt_90",
+      "summary": "5xx error rate on database-ybaop-35",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-09T16:07:14.022Z",
+      "assignee": "user_2",
+      "resource_name": "database-ybaop-35",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_91",
+      "key": "evt_91",
+      "summary": "Memory low on server-faji0-36",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "new",
+      "created_at": "2025-09-14T13:56:34.171Z",
+      "assignee": "user_20",
+      "resource_name": "server-faji0-36",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_92",
+      "key": "evt_92",
+      "summary": "Disk space full on container-bg2dd-71",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-14T06:14:45.739Z",
+      "assignee": "user_19",
+      "resource_name": "container-bg2dd-71",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_93",
+      "key": "evt_93",
+      "summary": "Disk space full on container-swq59-57",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-06T01:59:02.112Z",
+      "assignee": "user_20",
+      "resource_name": "container-swq59-57",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_94",
+      "key": "evt_94",
+      "summary": "API latency high on container-d8ry0-55",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-10T19:07:03.142Z",
+      "assignee": "user_11",
+      "resource_name": "container-d8ry0-55",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_95",
+      "key": "evt_95",
+      "summary": "API latency high on gateway-frkii-27",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-12T14:27:14.976Z",
+      "assignee": "user_11",
+      "resource_name": "gateway-frkii-27",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_96",
+      "key": "evt_96",
+      "summary": "Disk space full on gateway-rtk6c-70",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-13T15:56:00.555Z",
+      "assignee": "user_6",
+      "resource_name": "gateway-rtk6c-70",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_97",
+      "key": "evt_97",
+      "summary": "CPU high on server-dp6ct-42",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-05T08:45:30.882Z",
+      "assignee": "user_2",
+      "resource_name": "server-dp6ct-42",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_98",
+      "key": "evt_98",
+      "summary": "CPU high on database-17ilg-14",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-10T11:58:13.603Z",
+      "assignee": null,
+      "resource_name": "database-17ilg-14",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_99",
+      "key": "evt_99",
+      "summary": "Memory low on cache-xwlc4-47",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-14T20:56:43.171Z",
+      "assignee": "user_5",
+      "resource_name": "cache-xwlc4-47",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_100",
+      "key": "evt_100",
+      "summary": "API latency high on database-9aq92-49",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-04T12:17:39.580Z",
+      "assignee": "user_19",
+      "resource_name": "database-9aq92-49",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_101",
+      "key": "evt_101",
+      "summary": "CPU high on cache-29xaf-65",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-17T19:11:57.037Z",
+      "assignee": "user_5",
+      "resource_name": "cache-29xaf-65",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_102",
+      "key": "evt_102",
+      "summary": "Memory low on gateway-l5ji1-56",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-04T12:55:38.515Z",
+      "assignee": "user_5",
+      "resource_name": "gateway-l5ji1-56",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_103",
+      "key": "evt_103",
+      "summary": "5xx error rate on cache-1cr71-73",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-01T10:14:49.073Z",
+      "assignee": "user_4",
+      "resource_name": "cache-1cr71-73",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_104",
+      "key": "evt_104",
+      "summary": "Disk space full on container-tbp3b-37",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-11T08:26:02.795Z",
+      "assignee": "user_11",
+      "resource_name": "container-tbp3b-37",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_105",
+      "key": "evt_105",
+      "summary": "Disk space full on database-17ilg-14",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-09T16:35:54.111Z",
+      "assignee": "user_19",
+      "resource_name": "database-17ilg-14",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_106",
+      "key": "evt_106",
+      "summary": "Disk space full on database-x2s7y-46",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-08T04:34:21.633Z",
+      "assignee": "user_5",
+      "resource_name": "database-x2s7y-46",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_107",
+      "key": "evt_107",
+      "summary": "CPU high on cache-5en5y-58",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "new",
+      "created_at": "2025-09-14T22:49:21.435Z",
+      "assignee": "user_9",
+      "resource_name": "cache-5en5y-58",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_108",
+      "key": "evt_108",
+      "summary": "Memory low on cache-1cr71-73",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-05T08:49:28.035Z",
+      "assignee": "user_2",
+      "resource_name": "cache-1cr71-73",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_109",
+      "key": "evt_109",
+      "summary": "Memory low on server-jza2o-20",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-18T11:10:31.752Z",
+      "assignee": "user_1",
+      "resource_name": "server-jza2o-20",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_110",
+      "key": "evt_110",
+      "summary": "Memory low on container-s4l13-61",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-09T11:46:32.125Z",
+      "assignee": "user_19",
+      "resource_name": "container-s4l13-61",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_111",
+      "key": "evt_111",
+      "summary": "API latency high on container-rjp09-8",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-18T03:56:31.213Z",
+      "assignee": "user_8",
+      "resource_name": "container-rjp09-8",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_112",
+      "key": "evt_112",
+      "summary": "5xx error rate on gateway-yx048-4",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-10T23:42:02.652Z",
+      "assignee": "user_8",
+      "resource_name": "gateway-yx048-4",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_113",
+      "key": "evt_113",
+      "summary": "CPU high on gateway-dyxcw-39",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "new",
+      "created_at": "2025-09-18T12:22:17.239Z",
+      "assignee": "user_14",
+      "resource_name": "gateway-dyxcw-39",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_114",
+      "key": "evt_114",
+      "summary": "Disk space full on cache-ozpr4-74",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-06T05:18:30.011Z",
+      "assignee": "user_9",
+      "resource_name": "cache-ozpr4-74",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_115",
+      "key": "evt_115",
+      "summary": "Memory low on gateway-pz6ji-40",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-05T19:16:19.766Z",
+      "assignee": "user_20",
+      "resource_name": "gateway-pz6ji-40",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_116",
+      "key": "evt_116",
+      "summary": "Memory low on container-swq59-57",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-09T16:14:28.710Z",
+      "assignee": "user_12",
+      "resource_name": "container-swq59-57",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_117",
+      "key": "evt_117",
+      "summary": "CPU high on gateway-sdsgu-68",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-08T19:18:55.800Z",
+      "assignee": "user_8",
+      "resource_name": "gateway-sdsgu-68",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_118",
+      "key": "evt_118",
+      "summary": "Memory low on container-swq59-57",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-08T08:59:44.460Z",
+      "assignee": "user_9",
+      "resource_name": "container-swq59-57",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_119",
+      "key": "evt_119",
+      "summary": "CPU high on cache-nh7qh-18",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-07T01:35:41.655Z",
+      "assignee": "user_8",
+      "resource_name": "cache-nh7qh-18",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_120",
+      "key": "evt_120",
+      "summary": "API latency high on gateway-v0knl-34",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-16T02:55:50.889Z",
+      "assignee": "user_7",
+      "resource_name": "gateway-v0knl-34",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_121",
+      "key": "evt_121",
+      "summary": "Memory low on cache-ydep1-67",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-12T11:06:42.967Z",
+      "assignee": "user_2",
+      "resource_name": "cache-ydep1-67",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_122",
+      "key": "evt_122",
+      "summary": "5xx error rate on database-17ilg-14",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-11T20:29:17.387Z",
+      "assignee": "user_20",
+      "resource_name": "database-17ilg-14",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_123",
+      "key": "evt_123",
+      "summary": "Disk space full on gateway-mmno0-41",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-01T06:03:51.750Z",
+      "assignee": "user_8",
+      "resource_name": "gateway-mmno0-41",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_124",
+      "key": "evt_124",
+      "summary": "API latency high on gateway-yx048-4",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-09T05:09:51.765Z",
+      "assignee": "user_7",
+      "resource_name": "gateway-yx048-4",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_125",
+      "key": "evt_125",
+      "summary": "Memory low on container-2pt71-75",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-13T16:58:33.802Z",
+      "assignee": "user_13",
+      "resource_name": "container-2pt71-75",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_126",
+      "key": "evt_126",
+      "summary": "5xx error rate on container-2pt71-75",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-07T07:18:16.499Z",
+      "assignee": "user_4",
+      "resource_name": "container-2pt71-75",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_127",
+      "key": "evt_127",
+      "summary": "API latency high on gateway-7apra-50",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-08T02:38:12.303Z",
+      "assignee": "user_10",
+      "resource_name": "gateway-7apra-50",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_128",
+      "key": "evt_128",
+      "summary": "5xx error rate on cache-vr35l-30",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-17T00:37:06.454Z",
+      "assignee": "user_6",
+      "resource_name": "cache-vr35l-30",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_129",
+      "key": "evt_129",
+      "summary": "Memory low on server-faji0-36",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-04T20:05:24.894Z",
+      "assignee": "user_18",
+      "resource_name": "server-faji0-36",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_130",
+      "key": "evt_130",
+      "summary": "Disk space full on container-tbp3b-37",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-13T02:23:01.574Z",
+      "assignee": "user_3",
+      "resource_name": "container-tbp3b-37",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_131",
+      "key": "evt_131",
+      "summary": "CPU high on container-bg2dd-71",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-05T12:41:40.857Z",
+      "assignee": "user_14",
+      "resource_name": "container-bg2dd-71",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_132",
+      "key": "evt_132",
+      "summary": "Memory low on server-6nk12-38",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-02T10:03:26.757Z",
+      "assignee": "user_3",
+      "resource_name": "server-6nk12-38",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_133",
+      "key": "evt_133",
+      "summary": "5xx error rate on database-1cgr4-3",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-15T05:14:08.019Z",
+      "assignee": "user_17",
+      "resource_name": "database-1cgr4-3",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_134",
+      "key": "evt_134",
+      "summary": "5xx error rate on cache-1cr71-73",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-06T02:45:23.543Z",
+      "assignee": "user_1",
+      "resource_name": "cache-1cr71-73",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_135",
+      "key": "evt_135",
+      "summary": "Disk space full on server-z7a4m-5",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-03T11:33:01.951Z",
+      "assignee": "user_18",
+      "resource_name": "server-z7a4m-5",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_136",
+      "key": "evt_136",
+      "summary": "API latency high on gateway-03wb0-48",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "new",
+      "created_at": "2025-09-01T00:17:20.560Z",
+      "assignee": "user_5",
+      "resource_name": "gateway-03wb0-48",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_137",
+      "key": "evt_137",
+      "summary": "5xx error rate on gateway-l5ji1-56",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-15T01:17:59.509Z",
+      "assignee": "user_14",
+      "resource_name": "gateway-l5ji1-56",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_138",
+      "key": "evt_138",
+      "summary": "Disk space full on database-3itbd-26",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-05T06:01:56.765Z",
+      "assignee": "user_17",
+      "resource_name": "database-3itbd-26",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_139",
+      "key": "evt_139",
+      "summary": "5xx error rate on gateway-yr910-1",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-06T01:22:23.470Z",
+      "assignee": "user_19",
+      "resource_name": "gateway-yr910-1",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_140",
+      "key": "evt_140",
+      "summary": "Memory low on cache-vr35l-30",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-18T02:40:52.058Z",
+      "assignee": null,
+      "resource_name": "cache-vr35l-30",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_141",
+      "key": "evt_141",
+      "summary": "Disk space full on database-3itbd-26",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-15T18:04:33.723Z",
+      "assignee": "user_19",
+      "resource_name": "database-3itbd-26",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_142",
+      "key": "evt_142",
+      "summary": "Memory low on database-9aq92-49",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-18T10:31:37.817Z",
+      "assignee": "user_9",
+      "resource_name": "database-9aq92-49",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_143",
+      "key": "evt_143",
+      "summary": "Memory low on gateway-rtk6c-70",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-13T16:58:04.513Z",
+      "assignee": "user_19",
+      "resource_name": "gateway-rtk6c-70",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_144",
+      "key": "evt_144",
+      "summary": "CPU high on gateway-7apra-50",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-08T07:25:43.326Z",
+      "assignee": null,
+      "resource_name": "gateway-7apra-50",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_145",
+      "key": "evt_145",
+      "summary": "API latency high on database-x2s7y-46",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-01T10:54:25.270Z",
+      "assignee": "user_5",
+      "resource_name": "database-x2s7y-46",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_146",
+      "key": "evt_146",
+      "summary": "Disk space full on server-6nk12-38",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-09T01:18:10.221Z",
+      "assignee": "user_13",
+      "resource_name": "server-6nk12-38",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_147",
+      "key": "evt_147",
+      "summary": "Disk space full on server-z7a4m-5",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-01T05:59:54.368Z",
+      "assignee": "user_1",
+      "resource_name": "server-z7a4m-5",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_148",
+      "key": "evt_148",
+      "summary": "API latency high on database-ybaop-35",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-17T12:46:54.076Z",
+      "assignee": "user_6",
+      "resource_name": "database-ybaop-35",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_149",
+      "key": "evt_149",
+      "summary": "Memory low on server-cmxyc-10",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-17T05:15:42.759Z",
+      "assignee": "user_5",
+      "resource_name": "server-cmxyc-10",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_150",
+      "key": "evt_150",
+      "summary": "CPU high on gateway-frkii-27",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-10T09:28:01.122Z",
+      "assignee": "user_14",
+      "resource_name": "gateway-frkii-27",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_151",
+      "key": "evt_151",
+      "summary": "Memory low on server-kwx5y-53",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-10T21:38:10.644Z",
+      "assignee": "user_15",
+      "resource_name": "server-kwx5y-53",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_152",
+      "key": "evt_152",
+      "summary": "5xx error rate on cache-vr35l-30",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-15T13:30:59.221Z",
+      "assignee": "user_8",
+      "resource_name": "cache-vr35l-30",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_153",
+      "key": "evt_153",
+      "summary": "Memory low on cache-xwlc4-47",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-17T05:09:12.684Z",
+      "assignee": "user_7",
+      "resource_name": "cache-xwlc4-47",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_154",
+      "key": "evt_154",
+      "summary": "CPU high on cache-29xaf-65",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-14T16:57:28.900Z",
+      "assignee": "user_4",
+      "resource_name": "cache-29xaf-65",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_155",
+      "key": "evt_155",
+      "summary": "Memory low on database-6erng-28",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-08T06:01:50.292Z",
+      "assignee": "user_13",
+      "resource_name": "database-6erng-28",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_156",
+      "key": "evt_156",
+      "summary": "CPU high on database-hsfk7-51",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-14T16:49:34.637Z",
+      "assignee": "user_17",
+      "resource_name": "database-hsfk7-51",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_157",
+      "key": "evt_157",
+      "summary": "API latency high on cache-1iwur-33",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-03T03:13:31.419Z",
+      "assignee": "user_4",
+      "resource_name": "cache-1iwur-33",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_158",
+      "key": "evt_158",
+      "summary": "API latency high on container-tbp3b-37",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-05T10:58:27.409Z",
+      "assignee": null,
+      "resource_name": "container-tbp3b-37",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_159",
+      "key": "evt_159",
+      "summary": "5xx error rate on database-s2c0s-9",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-05T18:59:54.714Z",
+      "assignee": "user_18",
+      "resource_name": "database-s2c0s-9",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_160",
+      "key": "evt_160",
+      "summary": "API latency high on server-am86r-16",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-08T07:14:14.402Z",
+      "assignee": "user_4",
+      "resource_name": "server-am86r-16",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_161",
+      "key": "evt_161",
+      "summary": "Memory low on cache-bmgr6-66",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-01T08:49:00.617Z",
+      "assignee": "user_17",
+      "resource_name": "cache-bmgr6-66",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_162",
+      "key": "evt_162",
+      "summary": "Disk space full on container-ke84m-31",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-12T15:03:38.480Z",
+      "assignee": "user_6",
+      "resource_name": "container-ke84m-31",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_163",
+      "key": "evt_163",
+      "summary": "Disk space full on cache-4dkhd-22",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-12T02:20:11.422Z",
+      "assignee": "user_4",
+      "resource_name": "cache-4dkhd-22",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_164",
+      "key": "evt_164",
+      "summary": "5xx error rate on database-d7gmi-45",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-11T01:04:51.733Z",
+      "assignee": "user_16",
+      "resource_name": "database-d7gmi-45",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_165",
+      "key": "evt_165",
+      "summary": "Memory low on cache-ydep1-67",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-06T01:18:45.338Z",
+      "assignee": "user_11",
+      "resource_name": "cache-ydep1-67",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_166",
+      "key": "evt_166",
+      "summary": "Disk space full on server-cmxyc-10",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "silenced",
+      "created_at": "2025-09-02T10:57:42.739Z",
+      "assignee": "user_10",
+      "resource_name": "server-cmxyc-10",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_167",
+      "key": "evt_167",
+      "summary": "5xx error rate on database-3t5zg-15",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-11T12:10:26.588Z",
+      "assignee": "user_15",
+      "resource_name": "database-3t5zg-15",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_168",
+      "key": "evt_168",
+      "summary": "CPU high on database-s2c0s-9",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-11T11:58:55.019Z",
+      "assignee": "user_2",
+      "resource_name": "database-s2c0s-9",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_169",
+      "key": "evt_169",
+      "summary": "Disk space full on database-9aq92-49",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-17T06:19:53.163Z",
+      "assignee": "user_19",
+      "resource_name": "database-9aq92-49",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_170",
+      "key": "evt_170",
+      "summary": "CPU high on container-rjp09-8",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-15T18:47:44.748Z",
+      "assignee": "user_14",
+      "resource_name": "container-rjp09-8",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_171",
+      "key": "evt_171",
+      "summary": "API latency high on gateway-6q7fm-11",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "new",
+      "created_at": "2025-09-11T16:19:01.759Z",
+      "assignee": "user_6",
+      "resource_name": "gateway-6q7fm-11",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_172",
+      "key": "evt_172",
+      "summary": "Disk space full on container-heyod-63",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-03T11:10:49.782Z",
+      "assignee": "user_18",
+      "resource_name": "container-heyod-63",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_173",
+      "key": "evt_173",
+      "summary": "CPU high on cache-4dkhd-22",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-12T00:19:12.262Z",
+      "assignee": "user_7",
+      "resource_name": "cache-4dkhd-22",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_174",
+      "key": "evt_174",
+      "summary": "CPU high on container-2pt71-75",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-17T20:14:41.987Z",
+      "assignee": "user_17",
+      "resource_name": "container-2pt71-75",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_175",
+      "key": "evt_175",
+      "summary": "Disk space full on gateway-3a2r3-7",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "new",
+      "created_at": "2025-09-05T00:05:22.528Z",
+      "assignee": "user_4",
+      "resource_name": "gateway-3a2r3-7",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_176",
+      "key": "evt_176",
+      "summary": "Disk space full on gateway-3a2r3-7",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "new",
+      "created_at": "2025-09-02T17:00:52.715Z",
+      "assignee": "user_11",
+      "resource_name": "gateway-3a2r3-7",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_177",
+      "key": "evt_177",
+      "summary": "CPU high on database-d7gmi-45",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-13T16:16:39.307Z",
+      "assignee": "user_7",
+      "resource_name": "database-d7gmi-45",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_2",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_178",
+      "key": "evt_178",
+      "summary": "Memory low on container-d8ry0-55",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-17T16:02:22.342Z",
+      "assignee": "user_2",
+      "resource_name": "container-d8ry0-55",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_179",
+      "key": "evt_179",
+      "summary": "CPU high on database-6erng-28",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-09T18:40:31.232Z",
+      "assignee": "user_12",
+      "resource_name": "database-6erng-28",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_180",
+      "key": "evt_180",
+      "summary": "Memory low on container-ke84m-31",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "silenced",
+      "created_at": "2025-09-06T13:43:55.646Z",
+      "assignee": "user_14",
+      "resource_name": "container-ke84m-31",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_181",
+      "key": "evt_181",
+      "summary": "CPU high on cache-ydep1-67",
+      "severity": "warning",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-12T21:20:26.426Z",
+      "assignee": "user_15",
+      "resource_name": "cache-ydep1-67",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_182",
+      "key": "evt_182",
+      "summary": "API latency high on container-1t54g-43",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "new",
+      "created_at": "2025-09-01T03:21:36.012Z",
+      "assignee": "user_16",
+      "resource_name": "container-1t54g-43",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_183",
+      "key": "evt_183",
+      "summary": "Disk space full on database-ybaop-35",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-06T21:10:14.175Z",
+      "assignee": "user_12",
+      "resource_name": "database-ybaop-35",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_184",
+      "key": "evt_184",
+      "summary": "Memory low on database-gxj31-23",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-05T23:13:46.308Z",
+      "assignee": "user_8",
+      "resource_name": "database-gxj31-23",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_185",
+      "key": "evt_185",
+      "summary": "Disk space full on database-1cgr4-3",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "resolved",
+      "created_at": "2025-09-14T15:16:51.046Z",
+      "assignee": "user_18",
+      "resource_name": "database-1cgr4-3",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_186",
+      "key": "evt_186",
+      "summary": "5xx error rate on gateway-sdsgu-68",
+      "severity": "critical",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-08T09:09:30.366Z",
+      "assignee": "user_6",
+      "resource_name": "gateway-sdsgu-68",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": null,
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_187",
+      "key": "evt_187",
+      "summary": "API latency high on database-1cgr4-3",
+      "severity": "info",
+      "source": "Datadog",
+      "status": "new",
+      "created_at": "2025-09-03T23:46:49.980Z",
+      "assignee": "user_3",
+      "resource_name": "database-1cgr4-3",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_188",
+      "key": "evt_188",
+      "summary": "Disk space full on server-jza2o-20",
+      "severity": "warning",
+      "source": "Prometheus",
+      "status": "new",
+      "created_at": "2025-09-02T18:12:52.716Z",
+      "assignee": "user_8",
+      "resource_name": "server-jza2o-20",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_189",
+      "key": "evt_189",
+      "summary": "Disk space full on server-5s6kr-2",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-12T06:54:50.938Z",
+      "assignee": "user_20",
+      "resource_name": "server-5s6kr-2",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_190",
+      "key": "evt_190",
+      "summary": "API latency high on gateway-69nko-13",
+      "severity": "info",
+      "source": "Prometheus",
+      "status": "new",
+      "created_at": "2025-09-13T16:14:24.833Z",
+      "assignee": "user_9",
+      "resource_name": "gateway-69nko-13",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_2"
+    },
+    {
+      "id": "evt_191",
+      "key": "evt_191",
+      "summary": "API latency high on gateway-nd1v7-64",
+      "severity": "critical",
+      "source": "Grafana",
+      "status": "resolved",
+      "created_at": "2025-09-05T09:13:22.716Z",
+      "assignee": "user_1",
+      "resource_name": "gateway-nd1v7-64",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_192",
+      "key": "evt_192",
+      "summary": "Memory low on database-17ilg-14",
+      "severity": "critical",
+      "source": "Kubernetes",
+      "status": "acknowledged",
+      "created_at": "2025-09-15T02:06:44.713Z",
+      "assignee": null,
+      "resource_name": "database-17ilg-14",
+      "service": "SRE Platform Service",
+      "business_impact": "中",
+      "storm_group": "storm_1",
+      "rule_id": "rule_3"
+    },
+    {
+      "id": "evt_193",
+      "key": "evt_193",
+      "summary": "Memory low on container-bg2dd-71",
+      "severity": "critical",
+      "source": "Prometheus",
+      "status": "acknowledged",
+      "created_at": "2025-09-07T13:15:12.357Z",
+      "assignee": "user_2",
+      "resource_name": "container-bg2dd-71",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_194",
+      "key": "evt_194",
+      "summary": "CPU high on database-d7gmi-45",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-11T21:57:32.082Z",
+      "assignee": "user_4",
+      "resource_name": "database-d7gmi-45",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_195",
+      "key": "evt_195",
+      "summary": "5xx error rate on server-am86r-16",
+      "severity": "info",
+      "source": "Kubernetes",
+      "status": "resolved",
+      "created_at": "2025-09-15T05:46:11.376Z",
+      "assignee": "user_12",
+      "resource_name": "server-am86r-16",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": null,
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_196",
+      "key": "evt_196",
+      "summary": "5xx error rate on gateway-7apra-50",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "silenced",
+      "created_at": "2025-09-09T07:34:38.966Z",
+      "assignee": null,
+      "resource_name": "gateway-7apra-50",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_197",
+      "key": "evt_197",
+      "summary": "CPU high on container-d8ry0-55",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "acknowledged",
+      "created_at": "2025-09-06T23:55:31.113Z",
+      "assignee": "user_14",
+      "resource_name": "container-d8ry0-55",
+      "service": "SRE Platform Service",
+      "business_impact": "高",
+      "storm_group": "storm_2",
+      "rule_id": "rule_5"
+    },
+    {
+      "id": "evt_198",
+      "key": "evt_198",
+      "summary": "CPU high on database-3t5zg-15",
+      "severity": "info",
+      "source": "Grafana",
+      "status": "silenced",
+      "created_at": "2025-09-13T10:34:48.620Z",
+      "assignee": "user_8",
+      "resource_name": "database-3t5zg-15",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_1",
+      "rule_id": "rule_4"
+    },
+    {
+      "id": "evt_199",
+      "key": "evt_199",
+      "summary": "Memory low on database-3itbd-26",
+      "severity": "warning",
+      "source": "Grafana",
+      "status": "acknowledged",
+      "created_at": "2025-09-09T06:03:40.640Z",
+      "assignee": "user_10",
+      "resource_name": "database-3itbd-26",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": "storm_2",
+      "rule_id": "rule_1"
+    },
+    {
+      "id": "evt_200",
+      "key": "evt_200",
+      "summary": "CPU high on container-swq59-57",
+      "severity": "warning",
+      "source": "Datadog",
+      "status": "resolved",
+      "created_at": "2025-09-17T11:09:20.999Z",
+      "assignee": "user_15",
+      "resource_name": "container-swq59-57",
+      "service": "SRE Platform Service",
+      "business_impact": "低",
+      "storm_group": null,
+      "rule_id": "rule_3"
     }
   ],
-  "recurring-silence-rules": [
+  "scripts": [
     {
-        "id": "rsr_1",
-        "name": "週末資料庫維護窗口",
-        "description": "每週六凌晨 2-4 點的資料庫例行維護，期間靜音相關告警。",
-        "matchers": [
-          { "name": "service", "value": "user-database", "isRegex": false }
-        ],
-        "cron_expression": "0 2 * * 6",
-        "duration_minutes": 120,
-        "timezone": "Asia/Taipei",
-        "is_enabled": true,
-        "creator_id": "usr_1",
-        "created_at": "2025-09-01T10:00:00Z",
-        "updated_at": "2025-09-01T10:00:00Z"
+      "id": "s_1",
+      "key": "s_1",
+      "name": "Script Implement a frontend",
+      "type": "Bash",
+      "description": "Deploy a cache",
+      "creator": "Jennifer Johnson",
+      "code": "echo \"Executing script 1\"",
+      "params": [],
+      "status": "active",
+      "category": "monitoring",
+      "executionCount": 87,
+      "last_executed": "2025-09-15T05:33:59.048Z"
+    },
+    {
+      "id": "s_2",
+      "key": "s_2",
+      "name": "Script Fix the server",
+      "type": "Python",
+      "description": "Deploy the server",
+      "creator": "James Jones",
+      "code": "echo \"Executing script 2\"",
+      "params": [],
+      "status": "active",
+      "category": "monitoring",
+      "executionCount": 93,
+      "last_executed": "2025-09-04T03:44:46.882Z"
+    },
+    {
+      "id": "s_3",
+      "key": "s_3",
+      "name": "Script Fix the API",
+      "type": "Bash",
+      "description": "Update a database",
+      "creator": "Jennifer Williams",
+      "code": "echo \"Executing script 3\"",
+      "params": [],
+      "status": "active",
+      "category": "monitoring",
+      "executionCount": 153,
+      "last_executed": "2025-09-16T14:35:52.439Z"
+    },
+    {
+      "id": "s_4",
+      "key": "s_4",
+      "name": "Script Fix an frontend",
+      "type": "Bash",
+      "description": "Refactor the API",
+      "creator": "Patricia Williams",
+      "code": "echo \"Executing script 4\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "maintenance",
+      "executionCount": 88,
+      "last_executed": "2025-09-06T04:41:17.156Z"
+    },
+    {
+      "id": "s_5",
+      "key": "s_5",
+      "name": "Script Refactor an frontend",
+      "type": "Python",
+      "description": "Refactor a server",
+      "creator": "Mary Johnson",
+      "code": "echo \"Executing script 5\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "performance",
+      "executionCount": 190,
+      "last_executed": "2025-09-14T02:53:42.544Z"
+    },
+    {
+      "id": "s_6",
+      "key": "s_6",
+      "name": "Script Refactor a API",
+      "type": "Bash",
+      "description": "Deploy a database",
+      "creator": "Jennifer Williams",
+      "code": "echo \"Executing script 6\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "monitoring",
+      "executionCount": 177,
+      "last_executed": "2025-09-08T07:01:17.798Z"
+    },
+    {
+      "id": "s_7",
+      "key": "s_7",
+      "name": "Script Deploy a database",
+      "type": "Python",
+      "description": "Update the cache",
+      "creator": "Robert Johnson",
+      "code": "echo \"Executing script 7\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "deployment",
+      "executionCount": 106,
+      "last_executed": "2025-09-02T01:16:08.670Z"
+    },
+    {
+      "id": "s_8",
+      "key": "s_8",
+      "name": "Script Implement a database",
+      "type": "Python",
+      "description": "Implement a cache",
+      "creator": "Jennifer Williams",
+      "code": "echo \"Executing script 8\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "deployment",
+      "executionCount": 102,
+      "last_executed": "2025-09-16T13:38:22.796Z"
+    },
+    {
+      "id": "s_9",
+      "key": "s_9",
+      "name": "Script Deploy an frontend",
+      "type": "Bash",
+      "description": "Implement a API",
+      "creator": "Jennifer Williams",
+      "code": "echo \"Executing script 9\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "monitoring",
+      "executionCount": 185,
+      "last_executed": "2025-09-12T09:23:30.768Z"
+    },
+    {
+      "id": "s_10",
+      "key": "s_10",
+      "name": "Script Fix an database",
+      "type": "Bash",
+      "description": "Implement a API",
+      "creator": "Jennifer Brown",
+      "code": "echo \"Executing script 10\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "monitoring",
+      "executionCount": 75,
+      "last_executed": "2025-09-07T14:28:59.308Z"
+    },
+    {
+      "id": "s_11",
+      "key": "s_11",
+      "name": "Script Refactor the frontend",
+      "type": "Python",
+      "description": "Deploy an database",
+      "creator": "Robert Johnson",
+      "code": "echo \"Executing script 11\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "maintenance",
+      "executionCount": 184,
+      "last_executed": "2025-09-17T23:31:04.352Z"
+    },
+    {
+      "id": "s_12",
+      "key": "s_12",
+      "name": "Script Deploy an cache",
+      "type": "Bash",
+      "description": "Implement an server",
+      "creator": "Jennifer Williams",
+      "code": "echo \"Executing script 12\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "deployment",
+      "executionCount": 132,
+      "last_executed": "2025-09-13T14:25:21.475Z"
+    },
+    {
+      "id": "s_13",
+      "key": "s_13",
+      "name": "Script Fix the cache",
+      "type": "Python",
+      "description": "Implement a database",
+      "creator": "Robert Johnson",
+      "code": "echo \"Executing script 13\"",
+      "params": [],
+      "status": "active",
+      "category": "performance",
+      "executionCount": 112,
+      "last_executed": "2025-09-15T00:55:47.423Z"
+    },
+    {
+      "id": "s_14",
+      "key": "s_14",
+      "name": "Script Deploy the cache",
+      "type": "Bash",
+      "description": "Fix the database",
+      "creator": "John Jones",
+      "code": "echo \"Executing script 14\"",
+      "params": [
+        {
+          "name": "param1",
+          "type": "string",
+          "label": "Parameter 1"
+        }
+      ],
+      "status": "active",
+      "category": "performance",
+      "executionCount": 21,
+      "last_executed": "2025-09-03T09:42:29.893Z"
+    },
+    {
+      "id": "s_15",
+      "key": "s_15",
+      "name": "Script Update an API",
+      "type": "Bash",
+      "description": "Fix a database",
+      "creator": "Jennifer Williams",
+      "code": "echo \"Executing script 15\"",
+      "params": [],
+      "status": "active",
+      "category": "deployment",
+      "executionCount": 55,
+      "last_executed": "2025-09-09T02:33:31.379Z"
+    }
+  ],
+  "schedules": [
+    {
+      "key": "sch_1",
+      "name": "Scheduled Task: Deploy a frontend",
+      "cron": "0 20 * * *",
+      "script_id": "s_5",
+      "last_run": "2025-09-07T20:38:49.888Z",
+      "last_status": "failed",
+      "enabled": false,
+      "creator": "Robert Smith"
+    },
+    {
+      "key": "sch_2",
+      "name": "Scheduled Task: Update the API",
+      "cron": "0 22 * * *",
+      "script_id": "s_7",
+      "last_run": "2025-09-15T23:39:15.810Z",
+      "last_status": "failed",
+      "enabled": false,
+      "creator": "Jennifer Williams"
+    },
+    {
+      "key": "sch_3",
+      "name": "Scheduled Task: Implement a database",
+      "cron": "0 9 * * *",
+      "script_id": "s_7",
+      "last_run": "2025-09-01T15:35:31.434Z",
+      "last_status": "success",
+      "enabled": false,
+      "creator": "John Johnson"
+    },
+    {
+      "key": "sch_4",
+      "name": "Scheduled Task: Update the server",
+      "cron": "0 8 * * *",
+      "script_id": "s_8",
+      "last_run": "2025-09-01T11:55:08.087Z",
+      "last_status": "success",
+      "enabled": false,
+      "creator": "John Smith"
+    },
+    {
+      "key": "sch_5",
+      "name": "Scheduled Task: Fix the frontend",
+      "cron": "0 21 * * *",
+      "script_id": "s_3",
+      "last_run": "2025-09-15T04:35:07.356Z",
+      "last_status": "failed",
+      "enabled": true,
+      "creator": "John Jones"
+    },
+    {
+      "key": "sch_6",
+      "name": "Scheduled Task: Fix the server",
+      "cron": "0 9 * * *",
+      "script_id": "s_11",
+      "last_run": "2025-09-11T00:01:37.380Z",
+      "last_status": "failed",
+      "enabled": false,
+      "creator": "John Johnson"
+    },
+    {
+      "key": "sch_7",
+      "name": "Scheduled Task: Update a frontend",
+      "cron": "0 20 * * *",
+      "script_id": "s_10",
+      "last_run": "2025-09-05T11:01:13.163Z",
+      "last_status": "failed",
+      "enabled": true,
+      "creator": "John Johnson"
+    },
+    {
+      "key": "sch_8",
+      "name": "Scheduled Task: Refactor a server",
+      "cron": "0 6 * * *",
+      "script_id": "s_12",
+      "last_run": "2025-09-08T21:21:00.958Z",
+      "last_status": "success",
+      "enabled": true,
+      "creator": "James Jones"
+    },
+    {
+      "key": "sch_9",
+      "name": "Scheduled Task: Refactor the API",
+      "cron": "0 11 * * *",
+      "script_id": "s_5",
+      "last_run": "2025-09-18T13:59:42.961Z",
+      "last_status": "failed",
+      "enabled": true,
+      "creator": "John Jones"
+    },
+    {
+      "key": "sch_10",
+      "name": "Scheduled Task: Fix an API",
+      "cron": "0 22 * * *",
+      "script_id": "s_10",
+      "last_run": "2025-09-12T18:24:59.567Z",
+      "last_status": "success",
+      "enabled": false,
+      "creator": "Patricia Williams"
+    }
+  ],
+  "executions": [
+    {
+      "key": "e_1",
+      "script_id": "s_13",
+      "script_name": "Script Fix the cache",
+      "trigger": {
+        "type": "Manual",
+        "user": "John Jones"
+      },
+      "status": "success",
+      "start_time": "2025-09-08T21:04:02.214Z",
+      "duration": "18.9s"
+    },
+    {
+      "key": "e_2",
+      "script_id": "s_7",
+      "script_name": "Script Deploy a database",
+      "trigger": {
+        "type": "Manual",
+        "user": "James Jones"
+      },
+      "status": "failed",
+      "start_time": "2025-09-12T16:14:21.393Z",
+      "duration": "9.3s"
+    },
+    {
+      "key": "e_3",
+      "script_id": "s_6",
+      "script_name": "Script Refactor a API",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_2"
+      },
+      "status": "success",
+      "start_time": "2025-09-15T03:41:34.439Z",
+      "duration": "2.7s"
+    },
+    {
+      "key": "e_4",
+      "script_id": "s_15",
+      "script_name": "Script Update an API",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_7",
+        "event_summary": "API latency high on cache-29xaf-65"
+      },
+      "status": "failed",
+      "start_time": "2025-09-08T18:54:42.427Z",
+      "duration": "20.4s"
+    },
+    {
+      "key": "e_5",
+      "script_id": "s_1",
+      "script_name": "Script Implement a frontend",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_2"
+      },
+      "status": "failed",
+      "start_time": "2025-09-04T08:01:48.903Z",
+      "duration": "6.5s"
+    },
+    {
+      "key": "e_6",
+      "script_id": "s_8",
+      "script_name": "Script Implement a database",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_9"
+      },
+      "status": "failed",
+      "start_time": "2025-09-05T01:14:45.524Z",
+      "duration": "18.2s"
+    },
+    {
+      "key": "e_7",
+      "script_id": "s_5",
+      "script_name": "Script Refactor an frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "Robert Johnson"
+      },
+      "status": "failed",
+      "start_time": "2025-09-14T05:42:09.834Z",
+      "duration": "5.0s"
+    },
+    {
+      "key": "e_8",
+      "script_id": "s_11",
+      "script_name": "Script Refactor the frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "Patricia Williams"
+      },
+      "status": "success",
+      "start_time": "2025-09-16T10:37:24.101Z",
+      "duration": "21.6s"
+    },
+    {
+      "key": "e_9",
+      "script_id": "s_10",
+      "script_name": "Script Fix an database",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Johnson"
+      },
+      "status": "failed",
+      "start_time": "2025-09-01T10:03:15.808Z",
+      "duration": "10.3s"
+    },
+    {
+      "key": "e_10",
+      "script_id": "s_11",
+      "script_name": "Script Refactor the frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "Robert Johnson"
+      },
+      "status": "failed",
+      "start_time": "2025-09-05T08:39:03.649Z",
+      "duration": "11.3s"
+    },
+    {
+      "key": "e_11",
+      "script_id": "s_1",
+      "script_name": "Script Implement a frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Johnson"
+      },
+      "status": "failed",
+      "start_time": "2025-09-12T03:21:57.779Z",
+      "duration": "3.2s"
+    },
+    {
+      "key": "e_12",
+      "script_id": "s_6",
+      "script_name": "Script Refactor a API",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Williams"
+      },
+      "status": "success",
+      "start_time": "2025-09-03T08:05:09.688Z",
+      "duration": "9.6s"
+    },
+    {
+      "key": "e_13",
+      "script_id": "s_2",
+      "script_name": "Script Fix the server",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_132",
+        "event_summary": "CPU high on database-17ilg-14"
+      },
+      "status": "failed",
+      "start_time": "2025-09-13T18:58:47.308Z",
+      "duration": "27.8s"
+    },
+    {
+      "key": "e_14",
+      "script_id": "s_1",
+      "script_name": "Script Implement a frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "John Smith"
+      },
+      "status": "success",
+      "start_time": "2025-09-01T07:20:45.560Z",
+      "duration": "8.1s"
+    },
+    {
+      "key": "e_15",
+      "script_id": "s_4",
+      "script_name": "Script Fix an frontend",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_2",
+        "event_summary": "Memory low on cache-vr35l-30"
+      },
+      "status": "success",
+      "start_time": "2025-09-04T15:55:48.843Z",
+      "duration": "1.0s"
+    },
+    {
+      "key": "e_16",
+      "script_id": "s_4",
+      "script_name": "Script Fix an frontend",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_2"
+      },
+      "status": "failed",
+      "start_time": "2025-09-11T06:47:43.596Z",
+      "duration": "4.5s"
+    },
+    {
+      "key": "e_17",
+      "script_id": "s_2",
+      "script_name": "Script Fix the server",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Williams"
+      },
+      "status": "failed",
+      "start_time": "2025-09-06T17:41:34.867Z",
+      "duration": "23.7s"
+    },
+    {
+      "key": "e_18",
+      "script_id": "s_4",
+      "script_name": "Script Fix an frontend",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_52",
+        "event_summary": "Disk space full on cache-ydep1-67"
+      },
+      "status": "success",
+      "start_time": "2025-09-02T07:19:27.348Z",
+      "duration": "12.8s"
+    },
+    {
+      "key": "e_19",
+      "script_id": "s_7",
+      "script_name": "Script Deploy a database",
+      "trigger": {
+        "type": "Manual",
+        "user": "Robert Johnson"
+      },
+      "status": "failed",
+      "start_time": "2025-09-12T19:28:39.825Z",
+      "duration": "28.0s"
+    },
+    {
+      "key": "e_20",
+      "script_id": "s_2",
+      "script_name": "Script Fix the server",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Williams"
+      },
+      "status": "success",
+      "start_time": "2025-09-03T22:27:29.145Z",
+      "duration": "17.2s"
+    },
+    {
+      "key": "e_21",
+      "script_id": "s_12",
+      "script_name": "Script Deploy an cache",
+      "trigger": {
+        "type": "Manual",
+        "user": "Robert Jones"
+      },
+      "status": "failed",
+      "start_time": "2025-09-06T02:10:08.224Z",
+      "duration": "24.2s"
+    },
+    {
+      "key": "e_22",
+      "script_id": "s_12",
+      "script_name": "Script Deploy an cache",
+      "trigger": {
+        "type": "Manual",
+        "user": "John Jones"
+      },
+      "status": "success",
+      "start_time": "2025-09-08T07:22:49.985Z",
+      "duration": "27.0s"
+    },
+    {
+      "key": "e_23",
+      "script_id": "s_14",
+      "script_name": "Script Deploy the cache",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_5"
+      },
+      "status": "failed",
+      "start_time": "2025-09-09T05:54:30.322Z",
+      "duration": "12.7s"
+    },
+    {
+      "key": "e_24",
+      "script_id": "s_14",
+      "script_name": "Script Deploy the cache",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Williams"
+      },
+      "status": "failed",
+      "start_time": "2025-09-11T10:01:02.665Z",
+      "duration": "13.1s"
+    },
+    {
+      "key": "e_25",
+      "script_id": "s_14",
+      "script_name": "Script Deploy the cache",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Brown"
+      },
+      "status": "success",
+      "start_time": "2025-09-09T06:18:25.737Z",
+      "duration": "26.4s"
+    },
+    {
+      "key": "e_26",
+      "script_id": "s_7",
+      "script_name": "Script Deploy a database",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_6"
+      },
+      "status": "success",
+      "start_time": "2025-09-14T15:08:31.595Z",
+      "duration": "11.8s"
+    },
+    {
+      "key": "e_27",
+      "script_id": "s_4",
+      "script_name": "Script Fix an frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Williams"
+      },
+      "status": "failed",
+      "start_time": "2025-09-07T16:30:25.565Z",
+      "duration": "9.6s"
+    },
+    {
+      "key": "e_28",
+      "script_id": "s_12",
+      "script_name": "Script Deploy an cache",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_7"
+      },
+      "status": "success",
+      "start_time": "2025-09-14T13:18:43.772Z",
+      "duration": "14.7s"
+    },
+    {
+      "key": "e_29",
+      "script_id": "s_14",
+      "script_name": "Script Deploy the cache",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_116",
+        "event_summary": "CPU high on server-6nk12-38"
+      },
+      "status": "failed",
+      "start_time": "2025-09-13T02:29:02.755Z",
+      "duration": "15.3s"
+    },
+    {
+      "key": "e_30",
+      "script_id": "s_11",
+      "script_name": "Script Refactor the frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "Mary Johnson"
+      },
+      "status": "success",
+      "start_time": "2025-09-04T19:27:14.694Z",
+      "duration": "18.3s"
+    },
+    {
+      "key": "e_31",
+      "script_id": "s_8",
+      "script_name": "Script Implement a database",
+      "trigger": {
+        "type": "Manual",
+        "user": "Robert Johnson"
+      },
+      "status": "success",
+      "start_time": "2025-09-16T07:32:03.575Z",
+      "duration": "13.8s"
+    },
+    {
+      "key": "e_32",
+      "script_id": "s_12",
+      "script_name": "Script Deploy an cache",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Williams"
+      },
+      "status": "success",
+      "start_time": "2025-09-09T12:18:29.558Z",
+      "duration": "24.2s"
+    },
+    {
+      "key": "e_33",
+      "script_id": "s_12",
+      "script_name": "Script Deploy an cache",
+      "trigger": {
+        "type": "Manual",
+        "user": "Robert Johnson"
+      },
+      "status": "failed",
+      "start_time": "2025-09-16T02:34:47.953Z",
+      "duration": "18.4s"
+    },
+    {
+      "key": "e_34",
+      "script_id": "s_15",
+      "script_name": "Script Update an API",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_193",
+        "event_summary": "5xx error rate on cache-vr35l-30"
+      },
+      "status": "failed",
+      "start_time": "2025-09-14T19:52:36.800Z",
+      "duration": "26.8s"
+    },
+    {
+      "key": "e_35",
+      "script_id": "s_3",
+      "script_name": "Script Fix the API",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_58",
+        "event_summary": "API latency high on server-cmxyc-10"
+      },
+      "status": "success",
+      "start_time": "2025-09-17T18:32:57.729Z",
+      "duration": "9.4s"
+    },
+    {
+      "key": "e_36",
+      "script_id": "s_8",
+      "script_name": "Script Implement a database",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_56",
+        "event_summary": "CPU high on database-j94yr-17"
+      },
+      "status": "success",
+      "start_time": "2025-09-05T01:38:28.337Z",
+      "duration": "15.8s"
+    },
+    {
+      "key": "e_37",
+      "script_id": "s_2",
+      "script_name": "Script Fix the server",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_47",
+        "event_summary": "API latency high on server-am86r-16"
+      },
+      "status": "success",
+      "start_time": "2025-09-03T14:02:07.340Z",
+      "duration": "16.3s"
+    },
+    {
+      "key": "e_38",
+      "script_id": "s_1",
+      "script_name": "Script Implement a frontend",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_45",
+        "event_summary": "API latency high on gateway-dhtde-12"
+      },
+      "status": "failed",
+      "start_time": "2025-09-14T07:17:41.610Z",
+      "duration": "15.3s"
+    },
+    {
+      "key": "e_39",
+      "script_id": "s_5",
+      "script_name": "Script Refactor an frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "James Jones"
+      },
+      "status": "failed",
+      "start_time": "2025-09-02T13:24:00.379Z",
+      "duration": "1.7s"
+    },
+    {
+      "key": "e_40",
+      "script_id": "s_8",
+      "script_name": "Script Implement a database",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_39",
+        "event_summary": "CPU high on database-gxj31-23"
+      },
+      "status": "failed",
+      "start_time": "2025-09-05T15:38:01.367Z",
+      "duration": "12.2s"
+    },
+    {
+      "key": "e_41",
+      "script_id": "s_14",
+      "script_name": "Script Deploy the cache",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_5"
+      },
+      "status": "failed",
+      "start_time": "2025-09-04T14:27:47.836Z",
+      "duration": "8.1s"
+    },
+    {
+      "key": "e_42",
+      "script_id": "s_13",
+      "script_name": "Script Fix the cache",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_10"
+      },
+      "status": "failed",
+      "start_time": "2025-09-05T05:17:43.816Z",
+      "duration": "28.4s"
+    },
+    {
+      "key": "e_43",
+      "script_id": "s_12",
+      "script_name": "Script Deploy an cache",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_183",
+        "event_summary": "CPU high on gateway-x791o-52"
+      },
+      "status": "failed",
+      "start_time": "2025-09-15T15:00:17.662Z",
+      "duration": "22.8s"
+    },
+    {
+      "key": "e_44",
+      "script_id": "s_13",
+      "script_name": "Script Fix the cache",
+      "trigger": {
+        "type": "Event",
+        "event_id": "evt_98",
+        "event_summary": "API latency high on cache-nh7qh-18"
+      },
+      "status": "failed",
+      "start_time": "2025-09-09T22:11:11.689Z",
+      "duration": "28.0s"
+    },
+    {
+      "key": "e_45",
+      "script_id": "s_12",
+      "script_name": "Script Deploy an cache",
+      "trigger": {
+        "type": "Manual",
+        "user": "John Smith"
+      },
+      "status": "failed",
+      "start_time": "2025-09-16T20:34:19.253Z",
+      "duration": "20.7s"
+    },
+    {
+      "key": "e_46",
+      "script_id": "s_15",
+      "script_name": "Script Update an API",
+      "trigger": {
+        "type": "Manual",
+        "user": "Robert Williams"
+      },
+      "status": "success",
+      "start_time": "2025-09-14T11:43:20.512Z",
+      "duration": "25.1s"
+    },
+    {
+      "key": "e_47",
+      "script_id": "s_10",
+      "script_name": "Script Fix an database",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_4"
+      },
+      "status": "failed",
+      "start_time": "2025-09-02T16:42:05.684Z",
+      "duration": "7.1s"
+    },
+    {
+      "key": "e_48",
+      "script_id": "s_1",
+      "script_name": "Script Implement a frontend",
+      "trigger": {
+        "type": "Manual",
+        "user": "Jennifer Brown"
+      },
+      "status": "success",
+      "start_time": "2025-09-14T05:49:06.479Z",
+      "duration": "14.3s"
+    },
+    {
+      "key": "e_49",
+      "script_id": "s_10",
+      "script_name": "Script Fix an database",
+      "trigger": {
+        "type": "Manual",
+        "user": "John Johnson"
+      },
+      "status": "success",
+      "start_time": "2025-09-09T03:31:08.113Z",
+      "duration": "12.9s"
+    },
+    {
+      "key": "e_50",
+      "script_id": "s_13",
+      "script_name": "Script Fix the cache",
+      "trigger": {
+        "type": "Schedule",
+        "id": "sch_9"
+      },
+      "status": "success",
+      "start_time": "2025-09-13T15:46:32.644Z",
+      "duration": "10.6s"
     }
   ],
   "tags": [
     {
-      "id": "tag_key_1",
-      "key_name": "env",
-      "description": "部署環境標識",
-      "is_required": true,
-      "compliance_category": "infrastructure",
-      "enforcement_level": "blocking"
+      "id": "tag_cat_1",
+      "name": "environment",
+      "displayName": "環境",
+      "category": "infrastructure",
+      "required": true,
+      "values": [
+        {
+          "id": "val_1",
+          "value": "production",
+          "displayName": "生產環境",
+          "color": "#f5222d",
+          "usageCount": 36
+        },
+        {
+          "id": "val_2",
+          "value": "staging",
+          "displayName": "預發環境",
+          "color": "#fa8c16",
+          "usageCount": 28
+        },
+        {
+          "id": "val_3",
+          "value": "development",
+          "displayName": "開發環境",
+          "color": "#52c41a",
+          "usageCount": 5
+        }
+      ]
     },
     {
-      "id": "tag_key_2",
-      "key_name": "service",
-      "description": "應用或服務的名稱",
-      "is_required": true,
-      "compliance_category": "application",
-      "enforcement_level": "warning"
+      "id": "tag_cat_2",
+      "name": "team",
+      "displayName": "負責團隊",
+      "category": "organization",
+      "required": false,
+      "values": [
+        {
+          "id": "val_4",
+          "value": "frontend",
+          "displayName": "前端團隊",
+          "color": "#722ed1",
+          "usageCount": 15
+        },
+        {
+          "id": "val_5",
+          "value": "backend",
+          "displayName": "後端團隊",
+          "color": "#52c41a",
+          "usageCount": 7
+        },
+        {
+          "id": "val_6",
+          "value": "devops",
+          "displayName": "DevOps 團隊",
+          "color": "#1890ff",
+          "usageCount": 9
+        }
+      ]
+    },
+    {
+      "id": "tag_cat_3",
+      "name": "os",
+      "displayName": "作業系統",
+      "category": "infrastructure",
+      "required": false,
+      "values": []
+    },
+    {
+      "id": "tag_cat_4",
+      "name": "data-center",
+      "displayName": "數據中心",
+      "category": "infrastructure",
+      "required": false,
+      "values": []
     }
   ],
-  "tag-allowed-values": [
-    { "id": "val_1", "tag_key_id": "tag_key_1", "value": "production", "color": "#f5222d" },
-    { "id": "val_2", "tag_key_id": "tag_key_1", "value": "staging", "color": "#faad14" },
-    { "id": "val_3", "tag_key_id": "tag_key_2", "value": "user-database", "color": "#52c41a" },
-    { "id": "val_4", "tag_key_id": "tag_key_2", "value": "api-gateway", "color": "#1890ff" }
-  ]
+  "alert_rules": [],
+  "silences": [],
+  "notifications": [],
+  "notification_channels": [],
+  "notification_strategies": []
 }
