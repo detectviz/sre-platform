@@ -167,6 +167,173 @@ SRE 平台
 
 ---
 
+## 🖼️ UI 截圖審閱與 API 對應分析
+
+本章節旨在透過審閱 `images/` 目錄下的 UI 截圖，反向核對 `openapi.yaml` 的 API 設計，並提出改善建議，以確保前後端設計的高度一致性與卓越的使用者體驗。
+
+### 1. AI 事件分析報告 (`AI 事件分析報告.png`)
+
+!\[AI 事件分析報告\](../images/AI%20事件分析報告.png)
+
+#### 涉及 API 端點
+
+- **`POST /incidents/generate-report`**: 核心 API，用於接收一組事件 ID 並回傳 AI 分析結果。
+  - **請求體**: `{ "incident_ids": ["inc-123", "inc-456"] }`
+  - **回應體**: `AIGeneratedReport` schema。
+- **`POST /automation/scripts/{scriptId}/execute`**: 用於執行「建議操作」中的自動化腳本，如重啟服務、回滾部署等。
+- **`GET /logs`**: 用於「查看日誌」操作，應搭配查詢參數跳轉。
+- **`POST /incidents/report/{reportId}/acknowledge`** (**潛在遺漏**): 用於記錄使用者已確認收到 AI 分析報告，建議新增此端點以增強審計追蹤能力。
+
+#### `openapi.yaml` 修正建議
+
+1.  **`AIGeneratedReport` Schema 擴充**：
+    -   **現狀**: 目前僅有 `content: { type: string }`，資訊量不足。
+    -   **建議**: 應重構為一個包含結構化數據的物件，例如：
+        ```yaml
+        AIGeneratedReport:
+          type: object
+          properties:
+            report_id: { type: string }
+            root_cause: { type: string }
+            confidence_score: { type: number, format: float }
+            impact_assessment: { type: string }
+            recommendations:
+              type: array
+              items:
+                type: object
+                properties:
+                  text: { type: string }
+                  action_type: { type: string, enum: [restart, rollback, view_logs, scale] }
+                  action_target: { type: object } # e.g., { "script_id": "scr-123", "resource_id": "res-456" }
+                  urgency: { type: string, enum: [high, medium, low] }
+        ```
+
+2.  **新增 API 端點**：
+    -   建議新增 `POST /incidents/report/{reportId}/acknowledge` 端點，用於追蹤報告的確認狀態。
+
+#### 視覺與體驗 (UX) 改善建議
+
+1.  **信心分數視覺化**: 將「信心: 85%」用一個小型的環圈圖或顏色條來表示，使其更直觀。
+2.  **實體連結**: 將報告內容中提到的服務名稱（如 `'user-authentication'`）和資源名稱（如 `db-prod-01`）轉化為超連結，點擊後可跳轉至對應的詳情頁面。
+3.  **操作確認**: 執行「重啟」、「回滾」等高風險操作前，應彈出一個確認對話框，向使用者二次確認操作內容，防止誤觸。
+4.  **標題清晰化**: 將「分析事件 (1)」改為更明確的「已分析 1 個關聯事件」，提升資訊傳達的準確性。
+
+---
+
+### 2. 事件列表頁面 (`事件列表.png`)
+
+!\[事件列表\](../images/事件列表.png)
+
+#### 涉及 API 端點
+
+- **`GET /dashboard/summary`**: 用於獲取頁面頂部的 KPI 統計卡片數據。
+- **`GET /incidents`**: 核心 API，用於獲取事件列表。所有搜尋、篩選、排序和分頁功能都透過此端點的查詢參數實現。
+  - **常用參數**: `?search=...`, `?status=new`, `?severity=critical`, `?page=1`, `?page_size=20`
+- **`POST /incidents/{incidentId}/acknowledge`**: 用於點擊「確認」操作按鈕。
+- **`POST /incidents/silences`**: 用於點擊「靜音」操作按鈕後，彈出視窗以建立新的靜音規則。
+- **`POST /incidents/generate-report`**: 用於勾選多個事件後，點擊「AI 分析」按鈕。
+- **`GET /incidents/export` (`潛在遺漏`)**: 「匯出」功能需要一個對應的 API 端點，目前規格中暫無。
+
+#### `openapi.yaml` 修正建議
+
+1.  **擴充 `Alert` Schema**: 為了在前端直接顯示處理人名稱而非 ID，建議在 `Alert` schema 中增加 `assignee_name` 欄位。後端可以在查詢時透過 JOIN 從 `users` 表獲取。
+    ```yaml
+    # components/schemas/Alert
+    properties:
+      # ... existing properties
+      assignee_id: { type: string }
+      assignee_name: { type: string } # 新增此欄位
+    ```
+2.  **新增匯出端點**: 建議新增 `GET /incidents/export` 端點，支援將當前篩選條件下的事件列表匯出為 CSV 或 Excel 格式。
+
+#### 視覺與體驗 (UX) 改善建議
+
+1.  **「業務影響」顏色區分**: 「高」和「中」影響等級的顏色過於接近，建議使用更易區分的顏色（如：高-紅色, 中-橙色, 低-藍色）。
+2.  **「告警風暴」互動**: 將「風暴 (3)」標籤設計為可點擊的互動元件，點擊後可在表格內展開或收合被聚合的告警，提升資訊瀏覽效率。
+3.  **顯示用戶名稱**: 將「處理人」欄位中的用戶 ID (`u_2`) 直接顯示為用戶的真實姓名，提升可讀性。
+4.  **減少視覺干擾**: 「操作」欄位的圖示按鈕可以預設隱藏，僅在滑鼠懸停於該行時顯示，使介面更簡潔。
+
+---
+
+### 3. 儀表板入口頁面 (`儀表板.png`)
+
+!\[儀表板\](../images/儀表板.png)
+
+#### 涉及 API 端點
+
+- **`GET /user/preferences?category=dashboard`**: 用於獲取當前用戶的偏好設定，以判斷哪個儀表板應被標記為「預設首頁」。
+- **`POST /user/preferences`**: 當實現「設為預設」功能時，用於更新用戶的偏好設定。
+
+#### `openapi.yaml` 修正建議
+
+- **無需修正**: 現有的 `/user/preferences` 端點已能滿足此頁面的核心需求。未來若要實現儀表板的增刪改查，則需新增 `/dashboards` 相關的 API 端點。
+
+#### 視覺與體驗 (UX) 改善建議
+
+1.  **豐富卡片資訊**: 在卡片上顯示關鍵指標預覽（例如：「基礎設施洞察」卡片顯示嚴重告警數，「SRE 戰情室」顯示核心業務 KPI），讓此頁面不僅是導航，更是資訊摘要。
+2.  **提供快速設定功能**: 在每張卡片的角落增加一個「釘選」或「星號」圖示，允許用戶直接在此頁面設定預設首頁，提升操作便捷性。
+3.  **預告未來功能**: 增加一個視覺上為「禁用」狀態的「新增儀表板」卡片，向用戶預告即將推出的自訂儀表板功能，並明確其入口位置。
+
+---
+
+### 4. 團隊管理頁面 (`團隊管理.png`)
+
+!\[團隊管理\](../images/團隊管理.png)
+
+#### 涉及 API 端點
+
+- **`GET /admin/stats/users` (`潛在遺漏`)**: 用於獲取頁面頂部的 KPI 統計數據（總用戶、在線用戶、團隊數等）。建議新增此類型的統計端點。
+- **`GET /teams`**: 獲取團隊列表以填充表格。
+  - **常用參數**: `?search=...`
+- **`POST /teams`**: 「新增團隊」按鈕的功能。
+- **`PUT /teams/{teamId}`**: 「編輯」按鈕的功能。
+- **`DELETE /teams/{teamId}`**: 「刪除」按鈕的功能 (軟刪除)。
+- **`POST /teams/batch` (`潛在遺漏`)**: 批次操作功能（如批次刪除）需要一個對應的 API 端點。
+
+#### `openapi.yaml` 修正建議
+
+1.  **新增統計端點**: 建議新增 `GET /admin/stats/users` 或類似端點，統一提供用戶、團隊相關的統計數字。
+2.  **新增批次操作端點**: 建議新增 `POST /teams/batch` 端點以支援批次刪除等操作。
+3.  **擴充 `Team` Schema**: 為了支援點擊「成員數」顯示成員列表的功能，可以在 `GET /teams/{teamId}` 的回應中包含完整的 `memberDetails`。目前的列表 API (`GET /teams`) 只需返回計數，是合理的。
+
+#### 視覺與體驗 (UX) 改善建議
+
+1.  **互動式計數**: 將「成員數」和「訂閱者數」欄位的數字改為可點擊的連結，點擊後彈出視窗顯示詳細列表。
+2.  **批次操作介面**: 當用戶勾選表格中的項目時，應在頁面底部出現一個浮動的「批次操作工具列」，提供「批次刪除」等功能。
+3.  **連結負責人**: 將「負責人」欄位的姓名連結到對應的人員管理詳情頁面。
+
+---
+
+### 5. 資源列表頁面 (`資源列表.png`)
+
+!\[資源列表\](../images/資源列表.png)
+
+#### 涉及 API 端點
+
+- **`GET /resources/stats` (`潛在遺漏`)**: 用於獲取頁面頂部的 KPI 統計數據。
+- **`GET /resources`**: 獲取資源列表。
+  - **常用參數**: `?search=...`, `?status=...`, `?type=...`, `?team_id=...`
+- **`POST /resources`**: 「新增資源」功能。
+- **`PUT /resources/{resourceId}`**: 「編輯」功能。
+- **`DELETE /resources/{resourceId}`**: 「刪除」功能 (軟刪除)。
+- **`POST /resources/scan`**: 「掃描網路」功能。
+- **`POST /resources/batch` (`潛在遺漏`)**: 批次操作功能。
+- **`GET /resources/export` (`潛在遺漏`)**: 匯出功能。
+
+#### `openapi.yaml` 修正建議
+
+1.  **擴充 `Resource` Schema**: 為了在列表頁直接顯示監控數據，避免前端發起大量額外請求，建議在 `GET /resources` 的回應中，為 `Resource` 物件增加 `cpu_usage`, `memory_usage`, `incidents_count` 等匯總欄位。
+2.  **新增統計與批次端點**: 建議新增 `GET /resources/stats` 和 `POST /resources/batch` 端點。
+3.  **新增匯出端點**: 建議新增 `GET /resources/export` 端點。
+
+#### 視覺與體驗 (UX) 改善建議
+
+1.  **連結性**: 「所屬團隊」和「關聯事件」計數應設計為可點擊的連結，方便使用者快速下鑽到相關頁面。
+2.  **標籤互動**: 滑鼠懸停在「標籤」上時，應以 Tooltip 形式顯示其完整的鍵值對或描述。
+3.  **批次操作介面**: 與團隊管理頁面類似，當用戶勾選資源時，應出現一個浮動的批次操作工具列。
+
+---
+
 ## 🏠 首頁 (HomePage)
 
 ### 組件參數
