@@ -1,8 +1,8 @@
 # SRE 平台 API 規格書 (SSOT)
-# 版本: 2.0.0
-# 更新日期: 2025-09-16
+# 版本: 3.0.0
+# 更新日期: 2025-09-18
 # 描述: 此文件為 SRE 平台前端與後端之間的 API 契約唯一真實來源 (Single Source of Truth)，
-#      根據 prototype.html 的全面審查結果重新撰寫。
+#      根據 pages.md 的全面分析進行了重構。
 openapi: 3.1.0
 info:
   title: SRE 平台 - API 規格書
@@ -32,3198 +32,511 @@ info:
   termsOfService: https://detectviz.com/terms
 
 servers:
-  - url: https://api.detectviz.com/v1
-    description: 生產環境 API 服務器
-  - url: https://api-staging.detectviz.com/v1
-    description: 測試環境 API 服務器
-  - url: http://localhost:8080/api/v1
-    description: 本地開發環境
   - url: /api/v1
     description: 相對路徑 (適用於代理配置)
 
 # ============================================
 # 擴展屬性 (Vendor Extensions)
 # ============================================
-x-error-codes:
-  # 標準 HTTP 錯誤
-  BAD_REQUEST:
-    http: 400
-    message: "請求格式錯誤或缺少必要參數"
-    i18n_key: errors.badRequest
-    details: "檢查請求參數格式、必填欄位和數據類型"
-  UNAUTHORIZED:
-    http: 401
-    message: "使用者未登入或 Token 已過期"
-    i18n_key: errors.unauthorized
-    details: "請重新登入或刷新 Token"
-  FORBIDDEN:
-    http: 403
-    message: "使用者權限不足，無法執行此操作"
-    i18n_key: errors.forbidden
-    details: "聯繫管理員獲取相應權限"
-  NOT_FOUND:
-    http: 404
-    message: "請求的資源不存在或已被移除"
-    i18n_key: errors.notFound
-    details: "確認資源 ID 正確或檢查是否已被刪除"
-  CONFLICT:
-    http: 409
-    message: "操作與目前資源狀態衝突"
-    i18n_key: errors.conflict
-    details: "資源可能已被修改或存在重複"
-  UNPROCESSABLE_ENTITY:
-    http: 422
-    message: "請求格式正確但包含語義錯誤"
-    i18n_key: errors.unprocessableEntity
-    details: "檢查業務邏輯和數據關聯性"
-  RATE_LIMITED:
-    http: 429
-    message: "請求過於頻繁，請稍後再試"
-    i18n_key: errors.rateLimited
-    details: "當前 API 配額已用盡，請等待重置"
-  INTERNAL_ERROR:
-    http: 500
-    message: "伺服器內部發生未知錯誤"
-    i18n_key: errors.internal
-    details: "請聯繫技術支援，並提供錯誤 ID"
-  SERVICE_UNAVAILABLE:
-    http: 503
-    message: "服務暫時不可用"
-    i18n_key: errors.serviceUnavailable
-    details: "系統維護中或負載過高"
-
-  # 業務邏輯錯誤
-  RESOURCE_IN_USE:
-    http: 409
-    message: "資源正在使用中，無法刪除"
-    i18n_key: errors.resource_in_use
-    details: "請先停止使用該資源的相關服務"
-  INVALID_METRIC:
-    http: 400
-    message: "無效的監控指標"
-    i18n_key: errors.invalid_metric
-    details: "指標名稱不存在或格式錯誤"
-  SCRIPT_EXECUTION_FAILED:
-    http: 500
-    message: "腳本執行失敗"
-    i18n_key: errors.scriptExecutionFailed
-    details: "檢查腳本語法和執行權限"
-  NOTIFICATION_DELIVERY_FAILED:
-    http: 502
-    message: "通知發送失敗"
-    i18n_key: errors.notificationDeliveryFailed
-    details: "檢查通知管道配置和網路連接"
-  SCHEDULE_CONFLICT:
-    http: 409
-    message: "排程時間衝突"
-    i18n_key: errors.scheduleConflict
-    details: "與現有排程存在時間重疊"
-  INSUFFICIENT_RESOURCES:
-    http: 507
-    message: "系統資源不足"
-    i18n_key: errors.insufficientResources
-    details: "CPU、記憶體或磁碟空間不足"
-
-x-role-definitions:
-  super_admin: "超級管理員：擁有系統最高權限，可以執行所有操作。"
-  team_manager: "團隊管理員：管理團隊成員、資源、事件規則等團隊範圍內的資源。"
-  team_member: "團隊成員：查看團隊資源、處理事件、執行腳本（受限）。"
-  viewer: "唯讀人員：僅可查看資源狀態、儀表板、報表。"
-
-x-resource-status-rules:
-  # 資源健康狀態的判定規則契約
-  default:
-    critical: "cpu_usage > 90 OR memory_usage > 95"
-    warning: "cpu_usage > 80 OR memory_usage > 85"
-    healthy: "cpu_usage <= 80 AND memory_usage <= 85"
-  server:
-    critical: "cpu_usage > 90 OR memory_usage > 95 OR disk_usage > 95"
-    warning: "cpu_usage > 80 OR memory_usage > 85 OR disk_usage > 90"
-    healthy: "cpu_usage <= 80 AND memory_usage <= 85 AND disk_usage <= 90"
-  database:
-    critical: "cpu_usage > 85 OR memory_usage > 90 OR replication_lag_s > 10 OR connections_pct > 95"
-    warning: "cpu_usage > 75 OR memory_usage > 85 OR replication_lag_s > 5 OR connections_pct > 90"
-    healthy: "cpu_usage <= 75 AND memory_usage <= 85 AND replication_lag_s <= 5 AND connections_pct <= 90"
-
-x-incident-lifecycle:
+x-event-lifecycle:
   # 事件狀態機契約
   states: [new, acknowledged, resolved, silenced]
   transitions:
-    - {
-        from: new,
-        to: acknowledged,
-        roles: [team_member, team_manager, super_admin],
-        action: "確認",
-      }
-    - {
-        from: acknowledged,
-        to: resolved,
-        roles: [team_member, team_manager, super_admin],
-        action: "解決",
-      }
-    - {
-        from: new,
-        to: silenced,
-        roles: [team_manager, super_admin],
-        action: "靜音",
-      }
-    - {
-        from: acknowledged,
-        to: silenced,
-        roles: [team_manager, super_admin],
-        action: "靜音",
-      }
-  actions:
-    acknowledge:
-      { endpoint: "/incidents/{incidentId}/acknowledge", method: POST }
-    resolve: { endpoint: "/incidents/{incidentId}/resolve", method: POST }
-    silence: { endpoint: "/incidents/silences", method: POST }
-
-x-websocket:
-  # WebSocket / SSE 通訊契約
-  notifications:
-    url: "/events"
-    description: "Server-Sent Events (SSE) 用於即時更新（alerts, incidents 等）。"
-    messages:
-      alert_fired:
-        payload_schema: "#/components/schemas/Alert"
-      incident_updated:
-        payload_schema: "#/components/schemas/Alert"
-      resource_status_changed:
-        payload_example:
-          resource_id: "res_1"
-          old_status: "healthy"
-          new_status: "warning"
+    - { from: new, to: acknowledged, action: "確認" }
+    - { from: acknowledged, to: resolved, action: "解決" }
+    - { from: new, to: silenced, action: "靜音" }
+    - { from: acknowledged, to: silenced, action: "靜音" }
 
 # ============================================
 # API 標籤 (Tags)
 # ============================================
 tags:
-  - name: System
-    description: 核心系統功能
-  - name: Auth
-    description: 身份驗證
-  - name: Search & Autocomplete
-    description: 全局搜尋與自動完成
-  - name: Dashboard
-    description: 儀表板與統計
-  - name: Resources
-    description: 資源管理
-  - name: Resource Groups
-    description: 資源群組管理
-  - name: Incidents
-    description: 事件管理
-  - name: Alerts
-    description: 原始告警管理
-  - name: Incident Rules
-    description: 事件規則管理
-  - name: Incident Silences
-    description: 事件靜音規則管理
-  - name: Analyzing
-    description: 分析與預測
-  - name: Automation
-    description: 自動化相關
-  - name: Admin
-    description: 平台管理功能
-  - name: Profile
-    description: 使用者個人設定
-  - name: Notifications
-    description: 使用者通知中心
+  - name: 系統 (System)
+    description: "核心系統功能，如健康檢查。"
+  - name: 身份驗證 (Auth)
+    description: "使用者登入、登出與 SSO 相關功能 (Keycloak 代理)。"
+  - name: 儀表板 (Dashboards)
+    description: "儀表板管理與資料視覺化 (Grafana 代理)。"
+  - name: 事件管理 (Event Management)
+    description: "事件、事件規則、靜音規則的管理 (Grafana 代理)。"
+  - name: 資源管理 (Resource Management)
+    description: "平台納管的基礎設施資源 (CMDB) 與資源群組。"
+  - name: 自動化中心 (Automation)
+    description: "自動化腳本、排程任務與執行日誌的管理。"
+  - name: 分析中心 (Analysis)
+    description: "容量規劃、AI 分析等決策支援功能。"
+  - name: 平台設定 (Platform Settings)
+    description: "平台層級的管理與設定功能，如標籤治理、權限角色等。"
+  - name: 個人中心 (User Profile)
+    description: "使用者個人資料與偏好設定。"
+  - name: 通知管理 (Notification Management)
+    description: "通知管道、策略與歷史記錄的管理。"
 
 # ============================================
 # API 路徑與端點 (Paths & Endpoints)
 # ============================================
 paths:
   # ============================================
-  # System
+  # 系統 (System)
   # ============================================
   /healthz:
     get:
-      tags: [System]
+      tags: [系統 (System)]
       summary: 服務健康檢查
       operationId: checkHealth
       security: []
       responses: { "200": { description: 服務健康 } }
   /readyz:
     get:
-      tags: [System]
+      tags: [系統 (System)]
       summary: 服務就緒檢查
       operationId: checkReadiness
       security: []
       responses: { "200": { description: 服務就緒 } }
-  /metrics:
-    get:
-      tags: [System]
-      summary: Prometheus 指標
-      operationId: getMetrics
-      security: []
-      responses: { "200": { description: Prometheus 指標 } }
-  /metrics/definitions:
-    get:
-      tags: [System]
-      summary: 獲取可用監控指標列表
-      operationId: getMetricDefinitions
-      security: [{ bearerAuth: [] }]
-      responses:
-        "200":
-          description: 成功獲取指標列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/MetricDefinition"
-  /metrics/query:
-    post:
-      tags: [System]
-      summary: 多資源指標時序查詢
-      operationId: queryMetrics
-      security: [{ bearerAuth: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MetricQueryRequest"
-      responses:
-        "200":
-          description: 成功返回指標時序數據
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MetricQueryResult"
 
   # ============================================
-  # Auth
+  # 身份驗證 (Auth)
   # ============================================
   /auth/sso/redirect:
     get:
-      tags: [Auth]
+      tags: [身份驗證 (Auth)]
       summary: 獲取 SSO 登入重定向 URL
-      description: 後端產生並回傳 Keycloak 登入頁面的 URL，前端直接重定向到此 URL。
       operationId: getSsoRedirectUrl
       security: []
-      responses:
-        "200":
-          description: 成功獲取重定向 URL
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  redirect_url:
-                    type: string
-                    format: uri
+      responses: { "200": { description: "成功獲取重定向 URL" } }
   /auth/sso/callback:
     get:
-      tags: [Auth]
+      tags: [身份驗證 (Auth)]
       summary: SSO 登入回呼
-      description: 使用者在 Keycloak 登入後，會被重導回此端點。後端在此處處理 code，與 Keycloak 交換 token，建立平台會話，並最終將使用者重導向到前端的主頁面。
       operationId: handleSsoCallback
       security: []
-      parameters:
-        - name: code
-          in: query
-          required: true
-          schema: { type: string }
-        - name: state
-          in: query
-          required: true
-          schema: { type: string }
-      responses:
-        "302":
-          description: 登入成功，重定向至前端應用。
+      responses: { "302": { description: "登入成功，重定向至前端應用" } }
   /auth/sso/logout:
     post:
-      tags: [Auth]
+      tags: [身份驗證 (Auth)]
       summary: SSO 登出
-      description: 執行單一登出 (SLO)。除了清除本機 session，還應回傳 Keycloak 的登出 URL，以便前端重定向，徹底清除 SSO 會話。
       operationId: ssoLogout
       security: [{ bearerAuth: [] }]
-      responses:
-        "200":
-          description: 成功取得登出 URL
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  logout_url:
-                    type: string
-                    format: uri
+      responses: { "200": { description: "成功取得登出 URL" } }
 
   # ============================================
-  # Users
+  # 個人中心 (User Profile)
+  # ============================================
+  /users/me:
+    get:
+      tags: [個人中心 (User Profile)]
+      summary: 獲取當前登入使用者資訊
+      operationId: getCurrentUser
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
+  /users/me/preferences:
+    get:
+      tags: [個人中心 (User Profile)]
+      summary: 獲取個人偏好設定
+      operationId: getUserPreferences
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
+    put:
+      tags: [個人中心 (User Profile)]
+      summary: 更新個人偏好設定
+      operationId: updateUserPreferences
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "更新成功" } }
+
+  # ============================================
+  # 平台設定 (Platform Settings) - 人員、團隊、角色
   # ============================================
   /users:
     get:
-      tags: [Profile]
+      tags: [平台設定 (Platform Settings)]
       summary: 獲取人員列表
-      description: 從 Keycloak 獲取使用者列表，並附加其在本平台內的團隊和角色資訊。
       operationId: listUsers
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: is_active
-          in: query
-          schema: { type: boolean }
-        - name: search
-          in: query
-          schema: { type: string }
-      responses:
-        "200":
-          description: 人員列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserList"
+      responses: { "200": { description: "成功" } }
   /invitations:
     post:
-      tags: [Profile]
+      tags: [平台設定 (Platform Settings)]
       summary: 邀請新人員
-      description: 在 Keycloak 中建立一個新使用者，並觸發 Keycloak 的邀請郵件流程。
       operationId: inviteUser
       security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/UserInvitationRequest"
-      responses:
-        "202":
-          description: 邀請已成功發送
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
+      responses: { "202": { description: "邀請已成功發送" } }
   /users/{userId}:
     get:
-      tags: [Profile]
-      summary: 獲取人員詳情
+      tags: [平台設定 (Platform Settings)]
+      summary: 獲取指定人員詳情
       operationId: getUser
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 人員詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
+      responses: { "200": { description: "成功" } }
     put:
-      tags: [Profile]
+      tags: [平台設定 (Platform Settings)]
       summary: 更新人員的平台權限
-      description: 只能更新使用者在平台內部的團隊和角色映射關係，無法修改姓名、Email 等核心資訊。
       operationId: updateUserPlatformRoles
       security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/UserPlatformRolesUpdateRequest"
-      responses:
-        "200":
-          description: 人員權限更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
+      responses: { "200": { description: "更新成功" } }
     delete:
-      tags: [Profile]
+      tags: [平台設定 (Platform Settings)]
       summary: 刪除人員 (軟刪除)
-      description: 此操作將標記人員為已刪除 (軟刪除)，但不會從資料庫中實際移除。可選擇性地在 Keycloak 中將使用者設為非活躍狀態。
       operationId: deleteUser
       security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 人員刪除成功
+      responses: { "204": { description: "刪除成功" } }
   /users/{userId}/internal-status:
     put:
-      tags: [Profile]
-      summary: 更新人員的平台內部狀態
-      description: 僅更新平台資料庫中 `users` 表的 `is_active` 欄位。此欄位用於控制平台內部的業務邏輯（如是否可被指派任務），而非登入權限。
+      tags: [平台設定 (Platform Settings)]
+      summary: 更新人員的平台內部啟用狀態
       operationId: updateUserInternalStatus
       security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      parameters:
-        - name: userId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                is_active:
-                  type: boolean
-      responses:
-        "200":
-          description: 內部狀態更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/User"
-
-  # ============================================
-  # Teams
-  # ============================================
+      responses: { "200": { description: "更新成功" } }
   /teams:
     get:
-      tags: [Admin]
+      tags: [平台設定 (Platform Settings)]
       summary: 獲取團隊列表
       operationId: listTeams
       security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: search
-          in: query
-          schema: { type: string }
-      responses:
-        "200":
-          description: 團隊列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TeamList"
+      responses: { "200": { description: "成功" } }
     post:
-      tags: [Admin]
+      tags: [平台設定 (Platform Settings)]
       summary: 創建團隊
       operationId: createTeam
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/TeamCreateRequest"
-      responses:
-        "201":
-          description: 團隊創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Team"
+      responses: { "201": { description: "創建成功" } }
   /teams/{teamId}:
     get:
-      tags: [Admin]
+      tags: [平台設定 (Platform Settings)]
       summary: 獲取團隊詳情
       operationId: getTeam
       security: [{ bearerAuth: [] }]
-      parameters:
-        - name: teamId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 團隊詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Team"
+      responses: { "200": { description: "成功" } }
     put:
-      tags: [Admin]
+      tags: [平台設定 (Platform Settings)]
       summary: 更新團隊
       operationId: updateTeam
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: teamId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/TeamUpdateRequest"
-      responses:
-        "200":
-          description: 團隊更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Team"
+      responses: { "200": { description: "更新成功" } }
     delete:
-      tags: [Admin]
+      tags: [平台設定 (Platform Settings)]
       summary: 刪除團隊 (軟刪除)
-      description: 此操作將標記團隊為已刪除 (軟刪除)，但不會從資料庫中實際移除。
       operationId: deleteTeam
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: teamId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 團隊刪除成功
-  /admin/stats/users:
-    get:
-      tags: [Admin]
-      summary: 獲取人員與團隊統計
-      operationId: getUserStats
-      security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      responses:
-        "200":
-          description: 人員與團隊統計數據
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  total_users: { type: integer }
-                  active_users: { type: integer }
-                  online_users: { type: integer }
-                  total_teams: { type: integer }
-                  pending_invitations: { type: integer }
-
-  # ============================================
-  # Roles
-  # ============================================
+      responses: { "204": { description: "刪除成功" } }
   /roles:
     get:
-      tags: [Admin]
+      tags: [平台設定 (Platform Settings)]
       summary: 獲取角色列表
       operationId: listRoles
       security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      responses:
-        "200":
-          description: 角色列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/Role"
-
-  # ============================================
-  # Search & Autocomplete
-  # ============================================
-  /autocomplete:
-    get:
-      tags: [Search & Autocomplete]
-      summary: 獲取自動完成建議
-      operationId: getAutocompleteSuggestions
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: type
-          in: query
-          required: true
-          schema:
-            type: string
-            enum: [user, resource, script, team, channel, all]
-        - name: q
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功獲取建議列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/AutocompleteResult"
-  /search:
-    get:
-      tags: [Search & Autocomplete]
-      summary: 全局搜尋
-      operationId: globalSearch
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: q
-          in: query
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功返回搜尋結果
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/SearchResultItem"
-
-  # ============================================
-  # Dashboard
-  # ============================================
-  /dashboard/summary:
-    get:
-      tags: [Dashboard]
-      summary: 儀表板摘要
-      operationId: getDashboardSummary
-      security: [{ bearerAuth: [] }]
-      responses:
-        "200":
-          description: 儀表板摘要
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DashboardSummary"
-  /dashboard/trends:
-    get:
-      tags: [Dashboard]
-      summary: 趨勢數據
-      operationId: getDashboardTrends
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [1h, 6h, 24h, 7d, 30d]
-            default: 24h
-      responses:
-        "200":
-          description: 趨勢數據
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TrendData"
-  /dashboard/resource-distribution:
-    get:
-      tags: [Dashboard]
-      summary: 資源分佈
-      operationId: getResourceDistribution
-      security: [{ bearerAuth: [] }]
-      responses:
-        "200":
-          description: 資源分佈數據
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceDistribution"
-
-  # ============================================
-  # Resources
-  # ============================================
-  /resources:
-    get:
-      tags: [Resources]
-      summary: 獲取資源列表
-      operationId: listResources
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - $ref: "#/components/parameters/SortByParam"
-        - $ref: "#/components/parameters/SortOrderParam"
-        - name: status
-          in: query
-          schema:
-            type: string
-        - name: type
-          in: query
-          schema:
-            type: string
-        - name: group_id
-          in: query
-          schema:
-            type: string
-        - name: search
-          in: query
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 資源列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceList"
+      responses: { "200": { description: "成功" } }
     post:
-      tags: [Resources]
-      summary: 創建資源
-      operationId: createResource
+      tags: [平台設定 (Platform Settings)]
+      summary: 創建角色
+      operationId: createRole
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/ResourceCreateRequest"
-      responses:
-        "201":
-          description: 資源創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Resource"
-  /resources/{resourceId}:
-    get:
-      tags: [Resources]
-      summary: 獲取資源詳情
-      operationId: getResource
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/ResourceIdParam"
-      responses:
-        "200":
-          description: 資源詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Resource"
+      responses: { "201": { description: "創建成功" } }
+  /roles/{roleId}:
     put:
-      tags: [Resources]
-      summary: 更新資源
-      operationId: updateResource
+      tags: [平台設定 (Platform Settings)]
+      summary: 更新角色
+      operationId: updateRole
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - $ref: "#/components/parameters/ResourceIdParam"
-      requestBody:
-        $ref: "#/components/requestBodies/ResourceUpdateRequest"
-      responses:
-        "200":
-          description: 資源更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Resource"
+      responses: { "200": { description: "更新成功" } }
     delete:
-      tags: [Resources]
-      summary: 刪除資源 (軟刪除)
-      description: 此操作將標記資源為已刪除 (軟刪除)，但不會從資料庫中實際移除。
-      operationId: deleteResource
+      tags: [平台設定 (Platform Settings)]
+      summary: 刪除角色
+      operationId: deleteRole
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - $ref: "#/components/parameters/ResourceIdParam"
-      responses:
-        "204":
-          description: 資源刪除成功
-  /resources/{resourceId}/metrics:
+      responses: { "204": { description: "刪除成功" } }
+  /permissions:
     get:
-      tags: [Resources]
-      summary: 獲取資源歷史指標
-      operationId: getResourceMetricsHistory
+      tags: [平台設定 (Platform Settings)]
+      summary: 獲取所有可用權限列表
+      operationId: listPermissions
       security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/ResourceIdParam"
-        - name: metric_name
-          in: query
-          required: true
-          schema: { type: string }
-        - name: period
-          in: query
-          schema:
-            type: string
-            enum: [1h, 6h, 24h, 7d, 30d]
-            default: 24h
-      responses:
-        "200":
-          description: 成功返回指標歷史數據
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TrendData"
-  /resources/{resourceId}/incidents:
-    get:
-      tags: [Resources]
-      summary: 獲取資源關聯事件列表
-      operationId: getResourceIncidents
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/ResourceIdParam"
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-      responses:
-        "200":
-          description: 資源關聯事件列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventList"
-  /resources/batch:
-    post:
-      tags: [Resources]
-      summary: 批次操作資源
-      operationId: batchOperateResources
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/BatchResourceOperation"
-      responses:
-        "200":
-          description: 批次操作結果
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BatchOperationResult"
-  /resource-scans:
-    post:
-      tags: [Resources]
-      summary: 掃描網段
-      operationId: scanNetwork
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/NetworkScanRequest"
-      responses:
-        "202":
-          description: 掃描任務已接受
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScanTaskResponse"
-  /resources/stats:
-    get:
-      tags: [Resources]
-      summary: 獲取資源統計數據
-      operationId: getResourceStats
-      security: [{ bearerAuth: [] }]
-      responses:
-        "200":
-          description: 資源統計數據
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  total_count: { type: integer }
-                  healthy_count: { type: integer }
-                  warning_count: { type: integer }
-                  critical_count: { type: integer }
-                  group_count: { type: integer }
-  /resource-scans/{taskId}:
-    get:
-      tags: [Resources]
-      summary: 獲取掃描結果
-      operationId: getScanResult
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: taskId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 掃描結果
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScanResult"
-  # ============================================
-  # Resource Groups
-  # ============================================
-  /resource-groups:
-    get:
-      tags: [Resource Groups]
-      summary: 獲取群組列表
-      operationId: listResourceGroups
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-      responses:
-        "200":
-          description: 群組列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceGroupList"
-    post:
-      tags: [Resource Groups]
-      summary: 創建群組
-      operationId: createResourceGroup
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/ResourceGroupCreateRequest"
-      responses:
-        "201":
-          description: 群組創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceGroup"
-  /resource-groups/{groupId}:
-    get:
-      tags: [Resource Groups]
-      summary: 獲取單一資源群組詳情
-      operationId: getResourceGroup
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 資源群組詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceGroup"
-    put:
-      tags: [Resource Groups]
-      summary: 更新群組
-      operationId: updateResourceGroup
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/ResourceGroupUpdateRequest"
-      responses:
-        "200":
-          description: 群組更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceGroup"
-    delete:
-      tags: [Resource Groups]
-      summary: 刪除群組 (軟刪除)
-      description: 此操作將標記群組為已刪除 (軟刪除)，但不會從資料庫中實際移除。
-      operationId: deleteResourceGroup
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 群組刪除成功
-  /resource-groups/{groupId}/members:
-    post:
-      tags: [Resource Groups]
-      summary: 管理群組成員
-      operationId: manageResourceGroupMembers
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: groupId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/GroupMemberOperation"
-      responses:
-        "200":
-          description: 成員管理成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-
-  # ============================================
-  # Tag Keys
-  # ============================================
-  /tag-keys:
-    get:
-      tags: [Resources]
-      summary: 獲取標籤鍵列表
-      operationId: listTagKeys
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: search
-          in: query
-          schema: { type: string }
-      responses:
-        "200":
-          description: 標籤鍵列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TagKey"
-    post:
-      tags: [Resources]
-      summary: 創建標籤鍵
-      operationId: createTagKey
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/TagKeyCreateRequest"
-      responses:
-        "201":
-          description: 標籤鍵創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagKey"
-  /tag-keys/{tagKeyId}:
-    get:
-      tags: [Resources]
-      summary: 獲取標籤鍵詳情
-      operationId: getTagKey
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: tagKeyId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 標籤鍵詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagKey"
-    put:
-      tags: [Resources]
-      summary: 更新標籤鍵
-      operationId: updateTagKey
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: tagKeyId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/TagKeyUpdateRequest"
-      responses:
-        "200":
-          description: 標籤鍵更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagKey"
-    delete:
-      tags: [Resources]
-      summary: 刪除標籤鍵
-      operationId: deleteTagKey
-      security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      parameters:
-        - name: tagKeyId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 標籤鍵刪除成功
-  /tag-keys/{tagKeyId}/values:
-    get:
-      tags: [Resources]
-      summary: 獲取標籤值列表
-      operationId: listTagValues
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: tagKeyId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 標籤值列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/TagValue"
-    post:
-      tags: [Resources]
-      summary: 新增標籤值
-      operationId: createTagValue
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: tagKeyId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/TagValueCreateRequest"
-      responses:
-        "201":
-          description: 標籤值創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagValue"
-
-  # ============================================
-  # Incidents
-  # ============================================
-  /incidents:
-    get:
-      tags: [Incidents]
-      summary: 獲取事件列表
-      operationId: listIncidents
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - $ref: "#/components/parameters/SortByParam"
-        - $ref: "#/components/parameters/SortOrderParam"
-        - name: status
-          in: query
-          schema: { type: string }
-        - name: severity
-          in: query
-          schema: { type: string }
-        - name: resource_id
-          in: query
-          schema: { type: string }
-      responses:
-        "200":
-          description: 事件列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AlertList"
-    post:
-      tags: [Incidents]
-      summary: 創建事件
-      operationId: createIncident
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/IncidentCreateRequest"
-      responses:
-        "201":
-          description: 事件創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Alert"
-  /incidents/{incidentId}:
-    get:
-      tags: [Incidents]
-      summary: 獲取事件詳情
-      operationId: getIncident
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: alertId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 事件詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Event"
-    put:
-      tags: [Incidents]
-      summary: 更新事件
-      operationId: updateIncident
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: alertId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/IncidentUpdateRequest"
-      responses:
-        "200":
-          description: 事件更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Event"
-  /incidents/{incidentId}/acknowledge:
-    post:
-      tags: [Incidents]
-      summary: 確認事件
-      operationId: acknowledgeIncident
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: alertId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 事件確認成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Event"
-  /incidents/{incidentId}/resolve:
-    post:
-      tags: [Incidents]
-      summary: 解決事件
-      operationId: resolveIncident
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: alertId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 事件解決成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Event"
-  /incidents/{incidentId}/assign:
-    post:
-      tags: [Incidents]
-      summary: 指派事件
-      operationId: assignIncident
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: alertId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [assignee_id]
-              properties:
-                assignee_id:
-                  type: string
-      responses:
-        "200":
-          description: 事件指派成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-  /incidents/{incidentId}/comments:
-    post:
-      tags: [Incidents]
-      summary: 新增事件註記
-      operationId: addIncidentComment
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: alertId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [comment]
-              properties:
-                comment:
-                  type: string
-      responses:
-        "201":
-          description: 註記新增成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-  /incidents/generate-report:
-    post:
-      tags: [Incidents]
-      summary: AI 生成事件報告
-      operationId: generateIncidentReport
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [incident_ids]
-              properties:
-                incident_ids:
-                  type: array
-                  items: { type: string }
-      responses:
-        "200":
-          description: AI 報告生成成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AIGeneratedReport"
-  # ============================================
-  # Incident Silences
-  # ============================================
-  /incident-silences:
-    get:
-      tags: [Incident Silences]
-      summary: 獲取靜音規則列表
-      operationId: listSilences
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-      responses:
-        "200":
-          description: 靜音規則列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SilenceList"
-    post:
-      tags: [Incident Silences]
-      summary: 創建靜音規則
-      operationId: createSilence
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/SilenceCreateRequest"
-      responses:
-        "201":
-          description: 靜音規則創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Silence"
-  /incident-silences/{silenceId}:
-    get:
-      tags: [Incident Silences]
-      summary: 獲取單一靜音規則
-      operationId: getSilence
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: silenceId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 靜音規則詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Silence"
-    put:
-      tags: [Incident Silences]
-      summary: 更新靜音規則
-      operationId: updateSilence
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: silenceId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/SilenceUpdateRequest"
-      responses:
-        "200":
-          description: 靜音規則更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Silence"
-    delete:
-      tags: [Incident Silences]
-      summary: 刪除靜音規則 (軟刪除)
-      description: 此操作將標記靜音規則為已刪除 (軟刪除)，但不會從資料庫中實際移除。
-      operationId: deleteSilence
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: silenceId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 靜音規則刪除成功
-  /incident-silences/{silenceId}/enable:
-    post:
-      tags: [Incident Silences]
-      summary: 啟用靜音規則
-      operationId: enableSilence
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: silenceId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 規則已啟用
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-  /incident-silences/{silenceId}/disable:
-    post:
-      tags: [Incident Silences]
-      summary: 停用靜音規則
-      operationId: disableSilence
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: silenceId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 規則已停用
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-
-  # ============================================
-  # Recurring Silence Rules (Platform Core Feature)
-  # ============================================
-  /recurring-silence-rules:
-    get:
-      tags: [Incident Silences]
-      summary: 獲取週期性靜音規則列表
-      operationId: listRecurringSilenceRules
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/LimitParam"
-        - name: enabled
-          in: query
-          schema: { type: boolean }
-          description: 過濾啟用/停用的規則
-      responses:
-        "200":
-          description: 週期性靜音規則列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RecurringSilenceRuleList"
-    post:
-      tags: [Incident Silences]
-      summary: 創建週期性靜音規則
-      operationId: createRecurringSilenceRule
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RecurringSilenceRuleCreateRequest"
-      responses:
-        "201":
-          description: 週期性靜音規則創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RecurringSilenceRule"
-
-  /recurring-silence-rules/{ruleId}:
-    get:
-      tags: [Incident Silences]
-      summary: 獲取單一週期性靜音規則
-      operationId: getRecurringSilenceRule
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: ruleId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 週期性靜音規則詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/RecurringSilenceRule"
-
-  /silence-rule-templates:
-    get:
-      tags: [Incident Silences]
-      summary: 獲取靜音規則範本列表
-      operationId: listSilenceRuleTemplates
-      security: [{ bearerAuth: [] }]
-      responses:
-        "200":
-          description: 靜音規則範本列表
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items: { $ref: "#/components/schemas/SilenceRuleTemplate" }
-
-  # ============================================
-  # Tag Governance (Platform Core Feature)
-  # ============================================
+      responses: { "200": { description: "成功" } }
   /tags:
     get:
-      tags: [Platform Settings]
-      summary: 獲取標籤鍵列表
-      operationId: listTagKeys
+      tags: [平台設定 (Platform Settings)]
+      summary: 獲取標籤治理規則列表
+      operationId: listTagGovernanceRules
       security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/LimitParam"
-        - name: category
-          in: query
-          schema: { type: string }
-          description: 過濾標籤分類
-      responses:
-        "200":
-          description: 標籤鍵列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagKeyList"
-
-  /tags/{keyId}/values:
+      responses: { "200": { description: "成功" } }
+    post:
+      tags: [平台設定 (Platform Settings)]
+      summary: 創建新的標籤治理規則
+      operationId: createTagGovernanceRule
+      security: [{ bearerAuth: [] }]
+      responses: { "201": { description: "創建成功" } }
+  /tags/{tagKeyId}/values:
     get:
-      tags: [Platform Settings]
-      summary: 獲取標籤允許值列表
+      tags: [平台設定 (Platform Settings)]
+      summary: 獲取標籤的允許值列表
       operationId: listTagAllowedValues
       security: [{ bearerAuth: [] }]
-      parameters:
-        - name: keyId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 標籤允許值列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagAllowedValueList"
-
+      responses: { "200": { description: "成功" } }
   /tags/compliance-report:
     get:
-      tags: [Platform Settings]
+      tags: [平台設定 (Platform Settings)]
       summary: 獲取標籤合規性報告
       operationId: getTagComplianceReport
       security: [{ bearerAuth: [] }]
-      x-roles: [platform_admin, super_admin]
+      responses: { "200": { description: "成功" } }
+  /audit-logs:
+    get:
+      tags: [平台設定 (Platform Settings)]
+      summary: 獲取審計日誌
+      operationId: getAuditLogs
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
+
+  # ============================================
+  # 資源管理 (Resource Management)
+  # ============================================
+  /resources:
+    get:
+      tags: [資源管理 (Resource Management)]
+      summary: 獲取資源列表
+      operationId: listResources
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
+  /resource-groups:
+    get:
+      tags: [資源管理 (Resource Management)]
+      summary: 獲取資源群組列表
+      operationId: listResourceGroups
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
+
+  # ============================================
+  # 事件管理 (Event Management)
+  # ============================================
+  /events:
+    get:
+      tags: [事件管理 (Event Management)]
+      summary: 獲取事件列表
+      operationId: listEvents
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
+  /events/{eventId}:
+    get:
+      tags: [事件管理 (Event Management)]
+      summary: 獲取事件詳情
+      operationId: getEvent
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
+  /events/{eventId}/comments:
+    post:
+      tags: [事件管理 (Event Management)]
+      summary: 為事件新增註記
+      operationId: addEventComment
+      security: [{ bearerAuth: [] }]
+      responses: { "201": { description: "新增成功" } }
+  /events/{eventId}/comments:
+    post:
+      tags: [事件管理 (Event Management)]
+      summary: 為事件新增註記
+      description: "為指定的事件添加一條評論或處理歷史記錄。支援 Markdown 和 @提及。"
+      operationId: addEventComment
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventCommentRequest"
       responses:
-        "200":
-          description: 標籤合規性報告
+        "201":
+          description: "註記新增成功"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TagComplianceReport"
-
-  # ============================================
-  # Event Rule Templates & Builder (Platform Core Feature)
-  # ============================================
+                $ref: "#/components/schemas/EventHistory"
+  /incidents:
+    post:
+      tags: [事件管理 (Event Management)]
+      summary: 合併多個事件為一個事故
+      description: "將一組關聯的事件合併成一個更高層級的事故，以便集中處理和追蹤。"
+      operationId: createIncidentFromEvents
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IncidentCreateRequest"
+      responses:
+        "201":
+          description: "事故創建成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+  /event-rules:
+    get:
+      tags: [事件管理 (Event Management)]
+      summary: 獲取事件規則列表
+      operationId: listEventRules
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
+    post:
+      tags: [事件管理 (Event Management)]
+      summary: 創建事件規則
+      operationId: createEventRule
+      security: [{ bearerAuth: [] }]
+      responses: { "201": { description: "創建成功" } }
+  /event-rules/{ruleId}:
+    put:
+      tags: [事件管理 (Event Management)]
+      summary: 更新事件規則
+      operationId: updateEventRule
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "更新成功" } }
+    delete:
+      tags: [事件管理 (Event Management)]
+      summary: 刪除事件規則
+      operationId: deleteEventRule
+      security: [{ bearerAuth: [] }]
+      responses: { "204": { description: "刪除成功" } }
   /event-rule-templates:
     get:
-      tags: [Event Rules]
+      tags: [事件管理 (Event Management)]
       summary: 獲取事件規則範本列表
       operationId: listEventRuleTemplates
       security: [{ bearerAuth: [] }]
-      responses:
-        "200":
-          description: 事件規則範本列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventRuleTemplateList"
-
+      responses: { "200": { description: "成功" } }
   /event-rules/scope-preview:
     post:
-      tags: [Event Rules]
-      summary: 預覽事件規則監控範圍
+      tags: [事件管理 (Event Management)]
+      summary: 預覽事件規則影響範圍
       operationId: previewEventRuleScope
       security: [{ bearerAuth: [] }]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                matchers:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      key: { type: string }
-                      operator: { type: string }
-                      value: { type: string }
-      responses:
-        "200":
-          description: 規則範圍預覽結果
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventRuleScopePreview"
-
+      responses: { "200": { description: "成功" } }
   /event-rules/metrics:
     get:
-      tags: [Event Rules]
-      summary: 獲取可用監控指標列表
+      tags: [事件管理 (Event Management)]
+      summary: 獲取事件規則可用指標
       operationId: listEventRuleMetrics
       security: [{ bearerAuth: [] }]
-      responses:
-        "200":
-          description: 可用監控指標列表
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items: { $ref: "#/components/schemas/EventRuleMetric" }
-
-  # ============================================
-  # Automation Scripts
-  # ============================================
-  /automation/scripts:
+      responses: { "200": { description: "成功" } }
+  /silence-rules:
     get:
-      tags: [Automation]
-      summary: 獲取自動化腳本列表
-      operationId: listAutomationScripts
+      tags: [事件管理 (Event Management)]
+      summary: 獲取靜音規則列表 (一次性)
+      operationId: listSilenceRules
       security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: category
-          in: query
-          schema: { type: string, enum: [deployment, maintenance, monitoring] }
-        - name: status
-          in: query
-          schema: { type: string, enum: [active, inactive] }
-        - name: search
-          in: query
-          schema: { type: string }
-      responses:
-        "200":
-          description: 腳本列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AutomationScriptList"
+      responses: { "200": { description: "成功" } }
+  /recurring-silence-rules:
+    get:
+      tags: [事件管理 (Event Management)]
+      summary: 獲取週期性靜音規則列表
+      operationId: listRecurringSilenceRules
+      security: [{ bearerAuth: [] }]
+      responses: { "200": { description: "成功" } }
     post:
-      tags: [Automation]
-      summary: 創建自動化腳本
-      operationId: createAutomationScript
+      tags: [事件管理 (Event Management)]
+      summary: 創建週期性靜音規則
+      operationId: createRecurringSilenceRule
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/AutomationScriptCreateRequest"
-      responses:
-        "201":
-          description: 腳本創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AutomationScript"
-  /automation/scripts/{scriptId}:
+      responses: { "201": { description: "創建成功" } }
+  /recurring-silence-rules/{ruleId}:
     get:
-      tags: [Automation]
-      summary: 獲取腳本詳情
-      operationId: getAutomationScript
+      tags: [事件管理 (Event Management)]
+      summary: 獲取單一週期性靜音規則
+      operationId: getRecurringSilenceRule
       security: [{ bearerAuth: [] }]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 腳本詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AutomationScript"
+      responses: { "200": { description: "成功" } }
     put:
-      tags: [Automation]
-      summary: 更新腳本
-      operationId: updateAutomationScript
+      tags: [事件管理 (Event Management)]
+      summary: 更新週期性靜音規則
+      operationId: updateRecurringSilenceRule
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/AutomationScriptUpdateRequest"
-      responses:
-        "200":
-          description: 腳本更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AutomationScript"
+      responses: { "200": { description: "更新成功" } }
     delete:
-      tags: [Automation]
-      summary: 刪除腳本
-      operationId: deleteAutomationScript
+      tags: [事件管理 (Event Management)]
+      summary: 刪除週期性靜音規則
+      operationId: deleteRecurringSilenceRule
       security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 腳本刪除成功
-  /automation/scripts/{scriptId}/execute:
-    post:
-      tags: [Automation]
-      summary: 執行腳本
-      operationId: executeAutomationScript
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                params:
-                  type: object
-                  description: 腳本執行參數
-                async:
-                  type: boolean
-                  default: true
-                  description: 是否異步執行
-      responses:
-        "202":
-          description: 腳本執行已接受
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScriptExecutionResponse"
+      responses: { "204": { description: "刪除成功" } }
 
   # ============================================
-  # Automation Schedules
+  # 通知管理 (Notification Management)
   # ============================================
-  /automation/schedules:
+  /notification-policies:
     get:
-      tags: [Automation]
-      summary: 獲取排程任務列表
-      operationId: listAutomationSchedules
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: status
-          in: query
-          schema: { type: string, enum: [active, inactive, error] }
-        - name: enabled
-          in: query
-          schema: { type: boolean }
-      responses:
-        "200":
-          description: 排程任務列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScheduleList"
-    post:
-      tags: [Automation]
-      summary: 創建排程任務
-      operationId: createAutomationSchedule
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/ScheduleCreateRequest"
-      responses:
-        "201":
-          description: 排程任務創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Schedule"
-  /automation/schedules/{scheduleId}:
-    get:
-      tags: [Automation]
-      summary: 獲取排程任務詳情
-      operationId: getAutomationSchedule
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: scheduleId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 排程任務詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Schedule"
-    put:
-      tags: [Automation]
-      summary: 更新排程任務
-      operationId: updateAutomationSchedule
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: scheduleId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/ScheduleUpdateRequest"
-      responses:
-        "200":
-          description: 排程任務更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Schedule"
-    delete:
-      tags: [Automation]
-      summary: 刪除排程任務
-      operationId: deleteAutomationSchedule
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: scheduleId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 排程任務刪除成功
-  /automation/schedules/{scheduleId}/enable:
-    post:
-      tags: [Automation]
-      summary: 啟用排程任務
-      operationId: enableAutomationSchedule
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: scheduleId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 排程任務已啟用
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-  /automation/schedules/{scheduleId}/disable:
-    post:
-      tags: [Automation]
-      summary: 停用排程任務
-      operationId: disableAutomationSchedule
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: scheduleId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 排程任務已停用
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-
-  # ============================================
-  # Resource Metrics History
-  # ============================================
-  /resources/{resourceId}/metrics/history:
-    get:
-      tags: [Resources]
-      summary: 獲取資源指標歷史數據（增強版）
-      operationId: getResourceMetricsHistoryEnhanced
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/ResourceIdParam"
-        - name: metric_type
-          in: query
-          required: true
-          schema: { type: string }
-        - name: start_time
-          in: query
-          schema: { type: string, format: "date-time" }
-        - name: end_time
-          in: query
-          schema: { type: string, format: "date-time" }
-        - name: resolution
-          in: query
-          schema:
-            {
-              type: string,
-              enum: ["1m", "5m", "15m", "1h", "1d"],
-              default: "5m",
-            }
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-      responses:
-        "200":
-          description: 資源指標歷史數據
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ResourceMetricsHistoryList"
-    post:
-      tags: [Resources]
-      summary: 批量插入資源指標數據
-      operationId: insertResourceMetrics
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - $ref: "#/components/parameters/ResourceIdParam"
-      requestBody:
-        $ref: "#/components/requestBodies/ResourceMetricsInsertRequest"
-      responses:
-        "201":
-          description: 指標數據插入成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-
-  /resources/metrics/bulk-query:
-    post:
-      tags: [Resources]
-      summary: 批量查詢多資源指標歷史
-      operationId: bulkQueryResourceMetrics
-      security: [{ bearerAuth: [] }]
-      requestBody:
-        $ref: "#/components/requestBodies/BulkMetricsQueryRequest"
-      responses:
-        "200":
-          description: 批量指標查詢結果
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BulkMetricsQueryResult"
-
-  # ============================================
-  # Event Analysis Results (AI Analysis)
-  # ============================================
-  /alerts/{alertId}/analysis:
-    get:
-      tags: [Incidents]
-      summary: 獲取事件 AI 分析結果
-      operationId: getIncidentAnalysis
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: alertId
-          in: path
-          required: true
-          schema: { type: string }
-        - name: analysis_type
-          in: query
-          schema:
-            {
-              type: string,
-              enum: ["rca", "impact", "recommendation", "prediction"],
-            }
-      responses:
-        "200":
-          description: 事件分析結果列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/EventAnalysisResult"
-    post:
-      tags: [Incidents]
-      summary: 觸發事件 AI 分析
-      operationId: triggerIncidentAnalysis
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: alertId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/AnalysisRequest"
-      responses:
-        "202":
-          description: 分析任務已啟動
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AnalysisTaskResponse"
-
-  /incidents/batch-analysis:
-    post:
-      tags: [Incidents]
-      summary: 批量事件分析
-      operationId: batchIncidentAnalysis
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/BatchAnalysisRequest"
-      responses:
-        "202":
-          description: 批量分析任務已啟動
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BatchAnalysisTaskResponse"
-
-  /analysis/results/{analysisId}:
-    get:
-      tags: [Analyzing]
-      summary: 獲取分析結果詳情
-      operationId: getAnalysisResult
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: analysisId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 分析結果詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventAnalysisResult"
-    put:
-      tags: [Analyzing]
-      summary: 更新分析結果（人工修正）
-      operationId: updateAnalysisResult
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: analysisId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/AnalysisResultUpdateRequest"
-      responses:
-        "200":
-          description: 分析結果更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventAnalysisResult"
-
-  # ============================================
-  # Script Versions (Version Control)
-  # ============================================
-  /automation/scripts/{scriptId}/versions:
-    get:
-      tags: [Automation]
-      summary: 獲取腳本版本歷史
-      operationId: getScriptVersions
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-      responses:
-        "200":
-          description: 腳本版本列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScriptVersionList"
-    post:
-      tags: [Automation]
-      summary: 創建新腳本版本
-      operationId: createScriptVersion
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/ScriptVersionCreateRequest"
-      responses:
-        "201":
-          description: 腳本版本創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScriptVersion"
-
-  /automation/scripts/{scriptId}/versions/{versionId}:
-    get:
-      tags: [Automation]
-      summary: 獲取特定腳本版本詳情
-      operationId: getScriptVersion
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-        - name: versionId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 腳本版本詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScriptVersion"
-
-  /automation/scripts/{scriptId}/versions/{versionId}/rollback:
-    post:
-      tags: [Automation]
-      summary: 回滾到指定腳本版本
-      operationId: rollbackScriptVersion
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-        - name: versionId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 腳本回滾成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AutomationScript"
-
-  /automation/scripts/{scriptId}/diff:
-    get:
-      tags: [Automation]
-      summary: 比較腳本版本差異
-      operationId: compareScriptVersions
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: scriptId
-          in: path
-          required: true
-          schema: { type: string }
-        - name: version_a
-          in: query
-          required: true
-          schema: { type: string }
-        - name: version_b
-          in: query
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 版本差異比較結果
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ScriptVersionDiff"
-
-  # ============================================
-  # Enhanced Dashboard APIs
-  # ============================================
-  /dashboards:
-    get:
-      tags: [Dashboard]
-      summary: 獲取儀表板列表（增強版）
-      operationId: listDashboards
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: category
-          in: query
-          schema: { type: string }
-        - name: shared_with_team
-          in: query
-          schema: { type: boolean }
-        - name: is_public
-          in: query
-          schema: { type: boolean }
-        - name: search
-          in: query
-          schema: { type: string }
-      responses:
-        "200":
-          description: 儀表板列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DashboardList"
-    post:
-      tags: [Dashboard]
-      summary: 創建自定義儀表板
-      operationId: createDashboard
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/DashboardCreateRequest"
-      responses:
-        "201":
-          description: 儀表板創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Dashboard"
-
-  /dashboards/{dashboardId}:
-    get:
-      tags: [Dashboard]
-      summary: 獲取儀表板詳情
-      operationId: getDashboard
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: dashboardId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 儀表板詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Dashboard"
-    put:
-      tags: [Dashboard]
-      summary: 更新儀表板
-      operationId: updateDashboard
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: dashboardId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/DashboardUpdateRequest"
-      responses:
-        "200":
-          description: 儀表板更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Dashboard"
-    delete:
-      tags: [Dashboard]
-      summary: 刪除儀表板 (軟刪除)
-      operationId: deleteDashboard
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_member, team_manager, super_admin]
-      parameters:
-        - name: dashboardId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 儀表板刪除成功
-
-  /dashboards/{dashboardId}/share:
-    post:
-      tags: [Dashboard]
-      summary: 分享儀表板
-      operationId: shareDashboard
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: dashboardId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/DashboardShareRequest"
-      responses:
-        "200":
-          description: 儀表板分享成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-
-  # ============================================
-  # Notification Management
-  # ============================================
-  /notifications/channels:
-    get:
-      tags: [Notifications]
-      summary: 獲取通知管道列表
-      operationId: listNotificationChannels
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: type
-          in: query
-          schema:
-            {
-              type: string,
-              enum: [email, slack, webhook, sms, pagerduty, wechat],
-            }
-        - name: enabled
-          in: query
-          schema: { type: boolean }
-      responses:
-        "200":
-          description: 通知管道列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationChannelList"
-    post:
-      tags: [Notifications]
-      summary: 創建通知管道
-      operationId: createNotificationChannel
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/NotificationChannelCreateRequest"
-      responses:
-        "201":
-          description: 通知管道創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationChannel"
-  /notifications/channels/{channelId}:
-    get:
-      tags: [Notifications]
-      summary: 獲取通知管道詳情
-      operationId: getNotificationChannel
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: channelId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 通知管道詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationChannel"
-    put:
-      tags: [Notifications]
-      summary: 更新通知管道
-      operationId: updateNotificationChannel
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: channelId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/NotificationChannelUpdateRequest"
-      responses:
-        "200":
-          description: 通知管道更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationChannel"
-    delete:
-      tags: [Notifications]
-      summary: 刪除通知管道
-      operationId: deleteNotificationChannel
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: channelId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 通知管道刪除成功
-  /notifications/channels/{channelId}/test:
-    post:
-      tags: [Notifications]
-      summary: 測試通知管道
-      operationId: testNotificationChannel
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      parameters:
-        - name: channelId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 測試成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-
-  # ============================================
-  # Notification Policies
-  # ============================================
-  /notifications/policies:
-    get:
-      tags: [Notifications]
+      tags: [通知管理 (Notification Management)]
       summary: 獲取通知策略列表
       operationId: listNotificationPolicies
       security: [{ bearerAuth: [] }]
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: enabled
-          in: query
-          schema: { type: boolean }
-      responses:
-        "200":
-          description: 通知策略列表
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationPolicyList"
-    post:
-      tags: [Notifications]
-      summary: 創建通知策略
-      operationId: createNotificationPolicy
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/NotificationPolicyCreateRequest"
-      responses:
-        "201":
-          description: 通知策略創建成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationPolicy"
-
-  # ============================================
-  # System Settings
-  # ============================================
-  /settings:
+      responses: { "200": { description: "成功" } }
+  /notification-channels:
     get:
-      tags: [Admin]
-      summary: 獲取系統設定列表
-      operationId: listSystemSettings
+      tags: [通知管理 (Notification Management)]
+      summary: 獲取通知管道列表
+      operationId: listNotificationChannels
       security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      parameters:
-        - name: category
-          in: query
-          schema: { type: string }
-      responses:
-        "200":
-          description: 系統設定列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/SystemSetting"
-    post:
-      tags: [Admin]
-      summary: 創建或更新系統設定
-      operationId: createOrUpdateSystemSetting
-      security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/SystemSettingCreateRequest"
-      responses:
-        "200":
-          description: 設定創建或更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemSetting"
-  /settings/{settingId}:
+      responses: { "200": { description: "成功" } }
+  /notification-history:
     get:
-      tags: [Admin]
-      summary: 獲取系統設定詳情
-      operationId: getSystemSetting
-      security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      parameters:
-        - name: settingId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 系統設定詳情
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemSetting"
-    delete:
-      tags: [Admin]
-      summary: 刪除系統設定
-      operationId: deleteSystemSetting
-      security: [{ bearerAuth: [] }]
-      x-roles: [super_admin]
-      parameters:
-        - name: settingId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "204":
-          description: 設定刪除成功
-
-  # ============================================
-  # User Preferences
-  # ============================================
-  /user/preferences:
-    get:
-      tags: [Profile]
-      summary: 獲取人員偏好設定
-      operationId: getUserPreferences
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: category
-          in: query
-          schema: { type: string }
-      responses:
-        "200":
-          description: 人員偏好設定列表
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: "#/components/schemas/UserPreference"
-    post:
-      tags: [Profile]
-      summary: 創建或更新人員偏好設定
-      operationId: createOrUpdateUserPreference
-      security: [{ bearerAuth: [] }]
-      requestBody:
-        $ref: "#/components/requestBodies/UserPreferenceCreateRequest"
-      responses:
-        "200":
-          description: 偏好設定創建或更新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/UserPreference"
-
-  # ============================================
-  # Maintenance Windows
-  # ============================================
-  /maintenance/windows:
-    get:
-      tags: [Maintenance]
-      summary: 獲取維護窗口列表
-      operationId: getMaintenanceWindows
-      responses:
-        "200":
-          description: 成功獲取維護窗口列表
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  windows:
-                    type: array
-                    items:
-                      type: object
-
-  /ai/analysis-reports/{reportId}:
-    get:
-      tags: [Analyzing]
-      summary: 獲取 AI 分析報告詳情
-      operationId: getAiAnalysisReport
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: reportId
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: 成功獲取報告
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AIAnalysisReport"
-        "202":
-          description: 報告仍在生成中
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  report_id: { type: string }
-                  status: { type: string, enum: [PENDING, RUNNING] }
-    post:
-      tags: [Analyzing]
-      summary: 對 AI 分析報告提供反饋
-      operationId: submitAiAnalysisFeedback
-      security: [{ bearerAuth: [] }]
-      parameters:
-        - name: reportId
-          in: path
-          required: true
-          schema: { type: string }
-      requestBody:
-        $ref: "#/components/requestBodies/AIAnalysisFeedbackRequest"
-      responses:
-        "200":
-          description: 反饋已成功提交
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OperationResult"
-
-  # ============================================
-  # 會話管理
-  # ============================================
-  /users/sessions:
-    get:
-      tags: [Auth]
-      summary: 獲取當前用戶的登入會話列表
-      operationId: getUserSessions
-      responses:
-        "200":
-          description: 成功獲取會話列表
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  sessions:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                          description: 會話 ID
-                        device:
-                          type: string
-                          description: 設備信息
-                        location:
-                          type: string
-                          description: 登入地點
-                        last_active:
-                          type: string
-                          format: date-time
-                          description: 最後活躍時間
-                        is_current:
-                          type: boolean
-                          description: 是否為當前會話
-
-  /users/sessions/{sessionId}:
-    delete:
-      tags: [Auth]
-      summary: 終止指定會話
-      operationId: terminateSession
-      parameters:
-        - name: sessionId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "204":
-          description: 會話已成功終止
-
-  # ============================================
-  # 通知歷史
-  # ============================================
-  /notifications/history:
-    get:
-      tags: [Notifications]
-      summary: 獲取通知發送歷史
+      tags: [通知管理 (Notification Management)]
+      summary: 獲取通知歷史記錄
       operationId: getNotificationHistory
+      security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
-        - name: channel
-          in: query
-          schema:
-            type: string
-          description: 過濾特定通知管道
         - name: status
           in: query
           schema:
             type: string
-            enum: [sent, failed, pending]
-          description: 過濾通知狀態
+            enum: [sent, failed, delivered, pending]
       responses:
         "200":
-          description: 成功獲取通知歷史
+          description: "成功獲取通知歷史列表"
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  notifications:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        id:
-                          type: string
-                        subject:
-                          type: string
-                        recipient:
-                          type: string
-                        channel:
-                          type: string
-                        status:
-                          type: string
-                        sent_at:
-                          type: string
-                          format: date-time
-                        error_message:
-                          type: string
-
-  /notifications/history/{notificationId}:
-    get:
-      tags: [Notifications]
-      summary: 獲取單個通知的詳細信息
-      operationId: getNotificationDetails
-      parameters:
-        - name: notificationId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功獲取通知詳情
-
-  /notifications/history/resend:
-    post:
-      tags: [Notifications]
-      summary: 重新發送失敗的通知
-      operationId: resendNotifications
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                notification_ids:
-                  type: array
                   items:
-                    type: string
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/NotificationHistory"
+                  pagination:
+                    $ref: "#/components/schemas/Pagination"
+  /notification-history/{historyId}:
+    get:
+      tags: [通知管理 (Notification Management)]
+      summary: 獲取單筆通知歷史詳情
+      operationId: getNotificationHistoryDetail
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: historyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: "成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationHistory"
+  /notification-history/{historyId}/resend:
+    post:
+      tags: [通知管理 (Notification Management)]
+      summary: 重新發送單條失敗的通知
+      operationId: resendNotification
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: historyId
+          in: path
+          required: true
+          schema: { type: string }
       responses:
         "202":
-          description: 重發請求已接受
-
-  # ============================================
-  # AI 分析報告
-  # ============================================
-  /events/{eventId}/ai-analysis:
-    post:
-      tags: [Events, AI]
-      summary: 觸發事件的 AI 分析
-      operationId: triggerEventAIAnalysis
-      parameters:
-        - name: eventId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "202":
-          description: AI 分析請求已提交
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  analysis_id:
-                    type: string
-                    description: 分析任務 ID
-
-  /events/{eventId}/analysis-report:
-    get:
-      tags: [Events, AI]
-      summary: 獲取事件 AI 分析報告
-      operationId: getEventAnalysisReport
-      parameters:
-        - name: eventId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功獲取分析報告
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  event_id:
-                    type: string
-                  root_cause:
-                    type: string
-                    description: 根本原因分析
-                  confidence:
-                    type: number
-                    format: float
-                    description: 置信度 (0-1)
-                  recommendations:
-                    type: array
-                    items:
-                      type: string
-                  similar_incidents:
-                    type: array
-                    items:
-                      type: object
-
-  /events/{eventId}/related:
-    get:
-      tags: [Events]
-      summary: 獲取相關事件列表
-      operationId: getRelatedEvents
-      parameters:
-        - name: eventId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: relation_type
-          in: query
-          schema:
-            type: string
-            enum: [temporal, resource, topology, ai_suggested]
-          description: 關聯類型
-      responses:
-        "200":
-          description: 成功獲取相關事件
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  related_events:
-                    type: array
-                    items:
-                      type: object
-
-  /events/{eventId}/automations:
-    get:
-      tags: [Events, Automation]
-      summary: 獲取事件相關的自動化執行歷史
-      operationId: getEventAutomations
-      parameters:
-        - name: eventId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功獲取自動化歷史
-
-  /events/{eventId}/history:
-    get:
-      tags: [Events]
-      summary: 獲取事件處理歷史
-      operationId: getEventHistory
-      parameters:
-        - name: eventId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功獲取事件歷史
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  history:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        timestamp:
-                          type: string
-                          format: date-time
-                        action:
-                          type: string
-                        user:
-                          type: string
-                        description:
-                          type: string
-
-  # ============================================
-  # 執行日誌詳情
-  # ============================================
-  /execution-logs:
-    get:
-      tags: [Automation]
-      summary: 獲取執行日誌列表
-      operationId: getExecutionLogs
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: script_name
-          in: query
-          schema:
-            type: string
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [success, failed, running]
-      responses:
-        "200":
-          description: 成功獲取執行日誌
-
-  /execution-logs/{logId}:
-    get:
-      tags: [Automation]
-      summary: 獲取執行日誌詳情
-      operationId: getExecutionLogDetails
-      parameters:
-        - name: logId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功獲取日誌詳情
-
-  /execution-logs/{logId}/output:
-    get:
-      tags: [Automation]
-      summary: 獲取執行輸出內容
-      operationId: getExecutionOutput
-      parameters:
-        - name: logId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功獲取執行輸出
-          content:
-            text/plain:
-              schema:
-                type: string
-
-  # ============================================
-  # 審計日誌
-  # ============================================
-  /audit-logs:
-    get:
-      tags: [Audit]
-      summary: 獲取系統審計日誌
-      operationId: getAuditLogs
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - name: user_id
-          in: query
-          schema:
-            type: string
-        - name: action_type
-          in: query
-          schema:
-            type: string
-        - name: resource_type
-          in: query
-          schema:
-            type: string
-        - name: start_time
-          in: query
-          schema:
-            type: string
-            format: date-time
-        - name: end_time
-          in: query
-          schema:
-            type: string
-            format: date-time
-      responses:
-        "200":
-          description: 成功獲取審計日誌
-
-  /audit-logs/{logId}:
-    get:
-      tags: [Audit]
-      summary: 獲取審計日誌詳情
-      operationId: getAuditLogDetails
-      parameters:
-        - name: logId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 成功獲取日誌詳情
-
-  /audit-logs/statistics:
-    get:
-      tags: [Audit]
-      summary: 獲取審計統計數據
-      operationId: getAuditStatistics
-      responses:
-        "200":
-          description: 成功獲取審計統計
-
-  /audit-logs/export:
-    post:
-      tags: [Audit]
-      summary: 導出審計日誌
-      operationId: exportAuditLogs
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                filters:
-                  type: object
-                format:
-                  type: string
-                  enum: [csv, json, pdf]
-      responses:
-        "202":
-          description: 導出請求已接受
-
-  # ============================================
-  # 密碼安全
-  # ============================================
-  /users/change-password:
-    post:
-      tags: [Auth]
-      summary: 變更用戶密碼
-      operationId: changePassword
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                current_password:
-                  type: string
-                new_password:
-                  type: string
-                confirm_password:
-                  type: string
-              required:
-                - current_password
-                - new_password
-                - confirm_password
-      responses:
-        "200":
-          description: 密碼變更成功
-
-  # ============================================
-  # 個人資料管理
-  # ============================================
-  /users/profile:
-    get:
-      tags: [Users]
-      summary: 獲取當前用戶個人資料
-      operationId: getUserProfile
-      responses:
-        "200":
-          description: 成功獲取個人資料
-
-    put:
-      tags: [Users]
-      summary: 更新個人資料
-      operationId: updateUserProfile
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                email:
-                  type: string
-                  format: email
-                avatar:
-                  type: string
-                bio:
-                  type: string
-      responses:
-        "200":
-          description: 個人資料更新成功
-
-  /users/preferences:
-    get:
-      tags: [Users]
-      summary: 獲取用戶偏好設定
-      operationId: getUserPreferences
-      responses:
-        "200":
-          description: 成功獲取偏好設定
-
-    put:
-      tags: [Users]
-      summary: 更新用戶偏好設定
-      operationId: updateUserPreferences
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                theme:
-                  type: string
-                  enum: [light, dark]
-                language:
-                  type: string
-                timezone:
-                  type: string
-                notifications:
-                  type: object
-      responses:
-        "200":
-          description: 偏好設定更新成功
-
-  # ============================================
-  # Fallback for omitted paths
-  # ============================================
-  # ... (other paths are omitted for brevity but would be fully defined here)
+          description: "重送請求已接受"
 
 # ============================================
 # 可重用元件 (Components)
@@ -3251,482 +564,51 @@ components:
       name: sort_order
       in: query
       schema: { type: string, enum: [asc, desc], default: desc }
-    ResourceIdParam:
-      name: resourceId
-      in: path
-      required: true
-      schema: { type: string }
-
-  responses:
-    BadRequest:
-      description: "請求參數錯誤 (400)"
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
-    Unauthorized:
-      description: "未授權 (401)"
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
-    Forbidden:
-      description: "無權限 (403)"
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
-    NotFound:
-      description: "資源不存在 (404)"
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
-    Conflict:
-      description: "資源衝突 (409)"
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ErrorResponse" }
-
-  requestBodies:
-    UserInvitationRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/UserInvitationRequest" }
-    UserPlatformRolesUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/UserPlatformRolesUpdateRequest" }
-    ResourceCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ResourceCreateRequest" }
-    ResourceUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ResourceUpdateRequest" }
-    BatchResourceOperation:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/BatchResourceOperation" }
-    NetworkScanRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/NetworkScanRequest" }
-    ResourceGroupCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ResourceGroupCreateRequest" }
-    ResourceGroupUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ResourceGroupUpdateRequest" }
-    GroupMemberOperation:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/GroupMemberOperation" }
-    IncidentCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/IncidentCreateRequest" }
-    IncidentUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/IncidentUpdateRequest" }
-    SilenceCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/SilenceCreateRequest" }
-    SilenceUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/SilenceUpdateRequest" }
-    TeamCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/TeamCreateRequest" }
-    TeamUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/TeamUpdateRequest" }
-    TagKeyCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/TagKeyCreateRequest" }
-    TagKeyUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/TagKeyUpdateRequest" }
-    TagValueCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/TagValueCreateRequest" }
-    AutomationScriptCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/AutomationScriptCreateRequest" }
-    AutomationScriptUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/AutomationScriptUpdateRequest" }
-    ScheduleCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ScheduleCreateRequest" }
-    ScheduleUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ScheduleUpdateRequest" }
-    NotificationChannelCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            { $ref: "#/components/schemas/NotificationChannelCreateRequest" }
-    NotificationChannelUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            { $ref: "#/components/schemas/NotificationChannelUpdateRequest" }
-    NotificationPolicyCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            { $ref: "#/components/schemas/NotificationPolicyCreateRequest" }
-    SystemSettingCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/SystemSettingCreateRequest" }
-    UserPreferenceCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/UserPreferenceCreateRequest" }
-    MaintenanceWindowCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema:
-            { $ref: "#/components/schemas/MaintenanceWindowCreateRequest" }
-    ResourceMetricsInsertRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ResourceMetricsInsertRequest" }
-    BulkMetricsQueryRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/BulkMetricsQueryRequest" }
-    AnalysisRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/AnalysisRequest" }
-    BatchAnalysisRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/BatchAnalysisRequest" }
-    AnalysisResultUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/AnalysisResultUpdateRequest" }
-    ScriptVersionCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/ScriptVersionCreateRequest" }
-    DashboardCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/DashboardCreateRequest" }
-    DashboardUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/DashboardUpdateRequest" }
-    DashboardShareRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/DashboardShareRequest" }
-    AIAnalysisFeedbackRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/AIAnalysisFeedbackRequest" }
-
   schemas:
-    AIAnalysisReport:
-      type: object
-      properties:
-        report_id: { type: string }
-        status: { type: string, enum: [PENDING, RUNNING, SUCCESS, FAILED] }
-        generated_at: { type: string, format: "date-time" }
-        event_summary: { type: string }
-        root_cause_analysis:
-          type: object
-          properties:
-            text: { type: string }
-            confidence_score: { type: number, format: float }
-            evidence:
-              type: array
-              items:
-                type: object
-                properties:
-                  type: { type: string, enum: [METRIC, LOG, TRACE] }
-                  description: { type: string }
-                  link:
-                    type: object
-                    properties:
-                      name: { type: string }
-                      url: { type: string, format: uri }
-        impact_assessment:
-          type: object
-          properties:
-            text: { type: string }
-            affected_resources:
-              type: array
-              items:
-                type: object
-                properties:
-                  id: { type: string }
-                  name: { type: string }
-        recommended_actions:
-          type: array
-          items:
-            type: object
-            properties:
-              title: { type: string }
-              action_type: { type: string, enum: [AUTOMATION, LINK, TEXT] }
-              risk: { type: string, enum: [HIGH, MEDIUM, LOW] }
-              action_data: { type: object }
-    AIAnalysisFeedbackRequest:
-      type: object
-      properties:
-        is_helpful: { type: boolean }
-        correct_action_key: { type: string }
-        comment: { type: string }
-    ErrorResponse:
-      type: object
-      properties:
-        error: { type: string }
-        message: { type: string }
-    OperationResult:
-      type: object
-      properties:
-        success: { type: boolean }
-        message: { type: string }
-    Pagination:
-      type: object
-      properties:
-        page: { type: integer }
-        page_size: { type: integer }
-        total_items: { type: integer }
-        total_pages: { type: integer }
-    MetricDefinition:
-      type: object
-      properties:
-        name: { type: string }
-        unit: { type: string }
-        description: { type: string }
-    MetricQueryRequest:
-      type: object
-      properties:
-        resource_ids: { type: array, items: { type: string } }
-        metric: { type: string }
-        start_time: { type: string, format: "date-time" }
-        end_time: { type: string, format: "date-time" }
-    MetricQueryResult:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            type: object
-            properties:
-              resource_id: { type: string }
-              metric_name: { type: string }
-              data_points:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    timestamp: { type: string, format: "date-time" }
-                    value: { type: number }
-    AuthTokens:
-      type: object
-      properties:
-        access_token: { type: string }
-        refresh_token: { type: string }
-        expires_in: { type: integer }
-    AutocompleteResult:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-    SearchResultItem:
-      type: object
-      properties:
-        type: { type: string }
-        score: { type: number }
-        item: { type: object }
-    DashboardSummary:
-      type: object
-      properties:
-        alerts: { type: object }
-        resources: { type: object }
-        kpis: { type: object }
-    TrendData:
-      type: object
-      properties:
-        period: { type: string }
-        data_points: { type: array, items: { type: object } }
-    ResourceDistribution:
-      type: object
-      properties:
-        by_status: { type: object }
-        by_type: { type: object }
-        by_group: { type: array, items: { type: object } }
-    Resource:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        type: { type: string }
-        status: { type: string }
-        ip_address: { type: string }
-        team_id: { type: string }
-        location: { type: string }
-        description: { type: string }
-        tags: { type: array, items: { type: string } }
-        silences:
-          { type: array, items: { $ref: "#/components/schemas/Silence" } }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    ResourceList:
-      type: object
-      properties:
-        items: { type: array, items: { $ref: "#/components/schemas/Resource" } }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    ResourceCreateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        type: { type: string }
-        ip_address: { type: string }
-        group_id: { type: string }
-    ResourceUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        group_id: { type: string }
-    BatchResourceOperation:
-      type: object
-      properties:
-        operation: { type: string }
-        resource_ids: { type: array, items: { type: string } }
-        parameters: { type: object }
-    BatchOperationResult:
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            type: object
-            properties:
-              item_id: { type: string }
-              success: { type: boolean }
-              message: { type: string }
-    NetworkScanRequest:
-      type: object
-      properties:
-        cidr: { type: string }
-    ScanTaskResponse:
-      type: object
-      properties:
-        task_id: { type: string }
-        status: { type: string }
-    ScanResult:
-      type: object
-      properties:
-        task_id: { type: string }
-        status: { type: string }
-        discovered_resources: { type: array, items: { type: object } }
-    ResourceGroup:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        description: { type: string }
-        resource_count: { type: integer }
-    ResourceGroupList:
-      type: object
-      properties:
-        items:
-          { type: array, items: { $ref: "#/components/schemas/ResourceGroup" } }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    ResourceGroupCreateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
-    ResourceGroupUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
-    GroupMemberOperation:
-      type: object
-      properties:
-        operation: { type: string, enum: [add, remove] }
-        resource_ids: { type: array, items: { type: string } }
+    # ============================================
+    # 事件管理 Schemas
+    # ============================================
     Event:
       type: object
+      description: "代表一個完整的事件，包含所有用於UI展示的豐富化資訊"
       properties:
-        id: { type: string }
-        summary: { type: string }
-        description: { type: string }
-        severity: { type: string }
-        status: { type: string }
-        resource_id: { type: string }
-        rule_id: { type: string }
-        labels: { type: object }
-        annotations: { type: object }
-        value: { type: number }
-        business_impact: { type: string }
-        acknowledged_by_id: { type: string }
-        assigned_to_id: { type: string }
-        starts_at: { type: string, format: "date-time" }
-        ends_at: { type: string, format: "date-time" }
-        acknowledged_at: { type: string, format: "date-time" }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-        # Enriched data for detail view
+        id: { type: string, example: "evt_2a7d3e9f" }
+        summary: { type: string, example: "CPU high on db-mysql-prod-02" }
+        severity: { type: string, enum: [CRITICAL, WARNING, INFO] }
+        status: { type: string, enum: [FIRING, ACKNOWLEDGED, RESOLVED, MERGED] }
+        source: { type: string, example: "Prometheus" }
+        triggered_at: { type: string, format: "date-time" }
+        acknowledged_at: { type: string, format: "date-time", nullable: true }
+        resolved_at: { type: string, format: "date-time", nullable: true }
+        assignee:
+          type: object
+          properties:
+            id: { type: string, example: "usr_1a2b3c" }
+            name: { type: string, example: "陳大文" }
+        resource:
+          type: object
+          properties:
+            id: { type: string, example: "res_b4c5d6" }
+            name: { type: string, example: "db-mysql-prod-02" }
+            type: { type: string, example: "DATABASE" }
+        rule:
+          type: object
+          properties:
+            id: { type: string, example: "rule_e7f8g9" }
+            name: { type: string, example: "高 CPU 使用率" }
+        trigger_details:
+          type: object
+          properties:
+            threshold: { type: string, example: "CPU > 90%" }
+            value: { type: string, example: "92.5%" }
+        tags:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              value: { type: string }
+              color: { type: string }
         quick_links:
           type: array
           items:
@@ -3743,21 +625,18 @@ components:
               label: { type: string }
               api_endpoint: { type: string }
               method: { type: string }
-              payload: { type: object }
         history_logs:
           type: array
-          items: { $ref: "#/components/schemas/EventHistory" }
+          items:
+            $ref: "#/components/schemas/EventHistory"
         related_events:
           type: array
-          items: { $ref: "#/components/schemas/RelatedEvent" }
+          items:
+            $ref: "#/components/schemas/RelatedEvent"
         automation_runs:
           type: array
-          items: { $ref: "#/components/schemas/AutomationRunSummary" }
-    EventList:
-      type: object
-      properties:
-        items: { type: array, items: { $ref: "#/components/schemas/Event" } }
-        pagination: { $ref: "#/components/schemas/Pagination" }
+          items:
+            $ref: "#/components/schemas/AutomationRunSummary"
     EventHistory:
       type: object
       properties:
@@ -3770,7 +649,7 @@ components:
             id: { type: string }
             name: { type: string }
             avatar_url: { type: string, format: "uri" }
-        content: { type: string, description: "Supports Markdown" }
+        content: { type: string, description: "支援 Markdown" }
         metadata: { type: object }
         created_at: { type: string, format: "date-time" }
     RelatedEvent:
@@ -3798,60 +677,80 @@ components:
         started_at: { type: string, format: "date-time" }
         duration_ms: { type: integer }
         summary_log: { type: string }
+    EventCommentRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          description: "評論內容，支援 Markdown 和 @提及"
     IncidentCreateRequest:
       type: object
+      required: [title, severity, event_ids]
       properties:
-        summary: { type: string }
-        description: { type: string }
-        severity: { type: string }
-        resource_id: { type: string }
-        rule_id: { type: string }
-        labels: { type: object }
-        annotations: { type: object }
-    IncidentUpdateRequest:
+        title: { type: string, description: "新事故的標題" }
+        severity: { type: string, enum: [CRITICAL, HIGH, MEDIUM, LOW] }
+        assignee_id: { type: string, description: "指派處理事故的使用者或團隊ID" }
+        event_ids:
+          type: array
+          items:
+            type: string
+          description: "要合併到此事故中的事件ID列表"
+    Incident:
       type: object
       properties:
-        summary: { type: string }
-        description: { type: string }
-        severity: { type: string }
-        status: { type: string }
-        labels: { type: object }
-        annotations: { type: object }
-    AIGeneratedReport:
+        id: { type: string }
+        title: { type: string }
+        status: { type: string, enum: [investigating, identified, monitoring, resolved] }
+        severity: { type: string, enum: [CRITICAL, HIGH, MEDIUM, LOW] }
+        assignee_id: { type: string, nullable: true }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    UserPlatformRolesUpdateRequest:
       type: object
       properties:
-        content: { type: string }
-    Silence:
+        team_ids:
+          type: array
+          items: { type: string }
+        role_ids:
+          type: array
+          items: { type: string }
+    # ============================================
+    # 事件規則 (Grafana 代理) Schemas
+    # ============================================
+    EventRule:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        # ... and other fields representing a simplified rule
+    EventRuleTemplate:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
         description: { type: string }
-        matchers: { type: array, items: { type: object } }
-        start_time: { type: string, format: "date-time" }
-        end_time: { type: string, format: "date-time" }
-        created_by: { type: string }
-    SilenceList:
+        template_data: { type: object, description: "預填所有精靈步驟的數據" }
+    EventRuleScopePreview:
       type: object
       properties:
-        items: { type: array, items: { $ref: "#/components/schemas/Silence" } }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    SilenceCreateRequest:
+        matched_resources_count: { type: integer }
+        sample_resources:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+    EventRuleMetric:
       type: object
       properties:
+        id: { type: string }
         name: { type: string }
-        matchers: { type: array, items: { type: object } }
-        start_time: { type: string, format: "date-time" }
-        end_time: { type: string, format: "date-time" }
-    SilenceUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        matchers: { type: array, items: { type: object } }
-        start_time: { type: string, format: "date-time" }
-        end_time: { type: string, format: "date-time" }
+        description: { type: string }
+        query_template: { type: string, description: "後端用於生成查詢的模板" }
 
-    # User Management Schemas
+    # Other placeholder schemas
     User:
       type: object
       properties:
@@ -3859,716 +758,77 @@ components:
         username: { type: string }
         email: { type: string }
         name: { type: string }
-        avatar: { type: string }
-        roles: { type: array, items: { type: string } }
-        teams: { type: array, items: { type: string } }
-        teamNames: { type: array, items: { type: string } }
+        avatar_url: { type: string, nullable: true }
         is_active: { type: boolean }
-        lastLogin: { type: string, format: "date-time" }
-        loginCount: { type: integer }
-        preferences: { type: object }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    UserList:
-      type: object
-      properties:
-        items: { type: array, items: { $ref: "#/components/schemas/User" } }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    UserInvitationRequest:
-      type: object
-      properties:
-        first_name: { type: string }
-        last_name: { type: string }
-        email: { type: string }
-        teams: { type: array, items: { type: string } }
-        roles: { type: array, items: { type: string } }
-    UserPlatformRolesUpdateRequest:
-      type: object
-      properties:
-        teams: { type: array, items: { type: string } }
-        roles: { type: array, items: { type: string } }
-
-    # Team Management Schemas
+        last_login_at: { type: string, format: "date-time", nullable: true }
+        roles:
+          type: array
+          items: { type: string }
+        teams:
+          type: array
+          items: { type: string }
     Team:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
-        description: { type: string }
-        owner: { type: string }
-        ownerName: { type: string }
-        members: { type: array, items: { type: string } }
-        memberDetails:
-          { type: array, items: { $ref: "#/components/schemas/User" } }
-        subscribers: { type: array, items: { type: string } }
-        subscriberDetails:
-          { type: array, items: { $ref: "#/components/schemas/User" } }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    TeamList:
-      type: object
-      properties:
-        items: { type: array, items: { $ref: "#/components/schemas/Team" } }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    TeamCreateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
-        owner: { type: string }
-        members: { type: array, items: { type: string } }
-        subscribers: { type: array, items: { type: string } }
-    TeamUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
-        owner: { type: string }
-        members: { type: array, items: { type: string } }
-        subscribers: { type: array, items: { type: string } }
-
-    # Role Management Schemas
+        description: { type: string, nullable: true }
+        leader_id: { type: string, nullable: true }
+        member_count: { type: integer }
+        subscriber_count: { type: integer }
     Role:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
-        description: { type: string }
-        created_at: { type: string, format: "date-time" }
-
-    # Tag Governance Core Schemas
-    TagKey:
-      type: object
-      properties:
-        id: { type: string }
-        key_name: { type: string }
-        description: { type: string }
-        is_required: { type: boolean }
-        validation_regex: { type: string }
-        compliance_category: { type: string }
-        usage_count: { type: integer }
-        allowed_values_count: { type: integer }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    TagValue:
-      type: object
-      properties:
-        id: { type: string }
-        tagKeyId: { type: string }
-        value: { type: string }
-        displayName: { type: string }
-        description: { type: string }
-        usageCount: { type: integer }
-        enabled: { type: boolean }
-        created_at: { type: string, format: "date-time" }
-    TagKeyCreateRequest:
-      type: object
-      required: [key_name]
-      properties:
-        key_name: { type: string }
-        description: { type: string }
-        is_required: { type: boolean, default: false }
-        validation_regex: { type: string }
-        compliance_category: { type: string }
-    TagKeyUpdateRequest:
-      type: object
-      properties:
-        description: { type: string }
-        is_required: { type: boolean }
-        validation_regex: { type: string }
-        compliance_category: { type: string }
-    TagValueCreateRequest:
-      type: object
-      properties:
-        value: { type: string }
-        displayName: { type: string }
-        description: { type: string }
-
-    # Automation Schemas
-    AutomationScript:
+        description: { type: string, nullable: true }
+        is_built_in: { type: boolean }
+        user_count: { type: integer, description: "使用此角色的用戶數量" }
+    Resource:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
-        type: { type: string, enum: [python, bash, powershell] }
-        description: { type: string }
-        content: { type: string }
-        creator_id: { type: string }
-        category: { type: string, enum: [deployment, maintenance, monitoring] }
-        params: { type: object }
-        status: { type: string, enum: [active, inactive] }
-        execution_count: { type: integer }
-        success_count: { type: integer }
-        failure_count: { type: integer }
-        average_duration_ms: { type: integer }
-        last_executed_at: { type: string, format: "date-time" }
-        last_execution_status:
-          { type: string, enum: ["success", "failure", "timeout"] }
-        current_version: { type: string }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    AutomationScriptList:
-      type: object
-      properties:
-        items:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/AutomationScript" },
-          }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    AutomationScriptCreateRequest:
-      type: object
-      required: [name, type, content]
-      properties:
-        name: { type: string }
-        type: { type: string, enum: [python, bash, powershell] }
-        description: { type: string }
-        content: { type: string }
-        category: { type: string, enum: [deployment, maintenance, monitoring] }
-        params: { type: object }
-        status: { type: string, enum: [active, inactive] }
-    AutomationScriptUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
-        content: { type: string }
-        category: { type: string, enum: [deployment, maintenance, monitoring] }
-        params: { type: object }
-        status: { type: string, enum: [active, inactive] }
-    ScriptExecutionResponse:
-      type: object
-      properties:
-        execution_id: { type: string }
+        type: { type: string }
         status: { type: string }
-        message: { type: string }
-
-    # Schedule Schemas
-    Schedule:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        description: { type: string }
-        script_id: { type: string }
-        cron: { type: string }
-        schedule_mode: { type: string, enum: [simple, advanced] }
-        frequency: { type: string, enum: [hourly, daily, weekly, monthly] }
-        enabled: { type: boolean }
-        status: { type: string, enum: [active, inactive, error] }
-        last_status: { type: string, enum: [success, failed, pending] }
-        last_run_at: { type: string, format: "date-time" }
-        next_run_at: { type: string, format: "date-time" }
-        creator_id: { type: string }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    ScheduleList:
-      type: object
-      properties:
-        items: { type: array, items: { $ref: "#/components/schemas/Schedule" } }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    ScheduleCreateRequest:
-      type: object
-      required: [name, script_id, cron]
-      properties:
-        name: { type: string }
-        description: { type: string }
-        script_id: { type: string }
-        cron: { type: string }
-        schedule_mode: { type: string, enum: [simple, advanced] }
-        frequency: { type: string, enum: [hourly, daily, weekly, monthly] }
-        enabled: { type: boolean }
-    ScheduleUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
-        cron: { type: string }
-        schedule_mode: { type: string, enum: [simple, advanced] }
-        frequency: { type: string, enum: [hourly, daily, weekly, monthly] }
-        enabled: { type: boolean }
-
-    # Notification Schemas
-    NotificationChannel:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        type:
-          {
-            type: string,
-            enum: [email, slack, webhook, sms, pagerduty, wechat],
-          }
-        config: { type: object }
-        description: { type: string }
-        enabled: { type: boolean }
-        creator_id: { type: string }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    NotificationChannelList:
-      type: object
-      properties:
-        items:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/NotificationChannel" },
-          }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    NotificationChannelCreateRequest:
-      type: object
-      required: [name, type, config]
-      properties:
-        name: { type: string }
-        type:
-          {
-            type: string,
-            enum: [email, slack, webhook, sms, pagerduty, wechat],
-          }
-        config: { type: object }
-        description: { type: string }
-        enabled: { type: boolean }
-    NotificationChannelUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        config: { type: object }
-        description: { type: string }
-        enabled: { type: boolean }
-
-    NotificationPolicy:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        description: { type: string }
-        resource_type: { type: string }
-        resource_tags: { type: object }
-        alert_conditions: { type: object }
-        channels: { type: array, items: { type: string } }
-        escalation: { type: object }
-        enabled: { type: boolean }
-        creator_id: { type: string }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    NotificationPolicyList:
-      type: object
-      properties:
-        items:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/NotificationPolicy" },
-          }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    NotificationPolicyCreateRequest:
-      type: object
-      required: [name, channels]
-      properties:
-        name: { type: string }
-        description: { type: string }
-        resource_type: { type: string }
-        resource_tags: { type: object }
-        alert_conditions: { type: object }
-        channels: { type: array, items: { type: string } }
-        escalation: { type: object }
-        enabled: { type: boolean }
-        match_conditions:
+        ip_address: { type: string, nullable: true }
+        team_id: { type: string, nullable: true }
+        tags:
           type: array
           items:
             type: object
             properties:
-              key:
-                {
-                  type: string,
-                  enum:
-                    [
-                      severity,
-                      env,
-                      team,
-                      component,
-                      category,
-                      instance,
-                      service,
-                      alert_name,
-                    ],
-                }
-              operator:
-                { type: string, enum: ["=", "!=", "~", "!~", in, not_in] }
+              key: { type: string }
               value: { type: string }
-              description: { type: string }
-
-    # System Settings Schemas
-    SystemSetting:
+    Silence:
       type: object
+      description: "代表一個從 Grafana API 獲取的一次性靜音規則"
       properties:
         id: { type: string }
-        category: { type: string }
-        key: { type: string }
-        value: { type: object }
-        description: { type: string }
-        updated_by_id: { type: string }
-        updated_at: { type: string, format: "date-time" }
-    SystemSettingCreateRequest:
-      type: object
-      required: [category, key, value]
-      properties:
-        category: { type: string }
-        key: { type: string }
-        value: { type: object }
-        description: { type: string }
-
-    # User Preferences Schemas
-    UserPreference:
-      type: object
-      properties:
-        id: { type: string }
-        user_id: { type: string }
-        category: { type: string }
-        key: { type: string }
-        value: { type: object }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    UserPreferenceCreateRequest:
-      type: object
-      required: [category, key, value]
-      properties:
-        category: { type: string }
-        key: { type: string }
-        value: { type: object }
-
-    # Maintenance Window Schemas
-    MaintenanceWindow:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        description: { type: string }
-        start_time: { type: string, format: "date-time" }
-        end_time: { type: string, format: "date-time" }
-        timezone: { type: string }
-        recurrence: { type: object }
-        affected_resources: { type: array, items: { type: string } }
-        notification_settings: { type: object }
+        matchers:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              value: { type: string }
+              isEqual: { type: boolean }
+              isRegex: { type: boolean }
+        startsAt: { type: string, format: "date-time" }
+        endsAt: { type: string, format: "date-time" }
+        createdBy: { type: string }
+        comment: { type: string }
         status:
-          { type: string, enum: [scheduled, active, completed, cancelled] }
-        creator_id: { type: string }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    MaintenanceWindowList:
-      type: object
-      properties:
-        items:
-          {
-            type: array,
-            items: { $ref: "#/components/schemas/MaintenanceWindow" },
-          }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    MaintenanceWindowCreateRequest:
-      type: object
-      required: [name, start_time, end_time]
-      properties:
-        name: { type: string }
-        description: { type: string }
-        start_time: { type: string, format: "date-time" }
-        end_time: { type: string, format: "date-time" }
-        timezone: { type: string }
-        recurrence: { type: object }
-        affected_resources: { type: array, items: { type: string } }
-        notification_settings: { type: object }
-
-    # Resource Metrics History Schemas
-    ResourceMetricsHistory:
-      type: object
-      properties:
-        id: { type: string }
-        resource_id: { type: string }
-        metric_type: { type: string }
-        metric_value: { type: number }
-        unit: { type: string }
-        tags: { type: object }
-        timestamp: { type: string, format: "date-time" }
-        collected_by: { type: string }
-        metadata: { type: object }
-        created_at: { type: string, format: "date-time" }
-    ResourceMetricsHistoryList:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/ResourceMetricsHistory" }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    ResourceMetricsInsertRequest:
-      type: object
-      required: [metrics]
-      properties:
-        metrics:
-          type: array
-          items:
-            type: object
-            required: [metric_type, metric_value, timestamp]
-            properties:
-              metric_type: { type: string }
-              metric_value: { type: number }
-              unit: { type: string }
-              timestamp: { type: string, format: "date-time" }
-              tags: { type: object }
-              metadata: { type: object }
-    BulkMetricsQueryRequest:
-      type: object
-      required: [queries]
-      properties:
-        queries:
-          type: array
-          items:
-            type: object
-            required: [resource_id, metric_type]
-            properties:
-              resource_id: { type: string }
-              metric_type: { type: string }
-              start_time: { type: string, format: "date-time" }
-              end_time: { type: string, format: "date-time" }
-              resolution:
-                { type: string, enum: ["1m", "5m", "15m", "1h", "1d"] }
-    BulkMetricsQueryResult:
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            type: object
-            properties:
-              resource_id: { type: string }
-              metric_type: { type: string }
-              data_points:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    timestamp: { type: string, format: "date-time" }
-                    value: { type: number }
-                    tags: { type: object }
-
-    # Event Analysis Results Schemas
-    EventAnalysisResult:
-      type: object
-      properties:
-        id: { type: string }
-        alert_id: { type: string }
-        analysis_type:
-          {
-            type: string,
-            enum: ["rca", "impact", "recommendation", "prediction"],
-          }
-        confidence_score: { type: number, minimum: 0, maximum: 100 }
-        analysis_result: { type: object }
-        analyst_type: { type: string, enum: ["ai", "human", "hybrid"] }
-        status: { type: string, enum: ["pending", "completed", "failed"] }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    AnalysisRequest:
-      type: object
-      required: [analysis_types]
-      properties:
-        analysis_types:
-          type: array
-          items:
-            {
-              type: string,
-              enum: ["rca", "impact", "recommendation", "prediction"],
-            }
-        priority:
-          { type: string, enum: ["low", "normal", "high"], default: "normal" }
-        context: { type: object }
-    BatchAnalysisRequest:
-      type: object
-      required: [incident_ids, analysis_types]
-      properties:
-        incident_ids: { type: array, items: { type: string } }
-        analysis_types:
-          type: array
-          items:
-            {
-              type: string,
-              enum: ["rca", "impact", "recommendation", "prediction"],
-            }
-        priority:
-          { type: string, enum: ["low", "normal", "high"], default: "normal" }
-    AnalysisTaskResponse:
-      type: object
-      properties:
-        task_id: { type: string }
-        status:
-          { type: string, enum: ["pending", "running", "completed", "failed"] }
-        estimated_completion: { type: string, format: "date-time" }
-    BatchAnalysisTaskResponse:
-      type: object
-      properties:
-        batch_id: { type: string }
-        tasks:
-          type: array
-          items:
-            type: object
-            properties:
-              incident_id: { type: string }
-              task_id: { type: string }
-              status: { type: string }
-    AnalysisResultUpdateRequest:
-      type: object
-      properties:
-        confidence_score: { type: number, minimum: 0, maximum: 100 }
-        analysis_result: { type: object }
-        feedback_score: { type: number }
-        human_verified: { type: boolean }
-        verification_notes: { type: string }
-
-    # Script Version Control Schemas
-    ScriptVersion:
-      type: object
-      properties:
-        id: { type: string }
-        script_id: { type: string }
-        version: { type: string }
-        content: { type: string }
-        change_log: { type: string }
-        is_active: { type: boolean }
-        created_by: { type: string }
-        created_at: { type: string, format: "date-time" }
-    ScriptVersionList:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/ScriptVersion" }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    ScriptVersionCreateRequest:
-      type: object
-      required: [content]
-      properties:
-        content: { type: string }
-        change_log: { type: string }
-    ScriptVersionDiff:
-      type: object
-      properties:
-        version_a: { type: string }
-        version_b: { type: string }
-        diff_content: { type: string }
-        changes_summary:
           type: object
           properties:
-            additions: { type: integer }
-            deletions: { type: integer }
-            modifications: { type: integer }
-
-    # Enhanced Dashboard Schemas
-    Dashboard:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        description: { type: string }
-        category: { type: string }
-        layout_config: { type: object }
-        widgets_config: { type: object }
-        shared_with_teams: { type: array, items: { type: string } }
-        is_public: { type: boolean }
-        is_default: { type: boolean }
-        view_count: { type: integer }
-        last_accessed_at: { type: string, format: "date-time" }
-        tags: { type: array, items: { type: string } }
-        created_by: { type: string }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    DashboardList:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/Dashboard" }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    DashboardCreateRequest:
-      type: object
-      required: [name, layout_config]
-      properties:
-        name: { type: string }
-        description: { type: string }
-        category: { type: string }
-        layout_config: { type: object }
-        widgets_config: { type: object }
-        shared_with_teams: { type: array, items: { type: string } }
-        is_public: { type: boolean }
-        tags: { type: array, items: { type: string } }
-    DashboardUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
-        category: { type: string }
-        layout_config: { type: object }
-        widgets_config: { type: object }
-        shared_with_teams: { type: array, items: { type: string } }
-        is_public: { type: boolean }
-        tags: { type: array, items: { type: string } }
-    DashboardShareRequest:
-      type: object
-      required: [share_type]
-      properties:
-        share_type: { type: string, enum: ["team", "public", "private"] }
-        team_ids: { type: array, items: { type: string } }
-
-    # Recurring Silence Rules Schemas (Platform Core Feature)
+            state: { type: string, enum: [expired, active, pending] }
     RecurringSilenceRule:
       type: object
+      description: "平台核心功能：週期性靜音規則"
       properties:
         id: { type: string }
         name: { type: string }
-        description: { type: string }
-        matchers:
-          type: array
-          items:
-            type: object
-            properties:
-              name: { type: string }
-              value: { type: string }
-              isRegex: { type: boolean }
-        cron_expression: { type: string }
-        duration_minutes: { type: integer }
-        timezone: { type: string, default: "UTC" }
-        is_enabled: { type: boolean }
-        next_execution_time: { type: string, format: "date-time" }
-        last_execution_time: { type: string, format: "date-time" }
-        execution_count: { type: integer }
-        creator_id: { type: string }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    RecurringSilenceRuleList:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/RecurringSilenceRule" }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    RecurringSilenceRuleCreateRequest:
-      type: object
-      required: [name, matchers, cron_expression, duration_minutes]
-      properties:
-        name: { type: string }
-        description: { type: string }
-        matchers:
-          type: array
-          items:
-            type: object
-            properties:
-              name: { type: string }
-              value: { type: string }
-              isRegex: { type: boolean }
-        cron_expression: { type: string }
-        duration_minutes: { type: integer }
-        timezone: { type: string, default: "UTC" }
-        is_enabled: { type: boolean, default: true }
-    RecurringSilenceRuleUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
+        description: { type: string, nullable: true }
         matchers:
           type: array
           items:
@@ -4581,169 +841,68 @@ components:
         duration_minutes: { type: integer }
         timezone: { type: string }
         is_enabled: { type: boolean }
-    SilenceRuleTemplate:
+        creator_id: { type: string, nullable: true }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    # ============================================
+    # 標籤治理 Schemas
+    # ============================================
+    TagKey:
       type: object
+      description: "標籤治理規則的定義"
       properties:
         id: { type: string }
-        name: { type: string }
-        description: { type: string }
-        category: { type: string }
-        template_data:
-          type: object
-          properties:
-            name: { type: string }
-            description: { type: string }
-            matchers: { type: array }
-            cron_expression: { type: string }
-            duration_minutes: { type: integer }
-        is_default: { type: boolean }
+        key_name: { type: string }
+        description: { type: string, nullable: true }
+        is_required: { type: boolean }
+        validation_regex: { type: string, nullable: true }
+        compliance_category: { type: string, nullable: true }
         usage_count: { type: integer }
-        non_compliant_resources: { type: integer }
-        compliance_percentage: { type: number }
-        violations:
-          type: array
-          items:
-            type: object
-            properties:
-              resource_id: { type: string }
-              resource_name: { type: string }
-              violation_type: { type: string }
-              missing_tags: { type: array, items: { type: string } }
-              invalid_values: { type: array, items: { type: string } }
-
-    # Tag Governance Enhanced Schemas (Replaces old Tag Management)
-    TagKeyList:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/TagKey" }
-        pagination: { $ref: "#/components/schemas/Pagination" }
+        enforcement_level: { type: string, enum: [advisory, warning, blocking] }
     TagAllowedValue:
       type: object
+      description: "標籤鍵的預定義允許值"
       properties:
         id: { type: string }
         tag_key_id: { type: string }
         value: { type: string }
-        color: { type: string }
-        usage_count: { type: integer }
-        created_at: { type: string, format: "date-time" }
-    TagAllowedValueList:
+        color: { type: string, nullable: true }
+    TagComplianceViolation:
       type: object
+      description: "單一的標籤不合規記錄"
       properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/TagAllowedValue" }
-        tag_key: { $ref: "#/components/schemas/TagKey" }
-    TagAllowedValueCreateRequest:
+        resource_id: { type: string }
+        resource_name: { type: string }
+        violation_type: { type: string, enum: [missing_required, invalid_value, unknown_key] }
+        tag_key: { type: string }
+        expected_value: { type: string, nullable: true }
+        actual_value: { type: string, nullable: true }
+        severity: { type: string, enum: [low, medium, high] }
+        detected_at: { type: string, format: "date-time" }
+    TagComplianceReport:
       type: object
-      required: [value]
+      description: "標籤合規性的總結報告"
       properties:
-        value: { type: string }
-        color: { type: string }
-
-    # Smart Input Options Schemas
-    SmartInputOption:
-      type: object
-      properties:
-        id: { type: string }
-        category: { type: string }
-        key: { type: string }
-        value: { type: string }
-        display_name: { type: string }
-        description: { type: string }
-        color: { type: string }
-        sort_order: { type: integer }
-        is_active: { type: boolean }
-        usage_count: { type: integer }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    SmartInputOptionList:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/SmartInputOption" }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    SmartInputOptionCreateRequest:
-      type: object
-      required: [category, key, value]
-      properties:
-        category: { type: string }
-        key: { type: string }
-        value: { type: string }
-        display_name: { type: string }
-        description: { type: string }
-        color: { type: string }
-        sort_order: { type: integer }
-    UserSmartInputPreference:
-      type: object
-      properties:
-        id: { type: string }
-        user_id: { type: string }
-        category: { type: string }
-        frequently_used: { type: array, items: { type: string } }
-        last_used_at: { type: string, format: "date-time" }
-        usage_count: { type: integer }
-
-    # Event Rule Templates Schemas
-    EventRuleTemplate:
-      type: object
-      properties:
-        id: { type: string }
-        name: { type: string }
-        description: { type: string }
-        category: { type: string }
-        template_data:
+        summary:
           type: object
           properties:
-            rule_name: { type: string }
-            description: { type: string }
-            scope_tags: { type: object }
-            conditions: { type: array }
-            notification_settings: { type: object }
-            automation_settings: { type: object }
-        is_default: { type: boolean }
-        usage_count: { type: integer }
-        created_by: { type: string }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
-    EventRuleTemplateList:
-      type: object
-      properties:
-        items:
-          type: array
-          items: { $ref: "#/components/schemas/EventRuleTemplate" }
-        pagination: { $ref: "#/components/schemas/Pagination" }
-    EventRuleScopePreview:
-      type: object
-      properties:
-        matched_resources_count: { type: integer }
-        matched_resources:
+            compliance_score: { type: number, format: float }
+            total_resources_scanned: { type: integer }
+            violating_resources_count: { type: integer }
+        violations:
           type: array
           items:
-            type: object
-            properties:
-              id: { type: string }
-              name: { type: string }
-              type: { type: string }
-        preview_query: { type: string }
-    EventRuleMetric:
+            $ref: "#/components/schemas/TagComplianceViolation"
+    NotificationHistory:
       type: object
       properties:
-        name: { type: string }
-        display_name: { type: string }
-        description: { type: string }
-        unit: { type: string }
-        query_template: { type: string }
-        supported_operators: { type: array, items: { type: string } }
-        category: { type: string }
-    EventRuleTemplateVariable:
-      type: object
-      properties:
-        name: { type: string }
-        description: { type: string }
-        example_value: { type: string }
-        data_type: { type: string }
-        is_required: { type: boolean }
-        permissions: { type: array, items: { type: string } }
+        id: { type: string }
+        event_id: { type: string, nullable: true }
+        policy_id: { type: string, nullable: true }
+        channel_name: { type: string }
+        recipient: { type: string }
+        status: { type: string, enum: [pending, sent, failed, delivered] }
+        error_message: { type: string, nullable: true }
+        raw_payload: { type: object, description: "從 Grafana Webhook 接收到的原始 JSON" }
+        sent_at: { type: string, format: "date-time", nullable: true }
+        created_at: { type: string, format: "date-time" }
