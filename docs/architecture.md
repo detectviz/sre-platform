@@ -1,6 +1,14 @@
-# SRE 平台架構設計文件
+# SRE 平台系統架構設計書
 
-## 🎯 核心架構哲學
+## 📋 文檔概覽
+
+**文檔版本**: 2.0
+**更新日期**: 2024-09-18
+**目標讀者**: 技術架構師、開發團隊、系統運維人員
+
+## 🎯 系統概覽與核心架構哲學
+
+SRE 平台是一個現代化的企業級維運平台，採用前後端分離架構，專為 SRE 團隊設計。平台作為「統一管理平面」(Unified Management Plane)，整合多個開源工具，實現從被動故障響應到主動系統管理的轉型。
 
 ### 統一管理層 + 開源執行引擎架構
 - **平台定位**：作為「統一管理平面」(Unified Management Plane)
@@ -10,11 +18,20 @@
   - [Chapter 7: The Evolution of Automation at Google](google-sre-book/Chapter-07-The-Evolution-of-Automation-at-Google.md) - 自動化成熟度模型
   - [Chapter 5: Eliminating Toil](google-sre-book/Chapter-05-Eliminating-Toil.md) - 瑣務量化與消除
 
-  實現從手動操作向智慧自動化的轉型
-- **角色分工**：
-  - 平台前端：負責人員交互和數據展示
-  - 平台後端 (Go)：擔任「總控制器」，實現業務邏輯和API服務
-  - Grafana：擔任「核心執行引擎」，提供告警和監控能力
+### 核心設計理念
+
+```mermaid
+graph LR
+    A[被動響應] -->|轉型| B[主動管理]
+
+    subgraph "傳統模式"
+        A1[人工監控] --> A2[告警響應] --> A3[手動診斷] --> A4[人工修復]
+    end
+
+    subgraph "智能模式"
+        B1[智能監控] --> B2[預測分析] --> B3[自動診斷] --> B4[智能修復]
+    end
+```
 
 ### 智慧告警處理中樞
 - **Webhook作為AI整合點**：所有告警先經過平台再分發
@@ -23,6 +40,13 @@
   2. 動態產生處理預案
   3. 自動化修復
   4. 告警風暴總結
+
+### 關鍵技術決策
+
+1. **統一管理層策略**: 告警管理委託給 Grafana，人員狀態管理委託給 Keycloak
+2. **混合架構模式**: Go 後端處理高併發業務邏輯，React 前端提供現代化用戶體驗
+3. **雲原生設計**: 完全容器化，支持 Kubernetes 部署
+4. **可觀測性優先**: 內建分散式追蹤、指標收集、結構化日誌
 
 ## 📊 資訊架構原則
 
@@ -131,6 +155,194 @@
 3. **合理分配資源**：將最複雜、最具挑戰性的功能（如自定義儀表板）放在第二階段，確保開發團隊有充足的時間進行設計和研發。
 
 **關鍵決策**：請堅定地將**核心的「儀表板」功能保留在第一階段**，並將「管理儀表板」和「自訂報告」作為您在第二階段擴展平台影響力的王牌。
+
+## 🏗️ 整體架構
+
+### 系統分層架構
+
+```mermaid
+graph TB
+    subgraph "🌐 用戶層"
+        User([👨‍💻 SRE 工程師])
+        Admin([👩‍💼 系統管理員])
+        API_User([🔧 API 調用方])
+    end
+
+    subgraph "🎯 展示層 (Presentation Layer)"
+        Frontend[🖥️ React Web UI<br/>TypeScript + Ant Design]
+        Mobile[📱 響應式適配<br/>PWA 支持]
+    end
+
+    subgraph "🔌 API 網關層 (API Gateway)"
+        Gateway[🚪 API Gateway<br/>路由、限流、認證]
+        Auth[🔐 認證授權<br/>Keycloak OIDC]
+        RateLimit[⚡ 限流控制<br/>Redis 分散式限流]
+    end
+
+    subgraph "🎮 業務服務層 (Business Service)"
+        EventAPI[📊 事件管理 API]
+        ResourceAPI[🏗️ 資源管理 API]
+        NotifyAPI[📢 通知管理 API]
+        AnalyzeAPI[🧠 智能分析 API]
+        AutoAPI[🤖 自動化執行 API]
+    end
+
+    subgraph "📊 數據服務層 (Data Service)"
+        Database[(🐘 PostgreSQL<br/>業務數據存儲)]
+        TimeSeries[(📈 VictoriaMetrics<br/>時序數據存儲)]
+        Cache[(⚡ Redis Cluster<br/>快取 + 會話)]
+        Search[(🔍 Elasticsearch<br/>日誌搜索引擎)]
+    end
+
+    subgraph "🔍 監控觀測層 (Observability)"
+        Prometheus[📊 Prometheus<br/>指標收集]
+        Grafana[📈 Grafana<br/>可視化平台]
+        Loki[📝 Grafana Loki<br/>日誌聚合]
+        Tracing[🔗 Jaeger<br/>分散式追蹤]
+    end
+
+    subgraph "🏗️ 基礎設施層 (Infrastructure)"
+        K8s[☸️ Kubernetes<br/>容器編排]
+        Storage[💾 持久化存儲<br/>CSI 存儲類]
+        Network[🌐 網路層<br/>Ingress + Service Mesh]
+        Security[🔒 安全層<br/>RBAC + Network Policy]
+    end
+
+    %% 用戶交互
+    User --> Frontend
+    Admin --> Frontend
+    API_User --> Gateway
+
+    %% 前端到 API
+    Frontend --> Gateway
+    Mobile --> Gateway
+
+    %% API 網關路由
+    Gateway --> Auth
+    Gateway --> EventAPI
+    Gateway --> ResourceAPI
+    Gateway --> NotifyAPI
+    Gateway --> AnalyzeAPI
+    Gateway --> AutoAPI
+
+    %% 服務到數據層
+    EventAPI --> Database
+    EventAPI --> TimeSeries
+    ResourceAPI --> Database
+    ResourceAPI --> Cache
+    NotifyAPI --> Database
+    NotifyAPI --> Cache
+    AnalyzeAPI --> Search
+    AutoAPI --> Database
+
+    %% 監控和追蹤
+    EventAPI --> Tracing
+    ResourceAPI --> Tracing
+    NotifyAPI --> Tracing
+
+    Prometheus --> TimeSeries
+    Grafana --> TimeSeries
+    Loki --> Search
+```
+
+### 核心組件說明
+
+#### 🎯 前端平台 (React + TypeScript)
+- **技術棧**: React 18 + TypeScript 5 + Ant Design 5 + Vite
+- **主要職責**:
+  - 統一的管理界面和用戶體驗
+  - 資源生命週期可視化管理
+  - 任務編排和調度界面
+  - 實時監控數據展示
+  - 響應式設計支持多設備
+
+#### 🔧 後端服務 (Go)
+- **技術棧**: Go 1.21+ + Gin + GORM + Redis + PostgreSQL
+- **主要職責**:
+  - RESTful API 服務提供
+  - 複雜業務邏輯處理
+  - 數據持久化管理
+  - 外部系統集成
+  - AI Agent 驅動的智能分析
+  - 自動化工作流執行
+
+## 📐 詳細架構設計
+
+### 1. API 設計架構
+
+#### RESTful API 設計原則
+```yaml
+# 基於 OpenAPI 3.1.0 規範
+基礎路徑: /api/v1
+認證方式: Bearer Token (OIDC)
+內容類型: application/json
+響應格式: 統一的 ResponseWrapper<T>
+
+# 核心 API 模組
+/auth/*          # 認證授權
+/events/*        # 事件管理
+/resources/*     # 資源管理
+/notifications/* # 通知管理
+/analytics/*     # 分析報告
+/automation/*    # 自動化執行
+```
+
+#### API 安全設計
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant Keycloak
+    participant Service
+
+    Client->>Gateway: 1. API Request + Token
+    Gateway->>Keycloak: 2. Token Validation
+    Keycloak-->>Gateway: 3. Token Valid + Claims
+    Gateway->>Service: 4. Authorized Request
+    Service-->>Gateway: 5. Business Response
+    Gateway-->>Client: 6. Final Response
+```
+
+### 2. 數據架構設計
+
+#### 數據存儲策略
+```mermaid
+graph LR
+    subgraph "業務數據"
+        PG[(PostgreSQL<br/>ACID 事務)]
+        PG --> Users[用戶信息]
+        PG --> Events[事件數據]
+        PG --> Resources[資源清單]
+        PG --> Configs[配置信息]
+    end
+
+    subgraph "時序數據"
+        VM[(VictoriaMetrics<br/>高性能時序)]
+        VM --> Metrics[系統指標]
+        VM --> Alerts[告警歷史]
+        VM --> Performance[性能數據]
+    end
+
+    subgraph "快取數據"
+        Redis[(Redis Cluster<br/>內存快取)]
+        Redis --> Sessions[用戶會話]
+        Redis --> Cache[API 快取]
+        Redis --> Queue[消息隊列]
+    end
+
+    subgraph "搜索數據"
+        ES[(Elasticsearch<br/>全文搜索)]
+        ES --> Logs[應用日誌]
+        ES --> Audit[審計日誌]
+        ES --> Search[搜索索引]
+    end
+```
+
+#### 數據模型設計要點
+1. **用戶系統**: 委託 Keycloak 管理，本地僅存儲業務關聯數據
+2. **事件模型**: 支持層級關聯、狀態流轉、AI 分析結果存儲
+3. **資源模型**: 多維度標籤、動態屬性、批量操作支持
+4. **通知模型**: 多渠道、模板化、條件觸發機制
 
 ## 🛠️ 技術實作細節
 

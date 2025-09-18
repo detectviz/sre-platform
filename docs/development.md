@@ -1,622 +1,620 @@
-# 🛠️ SRE 平台開發總規劃
+# SRE 平台開發總規劃
 
-## 📋 文檔概述
+## 📋 文檔概覽
 
-**版本**: 2.0
-**更新日期**: 2025年9月15日
-**目標**: 統整所有開發相關規劃，形成完整的開發藍圖
+**文檔版本**: 1.0
+**更新日期**: 2024-09-18
+**目標讀者**: 專案經理、開發團隊、技術主管
 
----
+## 🎯 專案總覽
 
-## 🎯 開發總體策略
+SRE 平台是一個現代化的企業級維運平台開發專案，採用敏捷開發方法論，分階段實施策略，確保高質量交付和持續價值實現。
 
-### 前後端分離開發模式
+### 專案目標
+- **主要目標**: 構建新一代 SRE 智能維運平台
+- **核心價值**: 從被動故障響應轉向主動系統管理
+- **技術願景**: 雲原生、AI 驅動、高度自動化
+- **商業價值**: 降低 MTTR、提升系統可靠性、減少人工介入
 
-#### 核心理念
-- **平行開發**: 前端團隊基於API規範獨立開發，後端專注業務邏輯
-- **早期驗證**: 前端早期驗證UI/UX設計，後端專注API設計
-- **風險控制**: 降低整體項目風險，及早發現接口問題
-- **最佳實踐**: 參考 [Google SRE Book](https://sre.google/sre-book/) 的開發方法論：
-  - [Chapter 5: Eliminating Toil](google-sre-book/Chapter-05-Eliminating-Toil.md) - 瑣務量化管理
-  - [Chapter 7: The Evolution of Automation at Google](google-sre-book/Chapter-07-The-Evolution-of-Automation-at-Google.md) - 自動化演進
-  - [Chapter 17: Testing for Reliability](google-sre-book/Chapter-17-Testing-for-Reliability.md) - 可靠性測試
+## 📈 開發方法論
 
-  確保系統可靠性設計從開發階段開始
+### 敏捷開發框架
 
-#### 實施流程
+```mermaid
+graph LR
+    subgraph "🔄 敏捷開發循環"
+        Planning[📋 Sprint 規劃]
+        Development[💻 開發實作]
+        Testing[🧪 測試驗證]
+        Review[📊 Sprint 回顧]
+        Retrospective[🔍 持續改進]
 
-##### 階段一：API規範定義 📋
-1. **建立OpenAPI規範**
-   ```yaml
-   openapi: 3.0.0
-   info:
-     title: SRE Platform API
-     version: 1.0.0
-   paths:
-     /api/v1/resources:
-       get:
-         summary: 獲取資源列表
-   ```
+        Planning --> Development
+        Development --> Testing
+        Testing --> Review
+        Review --> Retrospective
+        Retrospective --> Planning
+    end
 
-2. **定義數據模型**
-   ```typescript
-   interface Resource {
-     id: string;
-     name: string;
-     ip: string;
-     type: string;
-     status: string;
-   }
-   ```
+    subgraph "🏗️ DevOps 實踐"
+        CI[⚙️ 持續集成]
+        CD[🚀 持續部署]
+        Monitoring[📊 持續監控]
+        Feedback[🔁 快速反饋]
 
-##### 階段二：Mock Server建立 🧪
-1. **Node.js Mock Server**
-   ```javascript
-   const express = require('express');
-   const app = express();
-
-   app.get('/api/v1/resources', (req, res) => {
-     res.json(mockResources);
-   });
-
-   app.listen(3001);
-   ```
-
-2. **前端API服務層**
-   ```typescript
-   export const resourceService = {
-     getResources: () => axios.get('/api/v1/resources'),
-   };
-   ```
-
-##### 階段三：前端開發實現 🎨
-1. **組件開發**
-   ```typescript
-   const ResourceListPage: React.FC = () => {
-     const [resources, setResources] = useState([]);
-     const [loading, setLoading] = useState(false);
-
-     useEffect(() => {
-       fetchResources();
-     }, []);
-
-     const fetchResources = async () => {
-       setLoading(true);
-       try {
-         const response = await resourceService.getResources();
-         setResources(response.data);
-       } catch (error) {
-         console.error('獲取資源失敗:', error);
-       } finally {
-         setLoading(false);
-       }
-     };
-
-     return (
-       <Table
-         dataSource={resources}
-         columns={columns}
-         loading={loading}
-       />
-     );
-   };
-   ```
-
-##### 階段四：後端實現 🔧
-1. **API實現 (Go + Gin)**
-   ```go
-   func (h *ResourceHandler) GetResources(c *gin.Context) {
-       resources, err := h.resourceService.GetAll()
-       if err != nil {
-           c.JSON(500, gin.H{"error": err.Error()})
-           return
-       }
-       c.JSON(200, resources)
-   }
-   ```
-
-2. **數據模型 (GORM)**
-   ```go
-   type Resource struct {
-       ID          uint      `json:"id" gorm:"primaryKey"`
-       Name        string    `json:"name" gorm:"not null"`
-       Type        string    `json:"type" gorm:"not null"`
-       Status      string    `json:"status" gorm:"default:healthy"`
-       IPAddress   string    `json:"ip_address"`
-       CreatedAt   time.Time `json:"created_at"`
-       UpdatedAt   time.Time `json:"updated_at"`
-   }
-   ```
-
-3. **結構化日誌 (Zap)**
-   ```go
-   import (
-       "go.uber.org/zap"
-       "time"
-   )
-
-   // 初始化 logger
-   logger, _ := zap.NewProduction()
-   defer logger.Sync()
-
-   start := time.Now()
-
-   // 結構化日誌記錄
-   logger.Info("資源查詢完成",
-       zap.String("user_id", userID),
-       zap.Int("resource_count", len(resources)),
-       zap.Duration("duration", time.Since(start)),
-   )
-
-   // 錯誤日誌
-   logger.Error("數據庫查詢失敗",
-       zap.Error(err),
-       zap.String("query", sql),
-       zap.String("table", "resources"),
-   )
-   ```
-
-4. **OpenTelemetry 觀測性**
-   ```go
-   import (
-       "go.opentelemetry.io/otel"
-       "go.opentelemetry.io/otel/attribute"
-       "go.opentelemetry.io/otel/metric"
-       "context"
-   )
-
-   // 追蹤 (Tracing)
-   tracer := otel.Tracer("resource-service")
-   ctx, span := tracer.Start(ctx, "GetResources")
-   defer span.End()
-
-   span.SetAttributes(
-       attribute.String("user.id", userID),
-       attribute.String("resource.type", resourceType),
-   )
-
-   // 指標 (Metrics)
-   meter := otel.Meter("resource-service")
-   requestCount, _ := meter.Int64Counter("resource_requests_total",
-       metric.WithDescription("總資源請求數"),
-   )
-
-   requestCount.Add(ctx, 1,
-       metric.WithAttributes(
-           attribute.String("method", "GET"),
-           attribute.String("endpoint", "/api/v1/resources"),
-       ),
-   )
-
-   // 日誌 (Logs) - 與 Zap 集成
-   spanLogger := logger.With(
-       zap.String("trace_id", span.SpanContext().TraceID().String()),
-       zap.String("span_id", span.SpanContext().SpanID().String()),
-   )
-   ```
-
-5. **環境切換**
-   ```bash
-   # 開發環境
-   REACT_APP_API_BASE_URL=http://localhost:3001/api/v1
-
-   # 生產環境
-   REACT_APP_API_BASE_URL=/api/v1
-   ```
-
-#### 開發環境配置
-
-##### Vite代理配置
-```typescript
-// vite.config.ts
-export default defineConfig({
-  server: {
-    proxy: {
-      '/api': {
-        target: 'http://localhost:3001',
-        changeOrigin: true,
-      },
-    },
-  },
-});
+        Development --> CI
+        CI --> CD
+        CD --> Monitoring
+        Monitoring --> Feedback
+        Feedback --> Development
+    end
 ```
 
-##### 前端觀測性配置
-```typescript
-// src/utils/monitoring.ts
-import * as Sentry from "@sentry/react";
-import { WebVitals } from "@sentry/tracing";
+### 開發原則
+1. **迭代增量**: 2 週 Sprint，快速交付價值
+2. **測試驅動**: TDD/BDD，確保代碼質量
+3. **持續集成**: 自動化 CI/CD，降低集成風險
+4. **用戶中心**: 以 SRE 工程師需求為核心
+5. **文檔同步**: 文檔即代碼，保持同步更新
 
-// Sentry 初始化
-Sentry.init({
-  dsn: "your-sentry-dsn",
-  integrations: [new WebVitals()],
-  tracesSampleRate: 1.0,
-});
+## 🎯 分階段實施策略
 
-// OpenTelemetry 前端追蹤
-import { WebTracerProvider } from '@opentelemetry/web';
-import { ConsoleSpanExporter, SimpleSpanProcessor } from '@opentelemetry/tracing';
+### Phase 1: 基礎平台建設 (MVP)
+**時間週期**: 8-10 週
+**目標**: 建立核心功能基礎，實現基本的 SRE 工作流程
 
-const provider = new WebTracerProvider();
-provider.addSpanProcessor(new SimpleSpanProcessor(new ConsoleSpanExporter()));
-provider.register();
+#### 🏗️ Sprint 1-2: 基礎架構搭建 (4 週)
 
-// Web Vitals 監控
-import { getCLS, getFID, getFCP, getLCP, getTTFB } from 'web-vitals';
+**Sprint 1 (週 1-2): 後端核心框架**
+```mermaid
+gantt
+    title Sprint 1: 後端核心框架
+    dateFormat  X
+    axisFormat %w
 
-getCLS(console.log);
-getFID(console.log);
-getFCP(console.log);
-getLCP(console.log);
-getTTFB(console.log);
+    section 基礎設施
+    項目初始化           :a1, 0, 2d
+    Docker 環境        :a2, after a1, 2d
+    CI/CD 管道        :a3, after a2, 2d
+
+    section 後端開發
+    Go 框架搭建        :b1, 0, 3d
+    數據庫設計        :b2, after b1, 2d
+    API 基礎架構      :b3, after b2, 3d
+
+    section 認證系統
+    Keycloak 集成     :c1, 4d, 4d
+    JWT 驗證         :c2, after c1, 2d
 ```
 
-##### K6 性能測試
-```javascript
-// tests/performance/load-test.js
-import http from 'k6/http';
-import { check, sleep } from 'k6';
+**交付目標**:
+- ✅ 完整的開發環境設置
+- ✅ Go 後端基礎框架
+- ✅ PostgreSQL 數據庫設計
+- ✅ Keycloak 認證集成
+- ✅ CI/CD 管道建立
 
-export let options = {
-  stages: [
-    { duration: '2m', target: 100 }, // 2分鐘內達到100個人員
-    { duration: '5m', target: 100 }, // 維持5分鐘
-    { duration: '2m', target: 200 }, // 2分鐘內達到200個人員
-    { duration: '5m', target: 200 }, // 維持5分鐘
-    { duration: '2m', target: 0 },   // 2分鐘內降至0
-  ],
-  thresholds: {
-    http_req_duration: ['p(99)<1500'], // 99%的請求要在1.5秒內完成
-  },
-};
+**Sprint 2 (週 3-4): 前端基礎框架**
+```mermaid
+gantt
+    title Sprint 2: 前端基礎框架
+    dateFormat  X
+    axisFormat %w
 
-const BASE_URL = 'http://localhost:8080';
+    section 前端設置
+    React 項目初始化    :a1, 0, 2d
+    TypeScript 配置   :a2, after a1, 1d
+    Ant Design 集成   :a3, after a2, 2d
 
-export default function () {
-  let response = http.get(`${BASE_URL}/api/v1/resources`);
+    section 基礎組件
+    佈局組件           :b1, 2d, 3d
+    導航組件           :b2, after b1, 2d
+    認證組件           :b3, after b2, 3d
 
-  check(response, {
-    'status is 200': (r) => r.status === 200,
-    'response time < 500ms': (r) => r.timings.duration < 500,
-  });
-
-  sleep(1);
-}
+    section 狀態管理
+    Redux Toolkit     :c1, 5d, 3d
+    API 客戶端        :c2, after c1, 2d
 ```
 
-執行測試：
-```bash
-# 安裝 k6
-# macOS: brew install k6
-# Linux: sudo apt update && sudo apt install k6
+**交付目標**:
+- ✅ React + TypeScript 項目架構
+- ✅ Ant Design 組件庫集成
+- ✅ 基礎佈局和導航系統
+- ✅ Redux 狀態管理
+- ✅ API 客戶端封裝
 
-# 運行測試
-k6 run tests/performance/load-test.js
+#### 🔧 Sprint 3-4: 核心功能模組 (4 週)
 
-# 輸出結果到文件
-k6 run --out json=results.json tests/performance/load-test.js
+**Sprint 3 (週 5-6): 事件管理系統**
+
+**開發任務分解**:
+```yaml
+後端任務:
+  - 事件數據模型設計 (2d)
+  - 事件 CRUD API 實現 (3d)
+  - 事件狀態流轉邏輯 (2d)
+  - 事件關聯功能 (2d)
+  - 單元測試編寫 (1d)
+
+前端任務:
+  - 事件列表頁面 (3d)
+  - 事件詳情頁面 (3d)
+  - 事件篩選功能 (2d)
+  - 事件操作功能 (2d)
+  - 組件測試 (1d)
+
+集成任務:
+  - API 集成測試 (1d)
+  - 端到端測試 (2d)
 ```
 
-##### 測試與驗證
-```javascript
-// API契約測試
-describe('API Contract Test', () => {
-  it('獲取資源列表', async () => {
-    await provider.addInteraction({
-      uponReceiving: '獲取資源列表請求',
-      withRequest: { method: 'GET', path: '/api/v1/resources' },
-      willRespondWith: { status: 200, body: [...] }
-    });
-  });
-});
+**Sprint 4 (週 7-8): 資源管理系統**
+
+**開發任務分解**:
+```yaml
+後端任務:
+  - 資源數據模型設計 (2d)
+  - 資源 CRUD API 實現 (3d)
+  - 資源分組功能 (2d)
+  - 資源監控集成 (3d)
+
+前端任務:
+  - 資源列表頁面 (3d)
+  - 資源拓撲視圖 (4d)
+  - 資源批量操作 (2d)
+  - 資源詳情展示 (1d)
+
+集成任務:
+  - Prometheus 數據集成 (2d)
+  - 實時數據更新 (2d)
 ```
 
----
-
-## 📊 階段性發展策略
-
-### 階段一：基礎優化與功能完善 (Q1 2025) ⚡
-
-#### 1.1 前端優化任務 🎨
-**目標**: 提升人員體驗，統一設計規範
-
-**關鍵任務**:
-- ✅ 按鈕樣式規範化 (已實現基礎功能)
-- ✅ 表格欄位優化 (調整行高、重新排序)
-- ✅ 批次操作功能 (告警列表、資源列表)
-- ✅ 數據導出功能 (支援多格式導出)
-- ✅ 模擬數據場景化 (真實性優化)
-
-**技術指標**:
-- 頁面載入時間 < 2秒
-- 人員操作響應 < 500ms
-- 視覺一致性 > 95%
-
-#### 1.2 架構優化 🏗️
-**目標**: 提升代碼可維護性和擴展性
-
-**關鍵任務**:
-- 🔄 動態路由系統 (從靜態switch-case改造)
-- 🔄 動態菜單配置 (支持運行時菜單調整)
-- 🔄 組件抽象化 (建立通用組件庫)
-- 🔄 錯誤處理統一 (全局錯誤邊界處理)
-
-#### 1.3 功能完整性 ⚙️
-**目標**: 實現核心功能的全覆蓋
-
-**關鍵任務**:
-- 📋 Tab頁籤化改造 (事件、自動化、設定模組)
-- 📋 搜尋功能增強 (全局搜尋、全文檢索)
-- 📋 個人化設定 (主題切換、界面定制)
-
-### 階段二：AI能力建設與智慧化 (Q2-Q3 2025) 🤖
-
-#### 2.1 AI基礎功能實現 🧠
-**目標**: 實現核心AI功能，奠定智慧化基礎
-
-**關鍵任務**:
-- 🔍 **異常檢測系統**
-  - 實時異常檢測算法
-  - 歷史模式學習機制
-  - 動態閾值調整功能
-- 📊 **效能預測模型**
-  - 資源使用趨勢預測
-  - 效能瓶頸自動識別
-  - 容量規劃智慧建議
-- 🎯 **智能根本原因分析**
-  - 多維度關聯分析
-  - 因果關係自動推斷
-  - 問題診斷自動化
-
-#### 2.2 AI數據基礎 📈
-**目標**: 建設AI模型訓練和推理的數據基礎
-
-**關鍵任務**:
-- 📊 數據質量治理 (數據清洗、標註、驗證)
-- 📊 特徵工程建設 (自動化特徵提取、選擇)
-- 📊 模型訓練管道 (自動化模型訓練、驗證、部署)
-- 📊 實時推理服務 (低延遲、高並發的推理服務)
-
-#### 2.3 AI人員體驗 👥
-**目標**: 讓AI功能真正服務於人員
-
-**關鍵任務**:
-- 🎨 AI結果可視化 (直觀的AI分析結果展示)
-- 🎯 解釋性AI (AI決策過程的可解釋性)
-- 🎪 個性化AI (基於人員行為的AI推薦)
-- 🎪 主動式AI (主動發現問題並提出建議)
-
-### 階段三：行業擴張與生態建設 (Q4 2025 - Q1 2026) 🌍
-
-#### 3.1 垂直行業深耕 🏭
-**目標**: 在重點行業建立領先地位
-
-**關鍵任務**:
-- **製造業**: 工業設備監控、預測性維護
-- **金融業**: 交易系統監控、高可用保障
-- **醫療行業**: 醫療設備監控、患者安全
-- **電信行業**: 網路設備監控、服務品質
-
-#### 3.2 行業解決方案 📦
-**目標**: 提供行業專屬的解決方案
-
-**關鍵任務**:
-- 🎯 行業模板庫 (預配置的行業最佳實踐)
-- 🎯 行業數據模型 (行業專屬的數據結構)
-- 🎯 行業監控儀表板 (行業特色的監控視圖)
-- 🎯 行業規範集成 (符合行業標準和法規)
-
-#### 3.3 生態系統建設 🌱
-**目標**: 建立開放的生態系統
-
-**關鍵任務**:
-- 🔗 API生態建設 (完整的API文檔和開發者工具)
-- 🔗 合作伙伴計劃 (技術合作伙伴、行業合作伙伴)
-- 🔗 應用市場 (第三方應用和插件市場)
-- 🔗 開發者社區 (技術文檔、開發者支持)
-
-### 階段四：技術創新與差異化 (2026年及以後) 🚀
-
-#### 4.1 自適應AI系統 🧠
-**目標**: 實現真正意義上的智慧運維
-
-**關鍵任務**:
-- 🎯 自學習系統 (基於運營數據的持續學習)
-- 🎯 預測性決策 (提前預測和解決問題)
-- 🎯 自動化優化 (系統自動優化自身配置)
-- 🎯 認知級別AI (理解複雜運營場景)
-
-#### 4.2 新技術集成 🛠️
-**目標**: 保持技術領先地位
-
-**關鍵任務**:
-- 🔬 AIOps進階功能 (事件關聯、影響分析)
-- 🔬 數字孿生技術 (虛擬系統建模和模擬)
-- 🔬 邊緣計算集成 (分散式架構支持)
-- 🔬 區塊鏈技術 (安全審計和信任機制)
-
-#### 4.3 全球化擴張 🌐
-**目標**: 成為全球性的智慧運維平台
-
-**關鍵任務**:
-- 🌍 多語言支持 (全球人員的本地化體驗)
-- 🌍 多區域部署 (全球性的服務覆蓋)
-- 🌍 文化適配 (不同地區的人員習慣適配)
-- 🌍 國際標準 (符合國際運維標準和法規)
-
----
-
-## ✅ 具體實施任務清單
-
-### 高優先級任務 (立即處理) 🚨
-
-#### 1. 程式碼清理任務 ✅ 已完成
-- [x] 移除 `console.log("Rule Submitted:", values)`
-- [x] 移除 `console.warn('無法找到目標輸入框')` → 改為 `message.warning`
-- [x] 移除 `console.log('Switch changed:', checked)` → 改為 TODO 註釋
-- [x] 移除 `console.log('Form values:', values)`
-- [x] 清理 localStorage debug 語句
-
-#### 2. 樣式優化任務
-- [ ] 建立共用顏色變數 (142 個 rgba 白色定義)
-- [ ] 建立共用間距變數 (38 個 padding: 16px, 20 個 marginBottom: 16px)
-- [ ] 建立標準漸層變數 (71 個 linear-gradient)
-- [ ] 統一毛玻璃效果樣式
-- [ ] 減少重複的 backdrop-filter 設定
-
-#### 3. 組件優化任務
-- [ ] 統一所有 Card 的 height 設定 (目前有 252px 的重複)
-- [ ] 標準化 Card 的 padding 和 margin
-- [ ] 建立共用的 Card 樣式類別
-- [ ] 統一 toolbar-btn 樣式 (60 個實例)
-- [ ] 標準化按鈕間距和大小
-- [ ] 建立按鈕樣式變數
-
-### 中優先級任務 (近期處理) 📋
-
-#### 4. 程式碼結構優化
-- [ ] 檢查 8 個 handleCancel 函數是否有重複邏輯
-- [ ] 優化 135 個 onClick 處理器
-- [ ] 合併相似的表單處理函數
-- [ ] 檢查 50 個 mock 資料是否有重複
-- [ ] 整理重複的圖標引用 (187 個 Outlined 圖標)
-- [ ] 優化 95 個 useState hooks 的使用
-
-### 低優先級任務 (後續處理) ✅
-
-#### 5. 性能優化
-- [ ] 減少 !important 用法 (檢查 245 個 .ant- 覆蓋)
-- [ ] 合併相似的 CSS 規則
-- [ ] 優化 CSS 選擇器效率
-- [ ] 檢查未使用的 Ant Design 組件
-- [ ] 優化圖標引入 (只引入使用的圖標)
-- [ ] 評估程式碼分割的可能性
-
-#### 6. 文件和註釋優化
-- [ ] 補充複雜邏輯的註釋
-- [ ] 移除過時或無用的註釋
-- [ ] 統一註釋風格
-- [ ] 檢查變數命名的一致性
-- [ ] 優化長函數名稱
-- [ ] 統一布林變數的命名模式
-
----
-
-## 📊 技術指標與成功衡量
-
-### 業務指標 💼
-- **人員滿意度**: > 95% (通過人員調查)
-- **功能採用率**: > 80% (核心功能使用率)
-- **跨行業覆蓋**: 5個以上重點行業
-- **生態合作伙伴**: 50家以上技術合作伙伴
-
-### 技術指標 🛠️
-- **系統可用性**: 99.99% (四個9)
-- **API響應時間**: < 200ms (P95)
-- **AI準確率**: > 90% (異常檢測準確率)
-- **擴展性**: 支持1000+並發人員
-
-### 開發指標 📈
-- **頁面載入時間**: < 2秒
-- **人員操作響應**: < 500ms
-- **代碼覆蓋率**: > 80%
-- **視覺一致性**: > 95%
-
----
-
-## 🎯 風險評估與應對策略
-
-### 技術風險 ⚠️
-- **AI模型可靠性**: 建立模型驗證和備用機制
-- **數據安全合規**: 完善數據加密和隱私保護
-- **系統擴展性**: 提前規劃架構升級路徑
-
-### 業務風險 📉
-- **市場競爭**: 持續創新，保持技術領先
-- **人員採用**: 優化人員體驗，降低學習成本
-- **行業變化**: 關注行業趨勢，靈活調整策略
-
-### 開發風險 👥
-- **人才缺口**: 建立人才培養計劃和招聘策略
-- **知識傳承**: 完善文檔和知識庫建設
-- **團隊協作**: 建立高效的協作流程和工具
-
----
-
-## 📅 里程碑計劃與進度追蹤
-
-### 2025 Q1: 基礎優化完成 ✅
-- ✅ 前端優化任務完成
-- ✅ Tab頁籤化改造完成
-- ✅ 核心功能完整性達標
-- ✅ 程式碼清理任務完成
-
-### 2025 Q2: AI能力初具規模 🔄
-- 🔄 異常檢測系統上線
-- 🔄 效能預測模型部署
-- 🔄 AI數據基礎建設完成
-
-### 2025 Q3: 行業擴張啟動 📋
-- 📋 第一個垂直行業解決方案上線
-- 📋 合作伙伴計劃啟動
-- 📋 API生態建設完成
-
-### 2025 Q4: 生態系統成型 🌱
-- 🌱 應用市場上線
-- 🌱 開發者社區建立
-- 🌱 全球化佈局啟動
-
-### 2026+: 持續創新發展 🚀
-- 🚀 自適應AI系統實現
-- 🚀 新技術集成完成
-- 🚀 全球領先地位確立
-
----
-
-## 📈 統計數據
-
-- **總行數**: 13,215 行
-- **React 組件**: 37 個
-- **自定義函數**: 119 個
-- **狀態變數**: 95 個
-- **CSS 類別**: 472 個
-- **CSS 變數**: 478 個
-
----
-
-## 💡 開發原則與最佳實踐
-
-### 漸進式開發
-1. **階段性清理**: 不要一次清理太多，以免影響功能
-2. **測試驗證**: 每次清理後都要測試相關功能
-3. **版本控制**: 每個清理任務都建立獨立的 commit
-4. **文檔更新**: 清理過程中同步更新相關文檔
-
-### 定期檢查週期
-- [ ] 每週檢查一次新的冗餘模式
-- [ ] 每次新功能開發後檢查
-- [ ] 代碼審查時特別注意冗餘問題
-
-### 團隊協作原則
-- **代碼規範**: TypeScript 強類型檢查，禁止使用 `any` 類型
-- **React實踐**: 使用函數組件 + Hooks，避免類組件
-- **組件設計**: 使用小寫字母開頭，PascalCase 命名
-- **文件結構**: 使用 kebab-case 命名
-
----
-
-## 🎯 總結與展望
-
-### 核心競爭力 🏆
-1. **技術深度**: 堅實的基礎建設 + AI原生設計
-2. **行業洞察**: 深入理解各行業運維痛點
-3. **生態優勢**: 開放的生態系統吸引合作伙伴
-4. **創新能力**: 持續的技術創新保持競爭力
-
-### 長期願景 🌟
-> **成為AI驅動的全球智慧運維領導者，幫助各行業實現數字化運維的全面轉型**
-
----
-
-*本文檔整合了原 `plan.md`、`roadmap.md` 和 `todo.md` 的內容，形成完整的開發總規劃。根據產品發展和市場變化持續更新，確保策略的有效性和前瞻性。*
+### Phase 2: 智能化能力建設 (6-8 週)
+**目標**: 集成 AI 分析能力，實現智能診斷和預測
+
+#### 🧠 AI 能力集成
+
+**Sprint 5-6: AI 分析引擎**
+- **LLM 集成**: OpenAI/Claude API 集成
+- **智能診斷**: 基於事件模式的智能分析
+- **根因分析**: AI 驅動的根因分析算法
+- **修復建議**: 基於歷史數據的修復建議
+
+**Sprint 7-8: 預測分析能力**
+- **容量預測**: 基於歷史數據的容量規劃
+- **故障預測**: 機器學習模型預測系統故障
+- **性能分析**: 性能趨勢分析和優化建議
+- **成本優化**: 基於使用模式的成本優化建議
+
+### Phase 3: 企業級功能完善 (4-6 週)
+**目標**: 完善企業級功能，支持大規模生產環境
+
+#### 🏢 企業級特性
+
+**Sprint 9-10: 高級功能**
+- **工作流引擎**: 自動化工作流設計和執行
+- **通知系統**: 多渠道通知和升級機制
+- **報告系統**: 自動化報告生成和分發
+- **API 管理**: API 版本管理和文檔系統
+
+**Sprint 11-12: 運維支持**
+- **監控集成**: 深度 Grafana/Prometheus 集成
+- **日誌系統**: 集中化日誌收集和分析
+- **備份恢復**: 數據備份和災難恢復機制
+- **性能優化**: 系統性能調優和擴展性改進
+
+## 👥 團隊組織結構
+
+### 核心團隊配置
+
+```mermaid
+graph TB
+    subgraph "🎯 產品團隊"
+        PM[產品經理]
+        UX[UX 設計師]
+        BA[業務分析師]
+    end
+
+    subgraph "💻 開發團隊"
+        TL[技術主管]
+        BE1[後端工程師 #1]
+        BE2[後端工程師 #2]
+        FE1[前端工程師 #1]
+        FE2[前端工程師 #2]
+        FS[全棧工程師]
+    end
+
+    subgraph "🔧 基礎設施團隊"
+        DevOps[DevOps 工程師]
+        SRE[SRE 工程師]
+        Security[安全工程師]
+    end
+
+    subgraph "🧪 質量保證團隊"
+        QA1[測試工程師 #1]
+        QA2[自動化測試工程師]
+        Perf[性能測試工程師]
+    end
+
+    PM --> TL
+    TL --> BE1
+    TL --> BE2
+    TL --> FE1
+    TL --> FE2
+    TL --> FS
+
+    DevOps --> TL
+    SRE --> TL
+    Security --> TL
+
+    QA1 --> TL
+    QA2 --> TL
+    Perf --> TL
+```
+
+### 角色職責定義
+
+| 角色 | 主要職責 | 所需技能 | 工作比例 |
+|------|----------|----------|----------|
+| **技術主管** | 技術架構、代碼審查、團隊協調 | Go/React/架構設計 | 100% |
+| **後端工程師** | API 開發、業務邏輯、數據庫設計 | Go/PostgreSQL/Redis | 100% |
+| **前端工程師** | UI 開發、交互設計、用戶體驗 | React/TypeScript/Ant Design | 100% |
+| **全棧工程師** | 跨棧開發、集成測試、原型開發 | Go/React/DevOps | 100% |
+| **DevOps 工程師** | CI/CD、基礎設施、監控 | K8s/Docker/Prometheus | 80% |
+| **測試工程師** | 功能測試、自動化測試、質量保證 | 測試框架/自動化工具 | 100% |
+
+## 🛠️ 技術實施計劃
+
+### 開發環境標準化
+
+#### 本地開發環境
+```yaml
+必需工具:
+  - Go 1.21+
+  - Node.js 18+
+  - Docker Desktop
+  - PostgreSQL 15+
+  - Redis 7+
+
+IDE 配置:
+  - VS Code 統一配置
+  - Go 擴展包
+  - TypeScript 擴展包
+  - Docker 擴展包
+
+代碼規範:
+  - Go: gofmt + golint
+  - TypeScript: ESLint + Prettier
+  - Git Hooks: pre-commit 檢查
+```
+
+#### CI/CD 管道設計
+```mermaid
+graph LR
+    subgraph "🔄 CI 流程"
+        Push[代碼推送]
+        Test[自動化測試]
+        Build[構建鏡像]
+        Security[安全掃描]
+        Quality[質量檢查]
+
+        Push --> Test
+        Test --> Build
+        Build --> Security
+        Security --> Quality
+    end
+
+    subgraph "🚀 CD 流程"
+        Deploy_Dev[部署到開發環境]
+        E2E_Test[端到端測試]
+        Deploy_Stage[部署到預發布環境]
+        Manual_Test[手動驗收測試]
+        Deploy_Prod[部署到生產環境]
+
+        Quality --> Deploy_Dev
+        Deploy_Dev --> E2E_Test
+        E2E_Test --> Deploy_Stage
+        Deploy_Stage --> Manual_Test
+        Manual_Test --> Deploy_Prod
+    end
+```
+
+### 代碼質量保證
+
+#### 自動化測試策略
+```yaml
+單元測試:
+  覆蓋率目標: > 80%
+  工具: Go test + Jest
+  執行頻率: 每次提交
+
+集成測試:
+  覆蓋率目標: 主要 API 路徑
+  工具: Go test + Supertest
+  執行頻率: 每日構建
+
+端到端測試:
+  覆蓋率目標: 核心用戶流程
+  工具: Playwright + Cypress
+  執行頻率: 部署前執行
+
+性能測試:
+  目標: API P95 < 200ms
+  工具: k6 + Artillery
+  執行頻率: 週期性執行
+```
+
+#### 代碼審查流程
+```mermaid
+sequenceDiagram
+    participant Dev as 開發者
+    participant Git as Git Repository
+    participant CI as CI System
+    participant Rev as 代碼審查者
+    participant QA as 測試團隊
+
+    Dev->>Git: 1. 創建 Feature Branch
+    Dev->>Git: 2. 提交代碼
+    Git->>CI: 3. 觸發 CI 檢查
+    CI-->>Dev: 4. CI 結果反饋
+    Dev->>Git: 5. 創建 Pull Request
+    Git->>Rev: 6. 請求代碼審查
+    Rev-->>Dev: 7. 審查反饋
+    Dev->>Git: 8. 修改並提交
+    Rev->>Git: 9. 批准合併
+    Git->>CI: 10. 觸發部署
+    CI->>QA: 11. 通知測試
+```
+
+## 📊 項目監控和控制
+
+### 關鍵績效指標 (KPIs)
+
+#### 開發效率指標
+| 指標 | 目標值 | 測量方法 | 報告頻率 |
+|------|--------|----------|----------|
+| **Sprint 完成率** | > 85% | 故事點完成情況 | Sprint 結束 |
+| **程式碼提交頻率** | 每天 > 3 次 | Git 提交統計 | 每週 |
+| **缺陷密度** | < 0.5 個/KLOC | 缺陷數/代碼行數 | 每月 |
+| **構建成功率** | > 95% | CI/CD 統計 | 每日 |
+| **部署頻率** | 每週 > 2 次 | 部署記錄 | 每週 |
+
+#### 質量保證指標
+| 指標 | 目標值 | 測量方法 | 報告頻率 |
+|------|--------|----------|----------|
+| **單元測試覆蓋率** | > 80% | 覆蓋率工具 | 每次構建 |
+| **集成測試通過率** | > 95% | 測試結果 | 每日 |
+| **代碼審查覆蓋率** | 100% | PR 統計 | 每週 |
+| **安全掃描通過率** | 100% | 安全工具 | 每次構建 |
+| **性能測試通過率** | > 90% | 性能測試結果 | 每週 |
+
+### 風險管理
+
+#### 主要風險識別
+```mermaid
+graph TB
+    subgraph "🔴 高風險項目"
+        Risk1[技術選型風險]
+        Risk2[團隊協作風險]
+        Risk3[需求變更風險]
+        Risk4[第三方依賴風險]
+    end
+
+    subgraph "🟡 中風險項目"
+        Risk5[性能達標風險]
+        Risk6[安全合規風險]
+        Risk7[集成複雜度風險]
+    end
+
+    subgraph "🟢 低風險項目"
+        Risk8[UI/UX 調整風險]
+        Risk9[文檔同步風險]
+    end
+
+    Risk1 --> Mitigation1[技術調研 + POC 驗證]
+    Risk2 --> Mitigation2[每日站會 + 協作工具]
+    Risk3 --> Mitigation3[需求鎖定 + 變更控制]
+    Risk4 --> Mitigation4[依賴分析 + 備選方案]
+```
+
+#### 風險緩解策略
+| 風險 | 影響等級 | 緩解策略 | 責任人 | 監控指標 |
+|------|----------|----------|---------|-----------|
+| **技術選型風險** | 高 | POC 驗證 + 專家評審 | 技術主管 | POC 完成度 |
+| **團隊協作風險** | 高 | 敏捷實踐 + 溝通機制 | 專案經理 | 團隊滿意度 |
+| **需求變更風險** | 中 | 需求鎖定 + 變更流程 | 產品經理 | 變更次數 |
+| **性能風險** | 中 | 性能測試 + 持續監控 | 性能工程師 | 性能指標 |
+
+## 📅 詳細時程規劃
+
+### 整體項目時間線
+
+```mermaid
+gantt
+    title SRE 平台開發總時程
+    dateFormat  YYYY-MM-DD
+    axisFormat  %m-%d
+
+    section Phase 1: 基礎建設
+    Sprint 1: 後端框架     :s1, 2024-09-18, 14d
+    Sprint 2: 前端框架     :s2, after s1, 14d
+    Sprint 3: 事件管理     :s3, after s2, 14d
+    Sprint 4: 資源管理     :s4, after s3, 14d
+
+    section Phase 2: 智能化
+    Sprint 5: AI 分析引擎  :s5, after s4, 14d
+    Sprint 6: AI 診斷能力  :s6, after s5, 14d
+    Sprint 7: 預測分析     :s7, after s6, 14d
+    Sprint 8: 智能優化     :s8, after s7, 14d
+
+    section Phase 3: 企業級
+    Sprint 9: 工作流引擎   :s9, after s8, 14d
+    Sprint 10: 通知系統    :s10, after s9, 14d
+    Sprint 11: 運維支持    :s11, after s10, 14d
+    Sprint 12: 性能優化    :s12, after s11, 14d
+```
+
+### 里程碑和交付物
+
+#### Phase 1 里程碑
+**M1 - MVP 完成 (第 8 週)**
+- ✅ 基礎認證和授權系統
+- ✅ 事件管理完整功能
+- ✅ 資源管理基礎功能
+- ✅ 基本監控集成
+- ✅ 部署到預發布環境
+
+#### Phase 2 里程碑
+**M2 - 智能化能力 (第 16 週)**
+- ✅ AI 分析和診斷功能
+- ✅ 智能預測和建議
+- ✅ 自動化工作流程
+- ✅ 性能和可用性達標
+
+#### Phase 3 里程碑
+**M3 - 生產就緒 (第 24 週)**
+- ✅ 企業級功能完備
+- ✅ 高可用性和可擴展性
+- ✅ 安全和合規認證
+- ✅ 文檔和培訓材料完整
+- ✅ 生產環境部署
+
+## 💰 資源和預算規劃
+
+### 人力資源投入
+
+| 角色 | 人數 | 每月成本 | 24 週總成本 |
+|------|------|----------|-------------|
+| **技術主管** | 1 | $12,000 | $72,000 |
+| **後端工程師** | 2 | $8,000 | $96,000 |
+| **前端工程師** | 2 | $8,000 | $96,000 |
+| **全棧工程師** | 1 | $9,000 | $54,000 |
+| **DevOps 工程師** | 1 | $10,000 | $60,000 |
+| **測試工程師** | 2 | $7,000 | $84,000 |
+| **產品經理** | 1 | $10,000 | $60,000 |
+| **UX 設計師** | 1 | $8,000 | $48,000 |
+
+**總人力成本**: $570,000
+
+### 基礎設施成本
+
+| 項目 | 月成本 | 24 週總成本 | 說明 |
+|------|--------|-------------|------|
+| **雲端基礎設施** | $3,000 | $18,000 | AWS/GCP 資源 |
+| **第三方服務** | $1,000 | $6,000 | API 費用、監控工具 |
+| **開發工具許可** | $500 | $3,000 | IDE、分析工具 |
+| **CI/CD 平台** | $300 | $1,800 | GitHub Actions/Jenkins |
+
+**總基礎設施成本**: $28,800
+
+### 總項目預算
+- **人力成本**: $570,000 (95%)
+- **基礎設施成本**: $28,800 (5%)
+- **總預算**: $598,800
+- **預留風險緩衝**: $59,880 (10%)
+- **最終預算**: $658,680
+
+## 📋 成功標準定義
+
+### 技術成功標準
+
+#### 功能完整性
+- ✅ 所有 MVP 功能 100% 實現
+- ✅ API 覆蓋率達到 OpenAPI 規範 95%
+- ✅ UI/UX 實現 pages.md 分析的 90% 需求
+- ✅ 智能化功能可用性達到 80%
+
+#### 性能指標
+- ✅ API 響應時間 P95 < 200ms
+- ✅ 頁面加載時間 P95 < 2s
+- ✅ 系統可用性 > 99.5%
+- ✅ 併發用戶支持 > 1,000
+
+#### 質量指標
+- ✅ 代碼覆蓋率 > 80%
+- ✅ 安全掃描 0 高危漏洞
+- ✅ 性能測試通過率 > 95%
+- ✅ 用戶驗收測試通過率 > 90%
+
+### 業務成功標準
+
+#### 用戶滿意度
+- ✅ SRE 工程師滿意度 > 4.5/5
+- ✅ 系統易用性評分 > 4.0/5
+- ✅ 功能完整性評分 > 4.0/5
+- ✅ 用戶培訓完成率 > 90%
+
+#### 運維效率提升
+- ✅ MTTR (平均修復時間) 降低 > 30%
+- ✅ 告警處理效率提升 > 40%
+- ✅ 人工介入事件減少 > 50%
+- ✅ 系統穩定性提升 > 20%
+
+## 🔄 持續改進機制
+
+### 反饋收集機制
+
+```mermaid
+graph TB
+    subgraph "📊 數據收集"
+        UserFeedback[用戶反饋]
+        Analytics[使用分析]
+        Performance[性能監控]
+        Bugs[問題跟蹤]
+    end
+
+    subgraph "📈 分析評估"
+        DataAnalysis[數據分析]
+        TrendAnalysis[趨勢分析]
+        ImpactAssess[影響評估]
+        PriorityRank[優先級排序]
+    end
+
+    subgraph "🎯 改進實施"
+        Planning[改進規劃]
+        Development[開發實施]
+        Testing[測試驗證]
+        Deployment[部署發布]
+    end
+
+    UserFeedback --> DataAnalysis
+    Analytics --> TrendAnalysis
+    Performance --> ImpactAssess
+    Bugs --> PriorityRank
+
+    DataAnalysis --> Planning
+    TrendAnalysis --> Development
+    ImpactAssess --> Testing
+    PriorityRank --> Deployment
+```
+
+### 版本迭代策略
+- **主版本**: 每季度發布，包含重大功能更新
+- **次版本**: 每月發布，包含功能改進和優化
+- **修訂版本**: 每週發布，包含問題修復
+- **熱修復**: 按需發布，處理緊急問題
+
+### 長期維護計劃
+- **技術債務清理**: 每季度安排 1 個 Sprint
+- **依賴更新**: 每月自動化檢查和更新
+- **安全補丁**: 7 天內應用關鍵安全更新
+- **性能優化**: 每半年進行系統性能評估
+
+## 📋 總結
+
+SRE 平台開發總規劃採用分階段實施策略，通過 24 週的開發週期，逐步構建從基礎 MVP 到企業級智能維運平台的完整解決方案。
+
+### 關鍵成功因素
+1. **明確的階段目標**: 每個 Phase 都有明確的交付目標和成功標準
+2. **敏捷開發實踐**: 2 週 Sprint，快速迭代和反饋
+3. **質量保證機制**: 多層次測試和代碼審查
+4. **風險控制策略**: 主動風險識別和緩解措施
+5. **持續改進文化**: 反饋驅動的持續優化
+
+### 預期收益
+- **開發效率**: 標準化流程提升開發效率 30%
+- **代碼質量**: 自動化測試和審查提升代碼質量 40%
+- **交付速度**: 敏捷實踐縮短交付週期 25%
+- **維護成本**: 良好架構降低維護成本 50%
+
+這個開發總規劃為 SRE 平台項目的成功實施提供了完整的路線圖和執行框架，確保項目能夠按時、按質、按預算完成交付。

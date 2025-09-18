@@ -769,5 +769,345 @@ ADD INDEX idx_execution_count (execution_count) COMMENT '執行次數索引',
 ADD INDEX idx_last_executed (last_executed_at) COMMENT '最後執行時間索引',
 ADD INDEX idx_success_rate (success_rate) COMMENT '成功率索引';
 
+-- ===========================================
+-- 會話管理模塊 (Session Management)
+-- ===========================================
+
+-- 用戶會話表
+CREATE TABLE user_sessions (
+    id VARCHAR(36) PRIMARY KEY COMMENT '會話唯一標識',
+    user_id VARCHAR(36) NOT NULL COMMENT '用戶ID',
+    token_hash VARCHAR(255) NOT NULL COMMENT 'Token雜湊值',
+    device_info JSON COMMENT '設備信息',
+    ip_address VARCHAR(45) COMMENT 'IP地址',
+    location VARCHAR(255) COMMENT '登入地點',
+    user_agent TEXT COMMENT '用戶代理字符串',
+    last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '最後活動時間',
+    expires_at TIMESTAMP NOT NULL COMMENT '過期時間',
+    is_active BOOLEAN DEFAULT TRUE COMMENT '是否活躍',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE COMMENT '用戶外鍵',
+    INDEX idx_user_id (user_id) COMMENT '用戶ID索引',
+    INDEX idx_token_hash (token_hash) COMMENT 'Token雜湊索引',
+    INDEX idx_expires_at (expires_at) COMMENT '過期時間索引',
+    INDEX idx_is_active (is_active) COMMENT '活躍狀態索引',
+    INDEX idx_last_activity (last_activity) COMMENT '最後活動時間索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='用戶會話表';
+
+-- ===========================================
+-- 通知管理模塊 (Notification Management)
+-- ===========================================
+
+-- 通知策略表
+CREATE TABLE notification_policies (
+    id VARCHAR(36) PRIMARY KEY COMMENT '策略唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '策略名稱',
+    description TEXT COMMENT '策略描述',
+    trigger_conditions JSON COMMENT '觸發條件',
+    channels JSON COMMENT '通知管道配置',
+    recipients JSON COMMENT '接收者配置',
+    template_id VARCHAR(36) COMMENT '模板ID',
+    scheduling JSON COMMENT '排程設定',
+    enabled BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
+    priority ENUM('low', 'normal', 'high', 'critical') DEFAULT 'normal' COMMENT '優先級',
+    created_by_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+    deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
+
+    FOREIGN KEY (created_by_id) REFERENCES users(id) COMMENT '創建者外鍵',
+    INDEX idx_name (name) COMMENT '策略名稱索引',
+    INDEX idx_enabled (enabled) COMMENT '啟用狀態索引',
+    INDEX idx_priority (priority) COMMENT '優先級索引',
+    INDEX idx_created_by (created_by_id) COMMENT '創建者索引',
+    INDEX idx_deleted_at (deleted_at) COMMENT '軟刪除索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知策略表';
+
+-- 通知管道表
+CREATE TABLE notification_channels (
+    id VARCHAR(36) PRIMARY KEY COMMENT '管道唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '管道名稱',
+    type ENUM('email', 'slack', 'webhook', 'sms', 'teams', 'discord') NOT NULL COMMENT '管道類型',
+    configuration JSON COMMENT '管道配置',
+    credentials JSON COMMENT '認證信息',
+    status ENUM('active', 'inactive', 'error') DEFAULT 'active' COMMENT '狀態',
+    last_test_at TIMESTAMP NULL COMMENT '最後測試時間',
+    last_test_result ENUM('success', 'failure') NULL COMMENT '最後測試結果',
+    error_message TEXT COMMENT '錯誤信息',
+    usage_count INT DEFAULT 0 COMMENT '使用次數',
+    created_by_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+    deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
+
+    FOREIGN KEY (created_by_id) REFERENCES users(id) COMMENT '創建者外鍵',
+    INDEX idx_name (name) COMMENT '管道名稱索引',
+    INDEX idx_type (type) COMMENT '管道類型索引',
+    INDEX idx_status (status) COMMENT '狀態索引',
+    INDEX idx_usage_count (usage_count) COMMENT '使用次數索引',
+    INDEX idx_deleted_at (deleted_at) COMMENT '軟刪除索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知管道表';
+
+-- 通知歷史表
+CREATE TABLE notification_history (
+    id VARCHAR(36) PRIMARY KEY COMMENT '通知唯一標識',
+    policy_id VARCHAR(36) COMMENT '策略ID',
+    channel_id VARCHAR(36) COMMENT '管道ID',
+    recipient_type ENUM('user', 'team', 'external') COMMENT '接收者類型',
+    recipient_id VARCHAR(36) COMMENT '接收者ID',
+    recipient_address VARCHAR(255) COMMENT '接收者地址',
+    subject VARCHAR(500) COMMENT '主題',
+    content TEXT COMMENT '內容',
+    status ENUM('pending', 'sent', 'failed', 'cancelled') DEFAULT 'pending' COMMENT '發送狀態',
+    error_message TEXT COMMENT '錯誤信息',
+    sent_at TIMESTAMP NULL COMMENT '發送時間',
+    delivered_at TIMESTAMP NULL COMMENT '投遞確認時間',
+    retry_count INT DEFAULT 0 COMMENT '重試次數',
+    metadata JSON COMMENT '元數據',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+
+    FOREIGN KEY (policy_id) REFERENCES notification_policies(id) COMMENT '策略外鍵',
+    FOREIGN KEY (channel_id) REFERENCES notification_channels(id) COMMENT '管道外鍵',
+    INDEX idx_policy_id (policy_id) COMMENT '策略ID索引',
+    INDEX idx_channel_id (channel_id) COMMENT '管道ID索引',
+    INDEX idx_recipient (recipient_type, recipient_id) COMMENT '接收者索引',
+    INDEX idx_status (status) COMMENT '狀態索引',
+    INDEX idx_sent_at (sent_at) COMMENT '發送時間索引',
+    INDEX idx_created_at (created_at) COMMENT '創建時間索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知歷史表';
+
+-- ===========================================
+-- 審計日誌模塊 (Audit Logs)
+-- ===========================================
+
+-- 審計日誌表
+CREATE TABLE audit_logs (
+    id VARCHAR(36) PRIMARY KEY COMMENT '日誌唯一標識',
+    user_id VARCHAR(36) COMMENT '操作用戶ID',
+    action_type ENUM('create', 'update', 'delete', 'login', 'logout', 'access', 'export') NOT NULL COMMENT '操作類型',
+    resource_type VARCHAR(100) COMMENT '資源類型',
+    resource_id VARCHAR(36) COMMENT '資源ID',
+    resource_name VARCHAR(255) COMMENT '資源名稱',
+    details JSON COMMENT '操作詳情',
+    before_data JSON COMMENT '操作前數據',
+    after_data JSON COMMENT '操作後數據',
+    ip_address VARCHAR(45) COMMENT 'IP地址',
+    user_agent TEXT COMMENT '用戶代理',
+    session_id VARCHAR(36) COMMENT '會話ID',
+    result ENUM('success', 'failure', 'partial') DEFAULT 'success' COMMENT '操作結果',
+    error_message TEXT COMMENT '錯誤信息',
+    risk_level ENUM('low', 'medium', 'high', 'critical') DEFAULT 'low' COMMENT '風險等級',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+
+    FOREIGN KEY (user_id) REFERENCES users(id) COMMENT '用戶外鍵',
+    INDEX idx_user_id (user_id) COMMENT '用戶ID索引',
+    INDEX idx_action_type (action_type) COMMENT '操作類型索引',
+    INDEX idx_resource (resource_type, resource_id) COMMENT '資源索引',
+    INDEX idx_result (result) COMMENT '操作結果索引',
+    INDEX idx_risk_level (risk_level) COMMENT '風險等級索引',
+    INDEX idx_created_at (created_at) COMMENT '創建時間索引',
+    INDEX idx_ip_address (ip_address) COMMENT 'IP地址索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='審計日誌表';
+
+-- ===========================================
+-- 系統設定模塊 (System Settings)
+-- ===========================================
+
+-- 系統設定表
+CREATE TABLE system_settings (
+    id VARCHAR(36) PRIMARY KEY COMMENT '設定唯一標識',
+    category VARCHAR(100) NOT NULL COMMENT '設定分類',
+    setting_key VARCHAR(255) NOT NULL COMMENT '設定鍵',
+    setting_value TEXT COMMENT '設定值',
+    value_type ENUM('string', 'number', 'boolean', 'json', 'encrypted') DEFAULT 'string' COMMENT '值類型',
+    description TEXT COMMENT '設定描述',
+    is_public BOOLEAN DEFAULT FALSE COMMENT '是否公開可見',
+    is_editable BOOLEAN DEFAULT TRUE COMMENT '是否可編輯',
+    validation_rule VARCHAR(500) COMMENT '驗證規則',
+    updated_by_id VARCHAR(36) COMMENT '更新者ID',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+
+    FOREIGN KEY (updated_by_id) REFERENCES users(id) COMMENT '更新者外鍵',
+    UNIQUE KEY uk_category_key (category, setting_key) COMMENT '分類鍵唯一約束',
+    INDEX idx_category (category) COMMENT '分類索引',
+    INDEX idx_is_public (is_public) COMMENT '公開狀態索引',
+    INDEX idx_updated_by (updated_by_id) COMMENT '更新者索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系統設定表';
+
+-- ===========================================
+-- 容量規劃模塊 (Capacity Planning)
+-- ===========================================
+
+-- 容量分析表
+CREATE TABLE capacity_analysis (
+    id VARCHAR(36) PRIMARY KEY COMMENT '分析唯一標識',
+    resource_id VARCHAR(36) COMMENT '資源ID',
+    resource_group_id VARCHAR(36) COMMENT '資源群組ID',
+    metric_name VARCHAR(100) NOT NULL COMMENT '指標名稱',
+    current_usage DECIMAL(10,2) COMMENT '當前使用率',
+    predicted_usage DECIMAL(10,2) COMMENT '預測使用率',
+    threshold_warning DECIMAL(10,2) DEFAULT 80.00 COMMENT '警告閾值',
+    threshold_critical DECIMAL(10,2) DEFAULT 90.00 COMMENT '危險閾值',
+    prediction_days INT DEFAULT 30 COMMENT '預測天數',
+    confidence_score DECIMAL(5,2) COMMENT '置信度分數',
+    recommendations JSON COMMENT '建議內容',
+    analysis_data JSON COMMENT '分析數據',
+    status ENUM('analyzing', 'completed', 'failed') DEFAULT 'analyzing' COMMENT '分析狀態',
+    created_by_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (resource_id) REFERENCES resources(id) COMMENT '資源外鍵',
+    FOREIGN KEY (resource_group_id) REFERENCES resource_groups(id) COMMENT '資源群組外鍵',
+    FOREIGN KEY (created_by_id) REFERENCES users(id) COMMENT '創建者外鍵',
+    INDEX idx_resource_id (resource_id) COMMENT '資源ID索引',
+    INDEX idx_resource_group_id (resource_group_id) COMMENT '資源群組ID索引',
+    INDEX idx_metric_name (metric_name) COMMENT '指標名稱索引',
+    INDEX idx_status (status) COMMENT '狀態索引',
+    INDEX idx_created_at (created_at) COMMENT '創建時間索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='容量分析表';
+
+-- ===========================================
+-- 執行日誌模塊 (Execution Logs)
+-- ===========================================
+
+-- 執行日誌表
+CREATE TABLE execution_logs (
+    id VARCHAR(36) PRIMARY KEY COMMENT '日誌唯一標識',
+    script_id VARCHAR(36) COMMENT '腳本ID',
+    schedule_id VARCHAR(36) COMMENT '排程ID',
+    trigger_type ENUM('manual', 'scheduled', 'event', 'api') NOT NULL COMMENT '觸發類型',
+    triggered_by_id VARCHAR(36) COMMENT '觸發者ID',
+    status ENUM('pending', 'running', 'success', 'failed', 'cancelled', 'timeout') DEFAULT 'pending' COMMENT '執行狀態',
+    start_time TIMESTAMP NULL COMMENT '開始時間',
+    end_time TIMESTAMP NULL COMMENT '結束時間',
+    duration_seconds INT COMMENT '執行時長(秒)',
+    exit_code INT COMMENT '退出代碼',
+    stdout_log LONGTEXT COMMENT '標準輸出日誌',
+    stderr_log LONGTEXT COMMENT '錯誤輸出日誌',
+    input_parameters JSON COMMENT '輸入參數',
+    output_data JSON COMMENT '輸出數據',
+    resource_usage JSON COMMENT '資源使用情況',
+    error_details JSON COMMENT '錯誤詳情',
+    retry_count INT DEFAULT 0 COMMENT '重試次數',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+
+    FOREIGN KEY (script_id) REFERENCES automation_scripts(id) COMMENT '腳本外鍵',
+    FOREIGN KEY (triggered_by_id) REFERENCES users(id) COMMENT '觸發者外鍵',
+    INDEX idx_script_id (script_id) COMMENT '腳本ID索引',
+    INDEX idx_schedule_id (schedule_id) COMMENT '排程ID索引',
+    INDEX idx_status (status) COMMENT '狀態索引',
+    INDEX idx_trigger_type (trigger_type) COMMENT '觸發類型索引',
+    INDEX idx_start_time (start_time) COMMENT '開始時間索引',
+    INDEX idx_created_at (created_at) COMMENT '創建時間索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='執行日誌表';
+
+-- ===========================================
+-- 性能優化：複合索引和分區策略
+-- ===========================================
+
+-- 為審計日誌表添加複合索引（高頻查詢場景）
+ALTER TABLE audit_logs
+ADD INDEX idx_user_action_time (user_id, action_type, created_at) COMMENT '用戶操作時間複合索引',
+ADD INDEX idx_resource_action_time (resource_type, resource_id, created_at) COMMENT '資源操作時間複合索引';
+
+-- 為通知歷史表添加複合索引
+ALTER TABLE notification_history
+ADD INDEX idx_status_created (status, created_at) COMMENT '狀態創建時間複合索引',
+ADD INDEX idx_recipient_status (recipient_type, recipient_id, status) COMMENT '接收者狀態複合索引';
+
+-- 為執行日誌表添加複合索引
+ALTER TABLE execution_logs
+ADD INDEX idx_script_status_time (script_id, status, start_time) COMMENT '腳本狀態時間複合索引',
+ADD INDEX idx_trigger_status_time (trigger_type, status, created_at) COMMENT '觸發狀態時間複合索引';
+
+-- ===========================================
+-- 數據保留策略和清理任務
+-- ===========================================
+
+-- 創建數據保留策略表
+CREATE TABLE data_retention_policies (
+    id VARCHAR(36) PRIMARY KEY COMMENT '策略唯一標識',
+    table_name VARCHAR(100) NOT NULL COMMENT '表名',
+    retention_days INT NOT NULL COMMENT '保留天數',
+    date_column VARCHAR(100) NOT NULL COMMENT '日期列名',
+    is_enabled BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
+    last_cleanup_at TIMESTAMP NULL COMMENT '最後清理時間',
+    cleanup_batch_size INT DEFAULT 1000 COMMENT '清理批次大小',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    UNIQUE KEY uk_table_name (table_name) COMMENT '表名唯一約束',
+    INDEX idx_is_enabled (is_enabled) COMMENT '啟用狀態索引',
+    INDEX idx_last_cleanup (last_cleanup_at) COMMENT '最後清理時間索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='數據保留策略表';
+
+-- 插入預設的數據保留策略
+INSERT INTO data_retention_policies (id, table_name, retention_days, date_column, is_enabled) VALUES
+(UUID(), 'audit_logs', 365, 'created_at', TRUE),
+(UUID(), 'notification_history', 90, 'created_at', TRUE),
+(UUID(), 'execution_logs', 180, 'created_at', TRUE),
+(UUID(), 'user_sessions', 30, 'created_at', TRUE),
+(UUID(), 'alerts', 180, 'created_at', TRUE);
+
+-- ===========================================
+-- 視圖定義 (Views for Common Queries)
+-- ===========================================
+
+-- 用戶活動統計視圖
+CREATE VIEW v_user_activity_stats AS
+SELECT
+    u.id as user_id,
+    u.username,
+    u.name,
+    COUNT(DISTINCT s.id) as active_sessions,
+    MAX(s.last_activity) as last_activity,
+    COUNT(DISTINCT DATE(al.created_at)) as active_days_last_30,
+    COUNT(al.id) as total_actions_last_30
+FROM users u
+LEFT JOIN user_sessions s ON u.id = s.user_id AND s.is_active = TRUE
+LEFT JOIN audit_logs al ON u.id = al.user_id AND al.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+WHERE u.is_active = TRUE
+GROUP BY u.id, u.username, u.name;
+
+-- 資源健康狀態統計視圖
+CREATE VIEW v_resource_health_stats AS
+SELECT
+    rg.id as group_id,
+    rg.name as group_name,
+    COUNT(r.id) as total_resources,
+    SUM(CASE WHEN r.status = 'healthy' THEN 1 ELSE 0 END) as healthy_count,
+    SUM(CASE WHEN r.status = 'warning' THEN 1 ELSE 0 END) as warning_count,
+    SUM(CASE WHEN r.status = 'critical' THEN 1 ELSE 0 END) as critical_count,
+    ROUND(SUM(CASE WHEN r.status = 'healthy' THEN 1 ELSE 0 END) * 100.0 / COUNT(r.id), 2) as health_percentage
+FROM resource_groups rg
+LEFT JOIN resource_group_members rgm ON rg.id = rgm.group_id
+LEFT JOIN resources r ON rgm.resource_id = r.id AND r.deleted_at IS NULL
+WHERE rg.deleted_at IS NULL
+GROUP BY rg.id, rg.name;
+
+-- 事件處理效率統計視圖
+CREATE VIEW v_event_processing_stats AS
+SELECT
+    DATE(a.created_at) as event_date,
+    COUNT(*) as total_events,
+    SUM(CASE WHEN a.status = 'resolved' THEN 1 ELSE 0 END) as resolved_events,
+    AVG(CASE
+        WHEN a.ends_at IS NOT NULL AND a.starts_at IS NOT NULL
+        THEN TIMESTAMPDIFF(MINUTE, a.starts_at, a.ends_at)
+        ELSE NULL
+    END) as avg_resolution_minutes,
+    AVG(CASE
+        WHEN a.acknowledged_at IS NOT NULL AND a.starts_at IS NOT NULL
+        THEN TIMESTAMPDIFF(MINUTE, a.starts_at, a.acknowledged_at)
+        ELSE NULL
+    END) as avg_acknowledgment_minutes
+FROM alerts a
+WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+GROUP BY DATE(a.created_at)
+ORDER BY event_date DESC;
+
 -- 啟用外鍵約束
 SET FOREIGN_KEY_CHECKS = 1;
