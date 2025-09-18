@@ -8,60 +8,121 @@ info:
   title: SRE 平台 - API 規格書
   description: |
     本 API 規格為 SRE 平台前後端開發的統一數據契約。
+
+    ## 主要功能模組
+    - **身份與存取管理**：用戶、團隊、角色和權限管理
+    - **資源管理**：基礎設施資源監控和群組管理
+    - **事件管理**：告警規則、靜音規則和事件處理
+    - **自動化中心**：腳本管理、排程任務和執行日誌
+    - **儀表板**：基礎設施洞察和 SRE 戰情室
+    - **通知管理**：通知策略、管道和歷史記錄
+    - **分析中心**：容量規劃和性能分析
+    - **平台設定**：標籤管理、郵件設定、身份驗證
+
     它定義了所有資源、事件、自動化、管理等模組的介面，
     並遵循 RESTful 設計原則與專案開發規範。
-  version: "2.0.0"
+  version: "3.0.0"
   contact:
     name: SRE 平台開發團隊
-    email: sre-platform-dev@example.com
+    email: sre-platform-dev@detectviz.com
+    url: https://github.com/detectviz/sre-platform
   license:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: https://detectviz.com/terms
 
 servers:
+  - url: https://api.detectviz.com/v1
+    description: 生產環境 API 服務器
+  - url: https://api-staging.detectviz.com/v1
+    description: 測試環境 API 服務器
+  - url: http://localhost:8080/api/v1
+    description: 本地開發環境
   - url: /api/v1
-    description: 應用程式 API 根路徑
+    description: 相對路徑 (適用於代理配置)
 
 # ============================================
 # 擴展屬性 (Vendor Extensions)
 # ============================================
 x-error-codes:
+  # 標準 HTTP 錯誤
   BAD_REQUEST:
     http: 400
     message: "請求格式錯誤或缺少必要參數"
     i18n_key: errors.badRequest
+    details: "檢查請求參數格式、必填欄位和數據類型"
   UNAUTHORIZED:
     http: 401
     message: "使用者未登入或 Token 已過期"
     i18n_key: errors.unauthorized
+    details: "請重新登入或刷新 Token"
   FORBIDDEN:
     http: 403
     message: "使用者權限不足，無法執行此操作"
     i18n_key: errors.forbidden
+    details: "聯繫管理員獲取相應權限"
   NOT_FOUND:
     http: 404
     message: "請求的資源不存在或已被移除"
     i18n_key: errors.notFound
+    details: "確認資源 ID 正確或檢查是否已被刪除"
   CONFLICT:
     http: 409
-    message: "操作與目前資源狀態衝突 (例如：重名)"
+    message: "操作與目前資源狀態衝突"
     i18n_key: errors.conflict
+    details: "資源可能已被修改或存在重複"
+  UNPROCESSABLE_ENTITY:
+    http: 422
+    message: "請求格式正確但包含語義錯誤"
+    i18n_key: errors.unprocessableEntity
+    details: "檢查業務邏輯和數據關聯性"
   RATE_LIMITED:
     http: 429
     message: "請求過於頻繁，請稍後再試"
     i18n_key: errors.rateLimited
+    details: "當前 API 配額已用盡，請等待重置"
   INTERNAL_ERROR:
     http: 500
     message: "伺服器內部發生未知錯誤"
     i18n_key: errors.internal
+    details: "請聯繫技術支援，並提供錯誤 ID"
+  SERVICE_UNAVAILABLE:
+    http: 503
+    message: "服務暫時不可用"
+    i18n_key: errors.serviceUnavailable
+    details: "系統維護中或負載過高"
+
+  # 業務邏輯錯誤
   RESOURCE_IN_USE:
     http: 409
     message: "資源正在使用中，無法刪除"
     i18n_key: errors.resource_in_use
+    details: "請先停止使用該資源的相關服務"
   INVALID_METRIC:
     http: 400
     message: "無效的監控指標"
     i18n_key: errors.invalid_metric
+    details: "指標名稱不存在或格式錯誤"
+  SCRIPT_EXECUTION_FAILED:
+    http: 500
+    message: "腳本執行失敗"
+    i18n_key: errors.scriptExecutionFailed
+    details: "檢查腳本語法和執行權限"
+  NOTIFICATION_DELIVERY_FAILED:
+    http: 502
+    message: "通知發送失敗"
+    i18n_key: errors.notificationDeliveryFailed
+    details: "檢查通知管道配置和網路連接"
+  SCHEDULE_CONFLICT:
+    http: 409
+    message: "排程時間衝突"
+    i18n_key: errors.scheduleConflict
+    details: "與現有排程存在時間重疊"
+  INSUFFICIENT_RESOURCES:
+    http: 507
+    message: "系統資源不足"
+    i18n_key: errors.insufficientResources
+    details: "CPU、記憶體或磁碟空間不足"
 
 x-role-definitions:
   super_admin: "超級管理員：擁有系統最高權限，可以執行所有操作。"
@@ -2357,39 +2418,540 @@ paths:
   # ============================================
   /maintenance/windows:
     get:
-      tags: [Admin]
+      tags: [Maintenance]
       summary: 獲取維護窗口列表
-      operationId: listMaintenanceWindows
-      security: [{ bearerAuth: [] }]
+      operationId: getMaintenanceWindows
+      responses:
+        "200":
+          description: 成功獲取維護窗口列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  windows:
+                    type: array
+                    items:
+                      type: object
+
+  # ============================================
+  # 會話管理
+  # ============================================
+  /users/sessions:
+    get:
+      tags: [Auth]
+      summary: 獲取當前用戶的登入會話列表
+      operationId: getUserSessions
+      responses:
+        "200":
+          description: 成功獲取會話列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: 會話 ID
+                        device:
+                          type: string
+                          description: 設備信息
+                        location:
+                          type: string
+                          description: 登入地點
+                        last_active:
+                          type: string
+                          format: date-time
+                          description: 最後活躍時間
+                        is_current:
+                          type: boolean
+                          description: 是否為當前會話
+
+  /users/sessions/{sessionId}:
+    delete:
+      tags: [Auth]
+      summary: 終止指定會話
+      operationId: terminateSession
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: 會話已成功終止
+
+  # ============================================
+  # 通知歷史
+  # ============================================
+  /notifications/history:
+    get:
+      tags: [Notifications]
+      summary: 獲取通知發送歷史
+      operationId: getNotificationHistory
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - name: channel
+          in: query
+          schema:
+            type: string
+          description: 過濾特定通知管道
         - name: status
           in: query
           schema:
-            { type: string, enum: [scheduled, active, completed, cancelled] }
+            type: string
+            enum: [sent, failed, pending]
+          description: 過濾通知狀態
       responses:
         "200":
-          description: 維護窗口列表
+          description: 成功獲取通知歷史
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MaintenanceWindowList"
-    post:
-      tags: [Admin]
-      summary: 創建維護窗口
-      operationId: createMaintenanceWindow
-      security: [{ bearerAuth: [] }]
-      x-roles: [team_manager, super_admin]
-      requestBody:
-        $ref: "#/components/requestBodies/MaintenanceWindowCreateRequest"
+                type: object
+                properties:
+                  notifications:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        subject:
+                          type: string
+                        recipient:
+                          type: string
+                        channel:
+                          type: string
+                        status:
+                          type: string
+                        sent_at:
+                          type: string
+                          format: date-time
+                        error_message:
+                          type: string
+
+  /notifications/history/{notificationId}:
+    get:
+      tags: [Notifications]
+      summary: 獲取單個通知的詳細信息
+      operationId: getNotificationDetails
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
-        "201":
-          description: 維護窗口創建成功
+        "200":
+          description: 成功獲取通知詳情
+
+  /notifications/history/resend:
+    post:
+      tags: [Notifications]
+      summary: 重新發送失敗的通知
+      operationId: resendNotifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notification_ids:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "202":
+          description: 重發請求已接受
+
+  # ============================================
+  # AI 分析報告
+  # ============================================
+  /events/{eventId}/ai-analysis:
+    post:
+      tags: [Events, AI]
+      summary: 觸發事件的 AI 分析
+      operationId: triggerEventAIAnalysis
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "202":
+          description: AI 分析請求已提交
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/MaintenanceWindow"
+                type: object
+                properties:
+                  analysis_id:
+                    type: string
+                    description: 分析任務 ID
+
+  /events/{eventId}/analysis-report:
+    get:
+      tags: [Events, AI]
+      summary: 獲取事件 AI 分析報告
+      operationId: getEventAnalysisReport
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 成功獲取分析報告
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  event_id:
+                    type: string
+                  root_cause:
+                    type: string
+                    description: 根本原因分析
+                  confidence:
+                    type: number
+                    format: float
+                    description: 置信度 (0-1)
+                  recommendations:
+                    type: array
+                    items:
+                      type: string
+                  similar_incidents:
+                    type: array
+                    items:
+                      type: object
+
+  /events/{eventId}/related:
+    get:
+      tags: [Events]
+      summary: 獲取相關事件列表
+      operationId: getRelatedEvents
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: relation_type
+          in: query
+          schema:
+            type: string
+            enum: [temporal, resource, topology, ai_suggested]
+          description: 關聯類型
+      responses:
+        "200":
+          description: 成功獲取相關事件
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  related_events:
+                    type: array
+                    items:
+                      type: object
+
+  /events/{eventId}/automations:
+    get:
+      tags: [Events, Automation]
+      summary: 獲取事件相關的自動化執行歷史
+      operationId: getEventAutomations
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 成功獲取自動化歷史
+
+  /events/{eventId}/history:
+    get:
+      tags: [Events]
+      summary: 獲取事件處理歷史
+      operationId: getEventHistory
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 成功獲取事件歷史
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  history:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        timestamp:
+                          type: string
+                          format: date-time
+                        action:
+                          type: string
+                        user:
+                          type: string
+                        description:
+                          type: string
+
+  # ============================================
+  # 執行日誌詳情
+  # ============================================
+  /execution-logs:
+    get:
+      tags: [Automation]
+      summary: 獲取執行日誌列表
+      operationId: getExecutionLogs
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: script_name
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [success, failed, running]
+      responses:
+        "200":
+          description: 成功獲取執行日誌
+
+  /execution-logs/{logId}:
+    get:
+      tags: [Automation]
+      summary: 獲取執行日誌詳情
+      operationId: getExecutionLogDetails
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 成功獲取日誌詳情
+
+  /execution-logs/{logId}/output:
+    get:
+      tags: [Automation]
+      summary: 獲取執行輸出內容
+      operationId: getExecutionOutput
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 成功獲取執行輸出
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  # ============================================
+  # 審計日誌
+  # ============================================
+  /audit-logs:
+    get:
+      tags: [Audit]
+      summary: 獲取系統審計日誌
+      operationId: getAuditLogs
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: user_id
+          in: query
+          schema:
+            type: string
+        - name: action_type
+          in: query
+          schema:
+            type: string
+        - name: resource_type
+          in: query
+          schema:
+            type: string
+        - name: start_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: 成功獲取審計日誌
+
+  /audit-logs/{logId}:
+    get:
+      tags: [Audit]
+      summary: 獲取審計日誌詳情
+      operationId: getAuditLogDetails
+      parameters:
+        - name: logId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 成功獲取日誌詳情
+
+  /audit-logs/statistics:
+    get:
+      tags: [Audit]
+      summary: 獲取審計統計數據
+      operationId: getAuditStatistics
+      responses:
+        "200":
+          description: 成功獲取審計統計
+
+  /audit-logs/export:
+    post:
+      tags: [Audit]
+      summary: 導出審計日誌
+      operationId: exportAuditLogs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filters:
+                  type: object
+                format:
+                  type: string
+                  enum: [csv, json, pdf]
+      responses:
+        "202":
+          description: 導出請求已接受
+
+  # ============================================
+  # 密碼安全
+  # ============================================
+  /users/change-password:
+    post:
+      tags: [Auth]
+      summary: 變更用戶密碼
+      operationId: changePassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                current_password:
+                  type: string
+                new_password:
+                  type: string
+                confirm_password:
+                  type: string
+              required:
+                - current_password
+                - new_password
+                - confirm_password
+      responses:
+        "200":
+          description: 密碼變更成功
+
+  # ============================================
+  # 個人資料管理
+  # ============================================
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: 獲取當前用戶個人資料
+      operationId: getUserProfile
+      responses:
+        "200":
+          description: 成功獲取個人資料
+
+    put:
+      tags: [Users]
+      summary: 更新個人資料
+      operationId: updateUserProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                avatar:
+                  type: string
+                bio:
+                  type: string
+      responses:
+        "200":
+          description: 個人資料更新成功
+
+  /users/preferences:
+    get:
+      tags: [Users]
+      summary: 獲取用戶偏好設定
+      operationId: getUserPreferences
+      responses:
+        "200":
+          description: 成功獲取偏好設定
+
+    put:
+      tags: [Users]
+      summary: 更新用戶偏好設定
+      operationId: updateUserPreferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                theme:
+                  type: string
+                  enum: [light, dark]
+                language:
+                  type: string
+                timezone:
+                  type: string
+                notifications:
+                  type: object
+      responses:
+        "200":
+          description: 偏好設定更新成功
 
   # ============================================
   # Fallback for omitted paths

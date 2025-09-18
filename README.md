@@ -28,7 +28,7 @@
 
 我們提供了一個功能完整的互動原型，讓您無需安裝即可體驗平台的核心功能：
 
-🌟 **[立即體驗 Live Demo](https://detectviz.github.io/sre-platform-frontend/prototype.html)**
+🌟 **[立即體驗 Live Demo](https://detectviz.github.io/sre-platform/prototype.html)**
 
 ### 📱 功能預覽
 
@@ -544,10 +544,10 @@ refactor: 重構狀態管理邏輯
 
 ```bash
 # 構建 Docker 鏡像
-docker build -t sre-platform-frontend .
+docker build -t sre-platform .
 
 # 運行容器
-docker run -p 80:80 sre-platform-frontend
+docker run -p 80:80 sre-platform
 ```
 
 ### ☁️ 雲端部署
