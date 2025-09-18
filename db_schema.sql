@@ -1063,5 +1063,155 @@ WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
 GROUP BY DATE(a.created_at)
 ORDER BY event_date DESC;
 
+-- ===========================================
+-- 平台核心功能擴展表 (基於 pages.md 分析)
+-- ===========================================
+
+-- 事件規則範本表 (Event Rule Templates)
+CREATE TABLE event_rule_templates (
+    id VARCHAR(36) PRIMARY KEY COMMENT '範本唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '範本名稱',
+    description TEXT COMMENT '範本描述',
+    category VARCHAR(100) COMMENT '範本分類',
+    template_data JSON NOT NULL COMMENT '範本配置數據',
+    is_default BOOLEAN DEFAULT FALSE COMMENT '是否為預設範本',
+    usage_count INT DEFAULT 0 COMMENT '使用次數',
+    created_by VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_category (category) COMMENT '分類索引',
+    INDEX idx_is_default (is_default) COMMENT '預設範本索引',
+    INDEX idx_usage_count (usage_count) COMMENT '使用次數索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='事件規則範本表';
+
+-- 靜音規則範本表 (Silence Rule Templates)
+CREATE TABLE silence_rule_templates (
+    id VARCHAR(36) PRIMARY KEY COMMENT '範本唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '範本名稱',
+    description TEXT COMMENT '範本描述',
+    category VARCHAR(100) COMMENT '範本分類',
+    template_data JSON NOT NULL COMMENT '範本配置數據 (包含 matchers, cron_expression 等)',
+    is_default BOOLEAN DEFAULT FALSE COMMENT '是否為預設範本',
+    usage_count INT DEFAULT 0 COMMENT '使用次數',
+    created_by VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_category (category) COMMENT '分類索引',
+    INDEX idx_is_default (is_default) COMMENT '預設範本索引',
+    INDEX idx_usage_count (usage_count) COMMENT '使用次數索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='靜音規則範本表';
+
+-- 通知管道健康檢查表 (Notification Channel Health Checks)
+CREATE TABLE notification_channel_health_checks (
+    id VARCHAR(36) PRIMARY KEY COMMENT '健康檢查唯一標識',
+    channel_id VARCHAR(36) NOT NULL COMMENT '通知管道ID',
+    check_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '檢查時間',
+    status ENUM('success', 'failure') NOT NULL COMMENT '檢查結果',
+    response_time_ms INT COMMENT '回應時間(毫秒)',
+    error_message TEXT COMMENT '錯誤訊息',
+    details JSON COMMENT '檢查詳情',
+
+    FOREIGN KEY (channel_id) REFERENCES notification_channels(id) ON DELETE CASCADE,
+    INDEX idx_channel_time (channel_id, check_time) COMMENT '管道時間複合索引',
+    INDEX idx_status (status) COMMENT '狀態索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知管道健康檢查表';
+
+-- Webhook 接收器表 (支援平台作為 Grafana Webhook 統一入口)
+CREATE TABLE webhook_receivers (
+    id VARCHAR(36) PRIMARY KEY COMMENT 'Webhook 接收器唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '接收器名稱',
+    endpoint_path VARCHAR(255) UNIQUE NOT NULL COMMENT '端點路徑 (例如: /webhooks/grafana)',
+    source_type ENUM('grafana', 'prometheus', 'external') NOT NULL COMMENT '來源類型',
+    authentication_config JSON COMMENT '認證配置',
+    preprocessing_rules JSON COMMENT '預處理規則',
+    is_enabled BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
+    received_count INT DEFAULT 0 COMMENT '接收次數統計',
+    last_received_at TIMESTAMP NULL COMMENT '最後接收時間',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    INDEX idx_endpoint_path (endpoint_path) COMMENT '端點路徑索引',
+    INDEX idx_source_type (source_type) COMMENT '來源類型索引',
+    INDEX idx_is_enabled (is_enabled) COMMENT '啟用狀態索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Webhook 接收器表';
+
+-- 標籤合規性檢查結果表 (Tag Compliance Violations)
+CREATE TABLE tag_compliance_violations (
+    id VARCHAR(36) PRIMARY KEY COMMENT '違規記錄唯一標識',
+    resource_id VARCHAR(36) NOT NULL COMMENT '資源ID',
+    resource_name VARCHAR(255) COMMENT '資源名稱',
+    violation_type ENUM('missing_required', 'invalid_value', 'unknown_key') NOT NULL COMMENT '違規類型',
+    tag_key VARCHAR(100) COMMENT '相關標籤鍵',
+    expected_value VARCHAR(255) COMMENT '預期值',
+    actual_value VARCHAR(255) COMMENT '實際值',
+    severity ENUM('low', 'medium', 'high') DEFAULT 'medium' COMMENT '嚴重程度',
+    detected_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '檢測時間',
+    resolved_at TIMESTAMP NULL COMMENT '解決時間',
+
+    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+    INDEX idx_resource_id (resource_id) COMMENT '資源ID索引',
+    INDEX idx_violation_type (violation_type) COMMENT '違規類型索引',
+    INDEX idx_tag_key (tag_key) COMMENT '標籤鍵索引',
+    INDEX idx_severity (severity) COMMENT '嚴重程度索引',
+    INDEX idx_detected_at (detected_at) COMMENT '檢測時間索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='標籤合規性違規記錄表';
+
+-- 平台系統配置範本表 (System Config Templates)
+CREATE TABLE system_config_templates (
+    id VARCHAR(36) PRIMARY KEY COMMENT '配置範本唯一標識',
+    name VARCHAR(255) NOT NULL COMMENT '範本名稱',
+    description TEXT COMMENT '範本描述',
+    category VARCHAR(100) NOT NULL COMMENT '配置分類',
+    template_data JSON NOT NULL COMMENT '範本配置數據',
+    is_default BOOLEAN DEFAULT FALSE COMMENT '是否為預設範本',
+    target_audience ENUM('beginner', 'intermediate', 'advanced') DEFAULT 'intermediate' COMMENT '目標使用者層級',
+    creator_id VARCHAR(36) COMMENT '創建者ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
+
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_category (category) COMMENT '分類索引',
+    INDEX idx_is_default (is_default) COMMENT '預設範本索引',
+    INDEX idx_target_audience (target_audience) COMMENT '目標使用者索引'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='系統配置範本表';
+
+-- 增強現有表格以支援 pages.md 分析中的功能建議
+-- ===========================================
+
+-- 為 notification_history 表增加原始 Payload 支援 (核心功能)
+ALTER TABLE notification_history
+ADD COLUMN raw_payload JSON COMMENT '從 Grafana Webhook 接收到的原始 JSON Payload',
+ADD COLUMN processing_duration_ms INT COMMENT '處理耗時(毫秒)',
+ADD COLUMN retry_count INT DEFAULT 0 COMMENT '重試次數',
+ADD COLUMN next_retry_at TIMESTAMP NULL COMMENT '下次重試時間';
+
+-- 為 recurring_silence_rules 表增加執行統計
+ALTER TABLE recurring_silence_rules
+ADD COLUMN last_execution_result ENUM('success', 'failure') NULL COMMENT '最後執行結果',
+ADD COLUMN execution_error_message TEXT COMMENT '執行錯誤訊息',
+ADD COLUMN next_execution_at TIMESTAMP NULL COMMENT '下次執行時間',
+ADD COLUMN total_executions INT DEFAULT 0 COMMENT '總執行次數',
+ADD COLUMN successful_executions INT DEFAULT 0 COMMENT '成功執行次數';
+
+-- 為 tag_keys 表增加使用統計和合規支援
+ALTER TABLE tag_keys
+ADD COLUMN last_usage_analysis_at TIMESTAMP NULL COMMENT '最後使用分析時間',
+ADD COLUMN compliance_score DECIMAL(5,2) DEFAULT 100.00 COMMENT '合規分數 (0-100)',
+ADD COLUMN enforcement_level ENUM('advisory', 'warning', 'blocking') DEFAULT 'advisory' COMMENT '強制等級';
+
+-- 為支援智慧輸入偏好設定增加索引優化
+ALTER TABLE user_smart_input_preferences
+ADD INDEX idx_last_used_category (last_used_at, category) COMMENT '最後使用時間分類複合索引',
+ADD INDEX idx_usage_count_desc (usage_count DESC) COMMENT '使用次數降序索引';
+
+-- 建立初始化 Webhook 接收器數據
+INSERT INTO webhook_receivers (id, name, endpoint_path, source_type, authentication_config, is_enabled) VALUES
+(UUID(), 'Grafana Alerting Webhook', '/api/v1/webhooks/grafana', 'grafana', '{"type": "bearer", "required": false}', TRUE),
+(UUID(), 'Prometheus Webhook', '/api/v1/webhooks/prometheus', 'prometheus', '{"type": "bearer", "required": false}', TRUE);
+
 -- 啟用外鍵約束
 SET FOREIGN_KEY_CHECKS = 1;

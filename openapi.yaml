@@ -1491,6 +1491,208 @@ paths:
                 $ref: "#/components/schemas/OperationResult"
 
   # ============================================
+  # Recurring Silence Rules (Platform Core Feature)
+  # ============================================
+  /recurring-silence-rules:
+    get:
+      tags: [Incident Silences]
+      summary: 獲取週期性靜音規則列表
+      operationId: listRecurringSilenceRules
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: enabled
+          in: query
+          schema: { type: boolean }
+          description: 過濾啟用/停用的規則
+      responses:
+        "200":
+          description: 週期性靜音規則列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRuleList"
+    post:
+      tags: [Incident Silences]
+      summary: 創建週期性靜音規則
+      operationId: createRecurringSilenceRule
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringSilenceRuleCreateRequest"
+      responses:
+        "201":
+          description: 週期性靜音規則創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRule"
+
+  /recurring-silence-rules/{ruleId}:
+    get:
+      tags: [Incident Silences]
+      summary: 獲取單一週期性靜音規則
+      operationId: getRecurringSilenceRule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 週期性靜音規則詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRule"
+
+  /silence-rule-templates:
+    get:
+      tags: [Incident Silences]
+      summary: 獲取靜音規則範本列表
+      operationId: listSilenceRuleTemplates
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: 靜音規則範本列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/SilenceRuleTemplate" }
+
+  # ============================================
+  # Tag Governance (Platform Core Feature)
+  # ============================================
+  /tags:
+    get:
+      tags: [Platform Settings]
+      summary: 獲取標籤鍵列表
+      operationId: listTagKeys
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/LimitParam"
+        - name: category
+          in: query
+          schema: { type: string }
+          description: 過濾標籤分類
+      responses:
+        "200":
+          description: 標籤鍵列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagKeyList"
+
+  /tags/{keyId}/values:
+    get:
+      tags: [Platform Settings]
+      summary: 獲取標籤允許值列表
+      operationId: listTagAllowedValues
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 標籤允許值列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagAllowedValueList"
+
+  /tags/compliance-report:
+    get:
+      tags: [Platform Settings]
+      summary: 獲取標籤合規性報告
+      operationId: getTagComplianceReport
+      security: [{ bearerAuth: [] }]
+      x-roles: [platform_admin, super_admin]
+      responses:
+        "200":
+          description: 標籤合規性報告
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagComplianceReport"
+
+  # ============================================
+  # Event Rule Templates & Builder (Platform Core Feature)
+  # ============================================
+  /event-rule-templates:
+    get:
+      tags: [Event Rules]
+      summary: 獲取事件規則範本列表
+      operationId: listEventRuleTemplates
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: 事件規則範本列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventRuleTemplateList"
+
+  /event-rules/scope-preview:
+    post:
+      tags: [Event Rules]
+      summary: 預覽事件規則監控範圍
+      operationId: previewEventRuleScope
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                matchers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      key: { type: string }
+                      operator: { type: string }
+                      value: { type: string }
+      responses:
+        "200":
+          description: 規則範圍預覽結果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventRuleScopePreview"
+
+  /event-rules/metrics:
+    get:
+      tags: [Event Rules]
+      summary: 獲取可用監控指標列表
+      operationId: listEventRuleMetrics
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: 可用監控指標列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/EventRuleMetric" }
+
+  # ============================================
   # Automation Scripts
   # ============================================
   /automation/scripts:
@@ -3734,18 +3936,20 @@ components:
         description: { type: string }
         created_at: { type: string, format: "date-time" }
 
-    # Tag Management Schemas
+    # Tag Governance Core Schemas
     TagKey:
       type: object
       properties:
         id: { type: string }
-        key: { type: string }
-        displayName: { type: string }
+        key_name: { type: string }
         description: { type: string }
         is_required: { type: boolean }
-        compliance_required: { type: boolean }
-        validation_rules: { type: object }
+        validation_regex: { type: string }
+        compliance_category: { type: string }
+        usage_count: { type: integer }
+        allowed_values_count: { type: integer }
         created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
     TagValue:
       type: object
       properties:
@@ -3759,21 +3963,20 @@ components:
         created_at: { type: string, format: "date-time" }
     TagKeyCreateRequest:
       type: object
+      required: [key_name]
       properties:
-        key: { type: string }
-        displayName: { type: string }
+        key_name: { type: string }
         description: { type: string }
-        is_required: { type: boolean }
-        compliance_required: { type: boolean }
-        validation_rules: { type: object }
+        is_required: { type: boolean, default: false }
+        validation_regex: { type: string }
+        compliance_category: { type: string }
     TagKeyUpdateRequest:
       type: object
       properties:
-        displayName: { type: string }
         description: { type: string }
         is_required: { type: boolean }
-        compliance_required: { type: boolean }
-        validation_rules: { type: object }
+        validation_regex: { type: string }
+        compliance_category: { type: string }
     TagValueCreateRequest:
       type: object
       properties:
@@ -4310,4 +4513,237 @@ components:
       properties:
         share_type: { type: string, enum: ["team", "public", "private"] }
         team_ids: { type: array, items: { type: string } }
+
+    # Recurring Silence Rules Schemas (Platform Core Feature)
+    RecurringSilenceRule:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        matchers:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              value: { type: string }
+              isRegex: { type: boolean }
+        cron_expression: { type: string }
+        duration_minutes: { type: integer }
+        timezone: { type: string, default: "UTC" }
+        is_enabled: { type: boolean }
+        next_execution_time: { type: string, format: "date-time" }
+        last_execution_time: { type: string, format: "date-time" }
+        execution_count: { type: integer }
+        creator_id: { type: string }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    RecurringSilenceRuleList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/RecurringSilenceRule" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    RecurringSilenceRuleCreateRequest:
+      type: object
+      required: [name, matchers, cron_expression, duration_minutes]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        matchers:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              value: { type: string }
+              isRegex: { type: boolean }
+        cron_expression: { type: string }
+        duration_minutes: { type: integer }
+        timezone: { type: string, default: "UTC" }
+        is_enabled: { type: boolean, default: true }
+    RecurringSilenceRuleUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        matchers:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              value: { type: string }
+              isRegex: { type: boolean }
+        cron_expression: { type: string }
+        duration_minutes: { type: integer }
+        timezone: { type: string }
+        is_enabled: { type: boolean }
+    SilenceRuleTemplate:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        category: { type: string }
+        template_data:
+          type: object
+          properties:
+            name: { type: string }
+            description: { type: string }
+            matchers: { type: array }
+            cron_expression: { type: string }
+            duration_minutes: { type: integer }
+        is_default: { type: boolean }
+        usage_count: { type: integer }
+        non_compliant_resources: { type: integer }
+        compliance_percentage: { type: number }
+        violations:
+          type: array
+          items:
+            type: object
+            properties:
+              resource_id: { type: string }
+              resource_name: { type: string }
+              violation_type: { type: string }
+              missing_tags: { type: array, items: { type: string } }
+              invalid_values: { type: array, items: { type: string } }
+
+    # Tag Governance Enhanced Schemas (Replaces old Tag Management)
+    TagKeyList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TagKey" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    TagAllowedValue:
+      type: object
+      properties:
+        id: { type: string }
+        tag_key_id: { type: string }
+        value: { type: string }
+        color: { type: string }
+        usage_count: { type: integer }
+        created_at: { type: string, format: "date-time" }
+    TagAllowedValueList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/TagAllowedValue" }
+        tag_key: { $ref: "#/components/schemas/TagKey" }
+    TagAllowedValueCreateRequest:
+      type: object
+      required: [value]
+      properties:
+        value: { type: string }
+        color: { type: string }
+
+    # Smart Input Options Schemas
+    SmartInputOption:
+      type: object
+      properties:
+        id: { type: string }
+        category: { type: string }
+        key: { type: string }
+        value: { type: string }
+        display_name: { type: string }
+        description: { type: string }
+        color: { type: string }
+        sort_order: { type: integer }
+        is_active: { type: boolean }
+        usage_count: { type: integer }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    SmartInputOptionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/SmartInputOption" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    SmartInputOptionCreateRequest:
+      type: object
+      required: [category, key, value]
+      properties:
+        category: { type: string }
+        key: { type: string }
+        value: { type: string }
+        display_name: { type: string }
+        description: { type: string }
+        color: { type: string }
+        sort_order: { type: integer }
+    UserSmartInputPreference:
+      type: object
+      properties:
+        id: { type: string }
+        user_id: { type: string }
+        category: { type: string }
+        frequently_used: { type: array, items: { type: string } }
+        last_used_at: { type: string, format: "date-time" }
+        usage_count: { type: integer }
+
+    # Event Rule Templates Schemas
+    EventRuleTemplate:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        category: { type: string }
+        template_data:
+          type: object
+          properties:
+            rule_name: { type: string }
+            description: { type: string }
+            scope_tags: { type: object }
+            conditions: { type: array }
+            notification_settings: { type: object }
+            automation_settings: { type: object }
+        is_default: { type: boolean }
+        usage_count: { type: integer }
+        created_by: { type: string }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    EventRuleTemplateList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/EventRuleTemplate" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    EventRuleScopePreview:
+      type: object
+      properties:
+        matched_resources_count: { type: integer }
+        matched_resources:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: string }
+              name: { type: string }
+              type: { type: string }
+        preview_query: { type: string }
+    EventRuleMetric:
+      type: object
+      properties:
+        name: { type: string }
+        display_name: { type: string }
+        description: { type: string }
+        unit: { type: string }
+        query_template: { type: string }
+        supported_operators: { type: array, items: { type: string } }
+        category: { type: string }
+    EventRuleTemplateVariable:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        example_value: { type: string }
+        data_type: { type: string }
+        is_required: { type: boolean }
         permissions: { type: array, items: { type: string } }

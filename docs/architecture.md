@@ -266,6 +266,72 @@ graph TB
   - AI Agent 驅動的智能分析
   - 自動化工作流執行
 
+## ⭐ 平台核心功能架構
+
+基於 `pages.md` 全面分析，平台確立了以下三大核心附加價值功能，這些功能超越了原生 Grafana 的能力：
+
+### 🔄 週期性靜音規則 (Recurring Silence Rules)
+**問題解決**: Grafana 只支援一次性靜音，無法滿足例行維護需求。
+
+**平台解決方案**:
+- **自訂排程器服務**: 基於 CRON 表達式的週期性靜音規則
+- **智慧型代理**: 動態呼叫 Grafana API 建立/刪除標準靜音
+- **視覺化管理**: 提供比原生 Grafana 更友善的管理介面
+
+```mermaid
+graph LR
+    A[週期性靜音規則] --> B[排程器服務]
+    B --> C[CRON 排程檢查]
+    C --> D[Grafana API 調用]
+    D --> E[建立一次性靜音]
+    E --> F[時間到期自動刪除]
+```
+
+### 🏷️ 標籤治理 (Tag Governance)
+**問題解決**: 缺乏統一的元數據標準，導致標籤混亂。
+
+**平台解決方案**:
+- **標籤綱要管理**: 定義標籤鍵、允許值、驗證規則
+- **合規性檢查**: 自動檢測不符合規範的資源標籤
+- **智慧輸入**: 提供預設值下拉選單，防止標籤錯誤
+
+```mermaid
+graph TB
+    A[標籤治理中心] --> B[標籤鍵定義]
+    A --> C[允許值管理]
+    A --> D[驗證規則]
+    B --> E[智慧輸入提示]
+    C --> E
+    D --> F[合規性檢查]
+    F --> G[違規報告]
+```
+
+### 📨 通知歷史追蹤 (Notification History)
+**問題解決**: Grafana 通知是無狀態的，無法追蹤發送歷史。
+
+**平台解決方案**:
+- **統一 Webhook 入口**: 平台作為 Grafana 與外部系統間的代理
+- **持久化記錄**: 儲存所有通知的完整生命週期
+- **可審計性**: 提供完整的通知發送歷史和狀態追蹤
+
+```mermaid
+sequenceDiagram
+    participant G as Grafana
+    participant P as 平台 Webhook
+    participant Q as 訊息佇列
+    participant N as 通知處理器
+    participant E as 外部服務 (Slack)
+    participant DB as 歷史資料庫
+
+    G->>P: 1. 告警 Webhook
+    P->>Q: 2. 推送至佇列
+    P->>DB: 3. 記錄初始狀態
+    Q->>N: 4. 消費訊息
+    N->>E: 5. 轉發通知
+    E->>N: 6. 回應狀態
+    N->>DB: 7. 更新最終狀態
+```
+
 ## 📐 詳細架構設計
 
 ### 1. API 設計架構
