@@ -325,13 +325,6 @@ paths:
     post:
       tags: [事件管理 (Event Management)]
       summary: 為事件新增註記
-      operationId: addEventComment
-      security: [{ bearerAuth: [] }]
-      responses: { "201": { description: "新增成功" } }
-  /events/{eventId}/comments:
-    post:
-      tags: [事件管理 (Event Management)]
-      summary: 為事件新增註記
       description: "為指定的事件添加一條評論或處理歷史記錄。支援 Markdown 和 @提及。"
       operationId: addEventComment
       security: [{ bearerAuth: [] }]
