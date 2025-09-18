@@ -176,10 +176,11 @@ graph TB
 
 ### 📱 功能預覽
 
-![首頁](images/首頁.png)
-![事件列表](images/事件列表.png)
-![基礎設施洞察](images/基礎設施洞察.png)
-![容量規劃](images/容量規劃.png)
+![SRE戰情室](images/42-頁面-SRE戰情室.png)
+![事件列表](images/10-頁面-事件列表.png)
+![拓撲視圖](images/32-頁面-拓撲視圖.png)
+![基礎設施洞察](images/41-頁面-基礎設施洞察.png)
+![容量規劃](images/50-頁面-容量規劃.png)
 
 ---
 
