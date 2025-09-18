@@ -165,8 +165,9 @@ graph TB
 
     %% 數據流
     API --> Database
-    Frontend --> Timeseries
-    Frontend --> Grafana
+    API --> Timeseries
+    API --> Grafana
+    API --> Cache
 
     %% 監控目標
     Monitoring --> Infrastructure
@@ -237,7 +238,7 @@ graph TB
 
 #### 統一管理層架構
 - **告警管理完全委託給 Grafana**：不自行實作告警規則判斷邏輯，專注於人員體驗
-- **人員狀態管理完全委託給 Keycloak**：移除平台內人員狀態欄位，簡化管理介面
+- **人員狀態管理完全委託給 Keycloak**：人員**認證**狀態管理完全委託給 Keycloak，平台僅保留**業務**活動狀態，簡化管理介面
 - **數據收集策略**：優先使用`node_exporter`進行深度監控，無法安裝時fallback到`snmp_exporter`
 
 #### 平台獨有核心功能

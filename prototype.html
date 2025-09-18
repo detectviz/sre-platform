@@ -21162,53 +21162,60 @@
       );
     };
 
-    // 個人資訊組件
+    // 個人資訊組件 (已重構為唯讀)
     const PersonalInfoPage = () => {
-      const [form] = Form.useForm();
       return (
         <div style={{ maxWidth: 500, paddingTop: 16 }}>
-          <Form layout="vertical" form={form}>
-            <Form.Item label="姓名" name="name" initialValue="Admin User">
-              <Input />
-            </Form.Item>
-            <Form.Item label="電子郵件" name="email" initialValue="admin@example.com">
-              <Input disabled />
-            </Form.Item>
-            <Form.Item style={{ marginBottom: 0 }}>
-              <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
-                <Button type="primary" onClick={() => message.success('個人資訊已更新')}>
-                  更新個人資訊
-                </Button>
+          <Descriptions bordered column={1} size="small">
+            <Descriptions.Item label="姓名">Admin User</Descriptions.Item>
+            <Descriptions.Item label="電子郵件">admin@example.com</Descriptions.Item>
+          </Descriptions>
+          <Alert
+            message="個人資料管理說明"
+            description={
+              <div>
+                您的姓名與電子郵件等核心身份資訊由您的組織統一管理。如需修改，請點擊下方按鈕前往您的身份提供商 (Keycloak) 帳號中心。
               </div>
-            </Form.Item>
-          </Form>
+            }
+            type="info"
+            showIcon
+            style={{ marginTop: 24, marginBottom: 16 }}
+          />
+          <Button
+            type="primary"
+            icon={<LinkOutlined />}
+            onClick={() => message.info('將跳轉至 Keycloak 帳號中心...')}
+          >
+            前往 Keycloak 管理個人資料
+          </Button>
         </div>
       );
     };
 
-    // 密碼安全組件
+    // 密碼安全組件 (已重構為僅引導)
     const PasswordSecurityPage = () => {
-      const [form] = Form.useForm();
       return (
         <div style={{ maxWidth: 500, paddingTop: 16 }}>
-          <Form layout="vertical" form={form}>
-            <Form.Item label="目前密碼" name="currentPassword">
-              <Input.Password />
-            </Form.Item>
-            <Form.Item label="新密碼" name="newPassword">
-              <Input.Password />
-            </Form.Item>
-            <Form.Item label="確認新密碼" name="confirmPassword">
-              <Input.Password />
-            </Form.Item>
-            <Form.Item style={{ marginBottom: 0 }}>
-              <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
-                <Button type="primary" onClick={() => message.success('密碼已更新')}>
-                  更新密碼
-                </Button>
+          <Alert
+            message="安全性設定說明"
+            description={
+              <div>
+                本平台的所有安全性設定（包含密碼變更、兩步驟驗證 2FA）均由您的組織身份提供商 (Keycloak) 統一管理，以確保最高等級的安全性。
+                <br /><br />
+                請點擊下方按鈕前往 Keycloak 安全中心進行相關設定。
               </div>
-            </Form.Item>
-          </Form>
+            }
+            type="info"
+            showIcon
+            style={{ marginBottom: 16 }}
+          />
+          <Button
+            type="primary"
+            icon={<SafetyCertificateOutlined />}
+            onClick={() => message.info('將跳轉至 Keycloak 安全中心...')}
+          >
+            前往 Keycloak 修改密碼或設定 2FA
+          </Button>
         </div>
       );
     };
