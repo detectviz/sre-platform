@@ -296,49 +296,61 @@ paths:
   # ============================================
   # Auth
   # ============================================
-  /auth/login:
-    post:
+  /auth/sso/redirect:
+    get:
       tags: [Auth]
-      summary: 開發模式登入
-      operationId: devLogin
-      security: []
-      requestBody:
-        $ref: "#/components/requestBodies/AuthLoginRequest"
-      responses:
-        "200":
-          description: 登入成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthTokens"
-  /auth/refresh:
-    post:
-      tags: [Auth]
-      summary: 刷新 Token（開發）
-      operationId: devRefreshToken
-      security: []
-      requestBody:
-        $ref: "#/components/requestBodies/TokenRefreshRequest"
-      responses:
-        "200":
-          description: 刷新成功
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthTokens"
-  /auth/logout:
-    post:
-      tags: [Auth]
-      summary: 登出（開發）
-      operationId: devLogout
+      summary: 獲取 SSO 登入重定向 URL
+      description: 後端產生並回傳 Keycloak 登入頁面的 URL，前端直接重定向到此 URL。
+      operationId: getSsoRedirectUrl
       security: []
       responses:
         "200":
-          description: 登出成功
+          description: 成功獲取重定向 URL
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OperationResult"
+                type: object
+                properties:
+                  redirect_url:
+                    type: string
+                    format: uri
+  /auth/sso/callback:
+    get:
+      tags: [Auth]
+      summary: SSO 登入回呼
+      description: 使用者在 Keycloak 登入後，會被重導回此端點。後端在此處處理 code，與 Keycloak 交換 token，建立平台會話，並最終將使用者重導向到前端的主頁面。
+      operationId: handleSsoCallback
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema: { type: string }
+        - name: state
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "302":
+          description: 登入成功，重定向至前端應用。
+  /auth/sso/logout:
+    post:
+      tags: [Auth]
+      summary: SSO 登出
+      description: 執行單一登出 (SLO)。除了清除本機 session，還應回傳 Keycloak 的登出 URL，以便前端重定向，徹底清除 SSO 會話。
+      operationId: ssoLogout
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: 成功取得登出 URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logout_url:
+                    type: string
+                    format: uri
 
   # ============================================
   # Users
@@ -347,6 +359,7 @@ paths:
     get:
       tags: [Profile]
       summary: 獲取人員列表
+      description: 從 Keycloak 獲取使用者列表，並附加其在本平台內的團隊和角色資訊。
       operationId: listUsers
       security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
@@ -366,29 +379,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserList"
+  /invitations:
     post:
       tags: [Profile]
-      summary: 創建人員
-      operationId: createUser
+      summary: 邀請新人員
+      description: 在 Keycloak 中建立一個新使用者，並觸發 Keycloak 的邀請郵件流程。
+      operationId: inviteUser
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
       requestBody:
-        $ref: "#/components/requestBodies/UserCreateRequest"
+        $ref: "#/components/requestBodies/UserInvitationRequest"
       responses:
-        "201":
-          description: 人員創建成功
+        "202":
+          description: 邀請已成功發送
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/User"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "409":
-          $ref: "#/components/responses/Conflict"
+                $ref: "#/components/schemas/OperationResult"
   /users/{userId}:
     get:
       tags: [Profile]
@@ -410,8 +417,9 @@ paths:
                 $ref: "#/components/schemas/User"
     put:
       tags: [Profile]
-      summary: 更新人員
-      operationId: updateUser
+      summary: 更新人員的平台權限
+      description: 只能更新使用者在平台內部的團隊和角色映射關係，無法修改姓名、Email 等核心資訊。
+      operationId: updateUserPlatformRoles
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
       parameters:
@@ -420,10 +428,10 @@ paths:
           required: true
           schema: { type: string }
       requestBody:
-        $ref: "#/components/requestBodies/UserUpdateRequest"
+        $ref: "#/components/requestBodies/UserPlatformRolesUpdateRequest"
       responses:
         "200":
-          description: 人員更新成功
+          description: 人員權限更新成功
           content:
             application/json:
               schema:
@@ -431,7 +439,7 @@ paths:
     delete:
       tags: [Profile]
       summary: 刪除人員 (軟刪除)
-      description: 此操作將標記人員為已刪除 (軟刪除)，但不會從資料庫中實際移除。
+      description: 此操作將標記人員為已刪除 (軟刪除)，但不會從資料庫中實際移除。可選擇性地在 Keycloak 中將使用者設為非活躍狀態。
       operationId: deleteUser
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
@@ -443,11 +451,12 @@ paths:
       responses:
         "204":
           description: 人員刪除成功
-  /users/{userId}/reset-password:
-    post:
+  /users/{userId}/internal-status:
+    put:
       tags: [Profile]
-      summary: 重置人員密碼
-      operationId: resetUserPassword
+      summary: 更新人員的平台內部狀態
+      description: 僅更新平台資料庫中 `users` 表的 `is_active` 欄位。此欄位用於控制平台內部的業務邏輯（如是否可被指派任務），而非登入權限。
+      operationId: updateUserInternalStatus
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
       parameters:
@@ -455,13 +464,22 @@ paths:
           in: path
           required: true
           schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_active:
+                  type: boolean
       responses:
         "200":
-          description: 密碼重置成功
+          description: 內部狀態更新成功
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/OperationResult"
+                $ref: "#/components/schemas/User"
 
   # ============================================
   # Teams
@@ -833,7 +851,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AlertList"
+                $ref: "#/components/schemas/EventList"
   /resources/batch:
     post:
       tags: [Resources]
@@ -1204,7 +1222,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Alert"
+                $ref: "#/components/schemas/Event"
     put:
       tags: [Incidents]
       summary: 更新事件
@@ -1224,7 +1242,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Alert"
+                $ref: "#/components/schemas/Event"
   /incidents/{incidentId}/acknowledge:
     post:
       tags: [Incidents]
@@ -1243,7 +1261,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Alert"
+                $ref: "#/components/schemas/Event"
   /incidents/{incidentId}/resolve:
     post:
       tags: [Incidents]
@@ -1262,7 +1280,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Alert"
+                $ref: "#/components/schemas/Event"
   /incidents/{incidentId}/assign:
     post:
       tags: [Incidents]
@@ -2434,6 +2452,53 @@ paths:
                     items:
                       type: object
 
+  /ai/analysis-reports/{reportId}:
+    get:
+      tags: [Analyzing]
+      summary: 獲取 AI 分析報告詳情
+      operationId: getAiAnalysisReport
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 成功獲取報告
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AIAnalysisReport"
+        "202":
+          description: 報告仍在生成中
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  report_id: { type: string }
+                  status: { type: string, enum: [PENDING, RUNNING] }
+    post:
+      tags: [Analyzing]
+      summary: 對 AI 分析報告提供反饋
+      operationId: submitAiAnalysisFeedback
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: reportId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/AIAnalysisFeedbackRequest"
+      responses:
+        "200":
+          description: 反饋已成功提交
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
   # ============================================
   # 會話管理
   # ============================================
@@ -3018,16 +3083,16 @@ components:
           schema: { $ref: "#/components/schemas/ErrorResponse" }
 
   requestBodies:
-    AuthLoginRequest:
+    UserInvitationRequest:
       required: true
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/AuthLoginRequest" }
-    TokenRefreshRequest:
+          schema: { $ref: "#/components/schemas/UserInvitationRequest" }
+    UserPlatformRolesUpdateRequest:
       required: true
       content:
         application/json:
-          schema: { $ref: "#/components/schemas/TokenRefreshRequest" }
+          schema: { $ref: "#/components/schemas/UserPlatformRolesUpdateRequest" }
     ResourceCreateRequest:
       required: true
       content:
@@ -3083,16 +3148,6 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/SilenceUpdateRequest" }
-    UserCreateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/UserCreateRequest" }
-    UserUpdateRequest:
-      required: true
-      content:
-        application/json:
-          schema: { $ref: "#/components/schemas/UserUpdateRequest" }
     TeamCreateRequest:
       required: true
       content:
@@ -3217,8 +3272,63 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/DashboardShareRequest" }
+    AIAnalysisFeedbackRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/AIAnalysisFeedbackRequest" }
 
   schemas:
+    AIAnalysisReport:
+      type: object
+      properties:
+        report_id: { type: string }
+        status: { type: string, enum: [PENDING, RUNNING, SUCCESS, FAILED] }
+        generated_at: { type: string, format: "date-time" }
+        event_summary: { type: string }
+        root_cause_analysis:
+          type: object
+          properties:
+            text: { type: string }
+            confidence_score: { type: number, format: float }
+            evidence:
+              type: array
+              items:
+                type: object
+                properties:
+                  type: { type: string, enum: [METRIC, LOG, TRACE] }
+                  description: { type: string }
+                  link:
+                    type: object
+                    properties:
+                      name: { type: string }
+                      url: { type: string, format: uri }
+        impact_assessment:
+          type: object
+          properties:
+            text: { type: string }
+            affected_resources:
+              type: array
+              items:
+                type: object
+                properties:
+                  id: { type: string }
+                  name: { type: string }
+        recommended_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              title: { type: string }
+              action_type: { type: string, enum: [AUTOMATION, LINK, TEXT] }
+              risk: { type: string, enum: [HIGH, MEDIUM, LOW] }
+              action_data: { type: object }
+    AIAnalysisFeedbackRequest:
+      type: object
+      properties:
+        is_helpful: { type: boolean }
+        correct_action_key: { type: string }
+        comment: { type: string }
     ErrorResponse:
       type: object
       properties:
@@ -3266,15 +3376,6 @@ components:
                   properties:
                     timestamp: { type: string, format: "date-time" }
                     value: { type: number }
-    AuthLoginRequest:
-      type: object
-      properties:
-        username: { type: string }
-        password: { type: string, format: "password" }
-    TokenRefreshRequest:
-      type: object
-      properties:
-        refresh_token: { type: string }
     AuthTokens:
       type: object
       properties:
@@ -3402,7 +3503,7 @@ components:
       properties:
         operation: { type: string, enum: [add, remove] }
         resource_ids: { type: array, items: { type: string } }
-    Alert:
+    Event:
       type: object
       properties:
         id: { type: string }
@@ -3423,11 +3524,78 @@ components:
         acknowledged_at: { type: string, format: "date-time" }
         created_at: { type: string, format: "date-time" }
         updated_at: { type: string, format: "date-time" }
-    AlertList:
+        # Enriched data for detail view
+        quick_links:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              url: { type: string, format: "uri" }
+        available_actions:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+              api_endpoint: { type: string }
+              method: { type: string }
+              payload: { type: object }
+        history_logs:
+          type: array
+          items: { $ref: "#/components/schemas/EventHistory" }
+        related_events:
+          type: array
+          items: { $ref: "#/components/schemas/RelatedEvent" }
+        automation_runs:
+          type: array
+          items: { $ref: "#/components/schemas/AutomationRunSummary" }
+    EventList:
       type: object
       properties:
-        items: { type: array, items: { $ref: "#/components/schemas/Alert" } }
+        items: { type: array, items: { $ref: "#/components/schemas/Event" } }
         pagination: { $ref: "#/components/schemas/Pagination" }
+    EventHistory:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [SYSTEM_STATE_CHANGE, USER_COMMENT, AUTOMATION_RUN, ASSIGNEE_CHANGE] }
+        actor:
+          type: object
+          properties:
+            type: { type: string, enum: [system, user, rule] }
+            id: { type: string }
+            name: { type: string }
+            avatar_url: { type: string, format: "uri" }
+        content: { type: string, description: "Supports Markdown" }
+        metadata: { type: object }
+        created_at: { type: string, format: "date-time" }
+    RelatedEvent:
+      type: object
+      properties:
+        id: { type: string }
+        summary: { type: string }
+        severity: { type: string }
+        status: { type: string }
+        triggered_at: { type: string, format: "date-time" }
+        correlation_reason:
+          type: object
+          properties:
+            type: { type: string, enum: [TOPOLOGY_DOWNSTREAM, TOPOLOGY_UPSTREAM, TIME, CONTENT, AI] }
+            description: { type: string }
+            confidence_score: { type: number, format: float }
+    AutomationRunSummary:
+      type: object
+      properties:
+        run_id: { type: string }
+        script_id: { type: string }
+        script_name: { type: string }
+        status: { type: string, enum: [SUCCESS, FAILED, RUNNING] }
+        triggered_by: { type: string }
+        started_at: { type: string, format: "date-time" }
+        duration_ms: { type: integer }
+        summary_log: { type: string }
     IncidentCreateRequest:
       type: object
       properties:
@@ -3504,22 +3672,19 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/User" } }
         pagination: { $ref: "#/components/schemas/Pagination" }
-    UserCreateRequest:
+    UserInvitationRequest:
       type: object
       properties:
-        name: { type: string }
-        email: { type: string }
-        password: { type: string }
-        teams: { type: array, items: { type: string } }
-        roles: { type: array, items: { type: string } }
-    UserUpdateRequest:
-      type: object
-      properties:
-        name: { type: string }
+        first_name: { type: string }
+        last_name: { type: string }
         email: { type: string }
         teams: { type: array, items: { type: string } }
         roles: { type: array, items: { type: string } }
-        is_active: { type: boolean }
+    UserPlatformRolesUpdateRequest:
+      type: object
+      properties:
+        teams: { type: array, items: { type: string } }
+        roles: { type: array, items: { type: string } }
 
     # Team Management Schemas
     Team:

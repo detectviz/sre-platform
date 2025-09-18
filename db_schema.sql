@@ -11,17 +11,16 @@ SET FOREIGN_KEY_CHECKS = 0;
 -- ===========================================
 
 -- 人員表
+-- 人員表 (與 Keycloak 同步)
 CREATE TABLE users (
-    id VARCHAR(36) PRIMARY KEY COMMENT '人員唯一標識',
-    username VARCHAR(50) UNIQUE NOT NULL COMMENT '人員名',
-    email VARCHAR(255) UNIQUE NOT NULL COMMENT '電子郵件',
-    password_hash VARCHAR(255) NOT NULL COMMENT '密碼哈希',
+    id VARCHAR(36) PRIMARY KEY COMMENT '人員唯一標識 (同步 Keycloak UUID)',
+    username VARCHAR(255) UNIQUE NOT NULL COMMENT '登入用名 (同步 Keycloak)',
+    email VARCHAR(255) UNIQUE NOT NULL COMMENT '電子郵件 (同步 Keycloak)',
     name VARCHAR(100) NOT NULL COMMENT '顯示名稱',
-    avatar VARCHAR(500) COMMENT '頭像URL',
-    last_login TIMESTAMP NULL COMMENT '最後登入時間',
-    login_count INT DEFAULT 0 COMMENT '登入次數',
-    preferences JSON COMMENT '人員偏好設定',
-    is_active BOOLEAN NOT NULL DEFAULT TRUE COMMENT '人員是否在平台內啟用',
+    avatar_url VARCHAR(500) COMMENT '頭像URL',
+    last_login_at TIMESTAMP NULL COMMENT '最後登入時間',
+    preferences JSON COMMENT '人員平台偏好設定',
+    is_active BOOLEAN NOT NULL DEFAULT TRUE COMMENT '人員是否在平台內啟用 (非 Keycloak 狀態)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
@@ -30,21 +29,21 @@ CREATE TABLE users (
     INDEX idx_email (email) COMMENT '郵箱索引',
     INDEX idx_is_active (is_active) COMMENT '活躍狀態索引',
     INDEX idx_deleted_at (deleted_at) COMMENT '軟刪除索引'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='人員表';
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='人員表 (Keycloak 代理)';
 
 -- 團隊表
 CREATE TABLE teams (
     id VARCHAR(36) PRIMARY KEY COMMENT '團隊唯一標識',
-    name VARCHAR(100) NOT NULL COMMENT '團隊名稱',
+    name VARCHAR(100) UNIQUE NOT NULL COMMENT '團隊名稱',
     description TEXT COMMENT '團隊描述',
-    owner_id VARCHAR(36) COMMENT '團隊負責人ID',
+    leader_id VARCHAR(36) COMMENT '團隊負責人ID',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
 
-    FOREIGN KEY (owner_id) REFERENCES users(id) COMMENT '負責人外鍵',
+    FOREIGN KEY (leader_id) REFERENCES users(id) ON DELETE SET NULL COMMENT '負責人外鍵',
     INDEX idx_name (name) COMMENT '團隊名稱索引',
-    INDEX idx_owner (owner_id) COMMENT '負責人索引',
+    INDEX idx_leader_id (leader_id) COMMENT '負責人索引',
     INDEX idx_deleted_at (deleted_at) COMMENT '軟刪除索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='團隊表';
 
@@ -53,6 +52,7 @@ CREATE TABLE roles (
     id VARCHAR(36) PRIMARY KEY COMMENT '角色唯一標識',
     name VARCHAR(50) UNIQUE NOT NULL COMMENT '角色名稱',
     description TEXT COMMENT '角色描述',
+    is_built_in BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否為內建角色 (不可刪除)',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
@@ -60,17 +60,6 @@ CREATE TABLE roles (
     INDEX idx_name (name) COMMENT '角色名稱索引',
     INDEX idx_deleted_at (deleted_at) COMMENT '軟刪除索引'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色表';
-
--- 權限表
-CREATE TABLE permissions (
-    id VARCHAR(36) PRIMARY KEY COMMENT '權限唯一標識',
-    action VARCHAR(100) NOT NULL COMMENT '操作類型',
-    resource VARCHAR(100) NOT NULL COMMENT '資源類型',
-    description TEXT COMMENT '權限描述',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-
-    UNIQUE KEY unique_action_resource (action, resource) COMMENT '操作資源唯一約束'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='權限表';
 
 -- 人員團隊關聯表
 CREATE TABLE user_teams (
@@ -97,12 +86,11 @@ CREATE TABLE user_roles (
 -- 角色權限關聯表
 CREATE TABLE role_permissions (
     role_id VARCHAR(36) NOT NULL COMMENT '角色ID',
-    permission_id VARCHAR(36) NOT NULL COMMENT '權限ID',
+    permission_key VARCHAR(255) NOT NULL COMMENT '權限鍵 (定義於程式碼中)',
     granted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '授予時間',
 
-    PRIMARY KEY (role_id, permission_id) COMMENT '複合主鍵',
-    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE COMMENT '角色外鍵',
-    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE COMMENT '權限外鍵'
+    PRIMARY KEY (role_id, permission_key) COMMENT '複合主鍵',
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE COMMENT '角色外鍵'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色權限關聯表';
 
 -- 團隊訂閱者表
@@ -144,54 +132,54 @@ CREATE TABLE resources (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='資源表';
 
 -- 標籤鍵表
+-- 標籤治理 - 標籤鍵定義表
 CREATE TABLE tag_keys (
     id VARCHAR(36) PRIMARY KEY COMMENT '標籤鍵唯一標識',
-    key VARCHAR(100) UNIQUE NOT NULL COMMENT '標籤鍵',
-    display_name VARCHAR(255) NOT NULL COMMENT '顯示名稱',
+    key_name VARCHAR(100) UNIQUE NOT NULL COMMENT '標籤鍵',
     description TEXT COMMENT '標籤描述',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    is_required BOOLEAN DEFAULT FALSE COMMENT '是否必填',
+    validation_regex VARCHAR(255) COMMENT '值的驗證正則表達式',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_key_name (key_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='標籤治理 - 標籤鍵定義';
 
-    INDEX idx_key (key) COMMENT '標籤鍵索引'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='標籤鍵表';
-
--- 標籤值表
-CREATE TABLE tag_values (
-    id VARCHAR(36) PRIMARY KEY COMMENT '標籤值唯一標識',
-    tag_key_id VARCHAR(36) NOT NULL COMMENT '標籤鍵ID',
-    value VARCHAR(255) NOT NULL COMMENT '標籤值',
-    display_name VARCHAR(255) COMMENT '顯示名稱',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-
-    FOREIGN KEY (tag_key_id) REFERENCES tag_keys(id) ON DELETE CASCADE COMMENT '標籤鍵外鍵',
-    UNIQUE KEY unique_tag_value (tag_key_id, value) COMMENT '標籤鍵值唯一約束',
-    INDEX idx_value (value) COMMENT '標籤值索引'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='標籤值表';
+-- 標籤治理 - 標籤允許值表
+CREATE TABLE tag_allowed_values (
+    id VARCHAR(36) PRIMARY KEY,
+    tag_key_id VARCHAR(36) NOT NULL,
+    value VARCHAR(255) NOT NULL,
+    color VARCHAR(7) COMMENT 'UI 顯示顏色',
+    FOREIGN KEY (tag_key_id) REFERENCES tag_keys(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_tag_value (tag_key_id, value)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='標籤治理 - 標籤允許值';
 
 -- 資源標籤關聯表
 CREATE TABLE resource_tags (
     resource_id VARCHAR(36) NOT NULL COMMENT '資源ID',
-    tag_value_id VARCHAR(36) NOT NULL COMMENT '標籤值ID',
-    tagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '標籤時間',
-
-    PRIMARY KEY (resource_id, tag_value_id) COMMENT '複合主鍵',
-    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE COMMENT '資源外鍵',
-    FOREIGN KEY (tag_value_id) REFERENCES tag_values(id) ON DELETE CASCADE COMMENT '標籤值外鍵'
+    tag_key VARCHAR(100) NOT NULL,
+    tag_value VARCHAR(255) NOT NULL,
+    tagged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (resource_id, tag_key),
+    FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE,
+    INDEX idx_tag_key_value (tag_key, tag_value)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='資源標籤關聯表';
 
 -- 資源群組表
 CREATE TABLE resource_groups (
     id VARCHAR(36) PRIMARY KEY COMMENT '群組唯一標識',
-    name VARCHAR(255) NOT NULL COMMENT '群組名稱',
+    name VARCHAR(255) UNIQUE NOT NULL COMMENT '群組名稱',
     description TEXT COMMENT '群組描述',
-    team_id VARCHAR(36) COMMENT '負責團隊ID',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
-    deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
-
-    FOREIGN KEY (team_id) REFERENCES teams(id) COMMENT '團隊外鍵',
-    INDEX idx_name (name) COMMENT '群組名稱索引',
-    INDEX idx_team (team_id) COMMENT '團隊索引',
-    INDEX idx_deleted_at (deleted_at) COMMENT '軟刪除索引'
+    type ENUM('static', 'dynamic') NOT NULL DEFAULT 'static' COMMENT '群組類型',
+    rules JSON COMMENT '動態群組的標籤匹配規則',
+    responsible_team_id VARCHAR(36) COMMENT '負責團隊ID',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (responsible_team_id) REFERENCES teams(id) ON DELETE SET NULL,
+    INDEX idx_name (name),
+    INDEX idx_team_id (responsible_team_id),
+    INDEX idx_deleted_at (deleted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='資源群組表';
 
 -- 資源群組成員關聯表
@@ -209,57 +197,28 @@ CREATE TABLE resource_group_members (
 -- 事件與告警管理模塊 (Incidents & Alerts)
 -- ===========================================
 
--- 告警規則表
-CREATE TABLE alert_rules (
-    id VARCHAR(36) PRIMARY KEY COMMENT '規則唯一標識',
+-- 週期性靜音規則表 (平台核心功能)
+CREATE TABLE recurring_silence_rules (
+    id VARCHAR(36) PRIMARY KEY COMMENT '靜音規則唯一標識',
     name VARCHAR(255) NOT NULL COMMENT '規則名稱',
     description TEXT COMMENT '規則描述',
-    target VARCHAR(500) NOT NULL COMMENT '監控目標',
-    resource_tags JSON COMMENT '資源標籤匹配條件',
-    conditions JSON COMMENT '觸發條件',
-    notifications JSON COMMENT '通知配置',
-    enabled BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
-    severity ENUM('critical', 'warning', 'info') DEFAULT 'warning' COMMENT '默認嚴重性',
-    group_by JSON COMMENT '分組字段',
-    labels JSON COMMENT '自定義標籤',
-    annotations JSON COMMENT '自定義註解',
+    matchers JSON NOT NULL COMMENT 'Grafana 標籤匹配條件',
+    cron_expression VARCHAR(100) NOT NULL COMMENT 'CRON 表達式',
+    duration_minutes INT NOT NULL COMMENT '每次靜音持續時間(分鐘)',
+    timezone VARCHAR(50) DEFAULT 'UTC' COMMENT 'CRON 表達式使用的時區',
+    is_enabled BOOLEAN NOT NULL DEFAULT TRUE COMMENT '是否啟用',
     creator_id VARCHAR(36) COMMENT '創建者ID',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
 
-    FOREIGN KEY (creator_id) REFERENCES users(id) COMMENT '創建者外鍵',
-    INDEX idx_name (name) COMMENT '規則名稱索引',
-    INDEX idx_enabled (enabled) COMMENT '啟用狀態索引',
-    INDEX idx_creator (creator_id) COMMENT '創建者索引',
-    INDEX idx_deleted_at (deleted_at) COMMENT '軟刪除索引'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='告警規則表';
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_is_enabled (is_enabled)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='週期性靜音規則表';
 
--- 靜音規則表
-CREATE TABLE silence_rules (
-    id VARCHAR(36) PRIMARY KEY COMMENT '靜音規則唯一標識',
-    name VARCHAR(255) NOT NULL COMMENT '規則名稱',
-    description TEXT COMMENT '規則描述',
-    type ENUM('single', 'recurring') DEFAULT 'single' COMMENT '規則類型',
-    matchers JSON COMMENT '匹配條件',
-    starts_at TIMESTAMP NOT NULL COMMENT '開始時間',
-    ends_at TIMESTAMP NOT NULL COMMENT '結束時間',
-    created_by_id VARCHAR(36) COMMENT '創建者ID',
-    comment TEXT COMMENT '註釋',
-    status ENUM('active', 'expired', 'pending') DEFAULT 'pending' COMMENT '狀態',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
-
-    FOREIGN KEY (created_by_id) REFERENCES users(id) COMMENT '創建者外鍵',
-    INDEX idx_name (name) COMMENT '規則名稱索引',
-    INDEX idx_status (status) COMMENT '狀態索引',
-    INDEX idx_created_by (created_by_id) COMMENT '創建者索引',
-    INDEX idx_time_range (starts_at, ends_at) COMMENT '時間範圍索引'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='靜音規則表';
-
--- 告警事件表
-CREATE TABLE alerts (
-    id VARCHAR(36) PRIMARY KEY COMMENT '告警唯一標識',
+-- 事件表 (Events)
+CREATE TABLE events (
+    id VARCHAR(36) PRIMARY KEY COMMENT '事件唯一標識',
     summary VARCHAR(500) NOT NULL COMMENT '告警摘要',
     description TEXT COMMENT '告警描述',
     severity ENUM('critical', 'warning', 'info') DEFAULT 'warning' COMMENT '嚴重性',
@@ -295,15 +254,18 @@ CREATE TABLE alerts (
 -- ===========================================
 
 -- 自動化腳本表
+-- 自動化腳本元數據表 (內容儲存於 Git)
 CREATE TABLE automation_scripts (
     id VARCHAR(36) PRIMARY KEY COMMENT '腳本唯一標識',
-    name VARCHAR(255) NOT NULL COMMENT '腳本名稱',
+    name VARCHAR(255) UNIQUE NOT NULL COMMENT '腳本名稱',
     type ENUM('python', 'bash', 'powershell') DEFAULT 'python' COMMENT '腳本類型',
     description TEXT COMMENT '腳本描述',
-    content TEXT NOT NULL COMMENT '腳本內容',
     creator_id VARCHAR(36) COMMENT '創建者ID',
     category ENUM('deployment', 'maintenance', 'monitoring') DEFAULT 'maintenance' COMMENT '分類',
-    params JSON COMMENT '參數定義',
+    parameters_definition JSON COMMENT '參數定義',
+    git_repo_url VARCHAR(500) NOT NULL COMMENT 'Git 倉庫 URL',
+    commit_hash VARCHAR(40) NOT NULL COMMENT '當前版本的 Commit Hash',
+    version VARCHAR(20) NOT NULL COMMENT '當前版本號',
     status ENUM('active', 'inactive') DEFAULT 'active' COMMENT '狀態',
     execution_count INT DEFAULT 0 COMMENT '執行次數',
     last_executed_at TIMESTAMP NULL COMMENT '最後執行時間',
@@ -311,14 +273,14 @@ CREATE TABLE automation_scripts (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     deleted_at TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
 
-    FOREIGN KEY (creator_id) REFERENCES users(id) COMMENT '創建者外鍵',
-    INDEX idx_name (name) COMMENT '腳本名稱索引',
-    INDEX idx_type (type) COMMENT '腳本類型索引',
-    INDEX idx_category (category) COMMENT '分類索引',
-    INDEX idx_status (status) COMMENT '狀態索引',
-    INDEX idx_creator (creator_id) COMMENT '創建者索引',
-    INDEX idx_deleted_at (deleted_at) COMMENT '軟刪除索引'
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='自動化腳本表';
+    FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE SET NULL,
+    INDEX idx_name (name),
+    INDEX idx_type (type),
+    INDEX idx_category (category),
+    INDEX idx_status (status),
+    INDEX idx_creator (creator_id),
+    INDEX idx_deleted_at (deleted_at)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='自動化腳本元數據表';
 
 -- 排程任務表
 CREATE TABLE schedules (
@@ -470,28 +432,20 @@ CREATE TABLE notification_policies (
 -- 通知歷史記錄表
 CREATE TABLE notification_history (
     id VARCHAR(36) PRIMARY KEY COMMENT '通知記錄唯一標識',
-    alert_id VARCHAR(36) COMMENT '關聯告警ID',
+    event_id VARCHAR(36) COMMENT '關聯事件ID',
+    policy_id VARCHAR(36) COMMENT '觸發的策略ID',
     channel_id VARCHAR(36) COMMENT '使用的管道ID',
-    template_id VARCHAR(36) COMMENT '使用的模板ID',
-    policy_id VARCHAR(36) COMMENT '使用的策略ID',
-    recipient VARCHAR(500) NOT NULL COMMENT '接收者',
-    subject VARCHAR(500) COMMENT '通知主題',
-    content TEXT NOT NULL COMMENT '通知內容',
-    status ENUM('pending', 'sent', 'delivered', 'failed') DEFAULT 'pending' COMMENT '發送狀態',
-    error_message TEXT COMMENT '錯誤信息',
+    recipient VARCHAR(500) NOT NULL COMMENT '接收者地址或描述',
+    status ENUM('pending', 'sent', 'failed', 'delivered') DEFAULT 'pending' COMMENT '發送狀態',
+    error_message TEXT COMMENT '失敗時的錯誤訊息',
+    raw_payload JSON COMMENT '從 Grafana Webhook 接收到的原始 JSON Payload',
     sent_at TIMESTAMP NULL COMMENT '發送時間',
-    delivered_at TIMESTAMP NULL COMMENT '送達時間',
-    retry_count INT DEFAULT 0 COMMENT '重試次數',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (alert_id) REFERENCES alerts(id) COMMENT '告警外鍵',
-    FOREIGN KEY (channel_id) REFERENCES notification_channels(id) COMMENT '管道外鍵',
-    FOREIGN KEY (template_id) REFERENCES notification_templates(id) COMMENT '模板外鍵',
-    FOREIGN KEY (policy_id) REFERENCES notification_policies(id) COMMENT '策略外鍵',
-    INDEX idx_alert (alert_id) COMMENT '告警索引',
-    INDEX idx_channel (channel_id) COMMENT '管道索引',
-    INDEX idx_status (status) COMMENT '狀態索引',
-    INDEX idx_sent_at (sent_at) COMMENT '發送時間索引'
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE SET NULL,
+    FOREIGN KEY (channel_id) REFERENCES notification_channels(id) ON DELETE SET NULL,
+    INDEX idx_status (status),
+    INDEX idx_created_at (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知歷史記錄表';
 
 -- ===========================================
