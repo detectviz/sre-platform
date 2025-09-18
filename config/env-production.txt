@@ -1,0 +1,58 @@
+# Production Environment Configuration
+# Optimized for production with enterprise-grade providers
+
+# ============================================
+# Database Configuration (PostgreSQL for production)
+# ============================================
+DB_TYPE=postgres
+DB_HOST=your-postgres-host
+DB_PORT=5432
+DB_NAME=sre_platform_prod
+DB_USER=sre_user
+DB_PASSWORD=your_secure_password
+DB_SSL_MODE=require
+
+# ============================================
+# Cache Configuration (Redis for production)
+# ============================================
+CACHE_TYPE=redis
+REDIS_HOST=your-redis-host
+REDIS_PORT=6379
+REDIS_PASSWORD=your_redis_password
+REDIS_DB=0
+
+# ============================================
+# Secrets Management (HashiCorp Vault for production)
+# ============================================
+SECRETS_TYPE=vault
+VAULT_HOST=https://your-vault-host:8200
+VAULT_TOKEN=your_vault_token
+VAULT_PATH=secret/sre-platform
+
+# ============================================
+# Queue/Task System (Redis for production)
+# ============================================
+QUEUE_TYPE=redis
+QUEUE_HOST=your-redis-host
+QUEUE_PORT=6379
+QUEUE_PASSWORD=your_redis_password
+
+# ============================================
+# Application Configuration
+# ============================================
+APP_ENV=production
+APP_PORT=8080
+APP_DEBUG=false
+
+# ============================================
+# Production-specific settings
+# ============================================
+LOG_LEVEL=warn
+LOG_FORMAT=json
+LOG_FILE_PATH=/var/log/sre-platform/app.log
+
+# ============================================
+# Security
+# ============================================
+JWT_SECRET=your_production_jwt_secret
+ENCRYPTION_KEY=your_32_char_production_key

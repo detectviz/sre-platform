@@ -1,37 +1,100 @@
-# SRE Platform Docker 環境變數配置
-# 複製此文件為 .env 並根據需要修改
+# SRE Platform Environment Configuration
+# Copy this file to .env and modify the values according to your environment
 
 # ============================================
-# 資料庫配置
+# Database Configuration (Factory Provider)
 # ============================================
-POSTGRES_DB=sre_dev
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=postgres
+# Options: postgres, sqlite, mysql
+DB_TYPE=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=sre_platform
+DB_USER=postgres
+DB_PASSWORD=your_secure_password
+DB_SSL_MODE=disable
 
 # ============================================
-# Redis 配置
+# Cache Configuration (Factory Provider)
 # ============================================
-REDIS_URL=redis://redis:6379/0
+# Options: redis, inmemory
+CACHE_TYPE=redis
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
 
 # ============================================
-# Grafana 配置
+# Secrets Management (Factory Provider)
 # ============================================
-GF_SECURITY_ADMIN_USER=admin
-GF_SECURITY_ADMIN_PASSWORD=admin
+# Options: vault, kubernetes, env
+SECRETS_TYPE=vault
+VAULT_HOST=http://localhost:8200
+VAULT_TOKEN=your_vault_token
+VAULT_PATH=secret/sre-platform
 
 # ============================================
-# Keycloak 配置
+# Queue/Task System (Factory Provider)
 # ============================================
-KEYCLOAK_ADMIN=admin
-KEYCLOAK_ADMIN_PASSWORD=admin
+# Options: redis, inmemory
+QUEUE_TYPE=redis
+QUEUE_HOST=localhost
+QUEUE_PORT=6379
+QUEUE_PASSWORD=
 
 # ============================================
-# 後端服務配置
+# Application Configuration
 # ============================================
-BACKEND_SESSION_KEY=dev-session-key-change-in-production-2024
+APP_ENV=development
+APP_PORT=8080
+APP_DEBUG=true
 
 # ============================================
-# 其他配置
+# Authentication Configuration
 # ============================================
-KEYCLOAK_URL=http://keycloak:8080
+KEYCLOAK_URL=http://localhost:8080
 KEYCLOAK_REALM=sre-platform
+KEYCLOAK_CLIENT_ID=sre-platform-client
+KEYCLOAK_CLIENT_SECRET=your_client_secret
+
+# ============================================
+# External Services
+# ============================================
+GRAFANA_URL=http://localhost:3000
+VICTORIA_METRICS_URL=http://localhost:8481
+CHROMADB_URL=http://localhost:8000
+
+# ============================================
+# Monitoring & Observability
+# ============================================
+OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+OTEL_SERVICE_NAME=sre-platform-backend
+OTEL_TRACES_EXPORTER=otlp
+OTEL_METRICS_EXPORTER=otlp
+
+# ============================================
+# Logging
+# ============================================
+LOG_LEVEL=info
+LOG_FORMAT=json
+LOG_FILE_PATH=/var/log/sre-platform/app.log
+
+# ============================================
+# Security
+# ============================================
+JWT_SECRET=your_jwt_secret_key_here
+ENCRYPTION_KEY=your_32_character_encryption_key
+
+# ============================================
+# Email Configuration (for notifications)
+# ============================================
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASSWORD=your_app_password
+FROM_EMAIL=noreply@sre-platform.com
+
+# ============================================
+# Slack Integration (for notifications)
+# ============================================
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
+SLACK_BOT_TOKEN=xoxb-your-slack-bot-token
