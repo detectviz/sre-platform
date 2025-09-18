@@ -123,6 +123,32 @@
 
 **Jules 的分析與建議**：
 
+我已審閱此分析。此頁面是整個平台的**核心資產庫 (CMDB)**，其設計目標應是將一個靜態的資源清單，轉化為一個**即時、可觀測、可操作的基礎設施管理中樞**。目前的設計是一個絕佳的起點，以下建議旨在深化其架構，使其成為真正的單一事實來源 (SSOT)。
+
+**核心後端架構：動態 CMDB**
+1.  **統一資料模型**：後端應建立一個統一的資源資料模型，其資料來源是**多源聚合**的：
+    *   **核心 CMDB 資料庫 (PostgreSQL)**：儲存資源的靜態屬性，如 `name`, `ip_address`, `location`, `owner_team`, `resource_type`。這是資源的「身份證」。
+    *   **自動化探索工具 (Discovery Tools)**：應定期執行自動化腳本（如 Ansible playbooks 或雲端 API 掃描），探索新的資源或更新現有資源的屬性，並寫入 PostgreSQL。
+    *   **監控系統 (VictoriaMetrics)**：即時的性能指標（如 `CPU使用率`、`記憶體使用率`）應從 VictoriaMetrics 動態查詢。
+    *   **事件系統 (Event Store)**：`關聯事件` 的數量應從事件儲存中即時聚合。
+2.  **高效能 API 設計**：
+    *   `GET /api/v1/resources`: 此 API 必須高效。後端服務應在回傳前，非同步地聚合來自上述多個來源的資料。對於列表中的即時指標，可以考慮使用一個稍微延遲（如 1 分鐘）的快取，以平衡即時性與效能。
+    *   `GET /api/v1/resources/statistics`: 頂部的四個 KPI 指標**必須**由一個背景排程作業（如每分鐘一次）**預先計算並快取**在 Redis 中。此 API 應直接讀取快取，確保頁面毫秒級載入。
+    *   `GET /api/v1/resources/{id}/metrics?range=1h`: 應提供一個專門的端點，用於獲取資源在特定時間範圍內的詳細時序數據，供前端的迷你圖表使用。
+
+**UX/UI 強化建議：將資料轉化為洞察**
+1.  **將指標視覺化為趨勢**：目前的 `CPU` 和 `記憶體使用率` 條狀圖只顯示了當前時間點的快照。應將其升級為**迷你趨勢圖 (Sparkline Chart)**，展示過去一小時的變化趨勢。這能讓 SRE 快速判斷問題是瞬時尖峰還是持續高負載。
+2.  **標籤即是操作的起點 (Tag-Driven Operations)**：
+    *   **標籤必須是可點擊的**：UI 中的每一個標籤（如 `production`, `database`）都應是一個超連結。點擊後，頁面會以此標籤為篩選條件，重新載入資源列表。
+    *   **批次操作以標籤為中心**：「批次設定」功能的核心應該是**批次編輯標籤**，允許 SRE 一次性為多個資源打上或移除同一個標籤。
+3.  **增強的健康狀態指示**：
+    *   **解釋「為何」**：滑鼠懸停在「狀態」圖示（如 `警告`）上時，必須顯示一個工具提示 (Tooltip)，清晰地說明觸發此狀態的**具體原因**，例如「`cpu_usage > 80% for 5m`」。此資訊直接來自觸發告警的規則。
+    *   **關聯事件連結**：`關聯事件` 欄位的數字不僅是數字，更應是一個**可點擊的連結**。點擊後，應彈出一個 Modal 或跳轉到一個預先篩選好的事件列表頁面，只顯示與該資源直接相關的活躍事件。
+4.  **情境化的行內操作 (Contextual Actions)**：表格最右側的「操作」按鈕不應是固定的。應根據資源的 `類型` 和 `標籤` 動態顯示。例如：
+    *   `類型: database` 的資源，可以顯示「執行備份」、「查看慢查詢」等操作。
+    *   `類型: kubernetes-pod` 的資源，可以顯示「查看日誌」、「進入容器 (Exec)」等操作。
+    這需要後端設計一個靈活的 `actions` API，根據資源屬性回傳可用的操作列表。
+
 我已審閱此分析，其內容非常詳盡且完全符合架構方向。以下是對其要點的確認與總結：
 
 此登入頁面的設計簡潔，但其功能實現必須嚴格遵循 `docs/architecture.md` 中定義的 **Keycloak 整合策略**。現有的 API 端點設計 (`POST /api/v1/auth/login`) 與該架構不符，應進行重構。
@@ -304,22 +330,72 @@
 
 **Jules 的分析與建議**：
 
-此彈窗是事件處理的「主控台」，應作為該事件的**單一事實來源 (Single Source of Truth)**，為 SRE 提供所有必要的上下文和操作入口。
+我已審閱此彈窗設計與現有分析。此彈窗是事件處理的「主控台」，其設計必須嚴格遵循「單一事實來源 (Single Source of Truth)」原則，為 SRE 提供所有必要的上下文和操作入口。現有分析中的 API 設計方向是正確的，我將其進一步強化，確保與 `docs/architecture.md` 中定義的架構完全對齊。
 
-**API 設計原則：一次性獲取，語義化操作**
-1.  **`GET /api/v1/events/{id}` - 全量資料 Payload**：此 API 的設計至關重要。為實現彈窗內各分頁的流暢切換，它**必須**在一次請求中回傳該事件的**所有**相關資訊，包括：
-    *   `basic_info`: 事件的核心屬性。
-    *   `history_logs`: 處理歷史紀錄陣列。
-    *   `related_events`: 關聯事件列表。
-    *   `automation_runs`: 自動化執行記錄。
-    *   `available_actions`: 一個基於事件當前狀態和使用者權限，由後端計算出的**可用操作列表** (e.g., `["acknowledge", "resolve", "silence", "assign"]`)。前端應根據此列表動態產生底部按鈕。
-2.  **`PUT /api/v1/events/{id}/status` - 語義化的狀態變更**：底部的「確認收到 (Ack)」按鈕應呼叫此端點，並附帶語義化的請求體 `{ "status": "acknowledged" }`，而非通用的 `update` 端點。這使得後端可以觸發特定的業務邏輯（如記錄歷史、通知相關人員）。
-3.  **數據驅動的「快速操作」**：圖片中的「資源監控」連結不應在前端硬編碼。後端回傳的事件物件中，應包含一個 `quick_links` 陣列，每個物件包含 `name` 和 `url`。這使得管理員可以根據事件來源或標籤，靈活配置最有用的外部連結（如監控圖表、日誌系統、Runbook 等）。
+**API 設計原則：一次性全量獲取，語義化狀態變更**
+
+1.  **`GET /api/v1/events/{id}` - 全量資料 Payload**:
+    此 API 的設計至關重要。為確保彈窗內各分頁（處理歷史、關聯事件等）的流暢切換，它**必須**在一次請求中回傳該事件的**所有**相關資訊。其 Payload 應被良好地結構化、版本化，並在 `openapi.yaml` 中詳細記錄。
+
+    *   **Payload 結構範例**:
+        ```json
+        {
+          "id": "evt_2a7d3e9f-8b4c-4f1a-9e2d-6c1f8a7b3e9f",
+          "summary": "CPU high on db-mysql-prod-02",
+          "severity": "CRITICAL",
+          "status": "ACKNOWLEDGED",
+          "source": "Prometheus",
+          "triggered_at": "2025-09-18T11:11:43Z",
+          "acknowledged_at": "2025-09-18T11:15:01Z",
+          "resolved_at": null,
+          "assignee": {
+            "id": "usr_1a2b3c",
+            "name": "陳大文"
+          },
+          "resource": {
+            "id": "res_b4c5d6",
+            "name": "db-mysql-prod-02",
+            "type": "DATABASE",
+            "cmdb_link": "/resources/res_b4c5d6"
+          },
+          "rule": {
+            "id": "rule_e7f8g9",
+            "name": "高 CPU 使用率"
+          },
+          "trigger_details": {
+            "threshold": "CPU > 90%",
+            "value": "92.5%"
+          },
+          "tags": [
+            { "key": "env", "value": "production", "color": "#f5222d" },
+            { "key": "dc", "value": "asia-east1", "color": "#faad14" },
+            { "key": "service", "value": "user-database", "color": "#52c41a" }
+          ],
+          "quick_links": [
+            { "name": "資源儀表板", "url": "https://grafana.example.com/d/abc-123/db-mysql-prod-02" },
+            { "name": "相關日誌", "url": "https://loki.example.com/explore?query={...}" },
+            { "name": "維運手冊 (Runbook)", "url": "https://confluence.example.com/kb/runbook-cpu-high" }
+          ],
+          "available_actions": [
+            { "key": "resolve", "label": "解決 (Resolve)", "api_endpoint": "/api/v1/events/{id}/status", "method": "PUT", "payload": { "status": "resolved" } },
+            { "key": "assign", "label": "指派 (Assign)", "api_endpoint": "/api/v1/events/{id}/assign", "method": "PUT" },
+            { "key": "silence", "label": "建立靜音", "api_endpoint": "/api/v1/silence-rules", "method": "POST" }
+          ],
+          // 以下是為其他分頁預載的資料
+          "history_logs": [ /* ... 處理歷史資料 ... */ ],
+          "related_events": [ /* ... 關聯事件資料 ... */ ],
+          "automation_runs": [ /* ... 自動化執行資料 ... */ ]
+        }
+        ```
+
+2.  **語義化的狀態變更 API**:
+    底部的操作按鈕應完全由 API 回應中的 `available_actions` 陣列驅動。例如，「確認收到 (Ack)」按鈕（在此例中應為禁用狀態，因為事件已確認）應呼叫 `PUT /api/v1/events/{id}/status` 並附帶語義化的請求體 `{ "status": "acknowledged" }`，而非一個通用的 `update` 端點。這使得後端可以為每個狀態轉換觸發特定的業務邏輯（如記錄歷史、通知相關人員）。
 
 **UX/UI 強化建議**：
-1.  **標籤 (Tags) 必須成為一等公民**：在「基本資訊」中，所有從 Grafana 繼承的標籤都應被**顯著地、可點擊地**展示出來。點擊標籤應能快速跳轉到事件列表，並以此標籤作為篩選條件。這是 SRE 進行問題定位和模式分析時最高頻的操作之一。
-2.  **萬物皆可連結 (Everything is a Link)**：為了實現深度追溯，此視圖中的每一個實體（資源名稱、規則名稱、來源、處理人等）都**必須**是一個超連結，導向其對應的管理或詳情頁面，讓 SRE 可以無縫地進行鑽取式分析 (drill-down)。
-3.  **賦予「AI 分析」更明確的價值**：點擊「AI 分析」按鈕後，不應僅僅是跳轉，而應在當前彈窗內**非同步地載入分析結果**，並在完成後用一個小紅點或動畫提示使用者查看。分析結果應直接呈現在一個新的「AI 分析」分頁中，內容包括**根因猜測**、**影響半徑**和**建議的處理步驟**。
+1.  **標籤 (Tags) 必須成為一等公民**：在「基本資訊」中，所有從 Grafana 繼承的標籤都應被**顯著地、可點擊地、帶有色彩地**展示出來。點擊標籤應能快速跳轉到事件列表，並以此標籤作為篩選條件。這是 SRE 進行問題定位和模式分析時最高頻的操作之一。
+2.  **萬物皆可連結 (Everything is a Link)**：為實現深度追溯，此視圖中的每一個實體（資源名稱、規則名稱、來源、處理人等）都**必須**是一個超連結，導向其對應的管理或詳情頁面，讓 SRE 可以無縫地進行鑽取式分析 (drill-down)。**特別是「資源名稱」，它應連結至平台內部的資源管理頁面 (`/resources/{id}`), 而非外部系統。**
+3.  **數據驅動的「快速操作」**：此區塊應完全由 API 回應中的 `quick_links` 陣列動態產生。這使得管理員可以根據事件來源或標籤，靈活配置最有用的外部連結（如監控圖表、日誌系統、Runbook 等），而無需在前端硬編碼。
+4.  **賦予「AI 分析」更明確的價值**：點擊「AI 分析」按鈕後，不應僅僅是跳轉，而應在當前彈窗內**非同步地載入分析結果**，並在完成後用一個小紅點或動畫提示使用者查看。分析結果應直接呈現在一個新的「AI 分析」分頁中，內容包括**根因猜測**、**影響半徑**和**建議的處理步驟**。
 
 #### 事件詳情彈窗 - 處理歷史 [事件詳情2-處理歷史](images/14-彈窗-事件列表-事件詳情2-處理歷史.png)
 
@@ -341,28 +417,72 @@
 
 **Jules 的分析與建議**：
 
-處理歷史不僅是日誌，更是**團隊協作、知識沉澱和事後複盤 (Postmortem)** 的核心。其設計應圍繞**資訊結構化**和**高效協作**兩個中心。
+我已審閱此設計。處理歷史不僅是日誌，更是**團隊協作、知識沉澱和事後複盤 (Postmortem)** 的核心。其設計應圍繞**資訊結構化**和**高效協作**兩個中心。現有的分析已為此奠定了堅實的基礎，我將在此之上，進一步深化其後端架構設計，確保其健壯性與可擴展性。
 
 **後端資料模型與 API 設計**：
-1.  **統一的 `event_histories` 資料表**：後端應設計一張 `event_histories` 表來記錄事件生命週期中的所有活動。其核心欄位應包括：
-    *   `event_id`: 關聯的事件。
-    *   `type`: **活動類型**，這是最重要的欄位，用於區分不同條目，如 `SYSTEM_STATE_CHANGE` (系統狀態變更), `USER_COMMENT` (使用者評論), `AUTOMATION_RUN` (自動化執行), `MANUAL_ACTION` (手動操作記錄)。前端依此 `type` 渲染不同的圖示和樣式。
-    *   `actor`: 操作者（可能是系統 `system` 或使用者 ID）。
-    *   `content`: 內容（如評論文字、狀態變更詳情）。
-    *   `metadata`: 一個 JSONB 欄位，用於儲存附件列表、富文本內容等結構化資料。
-2.  **語義化的評論 API**：
-    *   `POST /api/v1/events/{id}/comments`：這是處理使用者「新增紀錄」的唯一 API。它應接收 `content` (支援 Markdown) 和 `attachments` (附件列表) 等參數。
-    *   後端在處理此請求時，會在 `event_histories` 表中創建一條 `type` 為 `USER_COMMENT` 的新紀錄。
-3.  **支援 `@提及` 功能**：當使用者在評論中輸入 `@` 時，前端應呼叫 `GET /api/v1/users?q=...` 和 `GET /api/v1/teams?q=...` 來獲取可提及的人員和團隊列表。當評論提交時，後端應解析被提及的對象，並觸發 `Notification` 服務向他們發送通知。
+
+1.  **`event_histories` 資料模型**：
+    後端應設計一張專門的 `event_histories` 表來記錄事件生命週期中的所有活動。其核心欄位必須定義清晰：
+    *   `id`: 歷史條目的唯一識別碼。
+    *   `event_id`: 關聯事件的 foreign key。
+    *   `type`: **(關鍵欄位)** 用於區分條目類型的枚舉，以便前端進行差異化渲染。
+        *   `SYSTEM_STATE_CHANGE`: 系統觸發的狀態變更，如 `NEW` -> `ACKNOWLEDGED`。
+        *   `USER_COMMENT`: 使用者手動新增的評論。
+        *   `AUTOMATION_RUN`: 自動化腳本的執行記錄。
+        *   `ASSIGNEE_CHANGE`: 事件被指派給新的使用者或團隊。
+    *   `actor`: 執行操作的實體，格式應為 `type:id`，如 `"system:prometheus"`, `"user:usr_1a2b3c"`, `"rule:rule_e7f8g9"`。
+    *   `content`: 主要的文字內容，**必須支援 Markdown**。對於狀態變更，可以是「狀態由 NEW 變更為 ACKNOWLEDGED」。
+    *   `metadata`: 一個 `JSONB` 欄位，用於儲存結構化資料。例如，對於 `USER_COMMENT`，可以儲存 `attachments` 陣列；對於 `AUTOMATION_RUN`，可以儲存 `execution_id` 和 `exit_code`。
+    *   `created_at`: 條目的時間戳。
+
+2.  **`GET /api/v1/events/{id}` - `history_logs` Payload**:
+    此資料應作為主事件 API 的一部分一次性載入，以避免額外的網路請求。
+
+    ```json
+    "history_logs": [
+      {
+        "id": "hist_001",
+        "type": "SYSTEM_STATE_CHANGE",
+        "actor": { "type": "system", "name": "Prometheus" },
+        "content": "事件建立",
+        "created_at": "2025-09-18T11:11:43Z",
+        "metadata": null
+      },
+      {
+        "id": "hist_002",
+        "type": "USER_COMMENT",
+        "actor": { "type": "user", "id": "usr_2", "name": "user_2", "avatar_url": "..." },
+        "content": "已確認，正在分析和處理問題。",
+        "created_at": "2025-09-18T11:13:43Z",
+        "metadata": {
+          "attachments": [
+            { "file_name": "cpu_graph.png", "url": "/files/cpu_graph.png" }
+          ]
+        }
+      }
+    ]
+    ```
+
+3.  **語義化的評論與通知 API (`POST /api/v1/events/{id}/comments`)**:
+    *   **後端邏輯**: 收到請求後，後端會在 `event_histories` 表中建立一筆 `type: USER_COMMENT` 的紀錄。接著，為了實現服務解耦，它**不應直接呼叫通知服務**，而是應該：
+        1.  解析 `content` 中的 `@提及` (如 `@陳大文` 或 `@DBA_Team`)。
+        2.  將一個結構化的「提及通知」事件發布到**訊息佇列 (Message Queue)**，如 Kafka 或 Redis Streams。
+        3.  由獨立的 `Notification` 服務消費此訊息，並負責向被提及的對象發送精準通知。此模式確保了事件評論功能的高效能與系統的整體健壯性。
+
+4.  **附件處理流程 (Attachment Handling Flow)**:
+    *   為支援附件上傳，前端應呼叫一個專門的**檔案服務**端點 (e.g., `POST /api/v1/files`)，該服務負責將檔案儲存至物件儲存 (如 S3) 並回傳一個 `file_id`。
+    *   當使用者發表評論時，這個 `file_id` 會被包含在 `POST /api/v1/events/{id}/comments` 的請求體中，後端僅需儲存此 ID，而非處理檔案本身。
 
 **UX/UI 強化建議**：
-1.  **富文本與附件支援**：評論輸入框必須是一個**支援 Markdown 的富文本編輯器**，並提供**上傳附件**（如截圖、日誌片段）的功能。這對於準確、完整地記錄問題排查過程至關重要。
-2.  **視覺化區分資訊類型**：在時間軸的視覺設計上，必須明確區分不同 `type` 的歷史記錄。例如：
-    *   **系統狀態變更**：使用簡潔的系統圖示。
-    *   **使用者評論**：顯示該**使用者的頭像**，使其在時間軸中脫穎而出。
+
+1.  **富文本與附件支援 (Rich Text & Attachments)**：評論輸入框**必須**是一個**支援 Markdown 的富文本編輯器**，並提供**上傳附件**（如截圖、日誌片段）的功能。這對於準確、完整地記錄問題排查過程至關重要。
+2.  **視覺化區分資訊類型 (Visually Distinguish Entry Types)**：在時間軸的視覺設計上，必須明確區分不同 `type` 的歷史記錄。例如：
+    *   **系統狀態變更**：使用簡潔、中性的系統圖示（如齒輪）。
+    *   **使用者評論**：**顯示該使用者的頭像**，使人為干預的資訊在時間軸中脫穎而出。
     *   **自動化執行**：使用一個「機器人」圖示。
     這種視覺區分能幫助使用者快速掃描和定位關鍵的人為干預和評論資訊。
-3.  **將歷史轉化為知識**：提供一個「**新增至 Runbook**」或「**匯出為複盤報告**」的功能。選中幾條關鍵的處理歷史後，可以一鍵將這些結構化的資訊（操作者、時間、內容、附件）匯出，作為未來處理類似問題的 SOP 或事後學習材料，實現知識的沉澱與轉化。
+3.  **篩選與搜尋 (Filter and Search)**：對於冗長的處理歷史，在頂部增加**篩選控制項**（例如，一個可以多選 `type` 的下拉選單，只看「使用者評論」和「指派變更」）和一個**搜尋框**，是**不可或缺**的功能。這能讓 SRE 在複雜事件中快速定位關鍵資訊。
+4.  **將歷史轉化為知識 (Transform History into Knowledge)**：提供一個「**新增至知識庫**」或「**匯出為複盤報告**」的功能。使用者可以勾選幾條關鍵的處理歷史後，一鍵將這些結構化的資訊（操作者、時間、內容、附件）匯出，作為未來處理類似問題的 SOP 或事後學習材料，實現知識的沉澱與轉化。
 
 #### 事件詳情彈窗 - 關聯事件 [事件詳情3-關聯事件](images/15-彈窗-事件列表-事件詳情3-關聯事件.png)
 
@@ -383,25 +503,63 @@
 
 **Jules 的分析與建議**：
 
-關聯分析是從「單點告警」邁向「系統性故障分析」的關鍵一步。此功能的目標是**自動化地將雜訊聚合，並凸顯出故障的傳播鏈和根本原因**。
+我已審閱此設計。關聯分析是從「單點告警」邁向「系統性故障分析」的關鍵一步，是實現告警降噪、凸顯故障傳播鏈的核心功能。此處的目標是提供一個**自動化的決策支援工具**，最終引導 SRE 將一組相關的低階事件，合併為一個需要集中處理的高階**「事故 (Incident)」**。
 
 **後端架構與 API 設計**：
-1.  **非同步關聯引擎 (Async Correlation Engine)**：
-    *   後端 AI 服務的核心是一個**非同步的關聯引擎**。當新事件被處理時，該引擎會被觸發，基於多種策略進行計算：
-        *   **時間關聯**：在一個極短的時間窗口內發生的事件。
-        *   **拓撲關聯**：基於 CMDB 中的服務依賴關係（上游/下游）進行關聯。
-        *   **內容關聯**：基於事件標籤、摘要內容的相似性。
-        *   **機器學習**：基於歷史數據學習到的共現模式。
-    *   計算結果——包含關聯的 `event_id`、**關聯類型** (`type`) 和**置信度** (`confidence`)——應被**預先計算並儲存**在一張專門的 `event_correlations` 表中。
-2.  **高效能查詢 API**：`GET /api/v1/events/{id}/related` API **絕不能**即時計算關聯性，而應直接查詢 `event_correlations` 表，以保證彈窗的快速響應。
-3.  **「事故 (Incident)」抽象層**：
-    *   為了管理一組關聯事件，後端應引入一個更高層級的**「事故 (Incident)」資料模型**。`incidents` 表應包含事故標題、狀態、嚴重性、處理人等。
-    *   提供一個 `POST /api/v1/incidents` API，它接收一組 `event_ids`，創建一個新的 `incident` 記錄，並將這些事件與之關聯。這被稱為**事件合併**或**事故升級**。
+
+1.  **「事故 (Incident)」抽象層**:
+    *   為管理一組關聯事件，後端必須引入一個更高層級的**「事故 (Incident)」資料模型**。這是從被動響應轉向主動管理的關鍵。
+    *   `incidents` 表應包含 `title`, `status`, `severity`, `assignee_id` 等欄位，並透過一個關聯表 (e.g., `incident_events`) 連結多個 `event_id`。
+    *   `POST /api/v1/incidents`: 此 API 用於**事件合併**或**事故升級**。
+        *   **Request Body**:
+            ```json
+            {
+              "title": "資料庫效能下降事故",
+              "severity": "CRITICAL",
+              "assignee_id": "usr_1a2b3c",
+              "event_ids": ["evt_2a7d3e9f", "evt_aaa", "evt_bbb"]
+            }
+            ```
+        *   **後端邏輯**: 建立 `incident` 記錄後，後端應將所有傳入的 `event_ids` 對應的事件狀態更新為 `MERGED`，並將它們從主要的事件列表中過濾掉，以達到降噪目的。
+
+2.  **非同步關聯引擎 (Async Correlation Engine)**：
+    *   為找出哪些事件應被關聯，後端 AI 服務的核心是一個**非同步的關聯引擎**。當新事件被處理時，該引擎會被觸發，基於多種策略進行計算：
+        *   **時間關聯 (Time Correlation)**: 事件在極短時間窗口內發生。
+        *   **拓撲關聯 (Topology Correlation)**: 基於 CMDB 中的服務依賴關係（上游/下游）。
+        *   **內容關聯 (Content Correlation)**: 基於事件標籤或摘要的相似性。
+        *   **機器學習 (Machine Learning)**: 基於歷史數據學習到的共現模式。
+    *   計算結果——包含關聯的 `event_id`、**關聯類型** (`type`) 和**置信度** (`confidence`)——必須被**預先計算並儲存**在一張專門的 `event_correlations` 表中。
+
+3.  **`GET /api/v1/events/{id}` - `related_events` Payload**:
+    此 API **絕不能**即時計算關聯性，而應直接查詢預先計算好的 `event_correlations` 表，以保證彈窗的快速響應。其回傳的 `related_events` 陣列應有清晰的結構，包含關聯的原因和置信度。
+
+    ```json
+    "related_events": [
+      {
+        "id": "evt_aaa",
+        "summary": "API latency over 500ms",
+        "severity": "WARNING",
+        "status": "ACKNOWLEDGED",
+        "triggered_at": "2025-09-18T11:08:43Z",
+        "correlation_reason": {
+          "type": "TOPOLOGY_DOWNSTREAM",
+          "description": "此服務是 db-mysql-prod-02 的下游依賴。",
+          "confidence_score": 0.95
+        }
+      }
+      // ... more related events
+    ]
+    ```
 
 **UX/UI 強化建議**：
-1.  **解釋「為何相關」**：這是最重要的 UX 元素。UI 絕不能只是一個列表。必須在每個關聯事件旁，用一個清晰的圖示或標籤來解釋其**關聯的依據**，例如「**下游服務**」、「**時間相近 (5s內)**」、「**AI 推薦 (85% 置信度)**」。讓使用者理解系統的決策過程。
-2.  **視覺化拓撲**：當關聯原因是基於「拓撲」時，應在彈窗中提供一個按鈕，點擊後能顯示一個**迷你的、高亮了相關節點和故障傳播路徑的拓撲圖**。這比純文字列表直觀得多。
-3.  **將事件群組提升為「事故」**：此分頁應提供**核取方塊**和一個醒目的「**合併為事故**」按鈕。使用者選中一組高度相關的事件後，點擊此按鈕會彈出一個新對話框，讓他們為這個新「事故」命名、設定嚴重等級和指派處理人。這是從被動的告警響應，到主動的事故管理的關鍵轉變。
+
+1.  **將事件群組提升為「事故」 (Elevate Group to Incident)**: 這是此分頁的**核心工作流程**。
+    *   **UI 設計**: 必須為每個關聯事件提供**核取方塊**，並在底部提供一個醒目的「**合併為事故**」按鈕。此按鈕在沒有選中任何事件時應為禁用狀態，其文字應動態更新以反映選中數量，例如「**合併 3 個事件為事故**」。
+    *   **操作流程**: 點擊後，彈出一個新對話框，讓使用者為新事故命名、設定嚴重等級和指派處理人，並提供基於關聯事件智慧生成的合理預設值。
+
+2.  **解釋「為何相關」 (Explain "Why")**: 這是建立使用者信任的關鍵。UI 不能只是一個列表。必須在每個關聯事件旁，用一個**清晰的圖示和文字標籤**來解釋其關聯依據（例如，拓撲圖示 +「下游服務」，時鐘圖示 +「時間相近 (1m內)」，AI 圖示 +「AI 推薦 (92%)」）。滑鼠懸停在標籤上時，應有工具提示 (Tooltip) 顯示完整的 `description`。
+
+3.  **視覺化拓撲捷徑 (Visual Topology Shortcut)**: 當關聯原因是 `TOPOLOGY_DOWNSTREAM` 或 `TOPOLOGY_UPSTREAM` 時，應在該條目旁顯示一個「檢視拓撲」的圖示按鈕。點擊後，在彈窗內開啟一個小型的、聚焦的拓撲圖，高亮顯示相關節點和推測的故障路徑。這遠比純文字列表直觀。
 
 #### 事件詳情彈窗 - 自動化 [事件詳情4-自動化](images/16-彈窗-事件列表-事件詳情4-自動化.png)
 
@@ -422,15 +580,88 @@
 
 **Jules 的分析與建議**：
 
-**後端實現與 API 設計**：
-1. **數據關聯**：後端的 `execution_logs` 表必須包含一個 `event_id` 欄位，將自動化執行記錄與觸發它的事件明確關聯起來。
-2. **豐富的 API 回應**：`GET /api/v1/events/{id}/automations` 的回應中，每個執行記錄都應包含狀態、耗時、摘要等豐富資訊，而不僅僅是一個 ID。
-3. **手動觸發 API**：應提供一個 `POST /api/v1/automations/trigger` 端點，允許使用者在此介面手動觸發一個腳本來應對當前事件。
+我已審閱此設計。此分頁旨在將「偵測」與「修復」閉環，現有的分析已準確地指出了其核心目標：必須無縫地融合過去的執行記錄與未來的操作可能性，將一個簡單的日誌轉變為互動式的控制台。以下經我確認並強化的設計是實現此目標的正確藍圖。
 
-**UX 改善建議**：
-1. **讓空狀態變得可操作**：當沒有自動化被觸發時，這個空狀態頁面不應是資訊的終點。應提供明確的引導按鈕，例如「**手動執行腳本**」（讓使用者立即採取行動）和「**設定自動化規則**」（引導使用者優化未來流程）。
-2. **推薦的自動化腳本**：AI Agent 可基於事件的上下文，在此處推薦幾個可能適用的腳本，即使用戶沒有預先設定。這將極大地提升平台的智慧化和實用性。
-3. **豐富化的執行記錄**：當列表有內容時，每一條記錄都應是一個可展開的元件，清晰展示觸發資訊、執行參數、日誌片段和快捷操作（如「重新執行」），提供完整的追溯能力。
+**後端架構與 API 設計**：
+
+1.  **數據模型關聯**: 後端的 `execution_logs` 表**必須**有一個可為空的 `event_id` 欄位，用以清晰地關聯某次自動化執行與觸發它的事件。
+
+2.  **API 設計 - 分離「已執行」與「推薦」**:
+    此分頁的資料應來自兩個平行的、獨立的 API 呼叫，以優化載入體驗。
+
+    *   **已執行記錄**: `GET /api/v1/events/{id}/automation-runs`
+        此 API 用於獲取已針對此事件執行的自動化歷史。
+        ```json
+        {
+          "automation_runs": [
+            {
+              "run_id": "exec_123",
+              "script_id": "scr_abc",
+              "script_name": "清除 /tmp 目錄空間",
+              "status": "SUCCESS",
+              "triggered_by": "rule:rule_e7f8g9",
+              "started_at": "2025-09-18T11:12:05Z",
+              "duration_ms": 15300,
+              "summary_log": "成功釋放 1.5GB 磁碟空間。"
+            }
+          ]
+        }
+        ```
+
+    *   **推薦的自動化**: `GET /api/v1/events/{id}/recommended-automations`
+        此 API 由 AI 代理驅動，它分析事件的上下文（標籤、摘要等），並從腳本庫中推薦最相關的腳本。
+        ```json
+        {
+          "recommended_automations": [
+            {
+              "script_id": "scr_def",
+              "script_name": "重啟資料庫連接池",
+              "description": "適用於資料庫連線錯誤相關事件。",
+              "confidence_score": 0.85
+            },
+            {
+              "script_id": "scr_ghi",
+              "script_name": "分析慢查詢日誌",
+              "description": "適用於 CPU 或資料庫延遲事件。",
+              "confidence_score": 0.78
+            }
+          ]
+        }
+        ```
+
+3.  **手動觸發 API**:
+    *   `POST /api/v1/scripts/{script_id}/execute`
+    *   此 API 允許使用者從 UI 手動觸發一個腳本。
+    *   **Request Body**:
+        ```json
+        {
+          "context": {
+            "event_id": "evt_2a7d3e9f"
+          },
+          "parameters": {
+            "target_host": "db-mysql-prod-02",
+            "force_mode": false
+          }
+        }
+        ```
+
+**UX/UI 強化建議**：
+
+1.  **讓空狀態變得智慧且可操作 (Make the Empty State Smart & Actionable)**:
+    目前的空狀態是個死胡同，應將其重新設計為一個發射台。
+    *   **無執行記錄，但有推薦**: 主要視圖應直接顯示**推薦的自動化腳本列表**，每個推薦項旁都有一個「執行」按鈕。
+    *   **無執行記錄，亦無推薦**: UI 應顯示「此事件未觸發自動化腳本，也未找到推薦腳本。」，並緊隨兩個明確的行動呼籲 (Call-to-Action) 按鈕：「**手動執行腳本**」（開啟一個搜尋對話框以選擇腳本）和「**設定自動化規則**」（導航至事件規則建立頁面，並預先填入當前事件的上下文）。
+
+2.  **豐富化的執行記錄 (Rich Execution History)**:
+    當 `automation_runs` 列表不為空時，每個條目都應是一個可展開的元件。
+    *   **收合視圖**: 顯示關鍵資訊：腳本名稱、狀態圖示、觸發原因和時間戳。
+    *   **展開視圖**: 點擊後展開，並以分頁顯示更詳細的資訊：
+        *   **摘要 (Summary)**: 顯示 `summary_log`。
+        *   **參數 (Parameters)**: 顯示此次執行的具體參數。
+        *   **完整日誌 (Full Log)**: 顯示完整的、可搜尋的執行日誌輸出。
+        *   **操作 (Actions)**: 提供一個「**重新執行**」按鈕。
+
+這種方法將此分頁從一個被動的日誌檢視器，轉變為 SRE 工作流程中一個主動的、智慧化的部分，是提升平台價值的關鍵。
 
 #### AI 事件分析報告 [AI事件分析報告](images/17-彈窗-事件列表-AI事件分析報告.png)
 
@@ -451,6 +682,99 @@
 5. **建議操作**：基於分析結果提供具體的操作建議和優先順序
 6. **報告導出**：支援將分析報告導出為 PDF 或分享連結
 
+**Jules 的分析與建議**：
+
+我已審閱此 AI 分析報告的設計。這是展示平台智慧化能力的核心功能，其成敗關鍵在於兩點：**1) 將原始數據轉化為可行動的洞察**，以及 **2) 透過透明度與可驗證性來建立使用者的信任**。現有的分析已經完美地捕捉了這兩點，我將其設計細節確認並固化如下。
+
+**後端架構與 API 設計**：
+
+1.  **非同步分析流程 (Asynchronous Analysis Flow)**:
+    *   **第一步：觸發分析**: 使用者點擊「AI 分析」按鈕，呼叫 `POST /api/v1/events/{id}/ai-analysis`。此端點應立即回傳 `202 Accepted` 及一個 `report_id`，並在背景啟動一個非同步的分析任務。此設計確保了即使分析耗時較長，使用者介面也不會被凍結。
+        ```json
+        // POST /api/v1/events/{id}/ai-analysis -> 202 Accepted
+        {
+          "report_id": "rep_a1b2c3",
+          "status": "PENDING"
+        }
+        ```
+    *   **第二步：獲取報告**: 前端使用 `report_id` 來輪詢 `GET /api/v1/ai/analysis-reports/{report_id}`。此端點將回傳報告狀態 (`PENDING`, `RUNNING`, `SUCCESS`, `FAILED`)。當狀態為 `SUCCESS` 時，則一併回傳完整的報告內容。（或可使用 WebSocket 將結果主動推送至前端）。
+
+2.  **`GET /api/v1/ai/analysis-reports/{report_id}` - 結構化 Payload**:
+    報告的 Payload 必須是高度結構化的，以驅動 UI 的呈現。其中的 `evidence` 和 `recommended_actions` 是建立信任和實現可操作性的關鍵。
+
+    ```json
+    {
+      "report_id": "rep_a1b2c3",
+      "status": "SUCCESS",
+      "generated_at": "2025-09-18T11:20:00Z",
+      "event_summary": "API latency over 500ms",
+      "root_cause_analysis": {
+        "text": "根本原因很可能在於 'user-authentication' 服務中的內存洩漏，導致下游服務的連鎖故障。",
+        "confidence_score": 0.85,
+        "evidence": [
+          {
+            "type": "METRIC",
+            "description": "指標 'user-authentication_memory_usage' 呈現異常增長。",
+            "link": {
+              "name": "查看指標圖表",
+              "url": "/dashboards/d/xyz?var-service=user-authentication"
+            }
+          }
+        ]
+      },
+      "impact_assessment": {
+        "text": "對用戶登錄和註冊功能造成嚴重影響。用戶數據庫可能存在數據不一致的風險。",
+        "affected_resources": [
+          { "id": "res_abc", "name": "user-authentication-svc" },
+          { "id": "res_def", "name": "login-gateway" }
+        ]
+      },
+      "recommended_actions": [
+        {
+          "title": "立即重啟 'user-authentication' 服務",
+          "action_type": "AUTOMATION",
+          "risk": "HIGH",
+          "action_data": {
+            "script_id": "scr_restart_service",
+            "parameters": { "service_name": "user-authentication" }
+          }
+        },
+        {
+          "title": "檢查 db-prod-01 日誌",
+          "action_type": "LINK",
+          "risk": "LOW",
+          "action_data": { "url": "/logs?query={resource='db-prod-01'}" }
+        }
+      ]
+    }
+    ```
+
+3.  **使用者反饋迴路 API (User Feedback Loop API)**:
+    *   `POST /api/v1/ai/analysis-reports/{report_id}/feedback`: 此 API 對於透過 RLHF (Reinforcement Learning from Human Feedback) 來優化 AI 模型至關重要。
+    *   **Request Body**:
+        ```json
+        {
+          "is_helpful": true, // or false
+          "correct_action_key": "rollback_deployment", // 可選：哪個操作是正確的？
+          "comment": "根本原因正確，但重啟不是最佳方案。" // 可選
+        }
+        ```
+
+**UX/UI 強化建議**：
+
+1.  **透明度與可信度 (Transparency & Trust)**:
+    *   **展示證據 (Show, Don't Just Tell)**: RCA 和影響評估區塊不應只有文字。它們**必須**附帶可點擊的**證據連結**（由 API Payload 中的 `evidence` 驅動）。這使得 SRE 能夠輕易驗證 AI 的結論，從而建立對系統的信任。
+    *   **視覺化置信度**: 置信度分數（如 85%）應該用進度條或儀表盤等視覺化元件來呈現，而非純文字。
+
+2.  **可操作的建議 (Actionable Recommendations)**:
+    *   **數據驅動的按鈕**: 每個建議操作旁邊的按鈕必須完全由 `recommended_actions` 陣列驅動。`AUTOMATION` 類型的按鈕觸發腳本執行流程，而 `LINK` 類型則引導使用者跳轉。
+    *   **風險標示**: 每個操作都應被視覺化地標記其 `risk` 等級（例如，高風險操作如「重啟」應使用紅色且更醒目的按鈕樣式），以幫助使用者做出明智的決策。
+
+3.  **反饋機制 (Feedback Mechanism)**:
+    *   在報告的底部，必須有一個簡單明瞭的反饋機制（例如，「這個分析有幫助嗎？ 👍 / 👎」）。捕獲這些反饋對於 AI 模型的長期改進至關重要。
+
+總之，此功能的設計應將 AI 從一個「黑盒子」轉變為一個透明、可驗證、可操作的 SRE 助手。
+
 #### 建立靜音 [建立靜音](images/18-彈窗-事件規則-建立靜音.png)
 
 **功能描述**：
@@ -467,6 +791,50 @@
 3. **範圍驗證**：即時驗證靜音規則的匹配範圍，避免過度靜音
 4. **定時提醒**：支援設定靜音到期前的提醒通知
 5. **原因記錄**：要求或建議填寫靜音原因，便於後續追蹤和分析
+
+**Jules 的分析與建議**：
+
+我已審閱此設計。此對話框是 SRE 為應對告警或計劃性維護而暫時降噪的關鍵、高頻工作流程。其設計必須快速、清晰且安全。現有的分析準確地指出了其核心架構：作為 Grafana API 的一個智慧代理。我將此方向確認並細化如下。
+
+**後端架構與 API 設計 (Grafana 代理模式)**
+
+1.  **核心邏輯：代理至 Grafana (Proxy to Grafana)**:
+    根據 `docs/architecture.md`，本平台作為「統一管理平面」。因此，當使用者點擊「建立靜音」時，本平台後端的主要職責是**呼叫 Grafana 的 `POST /api/v1/silences` 端點**。平台自身資料庫僅儲存此操作的審計記錄，將內部的 `event_id`、`user_id` 與 Grafana 回傳的 `silence_id` 關聯起來。
+
+2.  **`POST /api/v1/silence-rules` - API 設計**:
+    此 API 用於建立一個**一次性**的靜音規則。
+    *   **Request Body**:
+        ```json
+        {
+          "event_id": "evt_2a7d3e9f-8b4c-4f1a-9e2d-6c1f8a7b3e9f",
+          "duration": "1h", // 例如 "15m", "4h", "24h"
+          "comment": "正在手動清理磁碟空間，暫時靜音。" // 必須提供
+        }
+        ```
+    *   **後端處理邏輯**:
+        1.  接收請求，驗證 `comment` 不得為空。
+        2.  從資料庫/快取中獲取 `event_id` 的完整詳情。
+        3.  **智慧地從事件資料中提取關鍵標籤** (如 `alertname`, `instance`, `job`, `severity`)，這些標籤將構成 Grafana 靜音規則的 `matchers`。
+        4.  計算 `startsAt` (當前時間) 和 `endsAt` (當前時間 + duration) 的 ISO 8601 格式時間戳。
+        5.  建構呼叫 Grafana API (`POST /api/v1/silences`) 的 Payload，其中 `comment` 欄位來自請求。
+        6.  呼叫 Grafana API，並處理可能的錯誤。
+        7.  儲存審計記錄並向前端回傳成功訊息。
+
+3.  **影響範圍預覽 API (`POST /api/v1/silence-rules/preview`)**:
+    為了實現「影響預覽」這個重要的 UX 功能，需要一個「試運行」API。
+    *   **Request Body**: 包含從事件中提取出的建議 `matchers`。
+    *   **後端邏輯**: 後端將這些 `matchers` 轉發給 Prometheus/VictoriaMetrics 的 `/api/v1/series` API，以獲取當前正在觸發告警且符合條件的時間序列數量。
+    *   **Response**: `{ "affected_series_count": 5 }`
+
+**UX/UI 強化建議**：
+
+1.  **強制要求「原因」並提供輸入框 (Mandatory Reason Field)**: 靜音告警是一個重要操作，必須追蹤其原因。目前的 UI 設計缺少此欄位。應在「靜音設定」區塊中**新增一個必填的「原因」文字輸入框**。這強制了問責制，並為團隊成員和未來審計提供了關鍵上下文。
+
+2.  **明確化「靜音範圍」 (Clarify Silence Scope)**: 此彈窗**必須**明確地向使用者展示將用於靜音的標籤。在「事件資訊」區塊下方，新增一個名為「**靜音匹配條件**」的區塊，顯示從事件中提取的確切鍵值對 (例如：`alertname = DiskSpaceLow`, `instance = srv-web-prod-02`)。這種透明度對於防止使用者意外地靜音過多告警至關重要。
+
+3.  **即時影響預覽 (Live Impact Preview)**: 當彈窗載入時，前端應自動呼叫 `POST /api/v1/silence-rules/preview` API。結果應清晰地顯示，例如：「**此規則將影響目前 5 條活躍告警。**」。這讓使用者在提交前能立即了解其操作的影響。
+
+4.  **提供進階選項 (Provide Advanced Options)**: 在「靜音匹配條件」區塊旁，新增一個「**編輯匹配條件**」的連結或按鈕。點擊後允許高階使用者修改 `matchers`（例如，透過移除 `instance` 匹配條件，將靜音範圍從單一實例擴大到整個 `job`），以應對更複雜的場景。
 
 #### 編輯事件規則 - 基本資訊 [編輯事件規則1-基本資訊](images/19-彈窗-事件規則-編輯事件規則1-基本資訊.png)
 
@@ -485,6 +853,61 @@
 4. **標籤建議**：根據選擇的資源自動建議相關標籤
 5. **驗證檢查**：即時驗證資源標籤的有效性和存在性
 
+**Jules 的分析與建議**：
+
+我已審閱此設計。此精靈是建立告警規則的主要介面，其成功與否取決於能否將 Grafana PromQL/MetricQL 的複雜性抽象化，提供一個引導式、安全且直觀的體驗。第一步「基本資訊」對於定義規則的身份，以及最重要的「監控範圍」至關重要。現有的分析已為此提供了正確的藍圖，我將其設計確認如下。
+
+**後端架構與 API 設計 (Grafana 代理模式)**
+
+1.  **核心邏輯 - Grafana 代理**: 必須明確，此精靈整體是一個友善的前端，用以建構一個複雜的 JSON 物件，並最終發送到 **Grafana Alerting API**。此處的「監控資源標籤」區塊，就是建構 Grafana 告警規則中標籤選擇器的 UI。
+
+2.  **範本 API (`GET /api/v1/event-rule-templates`)**:
+    此 API 是「快速套用範本」功能的關鍵。其回應應為一個範本物件陣列，每個物件包含**所有精靈步驟**的預設資料。
+
+    *   **Response Payload 範例**:
+        ```json
+        [
+          {
+            "id": "tpl_cpu_high",
+            "name": "CPU 使用率過高",
+            "description": "當 CPU 使用率持續超過 90% 時觸發。",
+            "prefilled_data": {
+              "rule_name": "CPU 使用率過高 on {{ $labels.instance }}",
+              "rule_description": "監控 {{ $labels.instance }} 的 CPU 使用率。",
+              "scope_tags": [{ "key": "job", "value": "node_exporter" }],
+              "trigger_conditions": { /* ...預設的觸發條件資料... */ },
+              "event_content": { /* ...預設的事件內容模板... */ },
+              "automation_tasks": [ /* ...預設的自動化任務設定... */ ]
+            }
+          }
+        ]
+        ```
+
+3.  **標籤選擇器 APIs (Tag Selector APIs)**:
+    互動式的「監控資源標籤」UI 需要兩個 API 來提供智慧提示並防止輸入錯誤。
+    *   `GET /api/v1/tags/keys`: 獲取監控系統中所有可用的標籤**鍵** (如 `["env", "app", "dc", "job", "instance"]`)。後端透過 Prometheus/VictoriaMetrics 的元數據 API (`/api/v1/labels`) 取得此列表。
+    *   `GET /api/v1/tags/values?key=env`: 獲取指定標籤鍵的所有已知**值**及其使用次數。後端透過 `/api/v1/label/env/values` 取得。
+        ```json
+        // GET /api/v1/tags/values?key=env
+        [
+          { "value": "production", "usage_count": 45 },
+          { "value": "staging", "usage_count": 20 }
+        ]
+        ```
+
+4.  **前端狀態管理 (Frontend State Management)**:
+    當使用者點擊「下一步：觸發設定」時，**不應**有後端 API 呼叫。此表單的資料 (`rule_name`, `description`, `scope_tags`) 應儲存在前端的狀態管理器中，並傳遞給後續步驟。最終完整的規則物件只在最後一步完成時，才組裝並發送到後端。
+
+**UX/UI 強化建議**：
+
+1.  **即時範圍預覽 (Live Scope Preview)**: 這是一個高價值功能。當使用者在「監控資源標籤」區塊新增或移除標籤時，前端應使用 debounce 機制呼叫一個新的 `POST /api/v1/event-rules/scope-preview` 端點。此 API 接收目前的 `matchers` 並回傳將被監控的資源數量。UI 上應清晰地顯示：「**目前的標籤組合將監控 12 個資源。**」，這能讓使用者對其設定的範圍有即時的信心。
+
+2.  **範本預覽 (Template Preview)**: 當使用者滑鼠懸停在「快速套用範本」中的某個範本上時，應出現一個工具提示或小型彈出視窗，總結該範本將在所有四個步驟中配置的內容，幫助使用者在點擊前做出明智的選擇。
+
+3.  **標籤輸入引導 (Guided Tag Input)**: 新增標籤的 UI 很不錯。應進一步增強，防止使用者重複新增相同的標籤鍵。一旦如 `env` 的鍵被加入，它就應該從可用鍵的下拉列表中移除，以避免衝突。
+
+透過這些 API 和 UX 設計，我們可以將複雜的告警範圍定義過程，轉化為一個對使用者友好且不易出錯的引導式體驗。
+
 #### 編輯事件規則 - 觸發條件 [編輯事件規則2-觸發條件](images/20-彈窗-事件規則-編輯事件規則2-觸發條件.png)
 
 **功能描述**：
@@ -501,6 +924,55 @@
 3. **閾值建議**：基於歷史數據分析，提供智能閾值建議
 4. **條件預覽**：即時顯示條件邏輯的自然語言描述
 5. **複雜運算式**：支援更複雜的邏輯運算和時間窗口配置
+
+**Jules 的分析與建議**：
+
+我已審閱此設計。這是規則建立精靈中最核心、技術上最複雜的一步。其目標是將強大但極其複雜的 PromQL/MetricQL 查詢，抽象成一個任何 SRE 成員都能理解和操作的視覺化介面。現有的分析已經為此挑戰提供了非常出色的解決方案，我將其核心邏輯與 UX 強化建議確認並細化如下。
+
+**後端架構與 API 設計 (Grafana 代理模式)**
+
+1.  **核心邏輯 - 翻譯為 Grafana 查詢**:
+    此 UI 的結構 (`(A AND B) OR (C)`) 完美地對應 Grafana 統一告警模型中的多個查詢和條件。後端的核心職責是將這個 UI 結構**翻譯**成 Grafana 能理解的 API Payload。
+    *   每一個「條件群組 (OR)」對應到 Grafana 規則中的一個獨立的 `data` 查詢物件，擁有自己的 `refId` (e.g., 'A', 'B')。
+    *   群組內的「AND 條件」會被後端合併成一個單一的查詢表達式。例如，`記憶體使用率 > 80%` 和 `資料庫延遲 > 5s` 會被翻譯成類似 `(mem_usage > 80) and (db_latency > 5)` 的 PromQL。
+    *   最終，還需要一個 `Expression` 類型的 `data` 物件，其表達式為 `A || B`，用以組合所有的 OR 條件群組。
+    *   每個「條件群組」設定的「事件等級」(INFO/WARNING/CRITICAL)，會被作為 `label` 附加到對應的 Grafana `data` 查詢物件上，這是實現多等級告警的關鍵。
+
+2.  **指標 API (`GET /api/v1/metrics`)**:
+    此 API 用於填充指標下拉選單，其回傳的內容必須是結構化的，而不僅僅是名稱。後端儲存 `query_template`，使得查詢邏輯的複雜性對前端完全隱藏，極大降低了前端實作的難度。
+
+    *   **Response Payload 範例**:
+        ```json
+        [
+          {
+            "id": "metric_cpu_usage",
+            "name": "CPU 使用率 (%)",
+            "description": "主機的平均 CPU 使用率。",
+            "unit": "%",
+            "query_template": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)"
+          }
+          // ... more metrics
+        ]
+        ```
+
+3.  **條件模擬 API (`POST /api/v1/event-rules/preview-condition`)**:
+    為了實現「條件模擬」這個強大的 UX 功能，需要一個 API 來預覽查詢效果。
+    *   **Request Body**: 前端將目前使用者建構的條件，轉換為查詢表達式後發送給後端。
+    *   **後端邏輯**: 後端拿著這個 `expression` 去查詢時序資料庫 (Prometheus/VictoriaMetrics)。
+    *   **Response**: 回傳繪製圖表所需的時序數據，前端收到後可以在一個小型預覽圖表中，將指標曲線和閾值線一同繪製出來，讓使用者直觀看到在過去 24 小時內，此規則會觸發多少次。
+
+**UX/UI 強化建議**：
+
+1.  **智慧閾值推薦 (Smart Threshold Suggestions)**: 當使用者選擇了一個指標（如「CPU 使用率」）後，系統可以自動呼叫 API 分析該指標在過去一段時間（如一週）的 P95、P99 百分位數，並將這些數值作為建議的 `WARNING` 和 `CRITICAL` 閾值提供給使用者參考。這是從「工具」到「助手」的關鍵一步。
+
+2.  **自然語言預覽 (Natural Language Preview)**: 在頁面底部或側邊，提供一個唯讀的文字區塊，用人類可讀的語言即時總結使用者建立的複雜規則。例如：
+    > 「當 (**記憶體使用率** 在 5 分鐘內持續 **> 80%**) 且 (**資料庫複製延遲** 在 5 分鐘內持續 **> 5 秒**) 時，將觸發 **WARNING** 等級的事件；或者當 (**CPU 使用率** 在 5 分鐘內持續 **> 85%**) 時，將觸發 **CRITICAL** 等級的事件。」
+
+    這能極大地降低使用者因邏輯複雜而出錯的機率，是提升易用性的關鍵。
+
+3.  **錯誤與衝突檢查**: 當使用者輸入閾值或選擇指標時，進行即時的語法和邏輯檢查，防止例如閾值單位不匹配等基本錯誤。
+
+透過這種方式，我們將 Grafana 強大的能力，透過一個精心設計的抽象層，安全、有效地提供給了使用者。
 
 #### 編輯事件規則 - 事件內容 [編輯事件規則3-事件內容](images/21-彈窗-事件規則-編輯事件規則3-事件內容.png)
 
@@ -519,6 +991,60 @@
 4. **範本庫**：內建常用的事件內容範本
 5. **多語言支援**：支援不同語言的事件內容範本
 
+**Jules 的分析與建議**：
+
+我已審閱此設計。此步驟定義了當告警觸發時，On-Call 工程師將會看到「什麼內容」。一個清晰、資訊豐富、包含上下文的事件內容，對於快速響應至關重要。現有的分析已準確地指出了實現此目標的核心：打造一個既易於使用，又能直接映射到 Grafana 引擎的強大模板化體驗。我將其設計確認如下。
+
+**後端架構與 API 設計 (Grafana 代理模式)**
+
+1.  **核心邏輯 - 映射至 Grafana Annotations**:
+    此 UI 直接設定 Grafana 告警規則的 `annotations`。
+    *   **事件標題樣板**: 此欄位的內容將填入 Grafana 規則的 `summary` annotation。
+    *   **事件內容樣板**: 此欄位的內容將填入 `description` annotation。
+    *   **變數格式**: UI 中使用的 `{{variable}}` 語法，後端在發送給 Grafana 前，會將其翻譯成 Grafana 相容的 Go 模板語法 (例如 `{{ .Labels.instance }}`)。
+
+2.  **變數 API (`GET /api/v1/event-rules/template-variables`)**:
+    此 API 為 UI 的「可用變數」區塊和「即時預覽」功能提供數據。其回應必須是結構化的，包含變數名稱、描述和一個用於預覽的範例值。
+
+    *   **Response Payload 範例**:
+        ```json
+        [
+          {
+            "name": "{{resource.name}}",
+            "description": "觸發事件的資源名稱。",
+            "example_value": "db-mysql-prod-01"
+          },
+          {
+            "name": "{{metric.value}}",
+            "description": "觸發事件時的指標數值。",
+            "example_value": "92.5"
+          },
+          {
+            "name": "{{threshold}}",
+            "description": "規則中設定的閾值。",
+            "example_value": "90"
+          }
+        ]
+        ```
+
+3.  **前端狀態管理**:
+    與前幾個步驟相同，此處輸入的所有資料 (`title_template`, `content_template`) 都會被加入到正在前端狀態中建構的規則物件裡。進入下一步時無需呼叫 API。
+
+**UX/UI 強化建議**：
+
+1.  **即時預覽 (Live Preview)**: 這是**不可或缺的必備功能**。頁面應包含一個「預覽」面板，隨著使用者在模板中輸入而即時更新。此面板應使用 API 回傳的 `example_value` 來渲染出最終告警的樣貌，給予使用者最直接的反饋，確保所見即所得。
+    *   **預覽範例**:
+        > **標題**: `db-mysql-prod-01 - CPU 使用率 (%) 異常`
+        > **內容**: `db-mysql-prod-01 的 CPU 使用率 (%) 已持續 5 分鐘超過閾值 90。目前數值為 92.5。請立即關注！`
+
+2.  **分級事件內容 (Per-Severity Content)**: (進階功能) 目前的 UI 為整個規則定義了一套標題/內容。一個重要的功能增強是，允許使用者為上一步中定義的**不同事件等級（WARNING, CRITICAL）設定不同的模板**。
+    *   UI 可在「事件內容」區塊中使用頁籤 (`WARNING`, `CRITICAL`) 來切換。
+    *   這將帶來更豐富的通知。例如，`CRITICAL` 告警的內容可以自動包含 On-Call 手冊的連結和 `@on-call-lead` 的升級路徑，而 `WARNING` 告警可能只包含儀表板的連結。
+
+3.  **內建 Markdown 編輯器 (Built-in Markdown Editor)**: 「事件內容樣板」的輸入框應為一個所見即所得（WYSIWYG）的 Markdown 編輯器，提供基礎的格式化工具（如粗體、斜體、列表、連結），讓非技術使用者也能輕鬆建立豐富且易讀的告警內容。
+
+總之，一個具備即時預覽和豐富變數支援的模板化系統，是確保告警通知品質的關鍵。
+
 #### 編輯事件規則 - 自動化 [編輯事件規則4-自動化](images/22-彈窗-事件規則-編輯事件規則4-自動化.png)
 
 **功能描述**：
@@ -528,6 +1054,7 @@
 
 **相關 API 端點**：
 - `GET /api/v1/scripts?compatible_with=event_rules` - 獲取適用腳本列表
+- `POST /api/v1/event-rules` - 建立或更新完整的事件規則
 
 **UX 改善建議**：
 1. **腳本測試**：提供腳本的測試執行功能，驗證參數和執行結果
@@ -535,6 +1062,81 @@
 3. **執行條件**：支援設定腳本的執行條件和優先級
 4. **結果處理**：配置腳本執行結果的處理方式（更新事件狀態、發送通知等）
 5. **依賴管理**：支援腳本間的依賴關係和執行順序
+
+**Jules 的分析與建議**：
+
+我已審閱此設計。這是將平台從一個被動的監控工具，提升為一個具備主動修復能力的「自愈」系統的關鍵一步。其核心是建立事件規則與自動化腳本之間清晰、可靠且安全的綁定。
+
+**後端架構與 API 設計**：
+
+1.  **最終規則 Payload (`POST /api/v1/event-rules`)**:
+    這是精靈的最後一步。當使用者點擊「完成」時，前端應將所有四個步驟的資料組裝成一個完整的規則物件。其中的 `automation` 部分應具備靈活的結構，以支援靜態和動態參數。
+
+    *   **Automation 物件結構範例**:
+        ```json
+        // 包含在最終事件規則物件中的 automation 欄位
+        "automation": {
+          "enabled": true,
+          "script_id": "scr_auto_scaling_for_web_servers",
+          "parameters": [
+            {
+              "name": "instance_count",
+              "value_type": "STATIC", 
+              "value": "3"
+            },
+            {
+              "name": "target_resource",
+              "value_type": "DYNAMIC_FROM_EVENT",
+              "value": "{{resource.name}}"
+            }
+          ]
+        }
+        ```
+
+2.  **腳本列表 API (`GET /api/v1/scripts`)**:
+    此 API 用於填充「選擇腳本」下拉選單，其回傳的內容**必須**包含每個腳本的參數定義，以便 UI 動態生成參數輸入欄位。
+
+    *   **Response Payload 範例**:
+        ```json
+        [
+          {
+            "id": "scr_auto_scaling_for_web_servers",
+            "name": "Auto-scaling for Web Servers",
+            "description": "動態擴展 Web 伺服器實例數量。",
+            "parameters": [
+              {
+                "name": "instance_count",
+                "type": "INTEGER",
+                "required": true,
+                "description": "期望的實例總數。"
+              },
+              {
+                "name": "target_resource_group",
+                "type": "STRING",
+                "required": true,
+                "description": "要擴展的資源群組名稱。"
+              }
+            ]
+          }
+        ]
+        ```
+
+3.  **後端觸發邏輯**:
+    當事件規則被觸發時，事件處理服務會檢查規則中是否包含已啟用的 `automation` 設定。如果有，它將：
+    a. 解析 `parameters` 陣列，將 `DYNAMIC_FROM_EVENT` 類型的參數值（如 `{{resource.name}}`）替換為真實的事件內容。
+    b. 向**自動化執行服務**發送一個新的執行任務請求，包含 `script_id` 和解析後的完整參數。
+    c. 該次執行將被記錄到 `execution_logs` 表，並包含觸發它的 `event_id`，以實現完整的可追溯性。
+
+**UX/UI 強化建議**：
+
+1.  **智慧參數映射 (Intelligent Parameter Mapping)**: 這是此介面的**核心體驗**。當使用者選擇一個腳本後，UI 應根據腳本的 `parameters` 定義，為每個參數動態生成一個輸入元件。
+    *   **提供映射選項**: 每個參數輸入元件旁，都應有一個切換開關或下拉選單，允許使用者在「**靜態值**」（手動輸入）和「**從事件中獲取**」之間選擇。
+    *   **動態變數選擇**: 當選擇「從事件中獲取」時，應提供一個包含所有可用事件變數（如 `{{resource.name}}`, `{{metric.value}}`）的下拉選單，供使用者選擇。
+    *   **智慧推薦**: 如果腳本參數的名稱（如 `target_resource`）與事件變數的名稱（如 `resource.name`）相似，系統應自動推薦此映射，以減少使用者的配置負擔。
+
+2.  **增加確認步驟 (Final Confirmation Step)**: 在點擊「完成」按鈕之前，強烈建議增加一個唯讀的「**確認設定**」步驟。此頁面將清晰地匯總前四步的所有配置，讓使用者在儲存前有最後一次機會審查整個規則，特別是將要執行的自動化動作及其參數，這是防止錯誤配置的關鍵安全措施。
+
+3.  **權限與安全 (Permissions & Security)**: `GET /api/v1/scripts` API 回傳的腳本列表**必須**基於當前使用者的權限進行過濾。並非所有使用者都有權限將所有腳本（特別是高風險腳本）設定為自動執行。
 
 #### 編輯靜音規則 - 基本資訊 [編輯靜音規則1-基本資訊](images/23-彈窗-靜音規則-編輯靜音規則1-基本資訊.png)
 
@@ -553,6 +1155,59 @@
 4. **範本驗證**：在應用範本前預覽其影響範圍
 5. **權限控制**：基於角色和團隊控制範本的使用權限
 
+**Jules 的分析與建議**：
+
+我已審閱此設計。此精靈是用於建立**可重複使用的、週期性的靜音規則**，這是本平台的核心功能之一，旨在解決原生 Grafana 功能的不足。此第一步的重點在於定義規則的業務目的，並透過範本加速常見場景的設定。
+
+**後端架構與 API 設計**：
+
+1.  **核心邏輯 - 平台管理的排程作業**:
+    週期性靜音規則是本平台獨有的概念。後端**必須**在自身資料庫中儲存完整的規則定義（名稱、描述、CRON 排程、匹配範圍等）。一個獨立的**排程器服務**會：
+    a. 定期檢查所有已啟用的週期性靜音規則。
+    b. 當偵測到某個規則進入其生效時間時，動態地**透過 Grafana API 建立一個標準的一次性靜音 (Silence)**。
+    c. 在規則的失效時間到達時，再次**透過 Grafana API 刪除**該次性靜音。
+
+2.  **範本 API (`GET /api/v1/silence-rule-templates`)**:
+    「快速套用範本」功能是提升效率的關鍵。此 API 的回應應包含能預先填寫精靈所有步驟的資料。
+
+    *   **Response Payload 範例**:
+        ```json
+        [
+          {
+            "id": "tpl_weekend_maintenance",
+            "name": "週末維護窗口",
+            "prefilled_data": {
+              "rule_name": "週末資料庫維護窗口",
+              "description": "每週六凌晨 2-4 點的資料庫例行維護，期間靜音相關告警。",
+              "schedule": {
+                "type": "RECURRING",
+                "cron": "0 2 * * 6", // At 02:00 on Saturday
+                "duration": "2h"
+              },
+              "scope": {
+                "matchers": [
+                  { "key": "service", "value": "user-database", "isRegex": false }
+                ]
+              }
+            }
+          }
+        ]
+        ```
+
+3.  **前端狀態管理**:
+    與事件規則精靈一樣，點擊「下一步」時**不應**呼叫 API。此步驟的資料 (`rule_name`, `description`) 應儲存在客戶端狀態管理器中，待精靈最後一步完成時，才將完整的規則物件組裝並發送到後端。
+
+**UX/UI 強化建議**：
+
+1.  **範本優先的工作流程 (Template-First Workflow)**:
+    此介面設計已經很好地突顯了範本。可以進一步強化，例如在視覺上將範本區塊置於更核心的位置，引導使用者將其作為首選的、最快的操作路徑。
+
+2.  **允許儲存自訂範本 (Custom Templates)**:
+    在精靈的最後確認步驟中，提供一個「**另存為範本**」的核取方塊或按鈕。這能讓團隊將自己常用的維護操作（如「每月結算批次作業」）儲存起來，極大提升未來操作的效率和一致性。
+
+3.  **引導式文字 (Guiding Placeholder Text)**:
+    「規則名稱」和「描述」對於未來管理和審計至關重要。輸入框的預設提示文字應引導使用者撰寫清晰、有意義的內容，例如，在「描述」中提示：「請簡述此靜音規則的目的、範圍和時間，以便團隊其他成員理解。」
+
 #### 編輯靜音規則 - 設定排程 [編輯靜音規則2-設定排程](images/24-彈窗-靜音規則-編輯靜音規則2-設定排程.png)
 
 **功能描述**：
@@ -570,6 +1225,66 @@
 4. **排程衝突檢查**：自動檢查與現有靜音規則的時間衝突
 5. **重覆預覽**：顯示在選定時間內的靜音覆蓋情況
 
+**Jules 的分析與建議**：
+
+我已審閱此設計。這是週期性靜音規則功能的核心，其挑戰在於提供一個簡單易懂的 UI，同時能在後端轉譯為精確的機器可讀排程 (CRON 表達式)。
+
+**後端架構與 API 設計**：
+
+1.  **核心邏輯 - UI 至 CRON 的翻譯**:
+    此步驟的設定將被保存在前端狀態中，直到精靈完成的最後一步才統一提交。後端在收到最終的規則物件時，**必須**包含一個強大的翻譯邏輯，將 UI 中的語意化選項轉換為標準的 CRON 表達式。
+
+    *   **UI 選項**: `重複模式: 每月`, `執行日期: 每月最後一天`, `靜音時段: 22:00`, `持續時間: 8小時`
+        **後端翻譯** -> `cron: "0 22 L * *"` 且持續時長為 `8h`。
+    *   **UI 選項**: `重複模式: 每週`, `執行日期: 星期一, 星期三`, `靜音時段: 00:00`, `持續時間: 1h`
+        **後端翻譯** -> `cron: "0 0 * * 1,3"` 且持續時長為 `1h`。
+
+    儲存於平台資料庫中的規則，應同時包含語意化選項和最終生成的 CRON 字串，以供排程器服務使用。
+
+2.  **前端狀態的 Payload 結構**:
+    在前端狀態管理器中構建的 `schedule` 物件應具備如下結構：
+
+    ```json
+    "schedule": {
+      "type": "RECURRING", // 或 "ONE_TIME"
+      "recurrence": {
+        "mode": "MONTHLY", // "DAILY", "WEEKLY", "MONTHLY"
+        "day_of_month": "LAST_DAY", // 或 1-31
+        "day_of_week": null // 或 ["MON", "WED"]
+      },
+      "time_period": {
+        "start_time": "22:00:00",
+        "duration": "8h"
+      },
+      "validity": {
+        "type": "PERMANENT", // "UNTIL_DATE", "EXECUTE_COUNT"
+        "end_date": null,
+        "count": null
+      },
+      "timezone": "Asia/Taipei" // 必須明確指定時區
+    }
+    ```
+
+**UX/UI 強化建議**：
+
+1.  **自然語言預覽 (Natural Language Preview)**:
+    這是此介面**不可或缺**的功能。頁面中應有一個唯讀的文字區塊，隨著使用者變更選項而即時更新，用人類可讀的語言總結其設定。
+    *   **預覽範例**: 「此規則將於**每月最後一天**的 **22:00** 開始生效，並持續 **8 小時**。此排程將**永久有效**。」
+    *   **核心價值**: 提供即時、清晰的設定反饋，極大地降低使用者因誤解而配置錯誤的風險。
+
+2.  **明確的時區處理 (Explicit Time Zone Handling)**:
+    時區是排程功能中最常見的錯誤來源。
+    *   **顯示當前時區**: UI **必須**在時間設定旁清晰地標示出當前所使用的時區（例如：「所有時間均以 **Asia/Taipei** 時區為準」）。
+    *   **允許使用者選擇**: 理想情況下，應提供一個下拉選單讓使用者選擇他們期望的時區，並將該值 (`schedule.timezone`) 持久化。後續所有時間計算應由後端基於此時區進行。
+
+3.  **排程衝突視覺化 (Schedule Conflict Visualization)**:
+    在儲存前，系統應能檢查並提示潛在的排程衝突。
+    *   **API 建議**: `POST /api/v1/silence-rules/check-conflict`，此 API 接收一個排程草稿，並回傳與之重疊的現有規則列表。
+    *   **UI 提示**: 在精靈的最後確認步驟中，顯示一個非阻斷式的警告：「**注意：此排程與『週末維護』規則存在部分時間重疊。**」
+
+4.  **提供進階 CRON 輸入模式 (Advanced CRON Input)**:
+    對於高階使用者，應提供一個切換開關，允許他們直接輸入或編輯標準的 CRON 字串。UI 應能雙向同步：簡易模式的選項變更應反映在 CRON 字串上，反之亦然。這能同時滿足不同經驗水平使用者的需求。
+
 #### 編輯靜音規則 - 設定範圍 [編輯靜音規則3-設定範圍](images/25-彈窗-靜音規則-編輯靜音規則3-設定範圍.png)
 
 **功能描述**：
@@ -579,7 +1294,9 @@
 
 **相關 API 端點**：
 - `GET /api/v1/resources/groups` - 獲取資源群組列表
-- `GET /api/v1/tags` - 獲取資源標籤列表
+- `GET /api/v1/tags/keys` - 獲取所有可用的標籤鍵
+- `GET /api/v1/tags/values?key={key}` - 獲取指定標籤鍵的可用值
+- `POST /api/v1/silence-rules` - 提交完整的靜音規則以供建立
 
 **UX 改善建議**：
 1. **智能匹配**：支援模糊匹配、正則表達式和萬用字元
@@ -587,6 +1304,53 @@
 3. **分組管理**：支援多個匹配組和邏輯關係（AND/OR）
 4. **排除模式**：支援正向和反向匹配的組合
 5. **歷史範圍**：基於歷史使用的智能建議和快捷設定
+
+**Jules 的分析與建議**：
+
+我已審閱此設計。這是靜音規則建立的最後一步，也是最關鍵的一步。錯誤的範圍設定可能導致錯過關鍵告警，或意外地將整個生產環境靜音。因此，此介面的核心目標必須是**清晰度**與**可預測性**。
+
+**後端架構與 API 設計**：
+
+1.  **核心邏輯 - 翻譯為 Grafana Matchers**:
+    此 UI 收集的「靜音條件」最終會被翻譯成 Grafana Silence API 所需的 `matchers` 陣列。
+    *   **資源群組**: 這是平台的一個抽象概念。當使用者選擇一個資源群組（如 `monitoring`）時，後端應將其翻譯為一個標準的標籤匹配，例如 `{ "name": "resource_group", "value": "monitoring", "isRegex": false }`。
+    *   **資源標籤**: 這直接對應到一個 matcher。UI 中顯示的 `資源標籤 = staging`，將被翻譯為 `{ "name": "env", "value": "staging", "isRegex": false }`。（注意：UI 上的「資源標籤」應改為更精確的標籤鍵，如 `env`）。
+
+2.  **最終規則 Payload (`POST /api/v1/silence-rules`)**:
+    當使用者點擊「儲存規則」時，前端會組裝來自所有步驟的資料。`scope` 和 `options` 部分的結構應如下所示：
+    ```json
+    // 包含在最終靜音規則物件中的欄位
+    "scope": {
+      "matchers": [
+        { "name": "resource_group", "value": "monitoring", "isRegex": false },
+        { "name": "env", "value": "staging", "isRegex": false } 
+      ]
+    },
+    "options": {
+        "start_immediately": true,
+        "send_notification_on_start_end": false
+    }
+    ```
+    後端接收到此物件後，將其儲存至平台資料庫，並由排程器服務根據排程來管理 Grafana 中的實際靜音。
+
+3.  **支援性 APIs**:
+    *   `GET /api/v1/resource-groups`: 獲取資源群組列表以填充下拉選單。
+    *   `GET /api/v1/tags/keys`: 獲取所有可用的標籤**鍵**以填充下拉選單。
+    *   `GET /api/v1/tags/values?key=...`: 獲取指定標籤鍵的所有已知**值**以提供自動完成建議。
+    *   `POST /api/v1/silence-rules/preview`: **(關鍵 API)** 此 API 接收一組 `matchers`，並回傳它們當前會影響的活躍告警數量，以實現「即時影響預覽」。
+
+**UX/UI 強化建議**：
+
+1.  **即時影響預覽 (Live Impact Preview)**:
+    這是此介面**最重要**的功能，可以極大提升使用者的信心並防止錯誤。
+    *   **實現方式**: 當使用者新增、移除或編輯任何一個條件時，UI 應使用 debounce 機制呼叫 `/api/v1/silence-rules/preview` API。
+    *   **UI 反饋**: 頁面中應有一個清晰的文字區域，即時反饋結果，例如：「**此範圍將影響 15 個資源上的 23 條活躍告警。**」
+
+2.  **提供完整的匹配運算子 (Operator Flexibility)**:
+    目前的 UI 只顯示了 `=` 運算子。為了發揮 Grafana 的全部能力，**必須**支援其完整的運算子集：`!=` (不等於), `=~` (正則表達式匹配), 和 `!~` (正則表達式不匹配)。這對於建立靈活、精確的靜音規則至關重要。
+
+3.  **通知選項的清晰化**:
+    「靜音開始/結束時發送通知」是一個很好的功能。其標籤文字應更具體，以管理使用者預期，例如：「**靜音開始/結束時，向我的預設管道發送通知**」。
 
 ### 告警規則 [事件規則](images/11-頁面-事件規則.png)
 
@@ -722,6 +1486,28 @@
 4. **標籤管理**：提供直觀的標籤編輯器，支援拖拽和搜尋
 5. **配置模板**：為不同類型的資源提供配置模板
 
+**Jules 的分析與建議**：
+
+我已審閱此分析。此彈窗是**維護 CMDB 資料品質**的關鍵互動點。圖片中展示的「標籤」編輯介面尤其出色，它透過提供建議、描述和使用次數，極大地提升了使用者體驗和資料一致性。我的建議將聚焦於**資料治理**和**智慧化**的深化。
+
+**核心架構設計：資料治理與驗證**
+1.  **處理手動與自動化的衝突**：表單中的欄位（如 `IP 位址`, `類型`）可能由自動化探索工具填充。平台必須有明確的**資料來源優先級策略**。
+    *   **建議策略**：由自動化探索發現的欄位應預設為**唯讀 (Read-only)**，並在 UI 上用一個小圖示（如 🔗）標示其來源。若使用者確實需要覆寫，可以提供一個「解鎖」或「覆寫」按鈕，但此操作必須**記錄明確的審計日誌**，說明是誰在何時覆寫了自動值。
+    *   後端 API (`PUT /api/v1/resources/{id}`) 必須能處理這種帶有「覆寫」標記的更新請求。
+2.  **強化的後端驗證**：API 必須執行嚴格的資料驗證，例如：
+    *   `ip_address` 必須符合有效的 IP 格式。
+    *   `type` 必須是後台預先定義好的枚舉值之一。
+    *   所有傳入的標籤鍵和值，都應與「標籤管理」模組中定義的規則進行校驗。
+3.  **智慧標籤系統的後端支撐**：為了實現圖片中優秀的標籤 UI，後端需要提供：
+    *   `GET /api/v1/tags/keys`: 獲取所有已定義的標籤**鍵**，及其描述。
+    *   `GET /api/v1/tags/values?key=...`: 根據標籤**鍵**，獲取所有推薦的**值**及其使用次數。
+    *   **強制詞彙表 (Enforced Vocabulary)**：「標籤管理」模組應允許管理員設定某個標籤鍵（如 `env`）的值**只能**從一個預設列表（`production`, `staging`, `test`）中選擇。當 UI 偵測到這種強制性標籤時，應自動將值的輸入框從「自由輸入」轉換為「**下拉選單**」，從源頭上保證資料的一致性。
+
+**UX/UI 強化建議：提升確定性與可追溯性**
+1.  **完整的審計追蹤 (Audit Trail)**：每一次透過此彈窗進行的儲存操作，都**必須**產生一條詳細的**審計日誌**。日誌應記錄 `resource_id`、操作者、時間、**所有被變更欄位的前後值對比**。在彈窗的底部，可以增加一個「查看變更歷史」的連結，直接導向該資源的審計歷史記錄。
+2.  **視覺化區分資料來源**：如上所述，應在 UI 上清晰地標示出哪些欄位是使用者手動輸入的，哪些是由系統自動同步的。這有助於使用者理解資料的生命週期，避免混淆。
+3.  **智慧推薦資源群組**：目前是手動勾選所屬群組。可以基於該資源的**標籤**進行智慧推薦。例如，一旦一個資源被打上了 `app:database` 和 `env:production` 的標籤，系統可以自動**建議或預先勾選**「Production Database」這個資源群組，減少使用者的操作負擔。
+
 ### 資源群組 [資源群組](images/31-頁面-資源群組.png)
 
 **功能描述**：
@@ -745,6 +1531,31 @@
 4. **權限管理**：與團隊權限系統整合，控制群組訪問權限
 5. **自動分組**：基於標籤或規則的自動分組功能
 
+**Jules 的分析與建議**：
+
+我已審閱此分析。資源群組是實現**「責任到人」**和**「規模化管理」**的關鍵機制。它不僅是資源的容器，更是策略、權限和監控的**作用域 (Scope)**。此處的設計為後續的深度整合奠定了良好基礎。
+
+**核心架構設計：靜態與動態結合**
+1.  **支援兩種群組類型**：平台必須同時支援兩種群組模式，以應對不同的管理需求。
+    *   **靜態群組 (Static Group)**：由使用者**手動**將資源加入或移除。適用於邊界清晰、成員固定的業務服務。
+    *   **動態群組 (Dynamic Group)**：基於一組**標籤匹配規則**自動更新成員。例如，一個「生產環境 Nginx」群組可以由規則 `tags.env == "production" AND tags.app == "nginx"` 來定義。任何符合此規則的新資源都會被**自動納入**。
+    *   在「新增/編輯群組」的彈窗中，應提供一個切換開關來選擇群組類型。
+2.  **後端實現**：
+    *   `resource_groups` 資料表中需要一個 `type` 欄位 (`static` 或 `dynamic`) 和一個 `rules` 欄位 (JSONB，用於儲存動態規則)。
+    *   一個背景作業需要定期執行，掃描所有動態群組的規則，並更新其成員關係快取。
+3.  **API 效能**：
+    *   `GET /api/v1/resource-groups` API 回應中的「狀態」統計（健康、警告、嚴重）**絕不能**即時計算。這必須由一個非同步的背景作業（如每 5 分鐘）預先計算並快取。即時計算會導致嚴重的效能問題。
+
+**UX/UI 強化建議：群組即是迷你儀表板**
+1.  **讓統計數字可操作**：群組列表中的「狀態」欄位（如 `Healthy: 1`, `Warning: 0`, `Critical: 0`）不僅是數字，更應是**可點擊的篩選器**。點擊 `Critical: 0` 應直接跳轉到資源列表頁，並自動篩選出屬於「Production Database」群組且狀態為「Critical」的資源。
+2.  **增加趨勢與 SLO 視圖**：
+    *   在每一行增加一個**迷你趨勢圖**，顯示該群組內 `Critical` 事件在過去 24 小時的變化趨勢。
+    *   如果該群組關聯了服務等級目標 (SLO)，應在此處簡潔地顯示其**錯誤預算 (Error Budget)** 的剩餘百分比。這能為 SRE 提供極其重要的決策依據。
+3.  **群組作為全域篩選器**：資源群組應成為平台中一個**通用、一致的篩選維度**。在「事件列表」、「儀表板」、「自動化日誌」等所有相關頁面，都應提供按「資源群組」進行篩選的功能。
+4.  **強化責任歸屬**：
+    *   「負責團隊」欄位應是一個超連結，點擊後可跳轉到該團隊的詳細資料頁面。
+    *   應與通知系統整合，允許直接向某個群組的「負責團隊」發送通知。
+
 #### 編輯群組 [編輯群組](images/34-彈窗-資源群組-編輯群組.png)
 
 **功能描述**：
@@ -761,6 +1572,26 @@
 3. **依賴關係**：顯示和管理群組間的依賴關係
 4. **巢狀結構**：支援父子群組的階層式管理
 5. **活動日誌**：記錄和顯示群組的變更歷史
+
+**Jules 的分析與建議**：
+
+我已審閱此分析。此彈窗是定義**管理邊界**和**責任範圍**的核心介面。圖片中展示的雙欄選擇器 (Dual Listbox) 是管理**靜態群組**成員的經典作法。我的建議旨在引入**動態群組**的配置能力，並提升大規模環境下的可用性。
+
+**核心架構設計：引入動態群組的配置**
+1.  **引入模式切換 (Mode Switcher)**：這是最重要的架構升級。在彈窗頂部，應增加一個**模式切換器**（如分段控制器），包含兩個選項：
+    *   **「手動管理」**：選中時，顯示圖片中現有的雙欄選擇器，用於手動添加/移除資源。
+    *   **「規則管理」**：選中時，雙欄選擇器應被**替換**為一個**規則產生器 (Rule Builder)** 介面。此介面允許使用者定義一組基於**標籤**的匹配條件（如 `tags.env == "production" AND tags.app == "database"`）。
+2.  **規則管理的即時預覽**：在「規則管理」模式下，介面下方應有一個區域**即時預覽**目前符合規則的資源列表。這能讓使用者在儲存前，驗證其規則的準確性。
+3.  **靈活的後端 API**：`PUT /api/v1/resource-groups/{id}` API 的請求體 (Payload) 必須能夠靈活處理兩種模式：
+    *   若為手動模式，Payload 應包含一個 `resource_ids` 陣列。
+    *   若為規則模式，Payload 則應包含一個 `rules` 物件（例如 `{"operator": "AND", "conditions": [{"key": "tags.env", "op": "==", "value": "production"}]}`）。
+
+**UX/UI 強化建議：應對規模化挑戰**
+1.  **雙欄選擇器的延展性 (Scalability)**：當「可用資源」數量龐大時（數千個），目前的 UI 會失效。必須進行強化：
+    *   **後端分頁與搜尋**：兩個列表都必須實現**後端分頁**。使用者的捲動或點擊頁碼時，才向後端請求下一頁資料。
+    *   **進階篩選**：「可用資源」列表上方的搜尋框，不應只是一個簡單的文字搜尋。它應該是一個**進階篩選器**，允許使用者按資源**類型、狀態、標籤**等進行篩選，以快速找到他們想要添加的資源。
+2.  **明確化「負責團隊」的權責**：變更「負責團隊」是一個高風險操作，它直接影響到權限和通知。當使用者試圖修改此欄位時，應彈出一個**確認對話框**，明確告知其後果，例如：「您確定要將負責團隊變更為『資料庫團隊』嗎？該團隊的成員將獲得此群組內所有資源的管理權限。」
+3.  **與拓撲視圖的聯動**：在彈窗底部增加一個「**在拓撲圖中預覽**」按鈕。點擊後，可以在背景打開拓撲視圖，並高亮顯示當前群組的所有成員及其相互關係。這有助於使用者從架構的角度，審視群組成員的合理性。
 
 ### 資源拓撲 [拓撲視圖](images/32-頁面-拓撲視圖.png)
 
@@ -783,6 +1614,27 @@
 3. **路徑分析**：點擊節點顯示影響路徑和依賴鏈
 4. **佈局選項**：提供多種佈局演算法選擇（樹狀、環形、層次等）
 5. **篩選功能**：支援按類型、狀態、團隊等條件篩選顯示節點
+
+**Jules 的分析與建議**：
+
+我已審閱此分析。拓撲視圖不應只是一個靜態的架構圖，而應是一個**即時的、互動式的診斷儀表板**。它的核心價值在於將**抽象的依賴關係**與**即時的健康狀態**結合，幫助 SRE 快速定位問題根源和評估影響範圍。
+
+**核心架構設計：CMDB 作為單一事實來源 (SSOT)**
+1.  **數據來源必須是 CMDB**：此拓撲圖的品質完全取決於 CMDB 中**關係資料**的準確性。後端必須有一個清晰的資料庫模型來儲存節點（`nodes`，即 `resources` 表中的資源）和邊（`edges`）。`edges` 表應至少包含 `source_resource_id`, `target_resource_id` 和 `relationship_type`（如 `CONNECTS_TO`, `DEPENDS_ON`）等欄位。
+2.  **關係的維護**：平台必須提供維護這些關係資料的機制，理想情況下應結合：
+    *   **手動編輯介面**：允許架構師或 SRE 手動定義服務間的依賴關係。
+    *   **自動化探索 API**：提供 API 端點，讓外部的服務網格 (Service Mesh) 或網路監控工具可以將自動探索到的依賴關係推送至 CMDB。
+3.  **API 設計：分離靜態與動態資料**：
+    *   `GET /api/v1/topology?resource_group=...`：此 API 應用於獲取**靜態**的拓撲結構（節點和邊）。它必須支援按「資源群組」進行篩選，因為全域拓撲圖通常資訊量過大而難以使用。
+    *   **即時狀態推送 (WebSocket)**：前端在繪製出靜態拓撲圖後，應透過 WebSocket 訂閱可見節點的**健康狀態更新**。後端的一個服務會持續監控資源狀態，並在狀態變更時，將更新即時推送給前端。這種方式遠優於前端的輪詢。
+
+**UX/UI 強化建議：從「看圖」到「診斷」**
+1.  **健康狀態是第一視覺元素**：節點的顏色**不應**固定為其類型顏色。節點的**邊框顏色**應動態反映其**即時健康狀態**：`綠色`代表健康，`黃色`代表警告，`紅色`且**帶有脈衝動畫**代表嚴重。這能讓 SRE 在一秒內識別出問題節點。節點中心的圖示則可以保留其類型標識。
+2.  **互動式故障分析**：這是拓撲圖的核心價值。當使用者點擊一個**紅色**節點時：
+    *   **視覺化爆炸半徑 (Blast Radius)**：圖中所有與該故障節點**無關**的節點和連線都應**變暗**。所有**下游**的依賴節點應被高亮，清晰地展示出此次故障的**影響範圍**。
+    *   **視覺化上游依賴 (Upstream Dependencies)**：同時，所有**上游**的依賴節點也應被高亮，但使用不同的樣式（例如虛線高亮）。這為 SRE 提供了尋找**根本原因**的線索。
+3.  **邊 (Edge) 也是資訊載體**：不僅節點，節點之間的連線也應承載資訊。滑鼠懸停在連線上時，應顯示一個小彈窗，展示兩個服務間的關鍵指標，如**流量 (RPM)**、**錯誤率 (%)** 和 **延遲 (Latency)**。這些資料可以從服務網格或 APM 系統中獲取。
+4.  **提供「時間旅行」功能**：在介面下方增加一個時間滑桿，允許使用者回溯到過去的某個時間點（例如，事故發生時），查看當時的拓撲健康狀態快照。這對於事後複盤和理解故障演變過程非常有幫助。
 
 ---
 
@@ -809,6 +1661,30 @@
 4. **搜尋功能**：增加儀表板搜尋和過濾功能
 5. **使用統計**：顯示儀表板使用頻率和最後訪問時間
 
+**Jules 的分析與建議**：
+
+我已審閱此分析。此頁面是平台的**視覺化中樞入口**。根據 `architecture.md` 的指導原則，本平台不重複造輪子，而是作為 **Grafana 的智慧型抽象層**。因此，此頁面的核心是**管理與呈現**在 Grafana 中定義的儀表板，而非在本機重建。
+
+**核心架構設計：Grafana 的門戶 (Portal)**
+1.  **資料庫作為門戶索引**：本平台的後端資料庫 (PostgreSQL) 中應有一張 `dashboards` 表。此表不儲存儀表板的 JSON 內容，而是作為一個**索引或門戶**，儲存儀表板的**元資料**，核心欄位包括：
+    *   `title`: 在本平台顯示的友善名稱。
+    *   `description`: 功能描述。
+    *   `category`: 用於 UI 分類（如 `資源監控`, `業務監控`）。
+    *   `grafana_uid`: **最重要的欄位**，儲存對應的 Grafana 儀表板的唯一識別碼 (UID)。
+    *   `grafana_url`: (可選) 儀表板的直接 URL，用於嵌入。
+2.  **透過 `<iframe>` 嵌入**：當使用者點擊任何一個儀表板卡片時，前端不應嘗試自己去渲染圖表。而應導航到一個通用的儀表板檢視頁面，該頁面內嵌一個 `<iframe>`，其 `src` 指向對應的 Grafana 儀表板 URL，並帶上 `kiosk` 模式參數以隱藏 Grafana 自身的 UI 元素，實現無縫整合。
+3.  **權限代理**：本平台應提供統一的權限管理。當使用者試圖存取某儀表板時，本平台的後端應先檢查該使用者是否有權限（根據 `dashboards` 表的元資料），驗證通過後，才回傳包含 Grafana `src` 的頁面。這實現了比 Grafana 原生更靈活的權限控制。
+
+**UX/UI 強化建議：從「列表」到「工廠」**
+1.  **儀表板即代碼 (Dashboard as Code) 與範本化**：提供一個「**從範本新增**」的功能。管理員可以預先定義好適用於不同場景的**儀表板範本**（例如，「標準微服務監控範本」）。當需要為一個新服務建立儀表板時，使用者只需選擇該範本，並提供一些參數（如 `服務名稱`、`資源群組`），後端就會自動呼叫 Grafana API，**動態產生並部署**一個新的儀表板。
+2.  **個人化與我的最愛**：
+    *   允許使用者將任何儀表板「**釘選**」或「**加入我的最愛**」。頁面頂部應有一個「我的最愛」區域，優先顯示這些個人化的捷徑。
+    *   「預設首頁」應可由使用者在個人設定中**自行指定**。
+3.  **豐富化卡片資訊**：目前的卡片資訊略顯單薄。可以增加：
+    *   **儀表板縮圖**：後端可以定期對 Grafana 儀表板進行截圖，作為預覽圖顯示在卡片上。
+    *   **擁有者/團隊**：顯示該儀表板的負責團隊。
+    *   **標籤**：為儀表板本身也加上標籤，並提供按標籤篩選的功能。
+
 ### 基礎設施洞察 [基礎設施洞察](images/41-頁面-基礎設施洞察.png)
 
 **功能描述**：
@@ -832,6 +1708,27 @@
 4. **預測準確性**：顯示 AI 預測的置信度和歷史準確率
 5. **快速操作**：為高使用率資源提供快速擴容或優化建議
 
+**Jules 的分析與建議**：
+
+我已審閱此分析。此儀表板是 SRE 的**日常起點**，旨在提供一個關於基礎設施健康狀況的**高密度資訊概覽**。它完美地體現了本平台「統一管理平面」的價值——將來自 CMDB、監控系統和 AI 引擎的資料聚合在一個視圖中。
+
+**核心架構設計：一個被精心編排的 Grafana 儀表板**
+1.  **單一 Grafana 儀表板**：整個「基礎設施洞察」頁面本身就應該是一個**單一的、經過精心設計的 Grafana 儀表板**，然後被無縫嵌入到本平台中。平台負責管理其生命週期和存取權限。
+2.  **Grafana 的多源數據能力**：為了實現此儀表板，Grafana 必須被配置為可以從本平台的**所有相關數據源**中拉取資料：
+    *   **VictoriaMetrics**：用於「資源列表總覽」中的使用率指標。
+    *   **PostgreSQL**：Grafana 需要安裝 `PostgreSQL` 資料來源外掛程式，使其能夠直接查詢本平台的 CMDB 資料庫，以獲取頂部的 KPI 計數（如伺服器總數）和「需關注的資源列表」。
+    *   **AI 預測資料庫**：AI 引擎在進行風險預測後，應將其結構化的結果（`resource_id`, `prediction_text`, `confidence`, `risk_level`, `timestamp`）寫入一個專門的資料庫表（可以是 PostgreSQL 中的一張新表）。Grafana 透過查詢此表來填充「AI 風險預測」面板。
+3.  **API 的角色轉變**：本平台的後端 API 在此處的角色**不是**為前端提供渲染儀表板所需的所有資料。相反，它的職責是**為 Grafana 提供可查詢的資料端點**，或者確保 Grafana 能夠安全地直連到後端資料庫。
+
+**UX/UI 強化建議：萬物皆可下鑽 (Drill-Down)**
+1.  **無處不在的下鑽連結**：此儀表板上的**每一個數據點**都應該是一個下鑽的入口，以實現從「發現問題」到「定位問題」的無縫跳轉。
+    *   點擊頂部的 KPI（如「47 台伺服器」），應跳轉到**資源列表**頁面，並預先篩選好 `type=server`。
+    *   點擊「資源列表總覽」中的任何一個資源，應跳轉到該資源**專屬的、更詳細的監控儀表板**（這也是一個 Grafana 儀表板）。
+    *   點擊「AI 風險預測」中的一個條目，應彈出一個對話框，用**圖表**展示AI做出此預測的**依據**（例如，CPU 使用率的歷史趨勢圖和未來預測的擬合曲線）。
+    *   點擊「需關注的資源列表」中的一個資源，應跳轉到**事件列表**頁面，並預先篩選好該資源的所有活躍事件。
+2.  **賦予 AI 預測可解釋性**：AI 預測如果是一個黑盒子，就很難獲得 SRE 的信任。在每個預測旁邊，應增加一個「**查看詳情**」或「**解釋**」的按鈕。點擊後，展示用於推斷的關鍵指標圖表和分析摘要，讓 SRE 能夠理解和驗證預測的邏輯。
+3.  **全局時間範圍選擇器**：作為一個合格的儀表板，頁面頂部必須有一個**時間範圍選擇器**（如「過去 1 小時」、「過去 24 小時」）。這個選擇器會作為變數，傳遞給頁面中所有的 Grafana 面板，確保所有資料都在統一的時間維度下進行展示。
+
 ### SRE 戰情室 [SRE戰情室](images/42-頁面-SRE戰情室.png)
 
 **功能描述**：
@@ -854,6 +1751,29 @@
 3. **AI 簡報改善**：增加展開/收合功能，提供更詳細的分析內容
 4. **圖表優化**：條狀圖應支援 hover 顯示具體數值
 5. **實時更新**：增加自動刷新功能和最後更新時間顯示
+
+**Jules 的分析與建議**：
+
+我已審閱此分析。此「戰情室」儀表板是整個平台的**大腦和心臟**，其設計目標是從**業務視角**出發，回答「系統現在好不好？」和「我應該立即關注什麼？」這兩個核心問題。
+
+**核心架構設計：以「業務服務」為核心的 Grafana 儀表板**
+1.  **引入「業務服務」的抽象層**：為了實現「服務健康度總覽」，CMDB 中必須引入一個比「資源群組」更高層次的抽象——**「業務服務 (Business Service)」**。一個「業務服務」（如 `支付服務`）可以由**多個**「資源群組」（如 `支付API伺服器群組`、`支付資料庫群組`）組成。
+2.  **基於 SLO 的健康度計算**：圖中的「服務健康度總覽」熱圖，其顏色（健康/警告/嚴重）的依據應來自於**服務等級目標 (SLO)**。後端需要有一個服務，能夠：
+    *   為每個「業務服務」的每個監控維度（延遲、流量、錯誤、飽和度）定義 SLO。
+    *   持續計算當前的效能指標是否違反了 SLO。
+    *   將計算出的健康狀態結果存入資料庫，供 Grafana 查詢。
+3.  **AI 簡報的生成與呈現**：
+    *   後端的 AI Agent 應定期（如每小時）執行一個分析任務，掃描過去一小時的指標和事件，生成這段文字摘要。
+    *   摘要內容應包含 **Markdown** 格式的連結，以便在前端實現可點擊的跳轉。
+    *   `GET /api/v1/ai/daily-report` API 只需回傳儲存在資料庫中的最新簡報即可。
+
+**UX/UI 強化建議：將儀表板變為指揮中心**
+1.  **完全互動的熱圖 (Interactive Heatmap)**：熱圖是此儀表板的靈魂，它的每一個單元格都必須是可操作的。
+    *   **點擊單元格**：例如，點擊「支付服務」在「錯誤」維度的紅色格子，應能立即**下鑽 (Drill Down)** 到一個專門的、預先篩選好的儀表板，詳細展示「支付服務」的錯誤日誌、錯誤率趨勢和相關事件。
+    *   **懸停顯示細節 (Hover)**：滑鼠懸停在任何一個格子上，都應顯示一個工具提示，包含**當前的具體指標值**和觸發狀態變更的 **SLO 閾值**（例如，「錯誤率: 2.1% (閾值: >1%)」）。
+2.  **可操作的 AI 簡報**：簡報中的實體（如 `Production Web Servers`, `web-prod-03`）必須是**可點擊的超連結**，直接將 SRE 導向對應的資源群組儀表板或資源詳情頁面，實現從「閱讀」到「行動」的轉化。
+3.  **整合值班資訊 (On-Call Integration)**：戰情室最重要的資訊之一就是「誰能解決問題」。儀表板的顯著位置（例如右上角）應有一個**值班資訊面板**，顯示關鍵業務服務的**當前主/備值班人員**是誰，並提供一鍵聯絡（如點擊跳轉到 Slack）的功能。此資訊可透過 API 從 Grafana OnCall 或 PagerDuty 等工具同步。
+4.  **即時性是關鍵**：頂部的事件計數器等關鍵指標，必須透過 **WebSocket** 實現即時更新，確保戰情室的資訊沒有延遲。
 
 ---
 
@@ -885,6 +1805,35 @@
 4. **協作功能**：支援規劃報告的分享和團隊協作審查
 5. **警報整合**：設定容量閾值警報和提前通知機制
 
+**Jules 的分析與建議**：
+
+我已審閱此頁面設計。容量規劃是 SRE 從被動救火轉向主動預防的關鍵工具。此設計在視覺化和建議方面做得很好，但要將其從「報告」轉變為一個可信、可操作的「決策支援系統」，我們必須在後端架構、API 設計和前端互動性上進行深度強化。
+
+**後端架構與資料流程**：
+1.  **資料來源與時序資料庫**：
+    *   **資料來源**：此功能的所有歷史資料**必須**來自 `architecture.md` 中定義的 **VictoriaMetrics** 時序資料庫。
+    *   **查詢語言**：後端應使用 MetricsQL 進行高效的資料聚合查詢。
+2.  **非同步分析服務 (Async Analysis Service)**：
+    *   容量預測是一個計算密集型任務，**嚴禁**在 API 請求中即時計算。
+    *   應建立一個獨立的 Go **分析服務 (Analytics Service)**。此服務應透過背景排程作業（例如，每 24 小時）為所有關鍵資源和指標**預先計算**未來 90 天的趨勢預測。
+    *   預測結果（包括趨勢資料點、達到閾值的預計天數等）應被儲存在 **PostgreSQL** 資料庫的 `capacity_predictions` 表中，供 API 快速查詢。
+3.  **KPI 指標預計算**：頂部的 KPI 指標（數據點總數、準確率等）同樣需要由背景作業**預先計算並快取**在 Redis 中，以確保頁面載入速度。
+
+**API 設計**：
+*   `POST /api/v1/analytics/capacity/analyze`：此 API 不應觸發即時的、阻塞式的分析。它的職責是**提交一個非同步的分析任務**。後端應立即回傳一個 `task_id`，前端可使用此 ID 輪詢任務狀態或透過 WebSocket 接收完成通知。
+*   `GET /api/v1/analytics/capacity/trends?resource_group=...&metric=...`：此 API 應**直接查詢** PostgreSQL 中預先計算好的預測結果，以實現儀表板的秒級載入。其回傳應包含歷史資料和預測資料。
+*   `GET /api/v1/analytics/capacity/recommendations?prediction_id=...`：基於一個已完成的預測任務，獲取結構化的建議。回傳的 JSON 應包含建議文字和可執行的 `script_id`。
+
+**UX/UI 強化建議**：
+1.  **信任度與透明度**：
+    *   **顯示模型與信賴區間**：在「趨勢預測」圖表中，除了預測線，還應繪製出**信賴區間 (Confidence Interval)** 的陰影區域。並在圖表下方用小字註明使用的預測模型（如 ARIMA），這能極大提升 SRE 對預測結果的信任度。
+    *   **資料點回溯**：圖表應支援互動。使用者點擊圖表上的任一歷史資料點時，應能看到該時間點的原始指標快照或關聯的重大事件，幫助理解歷史趨勢的成因。
+2.  **情境化的自動化 (Contextual Automation)**：
+    *   「建議執行擴容腳本」按鈕是個亮點。應將其強化：點擊後，不應直接執行，而是彈出一個**參數預填的執行確認視窗**。例如，若建議是「增加 2 個 Web Server」，則彈窗中的腳本參數 `instance_count` 應預設填寫為 `2`。
+    *   此處應**提供多個推薦腳本**，而不只是一個。例如，除了「擴容」，還可能有關聯的「效能優化」或「資料清理」腳本可供選擇。
+3.  **What-If 分析模擬**：
+    *   提供一個「**模擬事件**」輸入功能。例如，使用者可以輸入「預計下月流量增長 50%」，後端分析服務接收此參數後，重新計算並在圖表上繪製一條**新的模擬預測線**。這個 What-If 分析能力，能將工具從「回顧」提升到真正的「規劃」層次。
+
 ---
 
 ## 5.自動化中心
@@ -914,6 +1863,37 @@
 4. **依賴管理**：顯示腳本間的依賴關係
 5. **協作功能**：支援腳本分享和團隊協作開發
 
+**Jules 的分析與建議**：
+
+我已審閱此頁面設計。腳本庫是 SRE 平台實現「自動化」價值的核心，是將人類知識轉化為可重複執行資產的關鍵場所。此頁面佈局清晰，但要使其成為一個安全、可靠、可治理的企業級功能，我們必須在後端架構、API 設計和 UX 上進行深度強化。
+
+**後端架構與設計**：
+1.  **腳本儲存策略：Git-as-a-Database**
+    *   **嚴禁**將腳本內容直接儲存在 PostgreSQL 中。這會導致版本控制混亂、缺乏審計追蹤，且難以進行程式碼審查 (Code Review)。
+    *   **正確做法**：後端應整合一個私有的 **Git 倉庫** (如 Gitea 或 GitLab) 作為腳本的「單一事實來源 (SSOT)」。
+    *   `scripts` 資料表在 PostgreSQL 中僅儲存**元數據** (metadata)，如 `script_name`, `description`, `creator_id`，以及最重要的 `git_repo_url` 和 `commit_hash`。
+2.  **非同步執行引擎**：
+    *   腳本執行**必須**是**非同步**的。後端應維護一個基於訊息佇列 (e.g., Redis Streams) 的**任務執行器池 (Worker Pool)**。
+    *   當使用者點擊「執行」時，API 僅是將一個「執行任務」推送到佇列中。Worker 從佇列中獲取任務，從 Git 倉庫拉取對應 `commit_hash` 的腳本內容，在一個**隔離的執行環境** (如 Docker 容器或 k8s Job) 中執行，並將執行日誌串流式地寫入 Elasticsearch。
+3.  **KPI 指標預計算**：頂部的 KPI 指標（成功率、執行次數等）必須由一個背景排程作業**預先計算並快取**在 Redis 中，絕不能在頁面載入時對日誌進行即時聚合查詢。
+
+**API 設計**：
+*   `POST /api/v1/scripts`：建立一個新腳本。後端接收到腳本內容後，應執行 `git commit` 和 `git push` 到內部倉庫，然後將元數據寫入資料庫。
+*   `POST /api/v1/scripts/{id}/execute`：提交一個**非同步執行任務**。請求體應包含執行參數。API 應立即回傳一個 `execution_id`，前端可使用此 ID 跳轉到該次執行的即時日誌頁面。
+*   `GET /api/v1/scripts/{id}/history`：(新建議) 獲取一個腳本的 **Git 提交歷史**，用於在 UI 上展現版本演進。
+*   `GET /api/v1/scripts/statistics`：從 Redis 快取中直接讀取預先計算好的 KPI 統計資料。
+
+**UX/UI 強化建議**：
+1.  **內建程式碼編輯器與版本控制**：
+    *   「編輯腳本」彈窗應內嵌一個功能強大的**網頁版 IDE** (如 Monaco Editor，VS Code 的核心)，提供語法高亮、自動補全和靜態檢查功能。
+    *   編輯器旁應有一個**版本歷史**分頁，清晰地展示每一次的 `git commit` 紀錄（包含提交者、時間和訊息）。使用者應能**比較任意兩個版本之間的差異 (diff)**，並能**一鍵還原**到任一歷史版本。
+2.  **安全與治理**：
+    *   **參數化與祕密管理**：腳本內容**嚴禁**硬編碼任何密碼、API 金鑰或 Token。平台應與 **HashiCorp Vault** 或類似的祕密管理工具整合。在腳本執行時，執行器負責從 Vault 中安全地注入所需的祕密。
+    *   **執行權限 (Execution Permissions)**：應引入基於角色的腳本**執行權限**。例如，只有「資料庫管理員」角色的成員才能執行標記為 `db-sensitive` 的腳本。
+3.  **提升易用性與協作**：
+    *   **測試與「試運行 (Dry Run)」**：為每個腳本提供一個「測試」按鈕。同時，腳本應支援「試運行模式」，在該模式下，腳本只打印將要執行的命令，而不實際執行，以供使用者驗證其行為。
+    *   **共享與審查**：提供將腳本分享給其他團隊成員進行審查的功能，整合一個簡易的程式碼審查流程。
+
 #### 編輯腳本 [編輯腳本](images/54-彈窗-腳本庫-編輯腳本.png)
 
 **功能描述**：
@@ -930,6 +1910,79 @@
 3. **可及性改善**：提升界面的可及性和易用性
 4. **性能優化**：優化載入速度和響應時間
 5. **錯誤處理**：完善錯誤提示和異常情況處理
+
+**Jules 的分析與建議**：
+
+我已審閱此抽屜設計。日誌詳情是 SRE 工程師排查自動化問題時花費時間最多的地方，其設計的優劣直接決定了平台的易用性和排錯效率。此設計已經包含了日誌等級篩選、搜尋等高級功能，非常出色。我的建議將聚焦於如何從架構和 UX 細節上，將其打磨得盡善盡美。
+
+**後端架構與設計**：
+1.  **資料來源：Elasticsearch**
+    *   後端**必須**從 **Elasticsearch** 中獲取指定 `execution_id` 的日誌文件 (Document)。此文件應包含所有元數據以及完整的 `output` 欄位。
+2.  **日誌等級篩選的實現**：
+    *   UI 上的「日誌等級」篩選**不應**在前端完成。前端篩選對於超大日誌會導致瀏覽器卡頓。
+    *   正確做法是：當使用者選擇一個日誌等級（如 `ERROR`）時，前端應重新呼叫 API，並附上篩選參數。後端將此條件轉換為 Elasticsearch 的查詢（例如，使用 `match` 查詢來過濾 `output` 欄位中包含 `ERROR` 字串的行），只回傳符合條件的日誌內容。
+
+**API 設計**：
+*   `GET /api/v1/execution-logs/{id}`：此 API 應作為此抽屜的主要資料來源。
+    *   它應回傳一個包含所有元數據（`script_name`, `status`, `duration_ms` 等）和日誌輸出 (`output`) 的 JSON 物件。
+    *   可選地，它可以接受查詢參數 `?log_level=ERROR` 或 `?q=keyword`，讓後端直接在 Elasticsearch 中完成篩選和搜尋，只回傳處理過的 `output`。
+*   `GET /api/v1/execution-logs/{id}/raw`：(新建議) 提供一個專門的端點，用於以 `text/plain` 格式下載完整的、未經處理的原始日誌檔案，方便使用者在本地使用 `grep` 等工具進行分析。
+
+**UX/UI 強化建議**：
+1.  **升級為真實的日誌檢視器 (Log Viewer)**：
+    *   目前的純文字展示區應升級為一個**虛擬化 (Virtualized)** 的日誌檢視器元件。虛擬化是處理大量日誌（數千至數萬行）而不會造成瀏覽器卡頓的**唯一**可行方案。
+    *   檢視器應對日誌行中的關鍵字（如 `ERROR`, `WARN`, `SUCCESS`, `panic`）和常見格式（如 JSON）進行**語法高亮**，極大提升可讀性。
+2.  **上下文的深度連結**：
+    *   抽屜頂部的所有元數據都應是可互動的：
+        *   點擊「腳本名稱」，應在新分頁中打開該腳本的編輯器，並定位到執行的具體 `commit_hash` 版本。
+        *   點擊「觸發方式」中的「`手動 (admin)`」，應能看到該使用者的簡要資訊。如果觸發方式是「事件」或「排程」，則應連結到對應的事件詳情或排程設定。
+3.  **增強的搜尋與篩選**：
+    *   搜尋框應支援**正則表達式**和**大小寫切換**選項。
+    *   當執行搜尋後，除了高亮匹配行，還應在檢視器的捲動條上標示出所有匹配項的位置，方便使用者快速定位。
+4.  **顯示執行參數**：
+    *   在元數據區域，必須增加一塊區域，清晰地展示**本次執行所使用的完整參數**。這對於理解腳本行為和復現問題至關重要。
+
+**Jules 的分析與建議**：
+
+我已審閱此彈窗設計。這是自動化中心的核心互動介面之一，是 SRE 專家知識的「寫入點」。目前的表單佈局很清晰，但我們可以透過引入專業開發工具的實踐，將其從一個簡單的「文字編輯器」升級為一個可靠、可追溯的「程式碼編輯器」。
+
+**後端架構與 Git 整合**：
+1.  **儲存即提交 (Save is Commit)**：
+    *   當使用者點擊「儲存」時，後端**必須**將此操作翻譯為一個 **Git Commit**。
+    *   後端服務應執行以下原子操作：
+        1.  從內部 Git 倉庫 `clone` 或 `pull` 最新的腳本。
+        2.  用新的「腳本內容」覆寫檔案。
+        3.  執行 `git add` 和 `git commit`。**Commit Message 必須是結構化的**，例如 `Update script 'Auto-scaling for Web Servers' by user 'admin' via SRE Platform`。
+        4.  執行 `git push` 將變更推回遠端倉庫。
+        5.  更新 PostgreSQL 中 `scripts` 表的 `commit_hash` 欄位，使其指向這個新的 Commit。
+2.  **參數定義的儲存**：
+    *   腳本的參數定義（名稱、類型、預設值、是否必需）不應儲存在腳本檔案內，而應作為**元數據**，以 JSONB 格式儲存在 PostgreSQL 的 `scripts` 表的 `parameters_definition` 欄位中。這使得平台可以在不解析腳本內容的情況下，快速生成執行時的輸入表單。
+
+**API 設計**：
+*   `PUT /api/v1/scripts/{id}`：此 API 的請求體 (Payload) 應包含：
+    *   `name`, `description` (基本資訊)。
+    *   `content` (新的腳本內容)。
+    *   `parameters_definition` (更新後的參數定義 JSON)。
+    *   `commit_message` (可選，若為空，後端應自動生成)。
+    *   後端處理此請求後，應回傳包含新 `commit_hash` 的完整腳本元數據。
+
+**UX/UI 強化建議**：
+1.  **引入 Web IDE (Monaco Editor)**：
+    *   目前的「腳本內容」只是一個簡單的 `<textarea>`。**必須**將其替換為 **Monaco Editor** (VS Code 的核心引擎)。這將立即帶來企業級的體驗，包括：
+        *   **精準的語法高亮** (Python, Bash, etc.)。
+        *   **程式碼自動補全**。
+        *   **語法錯誤即時提示 (Linting)**。
+        *   **程式碼摺疊**和**小地圖導航**。
+2.  **實現真正的版本控制 UI**：
+    *   在彈窗中增加一個「**版本歷史 (Version History)**」分頁。
+    *   此分頁應呼叫 `GET /api/v1/scripts/{id}/history` API 來獲取 Git 提交歷史。
+    *   UI 上應以列表形式展示每一次 Commit，包含 `commit_hash`、作者、時間和 Commit Message。
+    *   使用者可以點擊**任一 Commit** 查看當時的程式碼快照。
+    *   使用者可以選中**任意兩個版本**，UI 應在一個**並排比較 (Side-by-Side Diff)** 視圖中清晰地展示其差異。
+    *   每個歷史版本旁都應有一個「**還原到此版本 (Revert to this version)**」按鈕，讓 SRE 可以安全、快速地回滾錯誤的變更。
+3.  **增強的參數設定**：
+    *   參數類型不應僅限於 `String`。應擴充為一個更豐富的類型系統，至少包括 `String`, `Number`, `Boolean` (渲染為開關), 和 `Secret` (渲染為密碼輸入框，其值絕不應在 API 中明文傳輸，而應是一個指向 Vault 中祕密的引用)。
+    *   應允許為參數設定「**預設值**」和「**是否必填**」的選項。
 
 #### 編輯排程 - 簡易模式 [編輯排程-簡易模式](images/55-彈窗-排程管理-編輯排程-簡易模式.png)
 
@@ -948,6 +2001,41 @@
 4. **資源約束**：設定執行時間限制和資源使用限制
 5. **依賴排程**：支援任務間的依賴關係和條件觸發
 
+**Jules 的分析與建議**：
+
+我已審閱此彈窗設計。簡易模式是降低自動化使用門檻、讓非專家也能安全設定排程的關鍵。其核心價值在於**將複雜的 CRON 語法，抽象化為人類可理解的、引導式的選項**。
+
+**後端架構與設計**：
+1.  **核心職責：翻譯層 (Translation Layer)**
+    *   此 UI 的後端核心是一個**翻譯器**。它接收來自前端的、結構化的簡易排程物件，並將其可靠地轉換為標準的 CRON 表達式，然後儲存到資料庫的 `cron_expression` 欄位。
+    *   **範例翻譯**：
+        *   `{ "frequency": "daily", "time": "11:00" }` -> `0 11 * * *`
+        *   `{ "frequency": "weekly", "day_of_week": 6, "time": "14:30" }` -> `30 14 * * 6`
+        *   `{ "frequency": "monthly", "day_of_month": 1, "time": "01:00" }` -> `0 1 1 * *`
+    *   這個翻譯邏輯必須有完整的單元測試覆蓋，以確保其準確性。
+2.  **API 設計：統一入口，區分模式**
+    *   `POST /api/v1/schedules` 和 `PUT /api/v1/schedules/{id}` 的請求體 (Payload) 應包含一個 `mode` 欄位 (`"simple"` 或 `"advanced"`)。
+    *   如果 `mode` 是 `"simple"`，則 payload 應包含一個 `simple_schedule_data` 物件，其結構對應簡易模式的選項。後端在儲存前，會呼叫翻譯層將其轉換為 `cron_expression`。
+    *   如果 `mode` 是 `"advanced"`，則 payload 直接包含 `cron_expression` 字串。
+
+**UX/UI 強化建議**：
+1.  **即時反饋與預覽 (Real-time Feedback & Preview)**：
+    *   這是最重要的 UX 改善。當使用者在簡易模式下調整「執行頻率」或「執行時間」時，介面上**必須**有一個區域**即時顯示**對應的 CRON 表達式和**接下來 3 次的預計執行時間**。
+    *   例如，當使用者選擇「每日」和「11:00」，UI 上應立即顯示：
+        > 預覽: `0 11 * * *`
+        >
+        > 接下來的執行時間:
+        > - 2025-09-19 11:00:00 (Asia/Taipei)
+        > - 2025-09-20 11:00:00 (Asia/Taipei)
+        > - 2025-09-21 11:00:00 (Asia/Taipei)
+    *   這個即時預覽能給予使用者極大的信心，確保他們的設定被系統正確理解。
+2.  **明確的時區處理**：
+    *   「執行時間」輸入框旁應明確標示其所使用的**時區**（例如，顯示 `(UTC+8)` 或 `(Asia/Taipei)`）。
+    *   理想情況下，應允許使用者為每個排程單獨選擇時區，以應對跨國團隊或跨時區資源的管理需求。
+3.  **目標資源的智慧化**：
+    *   「目標資源」的下拉選單應支援**搜尋**和**分組**（按資源群組或標籤）。對於有大量資源的環境，這是確保可用性的基本要求。
+    *   選中資源後，應以標籤 (Tag) 的形式顯示，而不是一個擁擠的下拉選單。
+
 #### 編輯排程 - 進階模式 [編輯排程-進階模式](images/56-彈窗-排程管理-編輯排程-進階模式.png)
 
 **功能描述**：
@@ -964,6 +2052,35 @@
 3. **異常處理**：配置排程失敗時的重試策略和通知
 4. **歷史分析**：分析排程的執行歷史和性能趨勢
 5. **資源監控**：即時監控排程執行的資源使用情況
+
+**Jules 的分析與建議**：
+
+我已審閱此彈窗設計。進階模式賦予了 SRE 專家們最大的靈活性，讓他們可以定義任意複雜的排程。此模式的核心設計理念應是**在提供完全控制權的同時，給予足夠的輔助和驗證，防止因手誤引發的錯誤**。
+
+**後端架構與設計**：
+1.  **核心職責：驗證層 (Validation Layer)**
+    *   在進階模式下，後端的主要職責是**驗證**。當接收到 `PUT /api/v1/schedules/{id}` 請求且 `mode` 為 `"advanced"` 時，後端**必須**使用一個可靠的 Go Cron 解析函式庫 (如 `robfig/cron`) 來驗證 `cron_expression` 字串的語法是否有效。
+    *   如果語法無效，API **必須**回傳 `400 Bad Request` 狀態碼，並在回應主體中提供清晰的錯誤訊息，例如 `{"error": "Invalid CRON expression: field 'day of week' has value out of range"}`。
+2.  **API 設計**：
+    *   API 設計與簡易模式保持一致。當 `mode` 為 `"advanced"` 時，API 直接接收 `cron_expression` 字串，驗證後存入資料庫。
+    *   無論是簡易模式還是進階模式，後端都應在儲存後，立即根據最終的 `cron_expression` 計算 `next_execution_time` 並更新資料庫欄位，確保資料的一致性。
+
+**UX/UI 強化建議**：
+1.  **即時 CRON 驗證與翻譯器**：
+    *   這是此介面**最重要的 UX 強化**。絕不能讓使用者在點擊「儲存」後才發現 CRON 寫錯了。
+    *   當使用者在「CRON 表達式」輸入框中打字時，UI 應**即時**提供以下三種反饋：
+        1.  **語法檢查**：輸入框旁顯示一個圖示，有效時為綠色勾號 ✅，無效時為紅色叉號 ❌。
+        2.  **語義翻譯**：在輸入框下方，將 CRON 表達式**即時翻譯成人類可讀的語言**。例如，輸入 `0 11 * * 1-5` 後，下方立即顯示「此任務將在每個工作日 (週一至週五) 的上午 11:00 執行」。
+        3.  **執行預覽**：進一步顯示**接下來 5 次的預計執行時間**列表，並附上時區，讓使用者可以完全確認排程的行為是否符合預期。
+2.  **內建 CRON 語法速查表**：
+    *   點擊輸入框旁的資訊圖示 (`i`)，不應只是一個簡單的 Tooltip，而應彈出一個**包含常用範例的速查表 (Cheat Sheet)**。
+    *   這個速查表應提供類似以下的內容，並允許使用者**點擊範例直接填入**輸入框：
+        *   `* * * * *` - 每分鐘
+        *   `0 */2 * * *` - 每兩小時
+        *   `0 9-17 * * 1-5` - 每個工作日的 9 點到 17 點，每小時的 0 分
+        *   `@daily` - 每日凌晨 0 點 (等同於 `0 0 * * *`)
+
+透過這些強化，即使是進階模式，也能變得極為友好和高效，有效減少人為失誤，提升平台的整體可靠性。
 
 #### 執行日誌詳情 [執行日誌詳情](images/57-彈窗-執行日誌-執行日誌詳情.png)
 
@@ -1005,6 +2122,38 @@
 4. **依賴排程**：支援任務間的依賴關係設定
 5. **告警整合**：排程失敗時自動發送告警
 
+**Jules 的分析與建議**：
+
+我已審閱此頁面設計。排程管理是自動化中心的大腦，負責在無人干預的情況下，可靠、準時地觸發例行任務。此 UI 設計清晰地展示了排程的核心資訊，但其背後的後端架構是確保功能成敗的關鍵。
+
+**後端架構與設計**：
+1.  **核心引擎：持久化排程器 (Persistent Scheduler)**
+    *   後端**必須**採用一個支援**持久化**的 Go Cron 函式庫（如 `gocron` 搭配其 `postgres-adapter`）。這意味著即使後端服務重啟，已註冊的排程任務也不會遺失。
+    *   平台啟動時，排程器服務會從 `schedules` 資料表中載入所有「已啟用」的排程，並在記憶體中註冊對應的 Cron Job。
+2.  **資料庫模型 (`schedules` table)**：
+    *   核心欄位應包含：`id`, `name`, `script_id` (關聯到腳本), `cron_expression`, `is_enabled`, `parameters` (JSONB，儲存腳本執行時所需的參數), `last_execution_time`, `next_execution_time`, `last_status` (`SUCCESS`, `FAILED`)。
+    *   `next_execution_time` **必須**由後端排程器在每次任務執行完畢或更新排程後，根據 CRON 表達式**重新計算並寫回資料庫**。前端應直接讀取此欄位，而不是自行計算。
+3.  **排程觸發工作流程**：
+    *   當一個 Cron Job 被觸發時，排程器**不應直接執行**腳本。
+    *   正確流程是：排程器將一個「執行任務」（包含 `script_id` 和 `parameters`）推送到與腳本庫共用的**非同步任務佇列**中。
+    *   任務執行器 (Worker) 消費此任務，執行腳本，並在執行結束後，將結果（成功/失敗）和日誌 ID **回寫**到 `execution_logs` 表。同時，應有一個回呼 (callback) 機制來更新 `schedules` 表中對應任務的 `last_status` 和 `last_execution_time`。
+
+**API 設計**：
+*   `GET /api/v1/schedules`：回傳排程列表。此 API 應直接從 `schedules` 表中讀取資料，包含後端已計算好的 `last_status` 和 `next_execution_time`。
+*   `POST /api/v1/schedules`：建立新排程。後端在寫入資料庫的同時，必須向執行中的排程器服務**動態註冊**這個新的 Cron Job。
+*   `PUT /api/v1/schedules/{id}`：更新排程。後端需要先從排程器中移除舊的 Job，更新資料庫，然後再註冊一個新的 Job。
+*   `PUT /api/v1/schedules/{id}/toggle`：切換啟用狀態。後端根據 `is_enabled` 的值，向排程器服務動態新增或移除對應的 Cron Job。
+
+**UX/UI 強化建議**：
+1.  **CRON 表達式的人性化**：
+    *   在「CRON 條件」欄位（如 `每日 2:00`）旁，應增加一個資訊圖示 (`i`)。滑鼠懸停時，顯示一個工具提示 (Tooltip)，將 CRON 表達式**翻譯成人類可讀的語言**（例如，「此任務將在每個月的1號和15號的凌晨3點執行」）。可以使用 `cron-parser` 或類似函式庫在前端或後端實現。
+2.  **即時測試與反饋**：
+    *   在操作欄中，除了「編輯」和「刪除」，應增加一個「**立即執行 (Run Now)**」的按鈕。這允許使用者在不等待排程時間的情況下，立即觸發一次任務，以測試其正確性。
+3.  **無縫的日誌追蹤**：
+    *   「上次狀態」欄位中的 `SUCCESS`/`FAILED` 標籤應是一個**超連結**，直接鏈接到**該次執行的詳細日誌頁面**。這能讓使用者在排程失敗時，一鍵跳轉到日誌進行問題排查，形成高效的工作閉環。
+4.  **避免排程漂移 (Schedule Drift)**：
+    *   UI 應清楚地顯示每個時間戳的**時區**（例如，`Asia/Taipei`），並在排程編輯頁面中允許使用者為排程指定時區，以避免因夏令時或伺服器時區不同而導致的執行時間漂移問題。
+
 ### 執行日誌 [執行日誌](images/53-頁面-執行日誌.png)
 
 **功能描述**：
@@ -1024,6 +2173,50 @@
 3. **性能統計**：執行時間趨勢和性能分析
 4. **日誌導出**：支援日誌導出和長期歸檔
 5. **告警關聯**：關聯執行失敗與系統告警
+
+**Jules 的分析與建議**：
+
+我已審閱此頁面設計。執行日誌是自動化系統的「飛行紀錄儀」，不僅是排查問題的依據，也是衡量自動化有效性和安全性的關鍵。此 UI 提供了基本的列表和篩選，但要將其打造成一個強大的偵錯與審計工具，必須採用正確的後端技術並極大化其查詢能力。
+
+**後端架構與設計**：
+1.  **日誌儲存：Elasticsearch 為核心**
+    *   根據 `architecture.md`，所有日誌資料（包括此處的執行日誌）的**單一事實來源 (SSOT)** 應為 **Elasticsearch**。
+    *   **嚴禁**將日誌的完整輸出 (stdout/stderr) 儲存在 PostgreSQL 中，這會導致資料庫膨脹、查詢效能低下，且無法實現全文檢索。
+2.  **資料模型 (Elasticsearch Index)**：
+    *   應為執行日誌建立一個專門的 Elasticsearch 索引 (e.g., `execution-logs-YYYY.MM`)。
+    *   每個日誌文件 (Document) 都應是結構化的，包含以下關鍵欄位：
+        *   `execution_id` (keyword): 唯一執行 ID。
+        *   `script_id` (keyword): 關聯的腳本 ID。
+        *   `script_name` (keyword): 腳本名稱。
+        *   `trigger_type` (keyword): 觸發方式 (`EVENT`, `SCHEDULE`, `MANUAL`)。
+        *   `trigger_by` (keyword): 觸發者 (使用者 ID 或 `system`)。
+        *   `status` (keyword): `SUCCESS`, `FAILED`, `RUNNING`。
+        *   `start_time`, `end_time` (date): 起止時間。
+        *   `duration_ms` (long): 執行耗時（毫秒）。
+        *   `output` (text): **完整的 stdout/stderr 輸出**，這是實現全文檢索的關鍵。
+        *   `parameters` (object): 執行的輸入參數。
+3.  **日誌收集流程**：
+    *   任務執行器 (Worker) 在執行腳本時，應透過一個日誌函式庫 (如 Zap) 將日誌**直接、即時地**串流到 Elasticsearch，而不是在任務結束後才整批寫入。這使得使用者可以即時查看正在執行中的任務日誌。
+
+**API 設計**：
+*   `GET /api/v1/execution-logs`：此 API 的後端實現**必須**是查詢 **Elasticsearch**，而非 PostgreSQL。
+    *   **篩選**: API 應支援基於 `script_name`, `status`, `trigger_type` 和時間範圍 (`@timestamp`) 的精確篩選。
+    *   **全文檢索**: 圖片中的「搜尋腳本名稱或觸發者」搜尋框，其後端查詢應使用 Elasticsearch 的 `multi_match` 查詢，同時搜尋 `script_name`, `trigger_by` 和 **`output`** 欄位。這允許使用者輸入「`Error: connection refused`」來快速找到所有包含此錯誤訊息的執行記錄。
+*   `GET /api/v1/execution-logs/{id}`：獲取單一執行記錄的**完整**日誌輸出，同樣來自 Elasticsearch。
+
+**UX/UI 強化建議**：
+1.  **強化的日誌檢視器**：
+    *   點擊任一列表項目，應在一個**抽屜 (Drawer) 或彈窗 (Modal)** 中開啟一個功能豐富的日誌檢視器。
+    *   此檢視器必須提供**語法高亮**（若日誌內容為 JSON 或 YAML）、**顯示行號**和**一鍵複製完整日誌**的功能。
+    *   對於長日誌，應提供**即時搜尋和高亮**匹配關鍵字的功能。
+2.  **上下文的無縫追溯**：
+    *   表格中的「觸發方式」欄位應是**可點擊的超連結**。例如：
+        *   若為 `Event`，點擊後應彈出關聯事件的詳情。
+        *   若為 `Schedule`，點擊後應跳轉到該排程的設定頁面。
+        *   若為 `Manual (admin)`，點擊後應顯示該使用者的資訊。
+    *   「腳本名稱」也應直接連結到該腳本的編輯頁面。
+3.  **智慧化快速篩選器**：
+    *   除了時間和關鍵字，應在搜尋框旁提供一組**預設的快速篩選按鈕**，如：「**僅顯示失敗的**」、「**過去 1 小時內**」、「**由我觸發的**」。這能極大提升日常排錯效率。
 
 ---
 
@@ -1054,6 +2247,35 @@
 3. **登入歷史**：人員登入活動和安全記錄
 4. **自助服務**：人員自助修改基本資訊
 5. **整合認證**：支援 SSO 和多因素認證
+
+**Jules 的分析與建議**：
+
+我已審閱此頁面設計。此為平台權限管理的核心。然而，其目前的 API 設計和部分 UI 元素（如「新增人員」按鈕）與 `docs/architecture.md` 中**「人員狀態管理完全委託給 Keycloak」**的核心架構原則**嚴重衝突**。平台本身**不應**是使用者的來源，而應是 Keycloak 使用者在平台內**角色與權限的映射層**。因此，必須對此頁面的前後端設計進行重構。
+
+**後端架構與設計 (Keycloak 代理模式)**：
+1.  **使用者同步**：後端應有一個**背景同步服務**，定期透過 Keycloak Admin API 將使用者資料（ID, Name, Email, Status）同步到平台的 `users` 資料庫中。本地資料庫僅儲存 Keycloak User ID 的引用和平台自身的業務資料（如內部 `is_active` 狀態）。
+2.  **停用/啟用邏輯分離**：
+    *   UI 上的「啟用」開關應只控制平台 `users` 表中的內部 `is_active` 欄位。此欄位用於控制平台內的業務邏輯（如能否被指派任務），**不應**影響使用者在 Keycloak 中的登入能力。
+    *   真正的「停用登入」應是一個獨立、明確的操作（例如，在編輯頁面中有一個「停用此帳號的 SSO 登入」按鈕），它會透過 Keycloak Admin API 去停用對應的 Keycloak 帳號。
+3.  **軟刪除策略**：刪除人員時，**必須**遵循 `docs/architecture.md` 中定義的軟刪除策略。後端應在 `users` 表中設定 `deleted_at` 時間戳，並可選擇性地在 Keycloak 中停用該使用者，但**絕不能**從 Keycloak 中永久刪除，以保持歷史資料（如審計日誌）的完整性。
+
+**API 重構**：
+*   `GET /api/v1/users`：此 API 應回傳從本地資料庫（已與 Keycloak 同步）查詢的、經過豐富化（加入團隊、角色資訊）的使用者列表。
+*   **廢棄 `POST /api/v1/users`**：平台不應直接建立使用者。
+*   **新增 `POST /api/v1/users/invite`**：此 API 應接收 `email`, `roles`, `teams` 等資訊，然後透過 Keycloak Admin API 建立一個新使用者並向其發送邀請郵件。這是**唯一**正確的新增使用者流程。
+*   **重構 `DELETE /api/v1/users/{id}`**：此 API 應觸發**軟刪除**，而非物理刪除。
+*   `PUT /api/v1/users/{id}/toggle`：此 API 的邏輯是正確的，僅用於切換平台內部的 `is_active` 狀態。
+
+**UX/UI 強化建議**：
+1.  **重新命名核心操作**：
+    *   將「**新增人員**」按鈕明確改為「**邀請人員 (Invite User)**」。點擊後，彈出一個表單，讓管理員填寫 Email、初始角色和團隊。
+2.  **清晰的狀態展示**：
+    *   表格中應增加一欄「**帳號狀態 (Account Status)**」，用以顯示從 Keycloak 同步來的真實狀態，如 `Active`, `Invitation Sent`, `Disabled`。
+    *   目前的「啟用」開關應重新標示為「**平台內活躍 (Active in Platform)**」，並在滑鼠懸停時提供 Tooltip 解釋：「控制此使用者是否能在平台內被指派任務或接收通知，不影響其登入能力。」
+3.  **增強的搜尋與上下文**：
+    *   搜尋框應支援按姓名或 Email 進行後端搜尋。
+    *   表格中的「團隊」和「角色」欄位，如果條目過多，應折疊顯示，並在點擊後展開或以 Tooltip 顯示完整列表。
+    *   在每一行的操作功能中，增加一個「**查看審計日誌**」的快捷按鈕，直接跳轉到以此使用者為篩選條件的審計日誌頁面。
 
 #### 編輯人員 [編輯人員](images/65-彈窗-人員管理-編輯人員.png)
 
@@ -1323,70 +2545,142 @@ const operators = [
 #### 編輯通知策略2 [編輯通知策略2](images/74-彈窗-通知策略-編輯通知策略2.png)
 
 **功能描述**：
-- 通知策略編輯彈窗的第二步
-- 配置通知管道和接收對象
-- 支援多管道選擇和接收者設定
+- 通知策略編輯精靈的第二步：「設定通知管道」。
+- 核心目標是為此策略指定接收通知的管道（即 Grafana 的 Contact Points）。
+- 介面中包含一個「系統建議」區塊，並列出可供選擇的通知管道。
 
 **相關 API 端點**：
-- `PUT /api/v1/notification-policies/{id}` - 更新通知策略
+- `GET /api/v1/notification-channels` - 獲取所有可用的通知管道列表。
+- `GET /api/v1/teams/{id}/suggested-channels` - 獲取與資源群組關聯的團隊所推薦的通知管道。
 
 **UX 改善建議**：
-1. **功能完善**：根據具體功能需求提供相應的UX改善建議
-2. **使用者體驗優化**：改善界面交互和操作流程
-3. **可及性改善**：提升界面的可及性和易用性
-4. **性能優化**：優化載入速度和響應時間
-5. **錯誤處理**：完善錯誤提示和異常情況處理
+1. **清晰標示管道類型**：在每個管道名稱旁，應有明確的圖示（如 Slack, PagerDuty, Email）來標示其類型。
+2. **預設選中**：「系統建議」的管道應預設為選中狀態，簡化操作。
+3. **測試連結**：在每個管道旁提供一個「測試」按鈕，點擊後可以立即發送一條測試通知到該管道，以驗證其可用性。
+
+**Jules 的分析與建議**：
+
+此步驟將抽象的「團隊」與具體的「通知管道」連結起來，是確保告警能準確送達責任人的關鍵環節。
+
+**後端架構與 API 設計**：
+1.  **與 Grafana Contact Point 的映射**：此處選擇的每一個「通知管道」，在後端都對應一個 Grafana「接觸點 (Contact Point)」的 UUID。當使用者完成精靈時，這些 UUIDs 將被用來填充 Grafana Policy JSON 中的 `contact_point` 欄位。
+2.  **「系統建議」的實現**：這個功能需要平台自身維護數據模型。
+    *   `resource_groups` 表需要有一個 `responsible_team_id` 欄位。
+    *   `teams` 表可以關聯到一組預設的 `notification_channel_ids`。
+    *   當前端在步驟一選擇了某個資源群組後，它可以向後端請求建議的管道列表，後端根據上述關聯關係回傳推薦的管道。
+3.  **API Payload 結構**：提交到 `POST /api/v1/notification-policies` 的 payload 中，此步驟的數據應為一組 ID：
+    ```json
+    {
+      // ... data from step 1
+      "contact_point_ids": ["uuid-of-pagerduty", "uuid-of-slack"],
+      // ... data from step 3
+    }
+    ```
 
 #### 編輯通知策略3 [編輯通知策略3](images/75-彈窗-通知策略-編輯通知策略3.png)
 
 **功能描述**：
-- 通知策略編輯彈窗的第三步
-- 設定通知模板和進階選項
-- 支援自訂模板和額外配置
+- 通知策略編輯精靈的第三步：「新增匹配條件」。
+- 允許使用者在第一步選擇的「資源群組」基礎上，添加更精細的標籤匹配條件（Label Matchers），作為 AND 條件來進一步過濾告警。
+- 介面包含一個條件建構器，以及一個「智慧輸入提示」區塊。
 
 **相關 API 端點**：
-- `PUT /api/v1/notification-policies/{id}` - 更新通知策略
+- `GET /api/v1/tags` - 獲取所有可用的標籤鍵（Label keys）列表。
+- `GET /api/v1/tags/{key}/values` - 根據標籤鍵獲取其可用的值列表（用於下拉選單和自動完成）。
 
 **UX 改善建議**：
-1. **功能完善**：根據具體功能需求提供相應的UX改善建議
-2. **使用者體驗優化**：改善界面交互和操作流程
-3. **可及性改善**：提升界面的可及性和易用性
-4. **性能優化**：優化載入速度和響應時間
-5. **錯誤處理**：完善錯誤提示和異常情況處理
+1. **邏輯關係清晰化**：明確標示所有條件之間是「AND」關係。如果未來要支援「OR」，需要提供更明確的 UI 進行分組。
+2. **即時驗證**：對輸入的值進行即時驗證，例如，如果運算子是 `~` (regex match)，應驗證其是否為合法的正則表達式。
+3. **刪除確認**：刪除條件時應有二次確認，防止誤操作。
+
+**Jules 的分析與建議**：
+
+此步驟是整個精靈的點睛之筆，它將 Grafana 強大但複雜的標籤匹配功能，透過「智慧輸入」這個 UX 設計，變得極為友好和高效。
+
+**後端架構與 API 設計**：
+1.  **Matcher 翻譯**：後端的核心任務是將前端傳來的一組條件陣列，準確地翻譯成 Grafana Policy JSON 中的 `matcher` 物件。例如，`[{key: "team", op: "=", val: "DevOps Team"}]` 會被翻譯成 `{"team": "DevOps Team"}`。
+2.  **API Payload 結構**：在最終提交的 payload 中，此步驟的數據應為一個條件陣列：
+    ```json
+    {
+      // ... data from step 1 & 2
+      "additional_matchers": [
+        { "key": "team", "operator": "=", "value": "DevOps Team" },
+        { "key": "severity", "operator": "!=", "value": "info" }
+      ]
+    }
+    ```
+3.  **標籤值 API**：為了支援智慧輸入，後端必須提供高效的 API 來查詢標籤鍵和值。`GET /api/v1/tags/{key}/values` 的實作可能需要查詢 Prometheus/VictoriaMetrics 的元數據 API (`/api/v1/label/{label_name}/values`)，並對結果進行快取。
+
+**「智慧輸入」功能深度分析**：
+- **核心理念**：根據使用者選擇的**標籤鍵 (key)**，動態地切換最適合的**輸入元件**。
+- **實現邏輯**：
+    - **下拉選單 (Dropdown)**：適用於值是有限、固定的枚舉類型。例如 `severity` (`critical`, `warning`), `env` (`production`, `staging`)。這些固定的值應由平台管理員在「標籤管理」頁面中預先定義。
+    - **自動完成 (Autocomplete)**：適用於值是動態的、數量龐大的標籤。例如 `instance`, `pod_name`。前端在使用者輸入時，呼叫後端 API 進行模糊查詢。
+    - **自由輸入 (Free Text)**：適用於完全自定義的標籤，如 `alert_name` 或註解。
+- **運算子與輸入框的聯動**：當使用者選擇 `in` 或 `not_in` 運算子時，輸入框應自動轉換為一個支援輸入多個值的「多選標籤輸入框 (Multi-select Tag Input)」。
 
 #### 編輯通知管道 [編輯通知管道](images/76-彈窗-通知管道-編輯通知管道.png)
 
 **功能描述**：
-- 通知管道編輯彈窗
-- 配置通知管道的基本資訊和連接設定
-- 支援管道類型選擇和參數配置
+- 用於新增或編輯單一通知管道（Grafana Contact Point）的表單。
+- 根據選擇的「管道類型」，動態顯示對應的設定欄位（如 Email 的收件人、Webhook 的 URL）。
+- 提供「發送測試」和「儲存」操作。
 
 **相關 API 端點**：
-- `PUT /api/v1/notification-channels/{id}` - 更新通知管道
+- `PUT /api/v1/notification-channels/{id}` - 更新通知管道，後端代理至 Grafana API。
+- `POST /api/v1/notification-channels/{id}/test` - 發送測試通知，後端代理至 Grafana API。
 
 **UX 改善建議**：
-1. **功能完善**：根據具體功能需求提供相應的UX改善建議
-2. **使用者體驗優化**：改善界面交互和操作流程
-3. **可及性改善**：提升界面的可及性和易用性
-4. **性能優化**：優化載入速度和響應時間
-5. **錯誤處理**：完善錯誤提示和異常情況處理
+1. **動態表單**：表單欄位應根據「管道類型」的選擇而動態變化，並提供清晰的欄位說明和範例。
+2. **即時回饋**：「發送測試」操作後，應在介面上顯示一個明確的成功或失敗提示。如果失敗，應顯示從後端收到的具體錯誤訊息，幫助使用者即時修正設定。
+3. **安全提示**：對於需要輸入 Token 或 Webhook URL 的欄位，應有安全提示，告知使用者這些資訊將被安全儲存。
+
+**Jules 的分析與建議**：
+
+此表單是平台與 Grafana 接觸點配置互動的核心介面。其設計應聚焦於**易用性**和**即時驗證**。
+
+**後端架構與 API 設計**：
+1.  **API 代理**：`PUT` 和 `POST` 端點的核心職責是將前端傳來的簡化資料模型，準確地翻譯成 Grafana API 所需的 JSON 結構。例如，一個 Email 類型的管道，後端需要建構如下的 payload 去呼叫 Grafana：
+    ```json
+    {
+      "name": "Default Email",
+      "type": "email",
+      "settings": {
+        "addresses": "user1@example.com;user2@example.com"
+      }
+    }
+    ```
+2.  **同步的測試請求**：前端發起的「發送測試」請求應是一個**同步**操作。API `POST /api/v1/notification-channels/{id}/test` 應等待 Grafana 的測試請求完成，並將其成功或失敗的結果立即回傳給前端，以便 UI 能提供即時回饋。
 
 #### 通知詳情 [通知詳情](images/77-抽屜-通知歷史-通知詳情.png)
 
 **功能描述**：
-- 通知歷史詳情抽屜
-- 顯示單條通知的完整資訊和發送狀態
-- 包含通知內容、接收者和發送日誌
+- 從「通知歷史」列表點擊後，以抽屜 (Drawer) 形式展示的單條通知發送詳情。
+- 清晰地展示了通知的發送時間、狀態、接收管道、關聯告警等元數據。
+- 提供了通知內容的預覽、結構化的錯誤訊息（如果失敗）以及原始的 JSON Payload。
 
 **相關 API 端點**：
-- `GET /api/v1/notification-history/{id}` - 獲取通知詳情
+- `GET /api/v1/notification-history/{id}` - 從平台自身的歷史記錄資料庫中獲取指定通知的完整詳情。
 
 **UX 改善建議**：
-1. **功能完善**：根據具體功能需求提供相應的UX改善建議
-2. **使用者體驗優化**：改善界面交互和操作流程
-3. **可及性改善**：提升界面的可及性和易用性
-4. **性能優化**：優化載入速度和響應時間
-5. **錯誤處理**：完善錯誤提示和異常情況處理
+1. **關聯導航**：「關聯告警」的內容應是一個超連結，點擊後可以直接打開該告警的「事件詳情」彈窗，方便使用者追溯問題的完整上下文。
+2. **Payload 格式化**：「原始 Payload」區塊的 JSON 應被格式化、可摺疊、可複製，以提升可讀性和實用性。
+3. **重試按鈕**：如果通知狀態是「FAILED」，應在此抽屜的底部或頂部提供一個「重新發送」按鈕，方便使用者進行手動重試。
+
+**Jules 的分析與建議**：
+
+此詳情視圖的設計非常出色，特別是**同時提供了簡潔的錯誤摘要和完整的原始 Payload**，這對於 SRE 進行故障排除至關重要。
+
+**後端架構與 API 設計**：
+1.  **數據來源**：如前述，此處所有數據均來自平台自身的 `notification_history` 資料庫表，而非直接來自 Grafana。
+2.  **豐富的 Payload**：`GET /api/v1/notification-history/{id}` 回應的 JSON payload 應包含所有必要資訊，包括：
+    *   `metadata`: 包含時間、狀態、操作者等。
+    *   `channel_info`: 接收管道的詳細資訊。
+    *   `alert_context`: 關聯告警的摘要和 ID。
+    *   `content`: 格式化後的通知內容。
+    *   `result`: 包含 `status` (`SUCCESS`/`FAILED`) 和 `error_message` (如果失敗)。
+    *   `raw_payload`: 從 Grafana Webhook 接收到的原始 JSON 字串。
+3.  **關聯事件 ID**：為了實現 UX 建議中的「關聯導航」，後端在記錄通知歷史時，必須從 Grafana 的 Webhook payload 中解析出告警的唯一標識，並將其與歷史記錄關聯起來。
 
 #### 通知管道 [通知管道](images/71-頁面-通知管道.png)
 
@@ -1436,77 +2730,42 @@ const operators = [
 
 #### 標籤管理 [標籤管理](images/80-頁面-標籤管理.png)
 
-**功能描述**：
-- 系統標籤元數據管理
-- 標籤統計：標籤總數、活躍書籤、配置異動
-- 標籤分類導航（基礎設施、應用程式、組織結構、業務屬性、安全合規）
-- 標籤表格：名稱、分類、標籤值、必填狀態、使用次數
-
-**相關 API 端點**：
-- `GET /api/v1/tags` - 獲取標籤列表
-- `POST /api/v1/tags` - 創建新標籤
-- `PUT /api/v1/tags/{id}` - 更新標籤
-- `DELETE /api/v1/tags/{id}` - 刪除標籤
-- `GET /api/v1/tags/statistics` - 標籤使用統計
-
-**UX 改善建議**：
-1. **視覺化統計**：使用圖表顯示標籤使用分佈和趨勢
-2. **批次編輯**：支援批次修改資源標籤
-3. **標籤建議**：基於現有標籤提供智能建議
-4. **合規檢查**：檢查必填標籤的合規性狀態
-5. **標籤模板**：為不同資源類型提供標籤模板
-
-#### 新增標籤 [新增標籤](images/83-彈窗-標籤管理-新增標籤.png)
+*關聯圖片: [新增標籤](images/83-彈窗-標籤管理-新增標籤.png), [管理標籤值](images/84-彈窗-標籤管理-管理標籤值.png), [編輯標籤](images/85-彈窗-標籤管理-編輯標籤.png)*
 
 **功能描述**：
-- 標籤新增彈窗
-- 定義新的標籤鍵和基本屬性
-- 支援標籤類型選擇和必填設定
+- 一個集中的**標籤治理 (Tag Governance)** 模組，用於定義和管理整個平台的元數據標準。
+- 主頁面 (80) 提供已定義標籤的列表，包含其分類、允許的值、是否必填以及在系統中的使用次數。
+- 彈出視窗支援標籤的完整生命週期管理：
+    - (83) 新增標籤：定義一個新的標籤鍵 (key) 的綱要 (schema)。
+    - (85) 編輯標籤：修改標籤鍵的綱要。
+    - (84) 管理標籤值：為一個標籤鍵定義一組預設的、允許的值 (values)，並可為每個值指定顏色。
 
 **相關 API 端點**：
-- `POST /api/v1/tags` - 創建新標籤
+- `GET /api/v1/tags`: 獲取所有已定義的標籤綱要列表。
+- `POST /api/v1/tags`: 建立一個新的標籤綱要。
+- `PUT /api/v1/tags/{id}`: 更新一個標籤綱要。
+- `GET /api/v1/tags/{id}/values`: 獲取指定標籤的所有允許值。
+- `POST /api/v1/tags/{id}/values`: 為指定標籤新增一個允許值。
 
 **UX 改善建議**：
-1. **功能完善**：根據具體功能需求提供相應的UX改善建議
-2. **使用者體驗優化**：改善界面交互和操作流程
-3. **可及性改善**：提升界面的可及性和易用性
-4. **性能優化**：優化載入速度和響應時間
-5. **錯誤處理**：完善錯誤提示和異常情況處理
+1. **標籤合規性報告**：增加一個「合規報告」分頁，顯示所有違反標籤規則（如缺少必填標籤、使用了未定義的值）的資源列表。
+2. **視覺化使用分佈**：「使用次數」應可點擊，點擊後顯示該標籤及其值的詳細分佈圖表和使用該標籤的資源列表。
+3. **自動化標籤建議**：整合 AI 功能，掃描資源屬性並自動建議應用的標準化標籤，加速標籤的落地和標準化過程。
 
-#### 管理標籤值 [管理標籤值](images/84-彈窗-標籤管理-管理標籤值.png)
+**Jules 的分析與建議**：
 
-**功能描述**：
-- 標籤值管理彈窗
-- 為指定標籤鍵添加和管理標籤值
-- 支援多個標籤值的批量操作
+此功能是平台從一個單純的「監控工具」提升為一個「營運治理平台」的核心。一個混亂的標籤系統會讓告警路由、成本分攤、權限管理等所有上層建築都無法有效建立。因此，這個模組的定位是**平台元數據的單一事實來源 (SSOT)**。
 
-**相關 API 端點**：
-- `GET /api/v1/tags/{id}/values` - 獲取標籤值列表
-- `POST /api/v1/tags/{id}/values` - 新增標籤值
+**後端架構與 API 設計**：
+1.  **獨立的數據模型**：後端必須有獨立的資料庫表（如 `tags`, `tag_values`）來儲存這些治理規則。這與監控系統中實際存在的標籤是分離的，前者是「規範」，後者是「現實」。
+2.  **數據驅動的智慧輸入**：此模組是「編輯通知策略」中「智慧輸入」功能的**數據來源**。當使用者在其他地方需要輸入標籤時，前端應呼叫此處的 API (`GET /api/v1/tags/{key}/values`) 來獲取下拉選單或自動完成的選項。
+3.  **非同步的分析任務**：
+    *   **使用次數計算**：`usage_count` 欄位需要一個**背景排程作業**，定期去查詢監控系統（如 Prometheus/VictoriaMetrics 的元數據 API）或日誌系統，統計各個標籤的使用情況，並將結果寫回 `tags` 表。這絕不能在 `GET /api/v1/tags` 的請求中即時計算。
+    *   **合規性檢查**：同樣，一個背景作業需要定期從 CMDB 或雲端 API 獲取資源列表及其標籤，與本模組定義的規則進行比對，並將不合規的結果儲存到一張 `tag_compliance_violations` 表中，供「合規報告」頁面查詢。
 
-**UX 改善建議**：
-1. **功能完善**：根據具體功能需求提供相應的UX改善建議
-2. **使用者體驗優化**：改善界面交互和操作流程
-3. **可及性改善**：提升界面的可及性和易用性
-4. **性能優化**：優化載入速度和響應時間
-5. **錯誤處理**：完善錯誤提示和異常情況處理
-
-#### 編輯標籤 [編輯標籤](images/85-彈窗-標籤管理-編輯標籤.png)
-
-**功能描述**：
-- 標籤編輯彈窗
-- 修改標籤的基本屬性和配置
-- 支援標籤屬性更新和重新分類
-
-**相關 API 端點**：
-- `PUT /api/v1/tags/{id}` - 更新標籤
-
-**UX 改善建議**：
-1. **功能完善**：根據具體功能需求提供相應的UX改善建議
-2. **使用者體驗優化**：改善界面交互和操作流程
-3. **可及性改善**：提升界面的可及性和易用性
-4. **性能優化**：優化載入速度和響應時間
-5. **錯誤處理**：完善錯誤提示和異常情況處理
+**與其他系統的整合**：
+- **CMDB 同步**：此模組應能與企業的 CMDB 進行雙向同步，確保標籤定義的一致性。
+- **IaC 工具整合**：提供 API 或匯出功能，讓 Terraform/Ansible 等 IaC (Infrastructure as Code) 工具可以直接消費這裡定義的標籤規範，從源頭保證新建資源的標籤合規性。
 
 #### 郵件設定 [郵件設定](images/81-頁面-郵件設定.png)
 
@@ -1552,61 +2811,57 @@ const operators = [
 
 ## 9.個人資料
 
-### 個人資訊 [個人資訊](images/90-頁面-個人資料-個人資訊.png)
+### 個人資料
 
-**功能描述**：
-- 用戶個人信息管理
-- 個人資料表單：姓名、電子郵件、聯絡方式、個人簡介
-- 頭像上傳和個人化設定
+*關聯圖片: [個人資訊](images/90-頁面-個人資料-個人資訊.png), [偏好設定](images/91-頁面-個人資料-偏好設定.png), [密碼安全](images/92-頁面-個人資料-密碼安全.png)*
 
-**相關 API 端點**：
-- `GET /api/v1/users/profile` - 獲取個人資料
-- `PUT /api/v1/users/profile` - 更新個人資料
+**Jules 的分析與建議**：
 
-**UX 改善建議**：
-1. **即時預覽**：頭像上傳的即時預覽
-2. **數據驗證**：即時驗證輸入數據的格式
-3. **變更歷史**：顯示個人資料的變更歷史
-4. **隱私控制**：控制個人資料的可見範圍
-5. **導出功能**：支援個人資料的導出
+我已審閱此區塊的所有頁面。根據 `docs/architecture.md` 中「身份認證委託給 Keycloak」的核心原則，此區塊的設計必須進行重大調整，以確保職責分離，將身份管理完全交由 Keycloak 處理。目前的 UI 設計 (圖片 90 和 92) 與此架構存在直接衝突。
 
-### 偏好設定 [偏好設定](images/91-頁面-個人資料-偏好設定.png)
+---
 
-**功能描述**：
-- 用戶偏好和個人化設定
-- 介面設定：主題選擇、語言設定、顯示偏好
-- 通知偏好：通知類型和接收方式設定
+#### 個人資訊
 
-**相關 API 端點**：
-- `GET /api/v1/users/preferences` - 獲取用戶偏好
-- `PUT /api/v1/users/preferences` - 更新用戶偏好
+**功能描述 (重構後)**：
+- **唯讀地**展示當前登入使用者的核心身份資訊（姓名、電子郵件）。
+- 提供一個明確的連結，引導使用者到 Keycloak 的帳號管理中心去修改這些資訊。
 
-**UX 改善建議**：
-1. **預覽功能**：設定變更的即時預覽
-2. **重設選項**：提供恢復預設設定的選項
-3. **設定同步**：支援跨設備的設定同步
-4. **設定模板**：提供常用設定組合模板
-5. **智慧建議**：基於使用習慣的智能設定建議
+**API 設計 (重構後)**：
+- `GET /api/v1/users/me`: 此 API 應從使用者請求中的 JWT (JSON Web Token) 的宣告 (claims) 中解析出 `name` 和 `email`。後端**不應**從本地資料庫讀取這些資訊。
+- **移除** `PUT /api/v1/users/profile` 端點，因為平台不負責更新使用者個人資料。
 
-### 密碼安全 [密碼安全](images/92-頁面-個人資料-密碼安全.png)
+**UX/UI 重新設計**：
+1.  **欄位變更為唯讀**：「姓名」和「電子郵件」的輸入框必須改為**純文字顯示**，不可編輯。
+2.  **操作按鈕變更為連結**：移除「更新個人資訊」按鈕，替換為一個超連結，文字為「**前往 Keycloak 管理個人資料**」。此連結應指向 Keycloak Account Console 的 URL。
 
-**功能描述**：
-- 密碼管理和安全性設定
-- 密碼變更表單：舊密碼、新密碼、確認密碼
-- 安全問題和恢復選項設定
-- 登入設備管理和會話控制
+---
 
-**相關 API 端點**：
-- `POST /api/v1/users/change-password` - 變更密碼
-- `GET /api/v1/users/sessions` - 獲取登入會話
-- `DELETE /api/v1/users/sessions/{id}` - 終止會話
+#### 偏好設定
 
-**UX 改善建議**：
-1. **密碼強度指示**：即時顯示密碼強度
-2. **安全建議**：提供密碼安全性建議
-3. **登入歷史**：顯示登入歷史和異常檢測
-4. **裝置管理**：清晰顯示和管理登入裝置
-5. **緊急存取**：提供密碼遺失時的緊急存取選項
+**功能描述 (符合架構)**：
+- 管理使用者在**本平台內**的個人化設定，這些設定與其核心身份無關。
+- 例如：介面主題、預設登入頁面、時區偏好等。
+
+**API 設計 (符合架構)**：
+- `GET /api/v1/users/preferences`
+- `PUT /api/v1/users/preferences`
+- 這兩個 API 應在平台自身的資料庫中讀寫一張 `user_preferences` 表，並透過從 JWT 中獲取的使用者 UUID 進行關聯。此部分的設計是正確的。
+
+---
+
+#### 密碼安全
+
+**功能描述 (重構後)**：
+- 不提供任何修改密碼的表單。
+- 提供一個明確的連結，引導使用者到 Keycloak 去執行所有與密碼相關的安全操作。
+
+**API 設計 (重構後)**：
+- **移除** `POST /api/v1/users/change-password` 端點。平台後端絕不能處理任何與密碼相關的邏輯。
+
+**UX/UI 重新設計**：
+1.  **移除整個表單**：必須**完全移除**「目前密碼」、「新密碼」、「確認新密碼」三個輸入框以及「更新密碼」按鈕。
+2.  **替換為引導連結**：在頁面上放置一個醒目的按鈕或連結，文字為「**前往 Keycloak 修改密碼或設定 2FA**」。此連結應將使用者重定向到 Keycloak Account Console 的「Security」分頁。
 
 ---
 
