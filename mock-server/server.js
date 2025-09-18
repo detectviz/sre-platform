@@ -28,7 +28,7 @@ server.post('/api/v1/auth/login', (req, res) => {
   } else {
     res.status(401).jsonp({
       code: 'INVALID_CREDENTIALS',
-      message: '用戶名或密碼錯誤'
+      message: '人員名或密碼錯誤'
     });
   }
 });

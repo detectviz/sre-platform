@@ -104,7 +104,7 @@ const tagSystem = {
   business: [
     'core-business',      // 核心業務
     'payment-critical',   // 支付關鍵
-    'user-facing',       // 面向用戶
+    'user-facing',       // 面向人員
     'backend-service',   // 後端服務
     'data-pipeline'      // 資料管道
   ],
@@ -350,7 +350,7 @@ const incidentScenarios = {
 ### 5.3 改進的展示效果
 - 更專業的資料呈現
 - 更真實的使用場景
-- 更好的用戶體驗
+- 更好的人員體驗
 - 更強的說服力
 
 ## 六、實施步驟

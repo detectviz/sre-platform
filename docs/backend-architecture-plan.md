@@ -20,9 +20,9 @@
 
 ### 核心實體分析 (Entity Analysis)
 
-#### 1. 用戶與權限管理 (Users & Permissions)
+#### 1. 身份與存取管理 (Users & Permissions)
 ```sql
--- 用戶表 (基於 User 結構)
+-- 人員表 (基於 User 結構)
 CREATE TABLE users (
     id VARCHAR(36) PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -75,7 +75,7 @@ CREATE TABLE permissions (
     UNIQUE KEY unique_action_resource (action, resource)
 );
 
--- 關聯表：用戶團隊 (基於 user_teams)
+-- 關聯表：人員團隊 (基於 user_teams)
 CREATE TABLE user_teams (
     user_id VARCHAR(36) NOT NULL,
     team_id VARCHAR(36) NOT NULL,
@@ -85,7 +85,7 @@ CREATE TABLE user_teams (
     FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
 );
 
--- 關聯表：用戶角色 (基於 user_roles)
+-- 關聯表：人員角色 (基於 user_roles)
 CREATE TABLE user_roles (
     user_id VARCHAR(36) NOT NULL,
     role_id VARCHAR(36) NOT NULL,
@@ -381,7 +381,7 @@ CREATE TABLE audit_logs (
 ### 實施步驟
 
 #### 階段 1: 核心表結構 (Week 1)
-1. **用戶與權限表**: `users`, `teams`, `roles`, `permissions`
+1. **身份與存取管理表**: `users`, `teams`, `roles`, `permissions`
 2. **關聯表**: `user_teams`, `user_roles`, `role_permissions`, `team_subscribers`
 
 #### 階段 2: 資源管理表 (Week 2)
@@ -422,18 +422,18 @@ CREATE TABLE audit_logs (
 
 #### 3. 認證與授權
 - **JWT Token**: Bearer Token 認證
-- **角色基礎**: 基於用戶角色控制資源訪問
+- **角色基礎**: 基於人員角色控制資源訪問
 
 ### 核心 API 端點
 
-#### 用戶與權限管理 APIs
+#### 身份與存取管理 APIs
 ```yaml
-# 用戶管理
-GET /api/v1/users - 獲取用戶列表 (分頁、篩選、搜尋)
-POST /api/v1/users - 新增用戶
-GET /api/v1/users/{id} - 獲取用戶詳情
-PUT /api/v1/users/{id} - 更新用戶
-DELETE /api/v1/users/{id} - 刪除用戶
+# 人員管理
+GET /api/v1/users - 獲取人員列表 (分頁、篩選、搜尋)
+POST /api/v1/users - 新增人員
+GET /api/v1/users/{id} - 獲取人員詳情
+PUT /api/v1/users/{id} - 更新人員
+DELETE /api/v1/users/{id} - 刪除人員
 POST /api/v1/users/{id}/reset-password - 重置密碼
 
 # 團隊管理
@@ -580,7 +580,7 @@ GET /api/v1/dashboard/business - 獲取業務儀表板數據
 ### 實施步驟
 
 #### 階段 1: 核心 API 定義 (Week 1-2)
-1. **用戶與權限 APIs**: 認證、用戶管理、角色管理
+1. **身份與存取管理 APIs**: 認證、人員管理、角色管理
 2. **資源管理 APIs**: 資源 CRUD、分組管理
 3. **OpenAPI 文檔結構**: 建立完整的規範結構
 
@@ -615,7 +615,7 @@ GET /api/v1/dashboard/business - 獲取業務儀表板數據
 5. **驗證**: 請求參數和響應數據的雙向驗證
 
 ### 實現優先級
-1. **Phase 1**: 用戶認證與權限管理 (Week 1-2)
+1. **Phase 1**: 人員認證與權限管理 (Week 1-2)
 2. **Phase 2**: 資源管理系統 (Week 3-4)
 3. **Phase 3**: 事件與告警系統 (Week 5-6)
 4. **Phase 4**: 自動化系統 (Week 7-8)
@@ -651,12 +651,12 @@ GET /api/v1/dashboard/business - 獲取業務儀表板數據
 
 ### Week 1-2: 基礎架構搭建
 - [ ] 數據庫設計與初始化
-- [ ] 用戶認證系統實現
+- [ ] 人員認證系統實現
 - [ ] 基本 API 框架搭建
 
 ### Week 3-4: 核心功能開發
 - [ ] 資源管理模塊
-- [ ] 用戶權限系統完善
+- [ ] 人員權限系統完善
 - [ ] API 文檔完善
 
 ### Week 5-6: 業務邏輯實現
@@ -700,7 +700,7 @@ GET /api/v1/dashboard/business - 獲取業務儀表板數據
 1. **API 文檔**: 每個端點都有詳細說明
 2. **數據庫文檔**: 表結構和關聯說明
 3. **部署文檔**: 環境配置和部署指南
-4. **用戶手冊**: API 使用說明
+4. **人員手冊**: API 使用說明
 
 ---
 

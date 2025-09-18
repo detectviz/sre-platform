@@ -10,7 +10,7 @@ SRE 平台
 ├── 分析中心 (Analysis) - Tab 管理 (容量規劃)
 ├── 自動化中心 (Automation) - Tab 管理 (腳本庫 | 排程管理 | 執行日誌)
 └── 設定 (Settings) [父選單 - 預設展開]
-    ├── 用戶與權限 - Tab 管理 (人員管理 | 團隊管理 | 角色管理 | 審計日誌)
+    ├── 身份與存取管理 - Tab 管理 (人員管理 | 團隊管理 | 角色管理 | 審計日誌)
     ├── 通知管理 - Tab 管理 (通知管道 | 通知策略)
     └── 平台設定 - Tab 管理 (標籤管理 | 郵件設定 | 身份驗證)
 
@@ -46,7 +46,7 @@ SRE 平台
 - [x] 執行記錄頁面 (AutomationPage > ExecutionsPage)
 
 #### 設定
-- [x] 用戶管理子頁面 (Settings > UserManagementPage)
+- [x] 人員管理子頁面 (Settings > UserManagementPage)
 - [x] 團隊管理子頁面 (Settings > TeamManagementPage)
 - [x] 角色管理子頁面 (Settings > RoleManagementPage)
 - [x] 通知策略頁面 (Settings > NotificationStrategiesPage)
@@ -63,7 +63,7 @@ SRE 平台
 - [ ] 管理儀表板頁面 (executive-dashboard)
 - [ ] 自訂報告頁面 (custom-reports)
 
-#### 用戶與權限模組
+#### 身份與存取管理模組
 - [x] 個人信息頁面 (PersonalInfoPage)
 - [x] 密碼安全頁面 (PasswordSecurityPage)
 - [x] 偏好設定頁面 (PreferencesPage)
@@ -109,7 +109,7 @@ SRE 平台
 
 ### **開發優先順序建議**
 1. **高優先級**: 儀表板功能補全 (管理儀表板、自訂報告)
-2. **中優先級**: 用戶體驗優化 (個人中心頁面整合)
+2. **中優先級**: 人員體驗優化 (個人中心頁面整合)
 3. **低優先級**: 其他增強功能 (如高級分析、客製化儀表板等)
 
 ### **技術實現統計**
@@ -156,13 +156,13 @@ SRE 平台
 #### **API 資料結構** (snake_case)
 - **資源物件**: `key`, `name`, `type`, `status`, `ip_address`, `groups`, `tags`, `cpu_usage`, `memory_usage`, `created_at`, `updated_at`
 - **告警物件**: `id`, `severity`, `summary`, `resource_name`, `created_at`, `status`, `business_impact`
-- **用戶物件**: `id`, `username`, `email`, `name`, `roles`, `teams`, `enabled`, `last_login`, `created_at`
+- **人員物件**: `id`, `username`, `email`, `name`, `roles`, `teams`, `enabled`, `last_login`, `created_at`
 - **腳本物件**: `id`, `name`, `type`, `content`, `creator`, `status`, `created_at`, `updated_at`
 
 #### **JavaScript 物件** (camelCase)
 - **資源物件**: `key`, `name`, `type`, `status`, `ipAddress`, `groups`, `tags`, `cpuUsage`, `memoryUsage`, `createdAt`, `updatedAt`
 - **告警物件**: `id`, `severity`, `summary`, `resourceName`, `createdAt`, `status`, `businessImpact`
-- **用戶物件**: `id`, `username`, `email`, `name`, `roles`, `teams`, `enabled`, `lastLogin`, `createdAt`
+- **人員物件**: `id`, `username`, `email`, `name`, `roles`, `teams`, `enabled`, `lastLogin`, `createdAt`
 - **腳本物件**: `id`, `name`, `type`, `content`, `creator`, `status`, `createdAt`, `updatedAt`
 
 ---
@@ -250,7 +250,7 @@ SRE 平台
 
 1.  **「業務影響」顏色區分**: 「高」和「中」影響等級的顏色過於接近，建議使用更易區分的顏色（如：高-紅色, 中-橙色, 低-藍色）。
 2.  **「告警風暴」互動**: 將「風暴 (3)」標籤設計為可點擊的互動元件，點擊後可在表格內展開或收合被聚合的告警，提升資訊瀏覽效率。
-3.  **顯示用戶名稱**: 將「處理人」欄位中的用戶 ID (`u_2`) 直接顯示為用戶的真實姓名，提升可讀性。
+3.  **顯示人員名稱**: 將「處理人」欄位中的人員 ID (`u_2`) 直接顯示為人員的真實姓名，提升可讀性。
 4.  **減少視覺干擾**: 「操作」欄位的圖示按鈕可以預設隱藏，僅在滑鼠懸停於該行時顯示，使介面更簡潔。
 
 ---
@@ -261,8 +261,8 @@ SRE 平台
 
 #### 涉及 API 端點
 
-- **`GET /user/preferences?category=dashboard`**: 用於獲取當前用戶的偏好設定，以判斷哪個儀表板應被標記為「預設首頁」。
-- **`POST /user/preferences`**: 當實現「設為預設」功能時，用於更新用戶的偏好設定。
+- **`GET /user/preferences?category=dashboard`**: 用於獲取當前人員的偏好設定，以判斷哪個儀表板應被標記為「預設首頁」。
+- **`POST /user/preferences`**: 當實現「設為預設」功能時，用於更新人員的偏好設定。
 
 #### `openapi.yaml` 修正建議
 
@@ -271,8 +271,8 @@ SRE 平台
 #### 視覺與體驗 (UX) 改善建議
 
 1.  **豐富卡片資訊**: 在卡片上顯示關鍵指標預覽（例如：「基礎設施洞察」卡片顯示嚴重告警數，「SRE 戰情室」顯示核心業務 KPI），讓此頁面不僅是導航，更是資訊摘要。
-2.  **提供快速設定功能**: 在每張卡片的角落增加一個「釘選」或「星號」圖示，允許用戶直接在此頁面設定預設首頁，提升操作便捷性。
-3.  **預告未來功能**: 增加一個視覺上為「禁用」狀態的「新增儀表板」卡片，向用戶預告即將推出的自訂儀表板功能，並明確其入口位置。
+2.  **提供快速設定功能**: 在每張卡片的角落增加一個「釘選」或「星號」圖示，允許人員直接在此頁面設定預設首頁，提升操作便捷性。
+3.  **預告未來功能**: 增加一個視覺上為「禁用」狀態的「新增儀表板」卡片，向人員預告即將推出的自訂儀表板功能，並明確其入口位置。
 
 ---
 
@@ -282,7 +282,7 @@ SRE 平台
 
 #### 涉及 API 端點
 
-- **`GET /admin/stats/users` (`潛在遺漏`)**: 用於獲取頁面頂部的 KPI 統計數據（總用戶、在線用戶、團隊數等）。建議新增此類型的統計端點。
+- **`GET /admin/stats/users` (`潛在遺漏`)**: 用於獲取頁面頂部的 KPI 統計數據（總人員、在線人員、團隊數等）。建議新增此類型的統計端點。
 - **`GET /teams`**: 獲取團隊列表以填充表格。
   - **常用參數**: `?search=...`
 - **`POST /teams`**: 「新增團隊」按鈕的功能。
@@ -292,14 +292,14 @@ SRE 平台
 
 #### `openapi.yaml` 修正建議
 
-1.  **新增統計端點**: 建議新增 `GET /admin/stats/users` 或類似端點，統一提供用戶、團隊相關的統計數字。
+1.  **新增統計端點**: 建議新增 `GET /admin/stats/users` 或類似端點，統一提供人員、團隊相關的統計數字。
 2.  **新增批次操作端點**: 建議新增 `POST /teams/batch` 端點以支援批次刪除等操作。
 3.  **擴充 `Team` Schema**: 為了支援點擊「成員數」顯示成員列表的功能，可以在 `GET /teams/{teamId}` 的回應中包含完整的 `memberDetails`。目前的列表 API (`GET /teams`) 只需返回計數，是合理的。
 
 #### 視覺與體驗 (UX) 改善建議
 
 1.  **互動式計數**: 將「成員數」和「訂閱者數」欄位的數字改為可點擊的連結，點擊後彈出視窗顯示詳細列表。
-2.  **批次操作介面**: 當用戶勾選表格中的項目時，應在頁面底部出現一個浮動的「批次操作工具列」，提供「批次刪除」等功能。
+2.  **批次操作介面**: 當人員勾選表格中的項目時，應在頁面底部出現一個浮動的「批次操作工具列」，提供「批次刪除」等功能。
 3.  **連結負責人**: 將「負責人」欄位的姓名連結到對應的人員管理詳情頁面。
 
 ---
@@ -330,7 +330,7 @@ SRE 平台
 
 1.  **連結性**: 「所屬團隊」和「關聯事件」計數應設計為可點擊的連結，方便使用者快速下鑽到相關頁面。
 2.  **標籤互動**: 滑鼠懸停在「標籤」上時，應以 Tooltip 形式顯示其完整的鍵值對或描述。
-3.  **批次操作介面**: 與團隊管理頁面類似，當用戶勾選資源時，應出現一個浮動的批次操作工具列。
+3.  **批次操作介面**: 與團隊管理頁面類似，當人員勾選資源時，應出現一個浮動的批次操作工具列。
 
 ---
 
@@ -1411,7 +1411,7 @@ SilenceStats: {
   - **取消** - 關閉彈窗
   - **儲存** - 新增靜音規則
 
-## 設定 - 用戶與權限 (Settings > UserManagementPage)
+## 設定 - 身份與存取管理 (Settings > UserManagementPage)
 
 ### 組件參數
 **Props:**
@@ -1422,46 +1422,46 @@ SilenceStats: {
 - `activeTab: string` - 當前活躍標籤頁 ('users' | 'teams')
 - `searchValue: string` - 搜尋關鍵字
 - `filters: object` - 篩選條件
-- `modalVisible: boolean` - 用戶/團隊編輯模態框
-- `currentUser: User` - 當前編輯用戶
+- `modalVisible: boolean` - 人員/團隊編輯模態框
+- `currentUser: User` - 當前編輯人員
 - `currentTeam: Team` - 當前編輯團隊
 
-**頁面描述**: 用戶和團隊的統一管理中心
+**頁面描述**: 人員和團隊的統一管理中心
 
 **頁面標籤頁**:
-- **用戶管理** - 用戶帳號管理
+- **人員管理** - 人員帳號管理
 - **團隊管理** - 團隊組織管理
 
-### 用戶管理子頁面
+### 人員管理子頁面
 
 ### 組件參數
 **Props:**
 - `themeMode: string` - 主題模式
 
 **State:**
-- `users: User[]` - 用戶列表
+- `users: User[]` - 人員列表
 - `loading: boolean` - 載入狀態
 - `searchValue: string` - 搜尋關鍵字
 - `filters: object` - 篩選條件 {status: string[], roles: string[], teams: string[]}
 - `selectedRowKeys: string[]` - 選中的行鍵
-- `modalVisible: boolean` - 用戶編輯模態框
-- `currentUser: User` - 當前編輯用戶
+- `modalVisible: boolean` - 人員編輯模態框
+- `currentUser: User` - 當前編輯人員
 
 **API 參數:**
-- `GET /api/users` - 獲取用戶列表
+- `GET /api/users` - 獲取人員列表
   - Query: `{search: string, filters: object, sort: object}`
-- `POST /api/users` - 新增用戶
+- `POST /api/users` - 新增人員
   - Body: `UserCreateRequest`
-- `PUT /api/users/{id}` - 更新用戶
-- `DELETE /api/users/{id}` - 刪除用戶
+- `PUT /api/users/{id}` - 更新人員
+- `DELETE /api/users/{id}` - 刪除人員
 - `POST /api/users/{id}/reset-password` - 重置密碼
 
 **資料結構:**
 ```javascript
-// 用戶結構
+// 人員結構
 User: {
   id: string,                    // 唯一標識
-  username: string,              // 用戶名
+  username: string,              // 人員名
   email: string,                 // 電子郵件
   name: string,                  // 顯示名稱
   avatar: string,                // 頭像 URL
@@ -1471,47 +1471,47 @@ User: {
   status: string,                // 狀態 ('active'|'inactive'|'pending')
   lastLogin: string,             // 最後登入時間
   loginCount: number,            // 登入次數
-  preferences: object,           // 用戶偏好設定
+  preferences: object,           // 人員偏好設定
   enabled: boolean,              // 是否啟用
   created_at: string,            // 創建時間
   updated_at: string             // 更新時間
 }
 
-// 用戶統計
+// 人員統計
 UserStats: {
-  total: number,                 // 總用戶數
-  active: number,                // 活躍用戶數
-  inactive: number,              // 非活躍用戶數
-  pending: number                // 待激活用戶數
+  total: number,                 // 總人員數
+  active: number,                // 活躍人員數
+  inactive: number,              // 非活躍人員數
+  pending: number                // 待激活人員數
 }
 ```
 
-**頁面描述**: 系統用戶帳號的生命週期管理
+**頁面描述**: 系統人員帳號的生命週期管理
 
 **工具列按鈕**:
-- **搜尋框**: 搜尋用戶姓名或電子郵件
+- **搜尋框**: 搜尋人員姓名或電子郵件
 - **篩選按鈕**: 彈出篩選面板 (狀態、角色、團隊)
-- **新增用戶按鈕**: 開啟新增用戶彈窗
+- **新增人員按鈕**: 開啟新增人員彈窗
 
 **統計卡片區域**:
-- **總用戶數**
-- **活躍用戶數**
-- **今日登入用戶數**
+- **總人員數**
+- **活躍人員數**
+- **今日登入人員數**
 - **角色分佈統計**
 
 **表格欄位**:
-- **啟用** (`enabled`) - 用戶啟用狀態切換
-- **姓名** (`name`) - 用戶姓名
-- **電子郵件** (`email`) - 用戶郵箱
+- **啟用** (`enabled`) - 人員啟用狀態切換
+- **姓名** (`name`) - 人員姓名
+- **電子郵件** (`email`) - 人員郵箱
 - **團隊** (`teams`) - 所屬團隊名稱
 - **角色** (`roles`) - 角色標籤 (多個角色)
 - **最後登入** (`lastLogin`) - 最後登入時間
 
 **操作按鈕**:
-- **編輯** - 編輯用戶信息
-- **刪除** - 刪除用戶
+- **編輯** - 編輯人員信息
+- **刪除** - 刪除人員
 
-**新增用戶彈窗**:
+**新增人員彈窗**:
 - **寬度**: 600px
 - **表單欄位**:
   - **姓名** (`name`) - 必填
@@ -1523,7 +1523,7 @@ UserStats: {
   - **狀態** (`status`) - 下拉選單 (active/inactive/pending)
 - **操作按鈕**:
   - **取消** - 關閉彈窗
-  - **儲存** - 新增用戶
+  - **儲存** - 新增人員
 
 ### 團隊管理子頁面 (TeamManagementPage)
 
@@ -1600,9 +1600,9 @@ TeamStats: {
 - **寬度**: 600px
 - **表單欄位**:
   - **團隊名稱** (`name`) - 必填
-  - **負責人** (`owner`) - 下拉選單 (用戶列表)
-  - **成員** (`members`) - 多選下拉 (用戶列表)
-  - **訂閱者** (`subscribers`) - 多選下拉 (用戶+通知管道)
+  - **負責人** (`owner`) - 下拉選單 (人員列表)
+  - **成員** (`members`) - 多選下拉 (人員列表)
+  - **訂閱者** (`subscribers`) - 多選下拉 (人員+通知管道)
   - **描述** (`description`) - 文字域
 - **操作按鈕**:
   - **取消** - 關閉彈窗
@@ -1631,7 +1631,7 @@ TeamStats: {
 
 **設定分類標籤頁**:
 - **通知設定** - 郵件和通知配置
-- **身份驗證** - 用戶驗證和權限設定
+- **身份驗證** - 人員驗證和權限設定
 - **系統設定** - 通用系統配置
 
 #### 通知設定子頁面
@@ -1657,7 +1657,7 @@ TeamStats: {
 
 #### 身份驗證設定子頁面
 
-**頁面描述**: 用戶驗證和權限管理設定
+**頁面描述**: 人員驗證和權限管理設定
 
 **設定區域**:
 - **會話設定**: 登入會話超時配置
@@ -1733,7 +1733,7 @@ Notification: {
 - **狀態** (`status`) - 發送狀態標籤 (SUCCESS/FAILED)
 - **通知管道** (`channel`) - 目標管道 (Slack/Email/Webhook等)
 - **告警摘要** (`alert`) - 觸發告警的簡要描述
-- **發送者** (`actor`) - 觸發通知的系統或用戶
+- **發送者** (`actor`) - 觸發通知的系統或人員
 - **訊息內容** (`message`) - 通知訊息的摘要
 - **錯誤訊息** (`errorMessage`) - 發送失敗時的錯誤信息
 
@@ -1858,7 +1858,7 @@ Execution: {
 - **開始時間** (`startTime`) - 執行開始時間
 - **結束時間** (`endTime`) - 執行結束時間
 - **執行時間** (`duration`) - 執行耗時
-- **執行人** (`executor`) - 觸發執行的用戶
+- **執行人** (`executor`) - 觸發執行的人員
 - **輸出日誌** (`logs`) - 執行日誌摘要
 
 **操作按鈕**:

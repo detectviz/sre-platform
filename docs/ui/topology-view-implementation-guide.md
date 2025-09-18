@@ -29,7 +29,7 @@
     * **數據範例**：
         ```json
         [
-          { "id": "service-A", "name": "用戶認證服務", "type": "Service", "status": "Healthy" },
+          { "id": "service-A", "name": "人員認證服務", "type": "Service", "status": "Healthy" },
           { "id": "db-prod-01", "name": "主資料庫", "type": "Host", "status": "Critical" },
           { "id": "redis-cache-01", "name": "緩存", "type": "Cache", "status": "Healthy" }
         ]
@@ -89,7 +89,7 @@
 - **前端渲染**: 使用ECharts Graph圖表，支援力引導和環形佈局
 - **互動功能**: 完整支援節點點擊、懸停、拖拽、縮放等操作
 - **視覺化**: 雙重顏色編碼系統（資源類型 + 健康狀態）
-- **用戶體驗**: 詳細資訊面板 + 下鑽導航 + 操作說明
+- **人員體驗**: 詳細資訊面板 + 下鑽導航 + 操作說明
 
 #### **技術細節**
 - **組件**: `ResourceTopologyTab` (React Hook組件)

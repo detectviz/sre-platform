@@ -992,15 +992,24 @@
       background-color: rgba(255, 77, 79, 0.08) !important;
     }
 
-    /* 靜音規則設定透明背景 */
-    .silence-modal .ant-modal-content,
+    /* 靜音規則設定深色背景 */
+    .silence-modal .ant-modal-content {
+      background: var(--bg-elevated) !important;
+      border: 1px solid var(--border-base) !important;
+      border-radius: 12px !important;
+    }
+
     .silence-modal .ant-modal-body {
       background: transparent !important;
     }
 
-    .silence-modal .ant-table,
+    .silence-modal .ant-table {
+      background: rgba(255, 255, 255, 0.02) !important;
+    }
+
     .silence-modal .ant-table-tbody>tr>td {
       background: transparent !important;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
 
     /* 高亮行樣式 */
@@ -2907,7 +2916,7 @@
       border-left: 4px solid var(--border-light);
     }
 
-    /* 用戶管理和設定頁面特殊間距 */
+    /* 人員管理和設定頁面特殊間距 */
     .user-profile-section {
       margin-bottom: var(--spacing-xl);
       padding: var(--spacing-lg);
@@ -4240,6 +4249,11 @@
       padding: 0;
       border-radius: var(--radius-lg);
       overflow: hidden;
+      max-height: 600px;
+    }
+
+    .notification-popover .ant-popover-content {
+      max-height: 600px;
     }
 
     .notification-dropdown .notification-item:hover {
@@ -4721,7 +4735,7 @@
       background: rgba(255, 107, 107, 0.1) !important;
     }
 
-    /* 🎯 User Menu Styles - 用戶選單樣式 */
+    /* 🎯 Personnel Menu Styles - 人員選單樣式 */
     .user-menu-trigger:hover {
       background: rgba(255, 255, 255, 0.08) !important;
     }
@@ -4827,7 +4841,7 @@
 
   <script type="text/babel">
     const { useState, useEffect, useRef, useMemo, useCallback } = React;
-    const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert } = antd;
+    const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert, AutoComplete } = antd;
     const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, HomeOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, ArrowUpOutlined, ArrowDownOutlined, AlignCenterOutlined, CompressOutlined, ExpandOutlined, MinusOutlined, UnorderedListOutlined, WarningOutlined, GlobalOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } = icons;
     const { Title, Text, Paragraph } = Typography;
     const { TextArea } = Input;
@@ -7092,7 +7106,7 @@
           borderColor: 'rgba(255,255,255,0.2)',
           textStyle: { color: '#fff', fontSize: 11 },
           formatter: function (params) {
-            const services = ['用戶認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'];
+            const services = ['人員認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'];
             const signals = ['延遲 (Latency)', '流量 (Traffic)', '錯誤 (Errors)', '飽和度 (Saturation)'];
             const service = services[params.data[1]];
             const signal = signals[params.data[0]];
@@ -7103,7 +7117,7 @@
         // 新增點擊事件處理
         onClick: function (params) {
           if (onNavigate && params.data) {
-            const services = ['用戶認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'];
+            const services = ['人員認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'];
             const signals = ['延遲', '流量', '錯誤', '飽和度'];
             const service = services[params.data[1]];
             const signal = signals[params.data[0]];
@@ -7131,7 +7145,7 @@
         },
         yAxis: {
           type: 'category',
-          data: ['用戶認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'],
+          data: ['人員認證', '訂單系統', '支付閘道', '通知服務', '資料分析', '檔案儲存'],
           splitArea: {
             show: true
           },
@@ -7166,7 +7180,7 @@
           name: '服務健康度',
           type: 'heatmap',
           data: [
-            [0, 0, 0], [1, 0, 0], [2, 0, 1], [3, 0, 0],  // 用戶認證
+            [0, 0, 0], [1, 0, 0], [2, 0, 1], [3, 0, 0],  // 人員認證
             [0, 1, 0], [1, 1, 0], [2, 1, 0], [3, 1, 1],  // 訂單系統
             [0, 2, 1], [1, 2, 0], [2, 2, 2], [3, 2, 0],  // 支付閘道
             [0, 3, 0], [1, 3, 0], [2, 3, 0], [3, 3, 0],  // 通知服務
@@ -7697,7 +7711,7 @@
               </Col>
               <Col xs={24} sm={12} lg={6}>
                 <ContextualKPICard
-                  title="活躍用戶"
+                  title="活躍人員"
                   value={businessMetrics.activeUsers.toLocaleString()}
                   unit="人"
                   trend="+8.7%"
@@ -7713,7 +7727,7 @@
                   unit="%"
                   trend="+0.3%"
                   status="info"
-                  description="訪客至付費用戶"
+                  description="訪客至付費人員"
                   icon={<RiseOutlined />}
                 />
               </Col>
@@ -7820,8 +7834,8 @@
                     style={{ marginBottom: '12px' }}
                   />
                   <Alert
-                    message="用戶活躍度上升"
-                    description="活躍用戶數較上週同期增長 8.7%"
+                    message="人員活躍度上升"
+                    description="活躍人員數較上週同期增長 8.7%"
                     type="info"
                     showIcon
                   />
@@ -9816,7 +9830,7 @@
           { source: 'host_3', target: 'service_auth', label: '認證驗證' },
           { source: 'host_2', target: 'host_1', label: '資料讀寫' },
           { source: 'host_2', target: 'host_4', label: '緩存讀取' },
-          { source: 'service_auth', target: 'host_1', label: '用戶驗證' },
+          { source: 'service_auth', target: 'host_1', label: '人員驗證' },
           { source: 'service_order', target: 'host_1', label: '訂單儲存' },
           { source: 'service_order', target: 'host_4', label: '會話緩存' },
           { source: 'host_5', target: 'host_2', label: '容器管理' },
@@ -11164,7 +11178,7 @@
             dayjs().add(silenceDuration, 'hour')
           ],
           matchers: matchers,
-          creator: 'admin', // 應該從當前用戶獲取
+          creator: 'admin', // 應該從當前人員獲取
           enabled: true,
           createdFromIncident: silenceIncident.key
         };
@@ -11813,8 +11827,8 @@
         const entityPatterns = [
           { pattern: /'([^']+)' 服務/g, type: 'service' },
           { pattern: /([a-zA-Z-]+\d+(?:-[a-zA-Z]+)*)/g, type: 'resource' },
-          { pattern: /用戶([^。，\s]+)功能/g, type: 'business' },
-          { pattern: /用戶數據庫/g, type: 'database' }
+          { pattern: /人員([^。，\s]+)功能/g, type: 'business' },
+          { pattern: /人員數據庫/g, type: 'database' }
         ];
 
         let result = text;
@@ -11890,7 +11904,7 @@
           const timer = setTimeout(() => {
             // Mocked analysis result
             const rootCause = "根本原因很可能在於 'user-authentication' 服務中的內存洩漏，導致下游服務的連鎖故障。";
-            const impact = "對用戶登錄和註冊功能造成嚴重影響。用戶數據庫可能存在數據不一致的風險。";
+            const impact = "對人員登錄和註冊功能造成嚴重影響。人員數據庫可能存在數據不一致的風險。";
             const recommendations = [
               {
                 text: "立即重啟 'user-authentication' 服務",
@@ -13289,7 +13303,7 @@
                     <Button
                       onClick={() => setCurrentStep(currentStep - 1)}
                     >
-                      {`上一步：${steps[currentStep - 1].title}`}
+                      {`上一步：${steps[currentStep - 1]?.title || '上一步'}`}
                     </Button>
                   )}
                 </div>
@@ -13302,7 +13316,7 @@
                       type="primary"
                       onClick={() => setCurrentStep(currentStep + 1)}
                     >
-                      {`下一步：${steps[currentStep + 1].title}`}
+                      {`下一步：${steps[currentStep]?.title || '下一步'}`}
                     </Button>
                   ) : (
                     <Button
@@ -13495,6 +13509,132 @@
         { key: 'c_pagerduty_platform', name: 'Platform Team PagerDuty', type: 'PagerDuty', team: 'team_10' },
         { key: 'c_slack_platform', name: 'Platform Slack Channel', type: 'Slack', team: 'team_10' }
       ];
+
+      // 🎯 智慧匹配值輸入函數 - 根據標籤類型選擇最佳輸入方式
+      const getSmartValueInput = (condition, index) => {
+        const { key, value } = condition;
+
+        // 模擬數據 - 實際應該從 API 獲取
+        const mockData = {
+          severity: ['critical', 'warning', 'info', 'debug'],
+          env: ['production', 'staging', 'development', 'testing'],
+          team: ['Developers', 'DevOps Team', 'Database Team', 'Network Team', 'Security Team', 'Operations Team', 'Platform Team'],
+          component: ['network', 'firewall', 'load_balancer', 'kubernetes', 'docker', 'consul'],
+          category: ['security', 'performance', 'availability', 'capacity', 'configuration'],
+          instance: ['web-prod-01', 'web-prod-02', 'db-master-01', 'cache-01', 'api-gateway-01'],
+          service: ['user-service', 'order-service', 'payment-service', 'notification-service', 'analytics-service']
+        };
+
+        // 檢查是否為多選運算子
+        const isMultiSelectOperator = condition.operator === 'in' || condition.operator === 'not_in';
+
+        // 根據標籤類型選擇輸入方式
+        switch (key) {
+          // 📋 下拉選單 - 有限且固定值
+          case 'severity':
+          case 'env':
+          case 'team':
+          case 'component':
+          case 'category':
+            if (isMultiSelectOperator) {
+              // 多選模式
+              return (
+                <Select
+                  mode="multiple"
+                  placeholder="選擇多個值"
+                  style={{ flex: 1 }}
+                  value={value ? value.split(',').map(v => v.trim()) : []}
+                  onChange={vals => updateMatchCondition(index, 'value', vals.join(', '))}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {mockData[key]?.map(option => (
+                    <Select.Option key={option} value={option}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {key === 'severity' && (
+                          <Tag color={
+                            option === 'critical' ? 'red' :
+                              option === 'warning' ? 'orange' :
+                                option === 'info' ? 'blue' : 'gray'
+                          } size="small">
+                            {option.toUpperCase()}
+                          </Tag>
+                        )}
+                        {option}
+                      </div>
+                    </Select.Option>
+                  ))}
+                </Select>
+              );
+            } else {
+              // 單選模式
+              return (
+                <Select
+                  placeholder="選擇值"
+                  style={{ flex: 1 }}
+                  value={value}
+                  onChange={val => updateMatchCondition(index, 'value', val)}
+                  showSearch
+                  optionFilterProp="children"
+                >
+                  {mockData[key]?.map(option => (
+                    <Select.Option key={option} value={option}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {key === 'severity' && (
+                          <Tag color={
+                            option === 'critical' ? 'red' :
+                              option === 'warning' ? 'orange' :
+                                option === 'info' ? 'blue' : 'gray'
+                          } size="small">
+                            {option.toUpperCase()}
+                          </Tag>
+                        )}
+                        {option}
+                      </div>
+                    </Select.Option>
+                  ))}
+                </Select>
+              );
+            }
+
+          // 🔍 自動完成輸入框 - 大量且不固定值
+          case 'instance':
+          case 'service':
+            return (
+              <AutoComplete
+                placeholder="輸入或選擇值"
+                style={{ flex: 1 }}
+                value={value}
+                onChange={val => updateMatchCondition(index, 'value', val)}
+                options={mockData[key]?.map(option => ({
+                  value: option,
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <SearchOutlined style={{ color: 'rgba(255,255,255,0.5)' }} />
+                      {option}
+                    </div>
+                  )
+                }))}
+                filterOption={(inputValue, option) =>
+                  option.value.toLowerCase().includes(inputValue.toLowerCase())
+                }
+              />
+            );
+
+          // ✏️ 自由輸入 - 靈活匹配
+          case 'alert_name':
+          default:
+            return (
+              <Input
+                placeholder="輸入匹配值"
+                style={{ flex: 1 }}
+                value={value}
+                onChange={e => updateMatchCondition(index, 'value', e.target.value)}
+                prefix={<EditOutlined style={{ color: 'rgba(255,255,255,0.5)' }} />}
+              />
+            );
+        }
+      };
 
       const showModal = (strategy = null) => {
         setEditingStrategy(strategy);
@@ -14061,6 +14201,10 @@
                           <Select.Option value="alert_name">alert_name</Select.Option>
                           <Select.Option value="instance">instance</Select.Option>
                           <Select.Option value="service">service</Select.Option>
+                          <Select.Option value="env">env</Select.Option>
+                          <Select.Option value="team">team</Select.Option>
+                          <Select.Option value="component">component</Select.Option>
+                          <Select.Option value="category">category</Select.Option>
                         </Select>
                         <Select
                           style={{ width: '80px', flexShrink: 0 }}
@@ -14071,13 +14215,13 @@
                           <Select.Option value="!=">!=</Select.Option>
                           <Select.Option value="~">~</Select.Option>
                           <Select.Option value="!~">!~</Select.Option>
+                          <Select.Option value="in">in</Select.Option>
+                          <Select.Option value="not_in">not_in</Select.Option>
                         </Select>
-                        <Input
-                          placeholder="匹配值"
-                          style={{ flex: 1 }}
-                          value={condition.value}
-                          onChange={e => updateMatchCondition(index, 'value', e.target.value)}
-                        />
+
+                        {/* 🎯 智慧匹配值輸入 - 根據標籤類型選擇最佳輸入方式 */}
+                        {getSmartValueInput(condition, index)}
+
                         <Button
                           type="text"
                           danger
@@ -14095,6 +14239,23 @@
                     >
                       新增匹配條件
                     </Button>
+                  </div>
+
+                  {/* 💡 使用提示 */}
+                  <div style={{
+                    marginTop: '16px',
+                    padding: '12px',
+                    background: 'rgba(24, 144, 255, 0.1)',
+                    border: '1px solid rgba(24, 144, 255, 0.2)',
+                    borderRadius: '6px'
+                  }}>
+                    <Text style={{ fontSize: '12px', color: 'rgba(24, 144, 255, 0.9)' }}>
+                      💡 <strong>智慧輸入提示：</strong><br />
+                      • <strong>severity、env、team</strong>：提供下拉選單，確保準確性<br />
+                      • <strong>instance、service</strong>：支援自動完成，方便輸入<br />
+                      • <strong>alert_name、component</strong>：自由輸入，靈活匹配<br />
+                      • <strong>in/not_in 運算子</strong>：支援多選值，提高靈活性
+                    </Text>
                   </div>
                 </div>
               )}
@@ -14352,6 +14513,94 @@
         setIsModalOpen(false);
         setEditingSilence(null);
         form.resetFields();
+      };
+
+      // 🎯 靜音規則智慧輸入函數 - 根據標籤類型選擇最佳輸入方式
+      const getSilenceSmartValueInput = (selectedKey, style = {}) => {
+        // 靜音規則的標籤選項
+        const silenceOptions = {
+          severity: ['critical', 'warning', 'info', 'debug'],
+          environment: ['production', 'staging', 'development', 'testing'],
+          resource_name: ['web-server-01', 'db-master-01', 'cache-01', 'api-gateway-01'],
+          resource_group: ['production-web', 'production-db', 'staging-web', 'monitoring'],
+          alert_name: ['CPU使用率過高', '記憶體不足', '磁碟空間不足', '網路異常'],
+          resource_tag: ['production', 'staging', 'database', 'web-server', 'high-priority', 'team-alpha'],
+          component: ['network', 'firewall', 'load_balancer', 'kubernetes', 'docker', 'consul'],
+          team: ['Developers', 'DevOps Team', 'Database Team', 'Network Team', 'Security Team', 'Operations Team', 'Platform Team'],
+          category: ['security', 'performance', 'availability', 'capacity', 'configuration']
+        };
+
+        // 根據標籤類型選擇輸入方式
+        switch (selectedKey) {
+          // 📋 下拉選單 - 有限且固定值
+          case 'severity':
+          case 'environment':
+          case 'resource_group':
+          case 'resource_tag':
+          case 'component':
+          case 'team':
+          case 'category':
+            return (
+              <Select
+                placeholder="選擇值"
+                style={{ ...style }}
+                showSearch
+                filterOption={(input, option) =>
+                  (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
+                }
+              >
+                {silenceOptions[selectedKey]?.map(option => (
+                  <Select.Option key={option} value={option}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      {selectedKey === 'severity' && (
+                        <Tag color={
+                          option === 'critical' ? 'red' :
+                            option === 'warning' ? 'orange' :
+                              option === 'info' ? 'blue' : 'gray'
+                        } size="small">
+                          {option.toUpperCase()}
+                        </Tag>
+                      )}
+                      {option}
+                    </div>
+                  </Select.Option>
+                ))}
+              </Select>
+            );
+
+          // 🔍 自動完成輸入框 - 大量且不固定值
+          case 'resource_name':
+          case 'alert_name':
+            return (
+              <AutoComplete
+                placeholder={`輸入或選擇${selectedKey === 'resource_name' ? '資源名稱' : '事件名稱'}`}
+                style={{ ...style }}
+                options={silenceOptions[selectedKey]?.map(option => ({
+                  value: option,
+                  label: (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <SearchOutlined style={{ color: 'rgba(255,255,255,0.5)' }} />
+                      {option}
+                    </div>
+                  )
+                }))}
+                filterOption={(inputValue, option) =>
+                  option.value.toLowerCase().includes(inputValue.toLowerCase())
+                }
+              />
+            );
+
+          // ✏️ 自由輸入 - 靈活匹配
+          case 'alert_name':
+          default:
+            return (
+              <Input
+                placeholder="輸入匹配值"
+                style={{ ...style }}
+                prefix={<EditOutlined style={{ color: 'rgba(255,255,255,0.5)' }} />}
+              />
+            );
+        }
       };
 
       const onFinish = (values) => {
@@ -14664,7 +14913,11 @@
             width={900}
             centered
             className="silence-modal"
-            style={{ background: 'transparent' }}
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-base)',
+              borderRadius: '12px'
+            }}
           >
             {/* Modal Header */}
             <div className="modal-header" style={{
@@ -14958,13 +15211,16 @@
                                 {fields.map(({ key, name, ...restField }) => (
                                   <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline">
                                     <Form.Item {...restField} name={[name, 'key']} rules={[{ required: true }]}>
-                                      <Select className="select-xl" placeholder="標籤">
+                                      <Select className="select-xl" placeholder="選擇匹配條件">
+                                        <Select.Option value="severity">嚴重性</Select.Option>
+                                        <Select.Option value="environment">環境</Select.Option>
                                         <Select.Option value="resource_name">資源名稱</Select.Option>
                                         <Select.Option value="resource_group">資源群組</Select.Option>
                                         <Select.Option value="resource_tag">資源標籤</Select.Option>
                                         <Select.Option value="alert_name">事件名稱</Select.Option>
-                                        <Select.Option value="severity">嚴重性</Select.Option>
-                                        <Select.Option value="environment">環境</Select.Option>
+                                        <Select.Option value="component">組件類型</Select.Option>
+                                        <Select.Option value="team">負責團隊</Select.Option>
+                                        <Select.Option value="category">事件類別</Select.Option>
                                       </Select>
                                     </Form.Item>
                                     <Form.Item {...restField} name={[name, 'op']} rules={[{ required: true }]} initialValue="=">
@@ -14978,28 +15234,7 @@
                                       <Form.Item noStyle shouldUpdate>
                                         {({ getFieldValue }) => {
                                           const selectedKey = getFieldValue(['matchers', name, 'key']);
-
-                                          if (selectedKey === 'resource_tag') {
-                                            return (
-                                              <Select
-                                                placeholder="選擇標籤值..."
-                                                style={{ width: 150 }}
-                                                showSearch
-                                                filterOption={(input, option) =>
-                                                  (option?.children ?? '').toLowerCase().includes(input.toLowerCase())
-                                                }
-                                              >
-                                                <Select.Option value="production">production</Select.Option>
-                                                <Select.Option value="staging">staging</Select.Option>
-                                                <Select.Option value="database">database</Select.Option>
-                                                <Select.Option value="web-server">web-server</Select.Option>
-                                                <Select.Option value="high-priority">high-priority</Select.Option>
-                                                <Select.Option value="team-alpha">team-alpha</Select.Option>
-                                              </Select>
-                                            );
-                                          }
-
-                                          return <Input placeholder="標籤值" style={{ width: 150 }} />;
+                                          return getSilenceSmartValueInput(selectedKey, { width: 150 });
                                         }}
                                       </Form.Item>
                                     </Form.Item>
@@ -16613,11 +16848,11 @@
       { id: 'super_admin', name: '超級管理員', color: 'red' },
       { id: 'team_manager', name: '團隊管理員', color: 'orange' },
       { id: 'team_member', name: '團隊成員', color: 'blue' },
-      { id: 'viewer', name: '唯讀用戶', color: 'gray' }
+      { id: 'viewer', name: '唯讀人員', color: 'gray' }
     ];
 
 
-    const UserManagementPage = () => {
+    const PersonnelManagementPage = () => {
       const initialUsers = [
         // 註：此為模擬數據，實際應從 API 獲取。新增 login_count 和 preferences 欄位以符合更新後的 schema。
         { key: 'user_1', name: 'Admin User', email: 'admin@example.com', teams: ['team_3'], roles: ['super_admin'], status: 'active', last_login: dayjs().subtract(1, 'day'), loginCount: 102, preferences: { theme: 'dark' }, created_at: dayjs().subtract(30, 'day') },
@@ -16635,7 +16870,7 @@
       const { message, modal } = antd.App.useApp();
       const confirmDelete = useDeleteConfirm();
 
-      // 团队名称映射（在UserManagementPage中定义，避免依赖外部teams）
+      // 团队名称映射（在PersonnelManagementPage中定义，避免依赖外部teams）
       const teamNameMap = {
         'team_1': 'Developers',
         'team_2': 'Viewers',
@@ -16655,7 +16890,7 @@
         return role ? role.name : id;
       });
 
-      // 用戶操作函數
+      // 人員操作函數
       const showUserModal = (user = null) => {
         setEditingUser(user);
         userForm.setFieldsValue(user || { name: '', email: '', teams: [], roles: ['viewer'], status: 'active' });
@@ -16675,10 +16910,10 @@
         };
         if (editingUser) {
           setUsers(users.map(u => u.key === editingUser.key ? newUser : u));
-          message.success('用戶更新成功');
+          message.success('人員更新成功');
         } else {
           setUsers([newUser, ...users]);
-          message.success('用戶新增成功');
+          message.success('人員新增成功');
         }
         handleUserCancel();
       };
@@ -16686,38 +16921,38 @@
         const user = users.find(u => u.key === userKey);
         if (!user) return;
 
-        // 檢查用戶當前狀態
+        // 檢查人員當前狀態
         if (user.status === 'pending') {
-          message.warning('待激活用戶無法直接切換狀態，請先激活用戶');
+          message.warning('待激活用人員無法直接切換狀態，請先激活用人員');
           return;
         }
         if (user.status === 'locked') {
-          message.warning('鎖定用戶無法直接切換狀態，請聯繫管理員');
+          message.warning('鎖定人員無法直接切換狀態，請聯繫管理員');
           return;
         }
 
         const statusText = newStatus === 'active' ? '啟用' : '停用';
         modal.confirm({
-          title: `確定要${statusText}此用戶嗎？`,
-          content: `${statusText}用戶 "${user.name}" 的帳號。${newStatus === 'inactive' ? '停用後用戶將無法登入系統，但保留所有權限設定。' : '啟用後用戶可以正常使用系統。'}`,
+          title: `確定要${statusText}此人員嗎？`,
+          content: `${statusText}人員 "${user.name}" 的帳號。${newStatus === 'inactive' ? '停用後人員將無法登入系統，但保留所有權限設定。' : '啟用後人員可以正常使用系統。'}`,
           okText: '確定',
           cancelText: '取消',
           onOk() {
             setUsers(users.map(u => u.key === userKey ? { ...u, status: newStatus } : u));
-            message.success(`用戶${statusText}成功`);
+            message.success(`人員${statusText}成功`);
           }
         });
       };
 
       const handleUserDelete = (user) => {
-        confirmDelete('用戶', () => {
+        confirmDelete('人員', () => {
           setUsers(users.filter(u => u.key !== user.key));
-        }, `用戶 "${user.name}"`);
+        }, `人員 "${user.name}"`);
       };
 
       const handleBatchDelete = () => {
         modal.confirm({
-          title: `確定要刪除 ${selectedRowKeys.length} 位用戶嗎？`,
+          title: `確定要刪除 ${selectedRowKeys.length} 位人員嗎？`,
           icon: <ExclamationCircleOutlined />,
           content: '此操作無法復原。',
           okText: '確定',
@@ -16734,7 +16969,7 @@
       const userColumns = [
         {
           title: '啟用', key: 'enable', width: 80, render: (_, record) => (
-            <Tooltip title={record.status === 'active' ? '停用用戶' : record.status === 'inactive' ? '啟用用戶' : '切換狀態'}>
+            <Tooltip title={record.status === 'active' ? '停用人員' : record.status === 'inactive' ? '啟用人員' : '切換狀態'}>
               <Switch
                 checked={record.status === 'active'}
                 disabled={record.status === 'pending' || record.status === 'locked'}
@@ -16767,7 +17002,7 @@
         }
       ];
 
-      // 篩選用戶
+      // 篩選人員
       const filteredUsers = users.filter(user =>
         user.name.toLowerCase().includes(userSearchText.toLowerCase()) ||
         user.email.toLowerCase().includes(userSearchText.toLowerCase())
@@ -16790,7 +17025,7 @@
           }}>
             <Space>
               <Input.Search
-                placeholder="搜尋用戶姓名或電子郵件"
+                placeholder="搜尋人員姓名或電子郵件"
                 onChange={e => setUserSearchText(e.target.value)}
                 style={{ width: 300 }}
                 allowClear
@@ -16801,7 +17036,7 @@
             </Space>
             <Space>
               <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
-              <Button type="primary" icon={<PlusOutlined />} onClick={() => showUserModal()}>新增用戶</Button>
+              <Button type="primary" icon={<PlusOutlined />} onClick={() => showUserModal()}>新增人員</Button>
             </Space>
           </Space>
           <div className="table-wrapper">
@@ -16829,7 +17064,7 @@
             </div>
           )}
 
-          {/* 用戶編輯模態框 */}
+          {/* 人員編輯模態框 */}
           <Modal
             title={null}
             open={isUserModalOpen}
@@ -16864,10 +17099,10 @@
                 </div>
                 <div>
                   <Title level={3} style={{ margin: 0, color: 'var(--text-primary)' }}>
-                    {editingUser ? '編輯用戶' : '新增用戶'}
+                    {editingUser ? '編輯人員' : '新增人員'}
                   </Title>
                   <Paragraph type="secondary" style={{ marginBottom: 0, marginTop: 4, fontSize: '13px' }}>
-                    {editingUser ? '修改用戶基本資訊與權限設定' : '建立新用戶並設定基本資訊與權限'}
+                    {editingUser ? '修改人員基本資訊與權限設定' : '建立新人員並設定基本資訊與權限'}
                   </Paragraph>
                 </div>
               </div>
@@ -16899,11 +17134,11 @@
                   <Col span={12}>
                     <Form.Item
                       name="name"
-                      label={<span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>用戶姓名</span>}
-                      rules={[{ required: true, message: '請輸入用戶姓名' }]}
+                      label={<span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>人員姓名</span>}
+                      rules={[{ required: true, message: '請輸入人員姓名' }]}
                     >
                       <Input
-                        placeholder="請輸入用戶姓名"
+                        placeholder="請輸入人員姓名"
                         style={{ height: '44px' }}
                         prefix={<UserOutlined style={{ color: 'var(--text-tertiary)' }} />}
                       />
@@ -16971,7 +17206,7 @@
                     >
                       <Select
                         mode="multiple"
-                        placeholder="請選擇用戶角色"
+                        placeholder="請選擇人員角色"
                         style={{ minHeight: '44px' }}
                         options={mockRoles.map(r => ({ label: r.name, value: r.id }))}
                       />
@@ -16988,7 +17223,7 @@
                     取消
                   </Button>
                   <Button type="primary" htmlType="submit">
-                    {editingUser ? '更新用戶' : '新增用戶'}
+                    {editingUser ? '更新人員' : '新增人員'}
                   </Button>
                 </div>
               </div>
@@ -17024,7 +17259,7 @@
       const { message, modal } = antd.App.useApp();
       const confirmDelete = useDeleteConfirm();
 
-      // 模擬用戶資料（用於團隊管理中的成員選擇）
+      // 模擬人員資料（用於團隊管理中的成員選擇）
       const mockUsers = [
         { key: 'user_1', name: '王工程師', email: 'wang@example.com' },
         { key: 'user_2', name: '陳經理', email: 'chen@example.com' },
@@ -17273,11 +17508,11 @@
                     height: 300,
                   }}
                   locale={{
-                    itemUnit: '個用戶',
-                    itemsUnit: '個用戶',
-                    searchPlaceholder: '搜尋用戶姓名或郵箱'
+                    itemUnit: '個人員',
+                    itemsUnit: '個人員',
+                    searchPlaceholder: '搜尋人員姓名或郵箱'
                   }}
-                  titles={['可用用戶', '團隊成員']}
+                  titles={['可用人員', '團隊成員']}
                 />
               </Form.Item>
 
@@ -17297,7 +17532,7 @@
                     ].map(group => (
                       <div key={group.type} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         <Text strong style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '14px' }}>
-                          {group.title}
+                          {group.title || '未命名群組'}
                         </Text>
                         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                           {group.data.map(subscriber => {
@@ -17393,7 +17628,7 @@
       const initialRoles = [
         { key: 'super_admin', name: '超級管理員', isBuiltIn: true, permissions: ['resources', 'incidents'] },
         { key: 'team_manager', name: '團隊管理員', isBuiltIn: true, permissions: ['res:list:read', 'res:list:write', 'inc:list:read', 'inc:rule:write'] },
-        { key: 'viewer', name: '唯讀用戶', isBuiltIn: true, permissions: ['res:list:read', 'inc:list:read'] },
+        { key: 'viewer', name: '唯讀人員', isBuiltIn: true, permissions: ['res:list:read', 'inc:list:read'] },
         { key: 'custom_role_1', name: '自定義DBA角色', isBuiltIn: false, permissions: ['res:list:read', 'res:group:write'] },
       ];
 
@@ -18020,7 +18255,7 @@
       const setAsDefaultDashboard = (dashboardKey) => {
         setDefaultDashboard(dashboardKey);
         localStorage.setItem('default-dashboard', dashboardKey);
-        antd.message.success(`已將「${dashboardCards.find(d => d.key === dashboardKey)?.title}」設為預設首頁`);
+        antd.message.success(`已將「${dashboardCards.find(d => d.key === dashboardKey)?.title || '未知儀表板'}」設為預設首頁`);
       };
 
       // Define dashboard cards using the exact pattern from Settings
@@ -18125,7 +18360,7 @@
                     marginBottom: '4px',
                     lineHeight: '1.2'
                   }}>
-                    {item.title}
+                    {item.title || '未命名項目'}
                   </div>
                   <div className="nav-item-description" style={{
                     color: 'rgba(255, 255, 255, 0.6)',
@@ -18214,11 +18449,11 @@
       // Define settings cards using the exact pattern from Management Center
       const settingsCards = [
         {
-          key: 'user-management',
+          key: 'personnel-management',
           icon: <UserOutlined />,
           title: '人員管理',
           description: '管理使用者帳號與權限。',
-          category: '用戶與權限',
+          category: '身份與存取管理',
           features: ['角色配置', 'SSO整合', '密碼策略'],
           enabled: true
         },
@@ -18227,7 +18462,7 @@
           icon: <TeamOutlined />,
           title: '團隊管理',
           description: '管理團隊結構與成員配置。',
-          category: '用戶與權限',
+          category: '身份與存取管理',
           features: ['階層架構', '權限繼承', '成員管理'],
           enabled: true
         },
@@ -18236,7 +18471,7 @@
           icon: <ApartmentOutlined />,
           title: '角色管理',
           description: '定義系統角色與其權限。',
-          category: '用戶與權限',
+          category: '身份與存取管理',
           features: ['RBAC控制', '自訂角色', '權限模板'],
           enabled: true
         },
@@ -18245,7 +18480,7 @@
           icon: <AuditOutlined />,
           title: '審計日誌',
           description: '查看系統操作審計記錄。',
-          category: '用戶與權限',
+          category: '身份與存取管理',
           features: ['操作追蹤', '安全審計', '日誌分析'],
           enabled: true
         },
@@ -18316,7 +18551,7 @@
               </div>
               <div className="nav-item-text" style={{ flex: 1 }}>
                 <Title level={5} className="nav-item-title" style={{ marginBottom: '4px' }}>
-                  {item.title}
+                  {item.title || '未命名項目'}
                 </Title>
                 <Paragraph className="nav-item-description" style={{ marginBottom: 0 }}>{item.description}</Paragraph>
               </div>
@@ -18361,7 +18596,7 @@
           </Paragraph>
           {/* 分組顯示設定功能 */}
           <div style={{ marginTop: '16px' }}>
-            {renderCategory('用戶與權限')}
+            {renderCategory('身份與存取管理')}
             {renderCategory('通知管理')}
             {renderCategory('平台設定')}
           </div>
@@ -20532,7 +20767,7 @@
 
     // 平台設定頁面組件
     const PlatformSettingsPage = ({ onNavigate, pageKey }) => {
-      const tabKey = ['tag-management', 'email-settings', 'auth-settings'].includes(pageKey) ? pageKey : 'tag-management';
+      const tabKey = ['tag-management', 'email-settings', 'auth-settings', 'identity-access-management'].includes(pageKey) ? pageKey : 'tag-management';
 
       // 平台設定統計資料
       const settingsStats = {
@@ -20572,7 +20807,7 @@
                   unit="個"
                   trend="+8.7%"
                   status="success"
-                  description="用戶登入會話"
+                  description="人員登入會話"
                   icon={<LockOutlined />}
                 />
               </Col>
@@ -20628,6 +20863,17 @@
               key="auth-settings"
             >
               <AuthSettingsPage />
+            </Tabs.TabPane>
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <UserOutlined />
+                  身份與存取管理
+                </span>
+              }
+              key="identity-access-management"
+            >
+              <UserPermissionsPage />
             </Tabs.TabPane>
           </Tabs>
         </React.Fragment>
@@ -20746,7 +20992,7 @@
             <Form.Item>
               <SettingsFormRow
                 label="會話過期時間"
-                description="用戶閒置多久後自動登出（小時）"
+                description="人員閒置多久後自動登出（小時）"
               >
                 <InputNumber
                   min={1}
@@ -21029,9 +21275,9 @@
     };
 
     const UserPermissionsPage = ({ onNavigate, pageKey }) => {
-      const tabKey = ['user-management', 'team-management', 'role-management', 'audit-logs'].includes(pageKey) ? pageKey : 'user-management';
+      const tabKey = ['personnel-management', 'team-management', 'role-management', 'audit-logs'].includes(pageKey) ? pageKey : 'personnel-management';
 
-      // 用戶與權限統計資料
+      // 身份與存取管理統計資料
       const userStats = {
         totalUsers: 156,
         activeUsers: 142,
@@ -21044,17 +21290,17 @@
       return (
         <React.Fragment>
           <PageHeader
-            title="用戶與權限管理"
-            subtitle="管理平台用戶帳戶、團隊組織架構和權限角色配置"
+            title="身份與存取管理"
+            subtitle="統一管理身份認證、存取權限和組織架構配置"
             icon={<UserOutlined />}
           />
 
-          {/* 用戶權限 KPI 儀表板 */}
+          {/* 人員權限 KPI 儀表板 */}
           <div style={{ marginBottom: 'var(--spacing-xl)' }}>
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={12} lg={6}>
                 <ContextualKPICard
-                  title="總用戶數"
+                  title="總人員數"
                   value={userStats.totalUsers}
                   unit="人"
                   trend="+5.2%"
@@ -21065,12 +21311,12 @@
               </Col>
               <Col xs={24} sm={12} lg={6}>
                 <ContextualKPICard
-                  title="在線用戶"
+                  title="在線人員"
                   value={userStats.onlineUsers}
                   unit="人"
                   trend="+12.1%"
                   status="info"
-                  description="目前活躍用戶"
+                  description="目前活躍人員"
                   icon={<SafetyCertificateOutlined />}
                 />
               </Col>
@@ -21112,9 +21358,9 @@
                   人員管理
                 </span>
               }
-              key="user-management"
+              key="personnel-management"
             >
-              <UserManagementPage />
+              <PersonnelManagementPage />
             </Tabs.TabPane>
             <Tabs.TabPane
               tab={
@@ -21406,7 +21652,7 @@
         getItem('分析中心', 'analyzing', <BarChartOutlined />),
         getItem('自動化中心', 'automation', <CodeOutlined />),
         getItem('設定', 'settings', <SettingOutlined />, [
-          getItem('用戶與權限', 'user-permissions', <UserOutlined />),
+          getItem('身份與存取管理', 'identity-access-management', <UserOutlined />),
           getItem('通知管理', 'notification-management', <BellOutlined />),
           getItem('平台設定', 'platform-settings', <SettingOutlined />),
         ]),
@@ -21448,7 +21694,7 @@
         if (['automation', 'scripts', 'schedules', 'executions'].includes(pageKey)) {
           return <AutomationCenterPage onNavigate={navigateToPage} pageKey={pageKey} scripts={scripts} setScripts={setScripts} addExecution={addExecution} executions={executions} setExecutions={setExecutions} schedules={schedules} setSchedules={setSchedules} pageParams={pageParams} />;
         }
-        if (['user-permissions', 'user-management', 'team-management', 'role-management', 'audit-logs'].includes(pageKey)) {
+        if (['identity-access-management', 'personnel-management', 'team-management', 'role-management', 'audit-logs'].includes(pageKey)) {
           return <UserPermissionsPage onNavigate={navigateToPage} pageKey={pageKey} />;
         }
         if (['notification-management', 'notification-strategies', 'notification-channels', 'notification-history'].includes(pageKey)) {
@@ -21458,7 +21704,7 @@
         if (pageKey === 'settings') {
           return <SettingsAdministrationPage onNavigate={navigateToPage} />;
         }
-        if (['platform-settings', 'tag-management', 'email-settings', 'auth-settings'].includes(pageKey)) {
+        if (['platform-settings', 'tag-management', 'email-settings', 'auth-settings', 'identity-access-management'].includes(pageKey)) {
           return <PlatformSettingsPage onNavigate={navigateToPage} pageKey={pageKey} />;
         }
         if (['profile'].includes(pageKey)) {
@@ -21589,7 +21835,7 @@
         const content = (
           <div className="notification-dropdown" style={{
             width: 380,
-            maxHeight: '520px',
+            maxHeight: '580px',
             overflow: 'hidden',
             borderRadius: 'var(--radius-lg)',
             background: 'var(--bg-elevated)',
@@ -21644,7 +21890,7 @@
 
             {/* 通知列表 */}
             <div style={{
-              maxHeight: '420px',
+              maxHeight: '450px',
               overflowY: 'auto',
               overflowX: 'hidden'
             }}>
@@ -21658,7 +21904,7 @@
                           n.id === item.id ? { ...n, read: true } : n
                         ));
                       }
-                      message.info(`跳轉至 ${item.title} 相關頁面`);
+                      message.info(`跳轉至 ${item.title || '未知項目'} 相關頁面`);
                     }}
                     style={{
                       cursor: 'pointer',
@@ -21705,7 +21951,7 @@
                             fontSize: '14px',
                             lineHeight: '1.4'
                           }}>
-                            {item.title}
+                            {item.title || '未命名通知'}
                           </span>
                         </div>
                       }
@@ -21744,8 +21990,9 @@
               <Button
                 type="link"
                 onClick={() => {
-                  setCurrentPage('notifications');
-                  message.info("導向通知管理頁面");
+                  // 無縫跳轉到通知管理頁面，並自動選中「通知歷史」Tab
+                  navigateToPage('notification-history');
+                  message.success("已跳轉到通知管理中心");
                 }}
                 style={{
                   color: 'var(--brand-primary)',

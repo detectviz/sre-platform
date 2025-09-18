@@ -67,7 +67,7 @@ x-role-definitions:
   super_admin: "超級管理員：擁有系統最高權限，可以執行所有操作。"
   team_manager: "團隊管理員：管理團隊成員、資源、事件規則等團隊範圍內的資源。"
   team_member: "團隊成員：查看團隊資源、處理事件、執行腳本（受限）。"
-  viewer: "唯讀用戶：僅可查看資源狀態、儀表板、報表。"
+  viewer: "唯讀人員：僅可查看資源狀態、儀表板、報表。"
 
 x-resource-status-rules:
   # 資源健康狀態的判定規則契約
@@ -285,7 +285,7 @@ paths:
   /users:
     get:
       tags: [Profile]
-      summary: 獲取用戶列表
+      summary: 獲取人員列表
       operationId: listUsers
       security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
@@ -300,14 +300,14 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: 用戶列表
+          description: 人員列表
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/UserList"
     post:
       tags: [Profile]
-      summary: 創建用戶
+      summary: 創建人員
       operationId: createUser
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
@@ -315,7 +315,7 @@ paths:
         $ref: "#/components/requestBodies/UserCreateRequest"
       responses:
         "201":
-          description: 用戶創建成功
+          description: 人員創建成功
           content:
             application/json:
               schema:
@@ -331,7 +331,7 @@ paths:
   /users/{userId}:
     get:
       tags: [Profile]
-      summary: 獲取用戶詳情
+      summary: 獲取人員詳情
       operationId: getUser
       security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
@@ -342,14 +342,14 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: 用戶詳情
+          description: 人員詳情
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
     put:
       tags: [Profile]
-      summary: 更新用戶
+      summary: 更新人員
       operationId: updateUser
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
@@ -362,15 +362,15 @@ paths:
         $ref: "#/components/requestBodies/UserUpdateRequest"
       responses:
         "200":
-          description: 用戶更新成功
+          description: 人員更新成功
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
     delete:
       tags: [Profile]
-      summary: 刪除用戶 (軟刪除)
-      description: 此操作將標記用戶為已刪除 (軟刪除)，但不會從資料庫中實際移除。
+      summary: 刪除人員 (軟刪除)
+      description: 此操作將標記人員為已刪除 (軟刪除)，但不會從資料庫中實際移除。
       operationId: deleteUser
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
@@ -381,11 +381,11 @@ paths:
           schema: { type: string }
       responses:
         "204":
-          description: 用戶刪除成功
+          description: 人員刪除成功
   /users/{userId}/reset-password:
     post:
       tags: [Profile]
-      summary: 重置用戶密碼
+      summary: 重置人員密碼
       operationId: resetUserPassword
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
@@ -495,13 +495,13 @@ paths:
   /admin/stats/users:
     get:
       tags: [Admin]
-      summary: 獲取用戶與團隊統計
+      summary: 獲取人員與團隊統計
       operationId: getUserStats
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
       responses:
         "200":
-          description: 用戶與團隊統計數據
+          description: 人員與團隊統計數據
           content:
             application/json:
               schema:
@@ -1133,7 +1133,7 @@ paths:
       operationId: getIncident
       security: [{ bearerAuth: [] }]
       parameters:
-        - name: incidentId
+        - name: alertId
           in: path
           required: true
           schema: { type: string }
@@ -1151,7 +1151,7 @@ paths:
       security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       parameters:
-        - name: incidentId
+        - name: alertId
           in: path
           required: true
           schema: { type: string }
@@ -1172,7 +1172,7 @@ paths:
       security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       parameters:
-        - name: incidentId
+        - name: alertId
           in: path
           required: true
           schema: { type: string }
@@ -1191,7 +1191,7 @@ paths:
       security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       parameters:
-        - name: incidentId
+        - name: alertId
           in: path
           required: true
           schema: { type: string }
@@ -1210,7 +1210,7 @@ paths:
       security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
       parameters:
-        - name: incidentId
+        - name: alertId
           in: path
           required: true
           schema: { type: string }
@@ -1239,7 +1239,7 @@ paths:
       security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       parameters:
-        - name: incidentId
+        - name: alertId
           in: path
           required: true
           schema: { type: string }
@@ -1672,6 +1672,424 @@ paths:
                 $ref: "#/components/schemas/OperationResult"
 
   # ============================================
+  # Resource Metrics History
+  # ============================================
+  /resources/{resourceId}/metrics/history:
+    get:
+      tags: [Resources]
+      summary: 獲取資源指標歷史數據（增強版）
+      operationId: getResourceMetricsHistoryEnhanced
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdParam"
+        - name: metric_type
+          in: query
+          required: true
+          schema: { type: string }
+        - name: start_time
+          in: query
+          schema: { type: string, format: "date-time" }
+        - name: end_time
+          in: query
+          schema: { type: string, format: "date-time" }
+        - name: resolution
+          in: query
+          schema:
+            {
+              type: string,
+              enum: ["1m", "5m", "15m", "1h", "1d"],
+              default: "5m",
+            }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: 資源指標歷史數據
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceMetricsHistoryList"
+    post:
+      tags: [Resources]
+      summary: 批量插入資源指標數據
+      operationId: insertResourceMetrics
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_member, team_manager, super_admin]
+      parameters:
+        - $ref: "#/components/parameters/ResourceIdParam"
+      requestBody:
+        $ref: "#/components/requestBodies/ResourceMetricsInsertRequest"
+      responses:
+        "201":
+          description: 指標數據插入成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
+  /resources/metrics/bulk-query:
+    post:
+      tags: [Resources]
+      summary: 批量查詢多資源指標歷史
+      operationId: bulkQueryResourceMetrics
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        $ref: "#/components/requestBodies/BulkMetricsQueryRequest"
+      responses:
+        "200":
+          description: 批量指標查詢結果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkMetricsQueryResult"
+
+  # ============================================
+  # Event Analysis Results (AI Analysis)
+  # ============================================
+  /alerts/{alertId}/analysis:
+    get:
+      tags: [Incidents]
+      summary: 獲取事件 AI 分析結果
+      operationId: getIncidentAnalysis
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: analysis_type
+          in: query
+          schema:
+            {
+              type: string,
+              enum: ["rca", "impact", "recommendation", "prediction"],
+            }
+      responses:
+        "200":
+          description: 事件分析結果列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventAnalysisResult"
+    post:
+      tags: [Incidents]
+      summary: 觸發事件 AI 分析
+      operationId: triggerIncidentAnalysis
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_member, team_manager, super_admin]
+      parameters:
+        - name: alertId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/AnalysisRequest"
+      responses:
+        "202":
+          description: 分析任務已啟動
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnalysisTaskResponse"
+
+  /incidents/batch-analysis:
+    post:
+      tags: [Incidents]
+      summary: 批量事件分析
+      operationId: batchIncidentAnalysis
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_member, team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/BatchAnalysisRequest"
+      responses:
+        "202":
+          description: 批量分析任務已啟動
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchAnalysisTaskResponse"
+
+  /analysis/results/{analysisId}:
+    get:
+      tags: [Analyzing]
+      summary: 獲取分析結果詳情
+      operationId: getAnalysisResult
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: analysisId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 分析結果詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventAnalysisResult"
+    put:
+      tags: [Analyzing]
+      summary: 更新分析結果（人工修正）
+      operationId: updateAnalysisResult
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_member, team_manager, super_admin]
+      parameters:
+        - name: analysisId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/AnalysisResultUpdateRequest"
+      responses:
+        "200":
+          description: 分析結果更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventAnalysisResult"
+
+  # ============================================
+  # Script Versions (Version Control)
+  # ============================================
+  /automation/scripts/{scriptId}/versions:
+    get:
+      tags: [Automation]
+      summary: 獲取腳本版本歷史
+      operationId: getScriptVersions
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: 腳本版本列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScriptVersionList"
+    post:
+      tags: [Automation]
+      summary: 創建新腳本版本
+      operationId: createScriptVersion
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/ScriptVersionCreateRequest"
+      responses:
+        "201":
+          description: 腳本版本創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScriptVersion"
+
+  /automation/scripts/{scriptId}/versions/{versionId}:
+    get:
+      tags: [Automation]
+      summary: 獲取特定腳本版本詳情
+      operationId: getScriptVersion
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 腳本版本詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScriptVersion"
+
+  /automation/scripts/{scriptId}/versions/{versionId}/rollback:
+    post:
+      tags: [Automation]
+      summary: 回滾到指定腳本版本
+      operationId: rollbackScriptVersion
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_manager, super_admin]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: versionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 腳本回滾成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScript"
+
+  /automation/scripts/{scriptId}/diff:
+    get:
+      tags: [Automation]
+      summary: 比較腳本版本差異
+      operationId: compareScriptVersions
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: version_a
+          in: query
+          required: true
+          schema: { type: string }
+        - name: version_b
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 版本差異比較結果
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScriptVersionDiff"
+
+  # ============================================
+  # Enhanced Dashboard APIs
+  # ============================================
+  /dashboards:
+    get:
+      tags: [Dashboard]
+      summary: 獲取儀表板列表（增強版）
+      operationId: listDashboards
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: shared_with_team
+          in: query
+          schema: { type: boolean }
+        - name: is_public
+          in: query
+          schema: { type: boolean }
+        - name: search
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 儀表板列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardList"
+    post:
+      tags: [Dashboard]
+      summary: 創建自定義儀表板
+      operationId: createDashboard
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_member, team_manager, super_admin]
+      requestBody:
+        $ref: "#/components/requestBodies/DashboardCreateRequest"
+      responses:
+        "201":
+          description: 儀表板創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+
+  /dashboards/{dashboardId}:
+    get:
+      tags: [Dashboard]
+      summary: 獲取儀表板詳情
+      operationId: getDashboard
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 儀表板詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+    put:
+      tags: [Dashboard]
+      summary: 更新儀表板
+      operationId: updateDashboard
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_member, team_manager, super_admin]
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/DashboardUpdateRequest"
+      responses:
+        "200":
+          description: 儀表板更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+    delete:
+      tags: [Dashboard]
+      summary: 刪除儀表板 (軟刪除)
+      operationId: deleteDashboard
+      security: [{ bearerAuth: [] }]
+      x-roles: [team_member, team_manager, super_admin]
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204":
+          description: 儀表板刪除成功
+
+  /dashboards/{dashboardId}/share:
+    post:
+      tags: [Dashboard]
+      summary: 分享儀表板
+      operationId: shareDashboard
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        $ref: "#/components/requestBodies/DashboardShareRequest"
+      responses:
+        "200":
+          description: 儀表板分享成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OperationResult"
+
+  # ============================================
   # Notification Management
   # ============================================
   /notifications/channels:
@@ -1903,7 +2321,7 @@ paths:
   /user/preferences:
     get:
       tags: [Profile]
-      summary: 獲取用戶偏好設定
+      summary: 獲取人員偏好設定
       operationId: getUserPreferences
       security: [{ bearerAuth: [] }]
       parameters:
@@ -1912,7 +2330,7 @@ paths:
           schema: { type: string }
       responses:
         "200":
-          description: 用戶偏好設定列表
+          description: 人員偏好設定列表
           content:
             application/json:
               schema:
@@ -1921,7 +2339,7 @@ paths:
                   $ref: "#/components/schemas/UserPreference"
     post:
       tags: [Profile]
-      summary: 創建或更新用戶偏好設定
+      summary: 創建或更新人員偏好設定
       operationId: createOrUpdateUserPreference
       security: [{ bearerAuth: [] }]
       requestBody:
@@ -2192,6 +2610,51 @@ components:
         application/json:
           schema:
             { $ref: "#/components/schemas/MaintenanceWindowCreateRequest" }
+    ResourceMetricsInsertRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ResourceMetricsInsertRequest" }
+    BulkMetricsQueryRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/BulkMetricsQueryRequest" }
+    AnalysisRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/AnalysisRequest" }
+    BatchAnalysisRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/BatchAnalysisRequest" }
+    AnalysisResultUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/AnalysisResultUpdateRequest" }
+    ScriptVersionCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/ScriptVersionCreateRequest" }
+    DashboardCreateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DashboardCreateRequest" }
+    DashboardUpdateRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DashboardUpdateRequest" }
+    DashboardShareRequest:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/DashboardShareRequest" }
 
   schemas:
     ErrorResponse:
@@ -2552,6 +3015,9 @@ components:
         key: { type: string }
         displayName: { type: string }
         description: { type: string }
+        is_required: { type: boolean }
+        compliance_required: { type: boolean }
+        validation_rules: { type: object }
         created_at: { type: string, format: "date-time" }
     TagValue:
       type: object
@@ -2570,11 +3036,17 @@ components:
         key: { type: string }
         displayName: { type: string }
         description: { type: string }
+        is_required: { type: boolean }
+        compliance_required: { type: boolean }
+        validation_rules: { type: object }
     TagKeyUpdateRequest:
       type: object
       properties:
         displayName: { type: string }
         description: { type: string }
+        is_required: { type: boolean }
+        compliance_required: { type: boolean }
+        validation_rules: { type: object }
     TagValueCreateRequest:
       type: object
       properties:
@@ -2596,7 +3068,13 @@ components:
         params: { type: object }
         status: { type: string, enum: [active, inactive] }
         execution_count: { type: integer }
+        success_count: { type: integer }
+        failure_count: { type: integer }
+        average_duration_ms: { type: integer }
         last_executed_at: { type: string, format: "date-time" }
+        last_execution_status:
+          { type: string, enum: ["success", "failure", "timeout"] }
+        current_version: { type: string }
         created_at: { type: string, format: "date-time" }
         updated_at: { type: string, format: "date-time" }
     AutomationScriptList:
@@ -2763,6 +3241,30 @@ components:
         channels: { type: array, items: { type: string } }
         escalation: { type: object }
         enabled: { type: boolean }
+        match_conditions:
+          type: array
+          items:
+            type: object
+            properties:
+              key:
+                {
+                  type: string,
+                  enum:
+                    [
+                      severity,
+                      env,
+                      team,
+                      component,
+                      category,
+                      instance,
+                      service,
+                      alert_name,
+                    ],
+                }
+              operator:
+                { type: string, enum: ["=", "!=", "~", "!~", in, not_in] }
+              value: { type: string }
+              description: { type: string }
 
     # System Settings Schemas
     SystemSetting:
@@ -2842,3 +3344,243 @@ components:
         recurrence: { type: object }
         affected_resources: { type: array, items: { type: string } }
         notification_settings: { type: object }
+
+    # Resource Metrics History Schemas
+    ResourceMetricsHistory:
+      type: object
+      properties:
+        id: { type: string }
+        resource_id: { type: string }
+        metric_type: { type: string }
+        metric_value: { type: number }
+        unit: { type: string }
+        tags: { type: object }
+        timestamp: { type: string, format: "date-time" }
+        collected_by: { type: string }
+        metadata: { type: object }
+        created_at: { type: string, format: "date-time" }
+    ResourceMetricsHistoryList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ResourceMetricsHistory" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    ResourceMetricsInsertRequest:
+      type: object
+      required: [metrics]
+      properties:
+        metrics:
+          type: array
+          items:
+            type: object
+            required: [metric_type, metric_value, timestamp]
+            properties:
+              metric_type: { type: string }
+              metric_value: { type: number }
+              unit: { type: string }
+              timestamp: { type: string, format: "date-time" }
+              tags: { type: object }
+              metadata: { type: object }
+    BulkMetricsQueryRequest:
+      type: object
+      required: [queries]
+      properties:
+        queries:
+          type: array
+          items:
+            type: object
+            required: [resource_id, metric_type]
+            properties:
+              resource_id: { type: string }
+              metric_type: { type: string }
+              start_time: { type: string, format: "date-time" }
+              end_time: { type: string, format: "date-time" }
+              resolution:
+                { type: string, enum: ["1m", "5m", "15m", "1h", "1d"] }
+    BulkMetricsQueryResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              resource_id: { type: string }
+              metric_type: { type: string }
+              data_points:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    timestamp: { type: string, format: "date-time" }
+                    value: { type: number }
+                    tags: { type: object }
+
+    # Event Analysis Results Schemas
+    EventAnalysisResult:
+      type: object
+      properties:
+        id: { type: string }
+        alert_id: { type: string }
+        analysis_type:
+          {
+            type: string,
+            enum: ["rca", "impact", "recommendation", "prediction"],
+          }
+        confidence_score: { type: number, minimum: 0, maximum: 100 }
+        analysis_result: { type: object }
+        analyst_type: { type: string, enum: ["ai", "human", "hybrid"] }
+        status: { type: string, enum: ["pending", "completed", "failed"] }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    AnalysisRequest:
+      type: object
+      required: [analysis_types]
+      properties:
+        analysis_types:
+          type: array
+          items:
+            {
+              type: string,
+              enum: ["rca", "impact", "recommendation", "prediction"],
+            }
+        priority:
+          { type: string, enum: ["low", "normal", "high"], default: "normal" }
+        context: { type: object }
+    BatchAnalysisRequest:
+      type: object
+      required: [incident_ids, analysis_types]
+      properties:
+        incident_ids: { type: array, items: { type: string } }
+        analysis_types:
+          type: array
+          items:
+            {
+              type: string,
+              enum: ["rca", "impact", "recommendation", "prediction"],
+            }
+        priority:
+          { type: string, enum: ["low", "normal", "high"], default: "normal" }
+    AnalysisTaskResponse:
+      type: object
+      properties:
+        task_id: { type: string }
+        status:
+          { type: string, enum: ["pending", "running", "completed", "failed"] }
+        estimated_completion: { type: string, format: "date-time" }
+    BatchAnalysisTaskResponse:
+      type: object
+      properties:
+        batch_id: { type: string }
+        tasks:
+          type: array
+          items:
+            type: object
+            properties:
+              incident_id: { type: string }
+              task_id: { type: string }
+              status: { type: string }
+    AnalysisResultUpdateRequest:
+      type: object
+      properties:
+        confidence_score: { type: number, minimum: 0, maximum: 100 }
+        analysis_result: { type: object }
+        feedback_score: { type: number }
+        human_verified: { type: boolean }
+        verification_notes: { type: string }
+
+    # Script Version Control Schemas
+    ScriptVersion:
+      type: object
+      properties:
+        id: { type: string }
+        script_id: { type: string }
+        version: { type: string }
+        content: { type: string }
+        change_log: { type: string }
+        is_active: { type: boolean }
+        created_by: { type: string }
+        created_at: { type: string, format: "date-time" }
+    ScriptVersionList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ScriptVersion" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    ScriptVersionCreateRequest:
+      type: object
+      required: [content]
+      properties:
+        content: { type: string }
+        change_log: { type: string }
+    ScriptVersionDiff:
+      type: object
+      properties:
+        version_a: { type: string }
+        version_b: { type: string }
+        diff_content: { type: string }
+        changes_summary:
+          type: object
+          properties:
+            additions: { type: integer }
+            deletions: { type: integer }
+            modifications: { type: integer }
+
+    # Enhanced Dashboard Schemas
+    Dashboard:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        category: { type: string }
+        layout_config: { type: object }
+        widgets_config: { type: object }
+        shared_with_teams: { type: array, items: { type: string } }
+        is_public: { type: boolean }
+        is_default: { type: boolean }
+        view_count: { type: integer }
+        last_accessed_at: { type: string, format: "date-time" }
+        tags: { type: array, items: { type: string } }
+        created_by: { type: string }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    DashboardList:
+      type: object
+      properties:
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/Dashboard" }
+        pagination: { $ref: "#/components/schemas/Pagination" }
+    DashboardCreateRequest:
+      type: object
+      required: [name, layout_config]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        category: { type: string }
+        layout_config: { type: object }
+        widgets_config: { type: object }
+        shared_with_teams: { type: array, items: { type: string } }
+        is_public: { type: boolean }
+        tags: { type: array, items: { type: string } }
+    DashboardUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        category: { type: string }
+        layout_config: { type: object }
+        widgets_config: { type: object }
+        shared_with_teams: { type: array, items: { type: string } }
+        is_public: { type: boolean }
+        tags: { type: array, items: { type: string } }
+    DashboardShareRequest:
+      type: object
+      required: [share_type]
+      properties:
+        share_type: { type: string, enum: ["team", "public", "private"] }
+        team_ids: { type: array, items: { type: string } }
+        permissions: { type: array, items: { type: string } }

@@ -217,7 +217,7 @@ const [tableDensity, setTableDensity] = useState('standard');
 
 ### 4. 表格密度
 - 預設使用 standard 模式
-- 記憶用戶選擇（使用 localStorage）
+- 記憶人員選擇（使用 localStorage）
 - 資料密集型頁面提供切換選項
 
 ## 📋 遷移指南
