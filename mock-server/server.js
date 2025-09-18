@@ -81,44 +81,55 @@ server.get('/api/v1/resources', (req, res) => {
   });
 });
 
-// 事件列表接口 - 支持分頁和搜索
-server.get('/api/v1/incidents', (req, res) => {
+// 事件列表接口 - 支持分頁和多維度篩選
+server.get('/api/v1/events', (req, res) => {
   const db = router.db;
   const page = parseInt(req.query.page) || 1;
   const pageSize = parseInt(req.query.page_size) || 20;
-  const status = req.query.status || '';
-  const severity = req.query.severity || '';
-  const search = req.query.search || '';
+  const { status, severity, resource_name, source, sort_by, sort_order } = req.query;
 
-  let incidents = db.get('incidents').value();
+  let events = db.get('events').value();
 
   // 狀態過濾
   if (status) {
-    incidents = incidents.filter(incident => incident.status === status);
+    events = events.filter(event => event.status.toLowerCase() === status.toLowerCase());
   }
 
   // 嚴重性過濾
   if (severity) {
-    incidents = incidents.filter(incident => incident.severity === severity);
+    events = events.filter(event => event.severity.toLowerCase() === severity.toLowerCase());
   }
 
-  // 搜索過濾
-  if (search) {
-    incidents = incidents.filter(incident =>
-      incident.summary.toLowerCase().includes(search.toLowerCase()) ||
-      incident.resource_name.toLowerCase().includes(search.toLowerCase()) ||
-      incident.service.toLowerCase().includes(search.toLowerCase())
-    );
+  // 資源名稱過濾
+  if (resource_name) {
+    events = events.filter(event => event.resource.name.toLowerCase().includes(resource_name.toLowerCase()));
+  }
+
+  // 來源過濾
+  if (source) {
+    events = events.filter(event => event.source.toLowerCase() === source.toLowerCase());
+  }
+
+  // 排序
+  if (sort_by) {
+    const order = sort_order === 'desc' ? -1 : 1;
+    events.sort((a, b) => {
+      const fieldA = a[sort_by];
+      const fieldB = b[sort_by];
+      if (fieldA < fieldB) return -1 * order;
+      if (fieldA > fieldB) return 1 * order;
+      return 0;
+    });
   }
 
   // 分頁
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
-  const paginatedIncidents = incidents.slice(start, end);
+  const paginatedEvents = events.slice(start, end);
 
   res.jsonp({
-    items: paginatedIncidents,
-    total: incidents.length,
+    items: paginatedEvents,
+    total: events.length,
     page: page,
     page_size: pageSize
   });

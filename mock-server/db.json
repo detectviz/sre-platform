@@ -1,107 +1,220 @@
 {
-  "resources": [
+  "users": [
     {
-      "id": "res-1",
-      "name": "prod-db-master-01",
-      "type": "database",
-      "status": "critical",
-      "ip_address": "10.1.1.5",
-      "group_id": "grp-db-prod",
-      "tags": ["prod", "mysql", "critical-asset"],
-      "created_at": "2024-01-15T10:00:00Z",
-      "updated_at": "2025-09-14T14:30:00Z"
+      "id": "usr_1",
+      "username": "admin",
+      "email": "admin@sre-platform.com",
+      "name": "Admin User",
+      "avatar_url": "https://i.pravatar.cc/150?u=admin",
+      "is_active": true,
+      "last_login_at": "2025-09-18T08:00:00Z",
+      "roles": ["super_admin"],
+      "teams": ["team_1"]
     },
     {
-      "id": "res-2",
-      "name": "prod-web-server-01",
-      "type": "server",
-      "status": "warning",
-      "ip_address": "10.1.2.10",
-      "group_id": "grp-web-prod",
-      "tags": ["prod", "web", "nginx"],
-      "created_at": "2024-03-20T11:30:00Z",
-      "updated_at": "2025-09-14T14:32:00Z"
+      "id": "usr_2",
+      "username": "jdoe",
+      "email": "john.doe@sre-platform.com",
+      "name": "John Doe",
+      "avatar_url": "https://i.pravatar.cc/150?u=jdoe",
+      "is_active": true,
+      "last_login_at": "2025-09-18T09:00:00Z",
+      "roles": ["team_manager", "team_member"],
+      "teams": ["team_2"]
     },
     {
-      "id": "res-3",
-      "name": "staging-api-gateway",
-      "type": "gateway",
-      "status": "healthy",
-      "ip_address": "192.168.1.1",
-      "group_id": "grp-api-staging",
-      "tags": ["staging", "api"],
-      "created_at": "2024-05-10T15:00:00Z",
-      "updated_at": "2025-09-14T14:35:00Z"
-    }
-  ],
-  "resource_groups": [
-    {
-      "id": "grp-db-prod",
-      "name": "Production Databases",
-      "resource_count": 5
-    },
-    {
-      "id": "grp-web-prod",
-      "name": "Production Web Servers",
-      "resource_count": 12
-    },
-    {
-        "id": "grp-api-staging",
-        "name": "Staging API Gateways",
-        "resource_count": 2
-    }
-  ],
-  "incidents": [
-    {
-      "id": "inc-1",
-      "title": "High CPU utilization on prod-db-master-01",
-      "severity": "critical",
-      "priority": "P1",
-      "status": "new",
-      "affected_resources": ["res-1"],
-      "created_at": "2025-09-14T14:30:00Z",
-      "updated_at": "2025-09-14T14:30:00Z"
-    },
-    {
-      "id": "inc-2",
-      "title": "High memory usage on prod-web-server-01",
-      "severity": "warning",
-      "priority": "P2",
-      "status": "acknowledged",
-      "assignee": "user-2",
-      "affected_resources": ["res-2"],
-      "created_at": "2025-09-14T14:32:00Z",
-      "updated_at": "2025-09-14T14:38:00Z"
-    }
-  ],
-  "alert_rules": [
-    {
-        "id": "rule-1",
-        "name": "High CPU Usage (Prod DB)",
-        "enabled": true,
-        "condition": { "metric": "cpu_usage", "operator": "gt", "threshold": 90, "duration": 300 },
-        "severity": "critical",
-        "priority": "P1"
-    },
-    {
-        "id": "rule-2",
-        "name": "High Memory Usage (Prod Web)",
-        "enabled": true,
-        "condition": { "metric": "memory_usage", "operator": "gt", "threshold": 85, "duration": 600 },
-        "severity": "warning",
-        "priority": "P2"
+      "id": "usr_3",
+      "username": "s.smith",
+      "email": "sara.smith@sre-platform.com",
+      "name": "Sara Smith",
+      "avatar_url": "https://i.pravatar.cc/150?u=s.smith",
+      "is_active": false,
+      "last_login_at": "2025-09-10T11:20:00Z",
+      "roles": ["team_member"],
+      "teams": ["team_2", "team_3"]
     }
   ],
   "teams": [
-      {
-          "id": "team-1",
-          "name": "SRE Team Alpha",
-          "member_count": 5
+    {
+      "id": "team_1",
+      "name": "SRE Core Team",
+      "description": "平台核心維運團隊",
+      "leader_id": "usr_1",
+      "member_count": 1,
+      "subscriber_count": 0
+    },
+    {
+      "id": "team_2",
+      "name": "Database Operations",
+      "description": "資料庫維運團隊",
+      "leader_id": "usr_2",
+      "member_count": 2,
+      "subscriber_count": 1
+    },
+    {
+      "id": "team_3",
+      "name": "Web Services Team",
+      "description": "Web 應用服務團隊",
+      "leader_id": null,
+      "member_count": 1,
+      "subscriber_count": 0
+    }
+  ],
+  "roles": [
+    {
+      "id": "super_admin",
+      "name": "超級管理員",
+      "description": "擁有所有權限",
+      "is_built_in": true,
+      "user_count": 1
+    },
+    {
+      "id": "team_manager",
+      "name": "團隊管理員",
+      "description": "可管理團隊內部資源與設定",
+      "is_built_in": true,
+      "user_count": 1
+    },
+    {
+      "id": "team_member",
+      "name": "團隊成員",
+      "description": "可處理事件與執行自動化腳本",
+      "is_built_in": true,
+      "user_count": 2
+    }
+  ],
+  "events": [
+    {
+      "id": "evt_1",
+      "summary": "CPU 使用率過高 on db-mysql-prod-01",
+      "severity": "CRITICAL",
+      "status": "FIRING",
+      "source": "Prometheus",
+      "triggered_at": "2025-09-18T09:00:00Z",
+      "assignee": null,
+      "resource": {
+        "id": "res_1",
+        "name": "db-mysql-prod-01",
+        "type": "DATABASE"
       },
-      {
-          "id": "team-2",
-          "name": "Database Admins",
-          "member_count": 3
-      }
+      "rule": {
+        "id": "rule_cpu_high",
+        "name": "高 CPU 使用率"
+      },
+      "trigger_details": {
+        "threshold": "CPU > 90%",
+        "value": "92.5%"
+      },
+      "tags": [
+        { "key": "env", "value": "production", "color": "#f5222d" },
+        { "key": "service", "value": "user-database", "color": "#52c41a" }
+      ],
+      "quick_links": [
+        { "name": "資源儀表板", "url": "#" },
+        { "name": "相關日誌", "url": "#" }
+      ],
+      "available_actions": [
+        { "key": "acknowledge", "label": "確認 (Acknowledge)", "api_endpoint": "/api/v1/events/evt_1/status", "method": "PUT", "payload": { "status": "acknowledged" } },
+        { "key": "silence", "label": "建立靜音", "api_endpoint": "/api/v1/silence-rules", "method": "POST" }
+      ]
+    },
+    {
+      "id": "evt_2",
+      "summary": "API latency over 500ms on api-gateway-prod",
+      "severity": "WARNING",
+      "status": "ACKNOWLEDGED",
+      "source": "Grafana",
+      "triggered_at": "2025-09-18T08:30:00Z",
+      "acknowledged_at": "2025-09-18T08:35:00Z",
+      "assignee": {
+        "id": "usr_2",
+        "name": "John Doe"
+      },
+      "resource": {
+        "id": "res_3",
+        "name": "api-gateway-prod",
+        "type": "GATEWAY"
+      },
+      "rule": {
+        "id": "rule_api_latency",
+        "name": "API 延遲過高"
+      },
+      "trigger_details": {
+        "threshold": "P95 Latency > 500ms",
+        "value": "580ms"
+      },
+      "tags": [
+        { "key": "env", "value": "production", "color": "#f5222d" }
+      ],
+      "quick_links": [],
+      "available_actions": [
+        { "key": "resolve", "label": "解決 (Resolve)", "api_endpoint": "/api/v1/events/evt_2/status", "method": "PUT", "payload": { "status": "resolved" } }
+      ]
+    }
+  ],
+  "notification-history": [
+    {
+      "id": "nh_1",
+      "event_id": "evt_1",
+      "policy_id": "np_1",
+      "channel_name": "Slack: #sre-critical",
+      "recipient": "#sre-critical",
+      "status": "sent",
+      "error_message": null,
+      "sent_at": "2025-09-18T09:00:05Z",
+      "created_at": "2025-09-18T09:00:02Z"
+    },
+    {
+      "id": "nh_2",
+      "event_id": "evt_2",
+      "policy_id": "np_2",
+      "channel_name": "Email: sre-team@example.com",
+      "recipient": "sre-team@example.com",
+      "status": "failed",
+      "error_message": "SMTP server connection timeout",
+      "sent_at": "2025-09-18T08:30:10Z",
+      "created_at": "2025-09-18T08:30:05Z"
+    }
+  ],
+  "recurring-silence-rules": [
+    {
+        "id": "rsr_1",
+        "name": "週末資料庫維護窗口",
+        "description": "每週六凌晨 2-4 點的資料庫例行維護，期間靜音相關告警。",
+        "matchers": [
+          { "name": "service", "value": "user-database", "isRegex": false }
+        ],
+        "cron_expression": "0 2 * * 6",
+        "duration_minutes": 120,
+        "timezone": "Asia/Taipei",
+        "is_enabled": true,
+        "creator_id": "usr_1",
+        "created_at": "2025-09-01T10:00:00Z",
+        "updated_at": "2025-09-01T10:00:00Z"
+    }
+  ],
+  "tags": [
+    {
+      "id": "tag_key_1",
+      "key_name": "env",
+      "description": "部署環境標識",
+      "is_required": true,
+      "compliance_category": "infrastructure",
+      "enforcement_level": "blocking"
+    },
+    {
+      "id": "tag_key_2",
+      "key_name": "service",
+      "description": "應用或服務的名稱",
+      "is_required": true,
+      "compliance_category": "application",
+      "enforcement_level": "warning"
+    }
+  ],
+  "tag-allowed-values": [
+    { "id": "val_1", "tag_key_id": "tag_key_1", "value": "production", "color": "#f5222d" },
+    { "id": "val_2", "tag_key_id": "tag_key_1", "value": "staging", "color": "#faad14" },
+    { "id": "val_3", "tag_key_id": "tag_key_2", "value": "user-database", "color": "#52c41a" },
+    { "id": "val_4", "tag_key_id": "tag_key_2", "value": "api-gateway", "color": "#1890ff" }
   ]
 }

@@ -328,6 +328,26 @@ graph LR
     end
 ```
 
+### 使用 Mock Server 進行前端開發
+為了實現前後端分離並行開發，專案提供了一個功能完善的 Mock Server。前端開發者可以在後端 API 尚未完全開發完成時，透過此 Mock Server 進行完整的功能開發與測試。
+
+- **技術**: 基於 `json-server`，並透過 `server.js` 擴充了自定義路由以模擬更真實的 API 行為 (如分頁、篩選)。
+- **資料來源**: 所有的模擬資料都定義在 `mock-server/db.json` 中。此檔案的結構與 `openapi.yaml` 中定義的 schemas 保持一致。
+- **API 契約**: Mock Server 提供的 API 端點嚴格遵循 `openapi.yaml` 中定義的契約。
+
+**快速啟動**:
+```bash
+# 1. 進入 mock-server 目錄
+cd mock-server
+
+# 2. 安裝依賴 (僅需初次執行)
+npm install
+
+# 3. 啟動伺服器
+npm start
+```
+伺服器將會啟動在 `http://localhost:8080`。前端開發時，請將 API 請求的基礎 URL 指向此位址。
+
 ### 代碼質量保證
 
 #### 自動化測試策略
