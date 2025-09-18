@@ -21,8 +21,6 @@ info:
 servers:
   - url: /api/v1
     description: 應用程式 API 根路徑
-  - url: http://localhost:3001/api/v1
-    description: Mock Server 開發環境
 
 # ============================================
 # 擴展屬性 (Vendor Extensions)
@@ -183,18 +181,21 @@ paths:
       tags: [System]
       summary: 服務健康檢查
       operationId: checkHealth
+      security: []
       responses: { "200": { description: 服務健康 } }
   /readyz:
     get:
       tags: [System]
       summary: 服務就緒檢查
       operationId: checkReadiness
+      security: []
       responses: { "200": { description: 服務就緒 } }
   /metrics:
     get:
       tags: [System]
       summary: Prometheus 指標
       operationId: getMetrics
+      security: []
       responses: { "200": { description: Prometheus 指標 } }
   /metrics/definitions:
     get:
@@ -239,6 +240,7 @@ paths:
       tags: [Auth]
       summary: 開發模式登入
       operationId: devLogin
+      security: []
       requestBody:
         $ref: "#/components/requestBodies/AuthLoginRequest"
       responses:
@@ -253,6 +255,7 @@ paths:
       tags: [Auth]
       summary: 刷新 Token（開發）
       operationId: devRefreshToken
+      security: []
       requestBody:
         $ref: "#/components/requestBodies/TokenRefreshRequest"
       responses:
@@ -267,6 +270,7 @@ paths:
       tags: [Auth]
       summary: 登出（開發）
       operationId: devLogout
+      security: []
       responses:
         "200":
           description: 登出成功
@@ -288,9 +292,9 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
-        - name: status
+        - name: is_active
           in: query
-          schema: { type: string, enum: [active, inactive, pending] }
+          schema: { type: boolean }
         - name: search
           in: query
           schema: { type: string }
@@ -316,6 +320,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /users/{userId}:
     get:
       tags: [Profile]
@@ -357,7 +369,8 @@ paths:
                 $ref: "#/components/schemas/User"
     delete:
       tags: [Profile]
-      summary: 刪除用戶
+      summary: 刪除用戶 (軟刪除)
+      description: 此操作將標記用戶為已刪除 (軟刪除)，但不會從資料庫中實際移除。
       operationId: deleteUser
       security: [{ bearerAuth: [] }]
       x-roles: [super_admin]
@@ -466,7 +479,8 @@ paths:
                 $ref: "#/components/schemas/Team"
     delete:
       tags: [Admin]
-      summary: 刪除團隊
+      summary: 刪除團隊 (軟刪除)
+      description: 此操作將標記團隊為已刪除 (軟刪除)，但不會從資料庫中實際移除。
       operationId: deleteTeam
       security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
@@ -478,6 +492,26 @@ paths:
       responses:
         "204":
           description: 團隊刪除成功
+  /admin/stats/users:
+    get:
+      tags: [Admin]
+      summary: 獲取用戶與團隊統計
+      operationId: getUserStats
+      security: [{ bearerAuth: [] }]
+      x-roles: [super_admin]
+      responses:
+        "200":
+          description: 用戶與團隊統計數據
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_users: { type: integer }
+                  active_users: { type: integer }
+                  online_users: { type: integer }
+                  total_teams: { type: integer }
+                  pending_invitations: { type: integer }
 
   # ============================================
   # Roles
@@ -687,7 +721,8 @@ paths:
                 $ref: "#/components/schemas/Resource"
     delete:
       tags: [Resources]
-      summary: 刪除資源
+      summary: 刪除資源 (軟刪除)
+      description: 此操作將標記資源為已刪除 (軟刪除)，但不會從資料庫中實際移除。
       operationId: deleteResource
       security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
@@ -754,7 +789,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/BatchOperationResult"
-  /resources/scan:
+  /resource-scans:
     post:
       tags: [Resources]
       summary: 掃描網段
@@ -770,7 +805,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ScanTaskResponse"
-  /resources/scan/{taskId}:
+  /resources/stats:
+    get:
+      tags: [Resources]
+      summary: 獲取資源統計數據
+      operationId: getResourceStats
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: 資源統計數據
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_count: { type: integer }
+                  healthy_count: { type: integer }
+                  warning_count: { type: integer }
+                  critical_count: { type: integer }
+                  group_count: { type: integer }
+  /resource-scans/{taskId}:
     get:
       tags: [Resources]
       summary: 獲取掃描結果
@@ -791,7 +845,7 @@ paths:
   # ============================================
   # Resource Groups
   # ============================================
-  /resources/groups:
+  /resource-groups:
     get:
       tags: [Resource Groups]
       summary: 獲取群組列表
@@ -822,7 +876,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceGroup"
-  /resources/groups/{groupId}:
+  /resource-groups/{groupId}:
     get:
       tags: [Resource Groups]
       summary: 獲取單一資源群組詳情
@@ -862,7 +916,8 @@ paths:
                 $ref: "#/components/schemas/ResourceGroup"
     delete:
       tags: [Resource Groups]
-      summary: 刪除群組
+      summary: 刪除群組 (軟刪除)
+      description: 此操作將標記群組為已刪除 (軟刪除)，但不會從資料庫中實際移除。
       operationId: deleteResourceGroup
       security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
@@ -874,7 +929,7 @@ paths:
       responses:
         "204":
           description: 群組刪除成功
-  /resources/groups/{groupId}/members:
+  /resource-groups/{groupId}/members:
     post:
       tags: [Resource Groups]
       summary: 管理群組成員
@@ -1063,7 +1118,7 @@ paths:
       security: [{ bearerAuth: [] }]
       x-roles: [team_member, team_manager, super_admin]
       requestBody:
-        $ref: "#/components/requestBodies/AlertCreateRequest"
+        $ref: "#/components/requestBodies/IncidentCreateRequest"
       responses:
         "201":
           description: 事件創建成功
@@ -1101,7 +1156,7 @@ paths:
           required: true
           schema: { type: string }
       requestBody:
-        $ref: "#/components/requestBodies/AlertUpdateRequest"
+        $ref: "#/components/requestBodies/IncidentUpdateRequest"
       responses:
         "200":
           description: 事件更新成功
@@ -1233,7 +1288,7 @@ paths:
   # ============================================
   # Incident Silences
   # ============================================
-  /incidents/silences:
+  /incident-silences:
     get:
       tags: [Incident Silences]
       summary: 獲取靜音規則列表
@@ -1264,7 +1319,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Silence"
-  /incidents/silences/{silenceId}:
+  /incident-silences/{silenceId}:
     get:
       tags: [Incident Silences]
       summary: 獲取單一靜音規則
@@ -1304,7 +1359,8 @@ paths:
                 $ref: "#/components/schemas/Silence"
     delete:
       tags: [Incident Silences]
-      summary: 刪除靜音規則
+      summary: 刪除靜音規則 (軟刪除)
+      description: 此操作將標記靜音規則為已刪除 (軟刪除)，但不會從資料庫中實際移除。
       operationId: deleteSilence
       security: [{ bearerAuth: [] }]
       x-roles: [team_manager, super_admin]
@@ -1316,7 +1372,7 @@ paths:
       responses:
         "204":
           description: 靜音規則刪除成功
-  /incidents/silences/{silenceId}/enable:
+  /incident-silences/{silenceId}/enable:
     post:
       tags: [Incident Silences]
       summary: 啟用靜音規則
@@ -1335,7 +1391,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OperationResult"
-  /incidents/silences/{silenceId}/disable:
+  /incident-silences/{silenceId}/disable:
     post:
       tags: [Incident Silences]
       summary: 停用靜音規則
@@ -2347,7 +2403,7 @@ components:
       properties:
         items: { type: array, items: { $ref: "#/components/schemas/Alert" } }
         pagination: { $ref: "#/components/schemas/Pagination" }
-    AlertCreateRequest:
+    IncidentCreateRequest:
       type: object
       properties:
         summary: { type: string }
@@ -2357,7 +2413,7 @@ components:
         rule_id: { type: string }
         labels: { type: object }
         annotations: { type: object }
-    AlertUpdateRequest:
+    IncidentUpdateRequest:
       type: object
       properties:
         summary: { type: string }
@@ -2412,11 +2468,10 @@ components:
         roles: { type: array, items: { type: string } }
         teams: { type: array, items: { type: string } }
         teamNames: { type: array, items: { type: string } }
-        status: { type: string }
+        is_active: { type: boolean }
         lastLogin: { type: string, format: "date-time" }
         loginCount: { type: integer }
         preferences: { type: object }
-        enabled: { type: boolean }
         created_at: { type: string, format: "date-time" }
         updated_at: { type: string, format: "date-time" }
     UserList:
@@ -2439,8 +2494,7 @@ components:
         email: { type: string }
         teams: { type: array, items: { type: string } }
         roles: { type: array, items: { type: string } }
-        status: { type: string }
-        enabled: { type: boolean }
+        is_active: { type: boolean }
 
     # Team Management Schemas
     Team:
