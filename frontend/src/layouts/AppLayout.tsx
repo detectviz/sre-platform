@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { MenuFoldOutlined, MenuUnfoldOutlined, SearchOutlined } from '@ant-design/icons';
+import {
+  DeploymentUnitOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  SearchOutlined,
+} from '@ant-design/icons';
 import { Breadcrumb, Button, Input, Layout, Menu, Space, Typography } from 'antd';
-import type { BreadcrumbProps } from 'antd';
-import type { MenuProps } from 'antd/es/menu';
+import type { BreadcrumbProps, MenuProps } from 'antd';
 import type { ReactNode } from 'react';
 import { NotificationCenter, UserMenu } from '../components';
 
@@ -22,33 +26,56 @@ export type AppLayoutProps = {
   children: ReactNode;
 };
 
-export const AppLayout = ({ menuItems, activeKey, onSelect, breadcrumbItems, children }: AppLayoutProps) => {
+export const AppLayout = ({
+  menuItems,
+  activeKey,
+  onSelect,
+  breadcrumbItems,
+  children,
+}: AppLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false);
 
   const toggleCollapsed = () => setCollapsed((prev) => !prev);
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
+    <Layout className="glass-layout" style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
       <Sider
         trigger={null}
         collapsible
         collapsed={collapsed}
         width={220}
-        className="glass-surface"
-        style={{ borderRight: '1px solid var(--border-light)', background: 'var(--bg-container)' }}
+        style={{ background: 'transparent' }}
       >
         <div
           style={{
-            height: 60,
+            height: '48px',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            padding: '0 16px',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            gap: '10px',
+            padding: `0 ${collapsed ? '0' : '16px'}`,
           }}
+          onClick={() => onSelect('home')}
         >
-          <Title level={4} className="heading-gradient" style={{ margin: 0 }}>
-            {collapsed ? 'SRE' : 'SRE Platform'}
-          </Title>
+          <div
+            style={{
+              width: '30px',
+              height: '30px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              borderRadius: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <DeploymentUnitOutlined style={{ fontSize: '18px', color: 'white' }} />
+          </div>
+          {!collapsed && (
+            <Title level={4} style={{ margin: 0, color: 'var(--text-primary)', fontSize: '18px' }}>
+              SRE Platform
+            </Title>
+          )}
         </div>
         <Menu
           theme="dark"
@@ -59,9 +86,15 @@ export const AppLayout = ({ menuItems, activeKey, onSelect, breadcrumbItems, chi
           style={{ background: 'transparent', borderRight: 0 }}
         />
       </Sider>
-      <Layout>
-        <Header className="app-header glass-surface">
-          <Space size={16} align="center">
+      <Layout style={{ background: 'transparent' }}>
+        <Header
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Space>
             <Button
               type="text"
               icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
@@ -69,13 +102,16 @@ export const AppLayout = ({ menuItems, activeKey, onSelect, breadcrumbItems, chi
               aria-label="切換側邊欄"
               style={{ color: 'var(--text-primary)' }}
             />
+            {breadcrumbItems && breadcrumbItems.length > 0 && (
+              <Breadcrumb items={breadcrumbItems} />
+            )}
+          </Space>
+          <Space size={20}>
             <Input
               prefix={<SearchOutlined style={{ color: 'var(--text-tertiary)' }} />}
               placeholder="Search... (Ctrl+K)"
               style={{ width: 260 }}
             />
-          </Space>
-          <Space size={20}>
             <NotificationCenter />
             <UserMenu
               username="Admin User"
@@ -85,10 +121,7 @@ export const AppLayout = ({ menuItems, activeKey, onSelect, breadcrumbItems, chi
             />
           </Space>
         </Header>
-        <Content style={{ padding: '0 24px 32px', minHeight: 'calc(100vh - 120px)' }}>
-          {breadcrumbItems && breadcrumbItems.length > 0 && (
-            <Breadcrumb items={breadcrumbItems} style={{ marginBottom: 16 }} />
-          )}
+        <Content style={{ padding: '24px', background: 'transparent', overflow: 'auto' }}>
           {children}
         </Content>
       </Layout>

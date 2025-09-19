@@ -1,11 +1,12 @@
-import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { Card, Skeleton, Space, Statistic, Typography } from 'antd';
+import { ArrowDownOutlined, ArrowUpOutlined, MinusOutlined } from '@ant-design/icons';
+import { Card, Skeleton, Typography } from 'antd';
 import type { ReactNode } from 'react';
 
 const { Text } = Typography;
 
-export type KPIStatus = 'success' | 'warning' | 'danger' | 'info';
+export type KPIStatus = 'success' | 'warning' | 'danger' | 'info' | 'normal';
 
+// Keeping old props for compatibility but mapping them to the new design
 export type ContextualKPICardProps = {
   /** KPI 標題 */
   title: string;
@@ -13,99 +14,127 @@ export type ContextualKPICardProps = {
   value: number | string;
   /** 數值單位 */
   unit?: string;
-  /** 比較趨勢，正值代表上升 */
+  /** (舊) 比較趨勢數值 */
   trendValue?: number;
-  /** 趨勢描述文字 */
+  /** (舊) 趨勢描述文字 */
   trendLabel?: string;
+  /** (新) 趨勢文字 */
+  trend?: string;
+  /** (新) 趨勢方向 */
+  trendDirection?: 'up' | 'down' | 'stable';
   /** 數值狀態，決定用色 */
   status?: KPIStatus;
   /** 額外補充說明 */
   description?: ReactNode;
-  /** 顯示在數值右側的圖示 */
+  /** 顯示在標題旁的圖示 */
   icon?: ReactNode;
   /** 卡片點擊事件 */
   onClick?: () => void;
   /** 是否載入中 */
   loading?: boolean;
-  /** 是否套用玻璃效果外框 */
-  glass?: boolean;
+  /** 附加的 class */
+  className?: string;
 };
 
-const statusColorMap: Record<KPIStatus, string> = {
-  success: '#52c41a',
-  warning: '#faad14',
-  danger: '#ff4d4f',
-  info: '#1890ff',
+const statusColors: Record<KPIStatus, string> = {
+  normal: 'var(--text-primary)',
+  success: 'var(--brand-success)',
+  warning: 'var(--brand-warning)',
+  danger: 'var(--brand-danger)',
+  info: 'var(--brand-info)',
+};
+
+const trendIcons = {
+  up: <ArrowUpOutlined />,
+  down: <ArrowDownOutlined />,
+  stable: <MinusOutlined />,
+};
+
+const trendColors = {
+  up: 'var(--brand-success)',
+  down: 'var(--brand-danger)',
+  stable: 'var(--text-tertiary)',
 };
 
 export const ContextualKPICard = ({
   title,
   value,
-  unit,
+  unit = '',
   trendValue,
   trendLabel,
-  status = 'info',
-  description,
+  trend: newTrend,
+  trendDirection: newTrendDirection,
+  status = 'normal',
   icon,
   onClick,
-  loading,
-  glass = true,
+  className = '',
+  description,
+  loading = false,
 }: ContextualKPICardProps) => {
-  const trendPositive = typeof trendValue === 'number' && trendValue >= 0;
-  const trendNegative = typeof trendValue === 'number' && trendValue < 0;
-  const color = statusColorMap[status];
+  // --- Prop compatibility mapping ---
+  const finalTrend = newTrend ?? (trendValue !== undefined ? `${Math.abs(trendValue)}%` : undefined);
+
+  let finalTrendDirection: 'up' | 'down' | 'stable' = 'stable';
+  if (newTrendDirection) {
+    finalTrendDirection = newTrendDirection;
+  } else if (trendValue !== undefined) {
+    if (trendValue > 0) finalTrendDirection = 'up';
+    else if (trendValue < 0) finalTrendDirection = 'down';
+  }
+  // --- End mapping ---
+
+  const cardClassName = [
+    'contextual-kpi-card',
+    onClick ? 'clickable' : '',
+    className,
+  ].filter(Boolean).join(' ');
+
+  const finalDescription = description || trendLabel;
+
+  if (loading) {
+    return (
+      <Card
+        hoverable={!!onClick}
+        className={cardClassName}
+        loading={loading}
+        bordered={false}
+      >
+        {/* The loading skeleton is automatically handled by AntD Card */}
+      </Card>
+    );
+  }
 
   return (
     <Card
       hoverable={!!onClick}
       onClick={onClick}
-      className={glass ? 'glass-surface' : ''}
-      styles={{
-        body: {
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'stretch',
-          minHeight: 120,
-        },
-      }}
+      className={cardClassName}
+      loading={loading}
+      bordered={false}
     >
-      <Space direction="vertical" size={8} style={{ flex: 1 }}>
-        <Text type="secondary" style={{ textTransform: 'uppercase', letterSpacing: 0.5 }}>
-          {title}
-        </Text>
-        {loading ? (
-          <Skeleton active paragraph={false} title={{ width: '60%' }} />
-        ) : (
-          <Statistic
-            value={value}
-            suffix={unit}
-            valueStyle={{ color }}
-          />
+      <div className="kpi-header">
+        <div className="kpi-title-section">
+          {icon && <div className="kpi-icon">{icon}</div>}
+          <div className="kpi-title">{title}</div>
+        </div>
+        {finalTrend && (
+          <div className="kpi-trend" style={{ color: trendColors[finalTrendDirection] }}>
+            {trendIcons[finalTrendDirection]}
+            <span className="trend-value">{finalTrend}</span>
+          </div>
         )}
-        {description && (
-          <Text type="secondary" style={{ fontSize: 13 }}>
-            {description}
-          </Text>
+      </div>
+      <div className="kpi-content">
+        <div className="kpi-value" style={{ color: statusColors[status] }}>
+          {typeof value === 'number' ? value.toLocaleString() : value}
+          {unit && <span className="kpi-unit">{unit}</span>}
+        </div>
+        {finalDescription && (
+          <div className="kpi-description">
+            <Text type="secondary">{finalDescription}</Text>
+          </div>
         )}
-      </Space>
-
-      <Space direction="vertical" align="end" size={8} style={{ minWidth: 80 }}>
-        {icon}
-        {typeof trendValue === 'number' && (
-          <Space size={4} style={{ color: trendPositive ? '#52c41a' : '#ff4d4f', fontWeight: 500 }}>
-            {trendPositive && <ArrowUpOutlined />}
-            {trendNegative && <ArrowDownOutlined />}
-            <span>
-              {Math.abs(trendValue)}%
-            </span>
-          </Space>
-        )}
-        {trendLabel && (
-          <Text type="secondary" style={{ fontSize: 12 }}>
-            {trendLabel}
-          </Text>
-        )}
-      </Space>
+      </div>
     </Card>
   );
 };

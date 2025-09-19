@@ -1,0 +1,410 @@
+/* === 全域樣式設定 === */
+body {
+  background-color: var(--bg-page);
+  color: var(--text-secondary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* === 玻璃效果通用 class === */
+.glass-surface {
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  box-shadow: var(--glass-shadow);
+}
+
+/* === 平台級 UI/UX 標準化設計規範 === */
+
+/* === Modal 彈窗標準化設計 === */
+.platform-modal .ant-modal-mask {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.platform-modal .ant-modal-content {
+  background: var(--bg-elevated);
+  border: var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.platform-modal .ant-modal-header {
+  background: transparent;
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--spacing-xl);
+}
+
+.platform-modal .ant-modal-title {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.platform-modal .ant-modal-body {
+  padding: var(--spacing-xl);
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.platform-modal .ant-modal-footer {
+  background: transparent;
+  border-top: 1px solid var(--border-light);
+  padding: var(--spacing-lg) var(--spacing-xl);
+  margin-top: 0;
+}
+
+/* === 狀態標籤樣式 === */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: var(--radius-xl);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.status-badge::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 狀態顏色 */
+.status-badge-healthy {
+  background: var(--brand-success-bg);
+  color: var(--brand-success);
+  border-color: rgba(82, 196, 26, 0.3);
+}
+
+.status-badge-warning {
+  background: var(--brand-warning-bg);
+  color: var(--brand-warning);
+  border-color: rgba(250, 173, 20, 0.3);
+}
+
+.status-badge-critical {
+  background: var(--brand-danger-bg);
+  color: var(--brand-danger);
+  border-color: rgba(255, 77, 79, 0.3);
+}
+
+.status-badge-info,
+.status-badge-new {
+  background: var(--brand-primary-bg);
+  color: var(--brand-primary);
+  border-color: rgba(24, 144, 255, 0.3);
+}
+
+.status-badge-unknown {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-tertiary);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* === Layout 樣式 === */
+.ant-layout-sider {
+  border-right: 1px solid var(--border-light) !important;
+}
+
+.ant-layout-header {
+  border-bottom: 1px solid var(--border-light) !important;
+  height: 48px !important;
+  line-height: 48px !important;
+  padding: 0 16px !important;
+  background: transparent !important;
+}
+
+/* 玻璃效果佈局 */
+.glass-layout .ant-layout-sider,
+.glass-layout .ant-layout-header {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+}
+
+/* Sidebar 選單樣式 */
+.ant-menu-dark.ant-menu-inline {
+  background: transparent;
+}
+
+.ant-menu-dark .ant-menu-item-selected {
+  background-color: var(--bg-selected) !important;
+  position: relative;
+}
+
+.ant-menu-dark .ant-menu-item-selected::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: var(--brand-primary);
+}
+
+.ant-menu-dark .ant-menu-item:hover,
+.ant-menu-dark .ant-menu-submenu-title:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+/* === 頁面標題組件樣式 === */
+.page-header {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg) 0;
+}
+
+.page-breadcrumb {
+  margin-bottom: var(--spacing-md);
+}
+
+.page-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-lg);
+}
+
+.page-header-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-title-section {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+}
+
+.page-title-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-lg);
+  color: var(--brand-primary);
+  font-size: 20px;
+}
+
+.page-title-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.page-header .page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-xs) 0;
+  line-height: 1.2;
+}
+
+.page-header .page-subtitle {
+  font-size: 16px;
+  color: var(--text-tertiary);
+  margin: 0;
+  line-height: 1.4;
+  max-width: 600px;
+}
+
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  flex-shrink: 0;
+}
+
+/* === 情境化 KPI 卡片樣式 === */
+.contextual-kpi-card.ant-card {
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  transition: all 0.3s ease;
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+  box-shadow: var(--glass-shadow);
+  position: relative;
+  overflow: hidden;
+  height: 120px;
+}
+
+.contextual-kpi-card.ant-card .ant-card-body {
+  padding: var(--spacing-lg);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.contextual-kpi-card.clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  border-color: var(--brand-primary);
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md);
+}
+
+.kpi-title-section {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+  min-width: 0;
+}
+
+.kpi-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: rgba(24, 144, 255, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--brand-primary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.kpi-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.kpi-trend {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.kpi-content {
+  flex: 1;
+}
+
+.kpi-value {
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: var(--spacing-xs);
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-xs);
+}
+
+.kpi-unit {
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--text-tertiary);
+}
+
+.kpi-description {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+/* === 表格容器樣式 === */
+.table-wrapper {
+  background: var(--glass-bg);
+  border: var(--glass-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: var(--glass-backdrop);
+  -webkit-backdrop-filter: var(--glass-backdrop);
+}
+
+.table-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.table-wrapper .ant-table {
+  background: transparent;
+}
+
+.table-wrapper .ant-table-thead > tr > th {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.table-wrapper .ant-table-tbody > tr:hover > td {
+  background: var(--bg-hover);
+}
+
+.table-wrapper .ant-table-tbody > tr > td {
+  padding: var(--spacing-md) var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+  color: var(--text-secondary);
+}
+
+/* === 分頁樣式 === */
+.custom-pagination .ant-pagination-item,
+.custom-pagination .ant-pagination-prev,
+.custom-pagination .ant-pagination-next {
+  background-color: transparent !important;
+  border-color: var(--border-light) !important;
+}
+
+.custom-pagination .ant-pagination-item a {
+  color: var(--text-secondary) !important;
+}
+
+.custom-pagination .ant-pagination-item-active {
+  border-color: var(--brand-primary) !important;
+}
+
+.custom-pagination .ant-pagination-item-active a {
+  color: var(--brand-primary) !important;
+}

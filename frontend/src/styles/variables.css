@@ -1,4 +1,4 @@
-/* 🌌 Design System Tokens */
+/* 🎨 統一設計系統 - Design System */
 :root {
   /* === 核心品牌色系統 === */
   --brand-primary: #1890ff;
@@ -45,14 +45,20 @@
   --border-hover: rgba(255, 255, 255, 0.2);
 
   /* === 間距系統 (8px 基礎網格) === */
-  --spacing-2xs: 2px;
   --spacing-xs: 4px;
+  /* 0.5 單位 */
   --spacing-sm: 8px;
+  /* 1 單位 */
   --spacing-md: 12px;
+  /* 1.5 單位 */
   --spacing-lg: 16px;
+  /* 2 單位 */
   --spacing-xl: 24px;
+  /* 3 單位 */
   --spacing-2xl: 32px;
+  /* 4 單位 */
   --spacing-3xl: 48px;
+  /* 6 單位 */
 
   /* === 圓角系統 === */
   --radius-xs: 4px;
@@ -67,7 +73,7 @@
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
   --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.45);
 
-  /* === 按鈕尺寸 === */
+  /* === 按鈕系統 === */
   --btn-height-sm: 28px;
   --btn-height-md: 32px;
   --btn-height-lg: 36px;
@@ -80,8 +86,4 @@
   --glass-border: 1px solid rgba(255, 255, 255, 0.12);
   --glass-backdrop: blur(20px) saturate(180%);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-
-  /* === 字型設定 === */
-  --font-sans: 'Inter', 'Segoe UI', 'Noto Sans TC', system-ui, -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif;
-  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
 }
