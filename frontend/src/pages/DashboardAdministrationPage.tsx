@@ -1,197 +1,550 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert, AutoComplete } from 'antd';
-import { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, HomeOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, ArrowUpOutlined, ArrowDownOutlined, AlignCenterOutlined, CompressOutlined, ExpandOutlined, MinusOutlined, UnorderedListOutlined, WarningOutlined, GlobalOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } from '@ant-design/icons';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
+import {
+  App as AntdApp,
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Col,
+  Dropdown,
+  Empty,
+  List,
+  Row,
+  Segmented,
+  Space,
+  Spin,
+  Tabs,
+  Tag,
+  Tooltip,
+  Typography,
+} from 'antd';
+import type { MenuProps, TabsProps } from 'antd';
+import {
+  AppstoreOutlined,
+  BarChartOutlined,
+  BranchesOutlined,
+  CloudServerOutlined,
+  LineChartOutlined,
+  ReloadOutlined,
+  ShareAltOutlined,
+  StarOutlined,
+  ThunderboltOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
+import dayjs from 'dayjs';
+import { ContextualKPICard, DataTable, PageHeader } from '../components';
+import type { ContextualKPICardProps, KPIStatus } from '../components/ContextualKPICard';
+import useDashboards from '../hooks/useDashboards';
+import type { DashboardCategory, DashboardDefinition } from '../types/dashboards';
 
-const { Title, Paragraph } = Typography;
+const { Text } = Typography;
 
-const DashboardAdministrationPage = ({ onNavigate }) => {
-    const [defaultDashboard, setDefaultDashboard] = useState(() => {
-      return localStorage.getItem('default-dashboard') || 'business-dashboard';
-    });
+type DashboardKpiCard = {
+  key: string;
+} & Pick<ContextualKPICardProps, 'title' | 'value' | 'unit' | 'status' | 'description' | 'icon'>;
 
-    const setAsDefaultDashboard = (dashboardKey) => {
-      setDefaultDashboard(dashboardKey);
-      localStorage.setItem('default-dashboard', dashboardKey);
-      message.success(`已將「${dashboardCards.find(d => d.key === dashboardKey)?.title || '未知儀表板'}」設為預設首頁`);
-    };
+const categoryMeta: Record<DashboardCategory, {
+  label: string;
+  description: string;
+  icon: ReactNode;
+  tone: KPIStatus;
+  accent: string;
+}> = {
+  infrastructure: {
+    label: '基礎設施洞察',
+    description: '雲資源、系統健康與容量趨勢',
+    icon: <CloudServerOutlined />,
+    tone: 'info',
+    accent: '#1890ff',
+  },
+  business: {
+    label: '業務與 SLA 指標',
+    description: '跨團隊服務品質與使用者體驗',
+    icon: <BarChartOutlined />,
+    tone: 'success',
+    accent: '#52c41a',
+  },
+  operations: {
+    label: '營運與容量',
+    description: '容量規劃、成本與資源利用率',
+    icon: <BranchesOutlined />,
+    tone: 'warning',
+    accent: '#faad14',
+  },
+  automation: {
+    label: '自動化與效率',
+    description: '腳本成效、ROI 及節省工時',
+    icon: <ThunderboltOutlined />,
+    tone: 'info',
+    accent: '#9254de',
+  },
+  custom: {
+    label: '團隊自訂',
+    description: '部門或專案的客製儀表板',
+    icon: <AppstoreOutlined />,
+    tone: 'info',
+    accent: '#13c2c2',
+  },
+};
 
-    const dashboardCards = [
-      {
-        key: 'alerts-insights',
-        icon: <ExclamationCircleOutlined />,
-        title: '基礎設施洞察',
-        description: '整合事件監控與資源健康度分析。',
-        category: '資源監控',
-        features: ['即時告警', '資源健康度', '趨勢分析'],
-        enabled: true
-      },
-      {
-        key: 'resource-overview',
-        icon: <HddOutlined />,
-        title: '資源總覽',
-        description: '資源使用情況與健康狀態總覽。',
-        category: '資源管理',
-        features: ['資源健康度', '使用率統計', '負載分佈'],
-        enabled: true
-      },
-      {
-        key: 'business-dashboard',
-        icon: <BarChartOutlined />,
-        title: 'SRE 戰情室',
-        description: '業務指標與效能監控儀表板。',
-        category: '業務監控',
-        features: ['KPI追蹤', '效能指標', '業務健康度'],
-        enabled: true
-      },
-      {
-        key: 'integrated-resource-overview',
-        icon: <GlobalOutlined />,
-        title: '整合資源總覽',
-        description: '跨集群資源整合視圖。',
-        category: '資源管理',
-        features: ['多集群視圖', '統一監控', '資源調度'],
-        enabled: true
+type DashboardAdministrationPageProps = {
+  onNavigate?: (key: string, params?: Record<string, unknown>) => void;
+};
+
+const DashboardAdministrationPage = ({ onNavigate }: DashboardAdministrationPageProps) => {
+  const { message } = AntdApp.useApp();
+  const { dashboards, stats, categorized, loading, error, isFallback, refresh } = useDashboards();
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [tableCategoryFilter, setTableCategoryFilter] = useState<'ALL' | DashboardCategory>('ALL');
+  const [defaultDashboardId, setDefaultDashboardId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('sre-platform/default-dashboard');
+  });
+
+  useEffect(() => {
+    if (defaultDashboardId) {
+      const exists = dashboards.some((item) => item.id === defaultDashboardId);
+      if (!exists) {
+        setDefaultDashboardId(dashboards.find((item) => item.isDefault)?.id ?? dashboards[0]?.id ?? null);
       }
+    } else {
+      setDefaultDashboardId(dashboards.find((item) => item.isDefault)?.id ?? dashboards[0]?.id ?? null);
+    }
+  }, [dashboards, defaultDashboardId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (defaultDashboardId) {
+      localStorage.setItem('sre-platform/default-dashboard', defaultDashboardId);
+    } else {
+      localStorage.removeItem('sre-platform/default-dashboard');
+    }
+  }, [defaultDashboardId]);
+
+  const handleSetDefault = useCallback((dashboard: DashboardDefinition) => {
+    setDefaultDashboardId(dashboard.id);
+    message.success(`已將「${dashboard.name}」設為預設儀表板`);
+  }, [message]);
+
+  const handleOpenDashboard = useCallback((dashboard: DashboardDefinition) => {
+    const target = dashboard.targetPageKey ?? dashboard.id;
+    onNavigate?.(target, { dashboardId: dashboard.id });
+  }, [onNavigate]);
+
+  const handleCloneDashboard = useCallback((dashboard: DashboardDefinition) => {
+    message.info(`已複製「${dashboard.name}」的儀表板設定 (模擬)`);
+  }, [message]);
+
+  const handleShareDashboard = useCallback((dashboard: DashboardDefinition) => {
+    message.success(`已產生「${dashboard.name}」的分享連結 (模擬)`);
+  }, [message]);
+
+  const tableData = useMemo(() => {
+    if (tableCategoryFilter === 'ALL') {
+      return dashboards;
+    }
+    return dashboards.filter((item) => item.category === tableCategoryFilter);
+  }, [dashboards, tableCategoryFilter]);
+
+  const columns = useMemo(() => {
+    const items: MenuProps['items'] = [
+      {
+        key: 'duplicate',
+        label: '複製儀表板',
+      },
+      {
+        key: 'share',
+        label: '分享設定',
+      },
     ];
 
-    const CardContent = ({ item }) => (
-      <div
-        className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-        style={{ height: '90px', width: '100%', position: 'relative' }}
-      >
-        {defaultDashboard === item.key && (
-          <div style={{
-            position: 'absolute',
-            top: '12px',
-            right: '12px',
-            background: '#52c41a',
-            color: 'white',
-            padding: '2px 6px',
-            borderRadius: '10px',
-            fontSize: '10px',
-            fontWeight: 600,
-            zIndex: 10,
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-            whiteSpace: 'nowrap'
-          }}>
-            <HomeOutlined style={{ marginRight: '2px', fontSize: '10px' }} />
-            預設首頁
-          </div>
-        )}
+    const handleMenuClick = (dashboard: DashboardDefinition, info: Parameters<NonNullable<MenuProps['onClick']>>[0]) => {
+      if (info.key === 'duplicate') {
+        handleCloneDashboard(dashboard);
+      }
+      if (info.key === 'share') {
+        handleShareDashboard(dashboard);
+      }
+    };
 
-        <div
-          className="nav-item-content"
-          onClick={() => item.enabled && onNavigate(item.key)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            height: '100%',
-            cursor: item.enabled ? 'pointer' : 'not-allowed',
-            position: 'relative'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-              <div className="nav-item-icon" style={{
-                background: 'rgba(24, 144, 255, 0.1)',
-                padding: '8px',
-                borderRadius: '8px',
-                fontSize: '24px',
-                color: item.enabled ? '#1890ff' : 'rgba(255, 255, 255, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexShrink: 0
-              }}>
-                {item.icon}
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="nav-item-title" style={{
-                  color: item.enabled ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.5)',
-                  fontSize: '16px',
-                  fontWeight: 600,
-                  marginBottom: '4px',
-                  lineHeight: '1.2'
-                }}>
-                  {item.title || '未命名項目'}
-                </div>
-                <div className="nav-item-description" style={{
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  fontSize: '14px',
-                  lineHeight: '1.4'
-                }}>
-                  {item.description}
-                </div>
-              </div>
-            </div>
-
-            {item.enabled && (
-              <Tooltip title={defaultDashboard === item.key ? "已是預設首頁" : "設為預設首頁"}>
-                <Button
-                  type="text"
-                  size="small"
-                  icon={<HomeOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (defaultDashboard !== item.key) {
-                      setAsDefaultDashboard(item.key);
-                    }
-                  }}
-                  style={{
-                    color: defaultDashboard === item.key ? '#52c41a' : 'rgba(255, 255, 255, 0.6)',
-                    padding: '4px',
-                    borderRadius: '4px',
-                    transition: 'all 0.2s',
-                    alignSelf: 'flex-end',
-                    marginBottom: '-2px'
-                  }}
-                  className="set-default-btn"
-                />
-              </Tooltip>
+    return [
+      {
+        title: '名稱',
+        dataIndex: 'name',
+        key: 'name',
+        render: (_: unknown, record: DashboardDefinition) => (
+          <Space direction="vertical" size={6} style={{ width: '100%' }}>
+            <Space size={8} wrap>
+              <Text strong>{record.name}</Text>
+              {record.id === defaultDashboardId && <Tag color="gold">預設</Tag>}
+              {record.status === 'draft' && <Tag color="cyan">草稿</Tag>}
+              {record.isFeatured && <Tag color="purple">精選</Tag>}
+            </Space>
+            {record.description && (
+              <Text type="secondary" style={{ fontSize: 12 }}>
+                {record.description}
+              </Text>
             )}
-          </div>
-        </div>
-      </div>
-    );
+            {record.tags && record.tags.length > 0 && (
+              <Space size={[4, 4]} wrap>
+                {record.tags.slice(0, 3).map((tag) => (
+                  <Tag key={tag}>{tag}</Tag>
+                ))}
+                {record.tags.length > 3 && <Tag>+{record.tags.length - 3}</Tag>}
+              </Space>
+            )}
+          </Space>
+        ),
+      },
+      {
+        title: '類別',
+        dataIndex: 'category',
+        key: 'category',
+        render: (value: DashboardCategory) => (
+          <Tag color={categoryMeta[value]?.accent}>{categoryMeta[value]?.label ?? value}</Tag>
+        ),
+      },
+      {
+        title: '擁有者',
+        dataIndex: 'owner',
+        key: 'owner',
+        render: (owner?: string) => owner ?? '—',
+      },
+      {
+        title: '瀏覽 / 收藏',
+        key: 'engagement',
+        render: (_: unknown, record: DashboardDefinition) => (
+          <Text type="secondary">{record.viewers ?? 0} / {record.favoriteCount ?? 0}</Text>
+        ),
+      },
+      {
+        title: '更新時間',
+        dataIndex: 'updatedAt',
+        key: 'updatedAt',
+        render: (value?: string) => (value ? dayjs(value).format('YYYY/MM/DD HH:mm') : '—'),
+      },
+      {
+        title: '操作',
+        key: 'actions',
+        width: 240,
+        render: (_: unknown, record: DashboardDefinition) => (
+          <Space size={4} wrap>
+            <Button type="link" onClick={() => handleOpenDashboard(record)}>
+              開啟
+            </Button>
+            <Button
+              type="link"
+              onClick={() => handleSetDefault(record)}
+              disabled={record.id === defaultDashboardId}
+            >
+              設為預設
+            </Button>
+            <Dropdown
+              trigger={['click']}
+              menu={{
+                items,
+                onClick: (info) => handleMenuClick(record, info),
+              }}
+            >
+              <Button type="link">更多</Button>
+            </Dropdown>
+          </Space>
+        ),
+      },
+    ];
+  }, [defaultDashboardId, handleCloneDashboard, handleOpenDashboard, handleSetDefault, handleShareDashboard]);
 
-    const renderCategory = (categoryName) => (
-      <div style={{ marginBottom: '24px' }}>
-        <Title level={5} style={{
-          color: 'var(--text-secondary)',
-          fontWeight: '500',
-          marginBottom: '8px',
-          fontSize: '16px'
-        }}>
-          {categoryName}
-        </Title>
-        <Row gutter={[16, 16]}>
-          {dashboardCards.filter(item => item.category === categoryName).map(item => (
-            <Col key={item.key} xs={24} md={12} lg={8} style={{ display: 'flex' }}>
-              {item.enabled ? (
-                <CardContent item={item} />
-              ) : (
-                <Badge.Ribbon text="即將推出">
-                  <CardContent item={item} />
-                </Badge.Ribbon>
-              )}
+  const automationTone: KPIStatus = stats.automationCoverage >= 60 ? 'success' : 'warning';
+  const kpiCards = useMemo<DashboardKpiCard[]>(() => ([
+    {
+      key: 'total',
+      title: '儀表板總數',
+      value: stats.totalDashboards,
+      unit: '個',
+      status: 'info',
+      description: stats.lastUpdatedAt ? `最後更新：${dayjs(stats.lastUpdatedAt).fromNow()}` : undefined,
+      icon: <AppstoreOutlined style={{ fontSize: 28, color: '#1890ff' }} />,
+    },
+    {
+      key: 'published',
+      title: '已發布',
+      value: stats.publishedDashboards,
+      unit: '個',
+      status: 'success',
+      description: '可供所有角色使用',
+      icon: <ShareAltOutlined style={{ fontSize: 28, color: '#52c41a' }} />,
+    },
+    {
+      key: 'custom',
+      title: '自訂儀表板',
+      value: stats.customDashboards,
+      unit: '個',
+      status: 'warning',
+      description: '由團隊自行建立',
+      icon: <UserOutlined style={{ fontSize: 28, color: '#faad14' }} />,
+    },
+    {
+      key: 'automation',
+      title: '自動化覆蓋率',
+      value: stats.automationCoverage,
+      unit: '%',
+      status: automationTone,
+      description: '有自動更新資料的儀表板',
+      icon: <ThunderboltOutlined style={{ fontSize: 28, color: '#9254de' }} />,
+    },
+  ]), [automationTone, stats]);
+
+  const popularDashboards = useMemo(
+    () => [...dashboards].sort((a, b) => (b.favoriteCount ?? 0) - (a.favoriteCount ?? 0)).slice(0, 5),
+    [dashboards],
+  );
+
+  const overviewContent = (
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <Row gutter={[16, 16]}>
+        {Object.keys(categoryMeta).map((key) => {
+          const categoryKey = key as DashboardCategory;
+          const items = categorized[categoryKey] ?? [];
+          const meta = categoryMeta[categoryKey];
+          return (
+            <Col key={categoryKey} xs={24} md={12} xl={8}>
+              <Card
+                className="glass-surface"
+                title={
+                  <Space size={12} align="start">
+                    <div
+                      style={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        background: `${meta.accent}33`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: meta.accent,
+                        fontSize: 20,
+                      }}
+                    >
+                      {meta.icon}
+                    </div>
+                    <Space direction="vertical" size={0}>
+                      <Text strong>{meta.label}</Text>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {meta.description}
+                      </Text>
+                    </Space>
+                  </Space>
+                }
+                extra={<Badge count={items.length} style={{ backgroundColor: meta.accent }} />}
+                styles={{ body: { paddingTop: 16 } }}
+              >
+                {items.length === 0 ? (
+                  <Empty description="尚無儀表板" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                ) : (
+                  <List
+                    dataSource={items.slice(0, 3)}
+                    split={false}
+                    renderItem={(item) => (
+                      <List.Item
+                        style={{ padding: '12px 0' }}
+                        actions={[
+                          <Button
+                            key="open"
+                            type="link"
+                            size="small"
+                            onClick={() => handleOpenDashboard(item)}
+                          >
+                            開啟
+                          </Button>,
+                        ]}
+                      >
+                        <List.Item.Meta
+                          title={
+                            <Space size={8} wrap>
+                              <Text strong>{item.name}</Text>
+                              {item.id === defaultDashboardId && <Tag color="gold">預設</Tag>}
+                            </Space>
+                          }
+                          description={
+                            <Space direction="vertical" size={4}>
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                擁有者：{item.owner ?? '未指定'}
+                              </Text>
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                更新於：{item.updatedAt ? dayjs(item.updatedAt).fromNow() : '未知'}
+                              </Text>
+                            </Space>
+                          }
+                        />
+                      </List.Item>
+                    )}
+                  />
+                )}
+
+                <Button
+                  block
+                  type="text"
+                  onClick={() => {
+                    setTableCategoryFilter(categoryKey);
+                    setActiveTab('library');
+                  }}
+                >
+                  查看此分類的所有儀表板
+                </Button>
+              </Card>
             </Col>
-          ))}
-        </Row>
-      </div>
-    );
+          );
+        })}
+      </Row>
 
-    return (
-      <React.Fragment>
-        <Title level={2} className="page-title" style={{ marginBottom: '2px' }}>儀表板</Title>
-        <Paragraph className="page-subtitle" type="secondary" style={{ marginBottom: '4px' }}>
-          統一的系統監控與業務洞察儀表板入口。
-        </Paragraph>
-        <div style={{ marginTop: '16px' }}>
-          {renderCategory('資源監控')}
-          {renderCategory('業務監控')}
-        </div>
-      </React.Fragment>
-    );
-  };
+      <Card className="glass-surface" title="熱門儀表板">
+        {popularDashboards.length === 0 ? (
+          <Empty description="暫無統計資料" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+        ) : (
+          <List
+            dataSource={popularDashboards}
+            renderItem={(item) => (
+              <List.Item
+                actions={[
+                  <Tooltip key="favorite" title="收藏數">
+                    <Space size={4}>
+                      <StarOutlined style={{ color: '#faad14' }} />
+                      <span>{item.favoriteCount ?? 0}</span>
+                    </Space>
+                  </Tooltip>,
+                  <Tooltip key="viewer" title="瀏覽次數">
+                    <Space size={4}>
+                      <LineChartOutlined style={{ color: '#1890ff' }} />
+                      <span>{item.viewers ?? 0}</span>
+                    </Space>
+                  </Tooltip>,
+                  <Button key="open" type="link" onClick={() => handleOpenDashboard(item)}>
+                    開啟
+                  </Button>,
+                ]}
+              >
+                <List.Item.Meta
+                  title={
+                    <Space size={8}>
+                      <Text strong>{item.name}</Text>
+                      <Tag color={categoryMeta[item.category]?.accent}>
+                        {categoryMeta[item.category]?.label ?? item.category}
+                      </Tag>
+                    </Space>
+                  }
+                  description={item.description}
+                />
+              </List.Item>
+            )}
+          />
+        )}
+      </Card>
+    </Space>
+  );
 
-  export default DashboardAdministrationPage;
+  const libraryContent = (
+    <DataTable<DashboardDefinition>
+      rowKey={(record) => record.id}
+      dataSource={tableData}
+      columns={columns}
+      loading={loading}
+      titleContent={
+        <Space wrap>
+          <Segmented
+            value={tableCategoryFilter}
+            onChange={(value) => setTableCategoryFilter(value as typeof tableCategoryFilter)}
+            options={[
+              { label: '全部', value: 'ALL' },
+              { label: categoryMeta.infrastructure.label, value: 'infrastructure' },
+              { label: categoryMeta.business.label, value: 'business' },
+              { label: categoryMeta.operations.label, value: 'operations' },
+              { label: categoryMeta.automation.label, value: 'automation' },
+              { label: categoryMeta.custom.label, value: 'custom' },
+            ]}
+          />
+          <Tooltip title="重新整理">
+            <Button icon={<ReloadOutlined />} onClick={refresh} disabled={loading} />
+          </Tooltip>
+        </Space>
+      }
+    />
+  );
+
+  const tabItems: TabsProps['items'] = useMemo(() => ([
+    {
+      key: 'overview',
+      label: '概覽',
+      children: overviewContent,
+    },
+    {
+      key: 'library',
+      label: '儀表板列表',
+      children: libraryContent,
+    },
+  ]), [libraryContent, overviewContent]);
+
+  return (
+    <Space direction="vertical" size="large" style={{ width: '100%' }}>
+      <PageHeader
+        title="儀表板管理"
+        subtitle="統一管理基礎設施與業務儀表板"
+        description="建立、分享與治理所有 SRE 儀表板，確保視覺一致性與數據可靠性。"
+        extra={
+          <Space>
+            <Tooltip title="重新整理儀表板資料">
+              <Button icon={<ReloadOutlined />} onClick={refresh} disabled={loading} />
+            </Tooltip>
+            <Button type="primary" icon={<AppstoreOutlined />}>
+              新建儀表板
+            </Button>
+          </Space>
+        }
+      />
+
+      {isFallback && (
+        <Alert
+          showIcon
+          type="info"
+          message="目前顯示為內建模擬資料"
+          description="尚未連接到 /dashboards API，以下內容為範例數據。"
+        />
+      )}
+
+      {error && !isFallback && (
+        <Alert
+          type="error"
+          showIcon
+          message="載入儀表板資料失敗"
+          description={error instanceof Error ? error.message : '請稍後再試'}
+        />
+      )}
+
+      <Row gutter={[16, 16]}>
+        {kpiCards.map((card) => (
+          <Col key={card.key} xs={24} sm={12} xl={6}>
+            <ContextualKPICard
+              title={card.title}
+              value={card.value}
+              unit={card.unit}
+              status={card.status}
+              description={card.description}
+              icon={card.icon}
+              loading={loading}
+            />
+          </Col>
+        ))}
+      </Row>
+
+      <Spin spinning={loading && dashboards.length === 0} tip="載入儀表板資料中...">
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={tabItems}
+        />
+      </Spin>
+    </Space>
+  );
+};
+
+export default DashboardAdministrationPage;

@@ -13,6 +13,12 @@
 
 ---
 
+## 📋 核心契約文件參考 (SSOT)
+所有部署配置必須符合以下契約規範：
+- **[../openapi.yaml](../openapi.yaml)** - API 服務端點和認證規範
+- **[../db_schema.sql](../db_schema.sql)** - 數據庫初始化和遷移腳本
+- **[../TODO.md](../TODO.md)** - 前端實作狀態和 Mock Server 配置
+
 ## 部署概述
 
 SRE 平台採用現代化的微服務架構，支持多種部署模式：

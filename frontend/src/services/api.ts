@@ -12,7 +12,9 @@ const mockApi = {
   getUsers: () => Promise.resolve(db.users),
   getTeams: () => Promise.resolve(db.teams),
   getRoles: () => Promise.resolve(db.roles),
-  getNotifications: () => Promise.resolve(db.notifications),
+  getNotifications: () => Promise.resolve(db.notification_history),
+  getNotificationPolicies: () => Promise.resolve(db.notification_policies),
+  getNotificationChannels: () => Promise.resolve(db.notification_channels),
 };
 
 const realApi = {
@@ -25,7 +27,9 @@ const realApi = {
   getUsers: () => fetch('/api/v1/users').then(res => res.json()),
   getTeams: () => fetch('/api/v1/teams').then(res => res.json()),
   getRoles: () => fetch('/api/v1/roles').then(res => res.json()),
-  getNotifications: () => fetch('/api/v1/notifications').then(res => res.json()),
+  getNotifications: () => fetch('/api/v1/notification-history').then(res => res.json()),
+  getNotificationPolicies: () => fetch('/api/v1/notification-policies').then(res => res.json()),
+  getNotificationChannels: () => fetch('/api/v1/notification-channels').then(res => res.json()),
 };
 
 const api = USE_MOCK_DATA ? mockApi : realApi;

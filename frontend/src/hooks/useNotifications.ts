@@ -9,8 +9,13 @@ const useNotifications = () => {
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
-                const data = await api.getNotifications();
-                setNotifications(data);
+        const data = await api.getNotifications();
+        const items = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.items)
+            ? data.items
+            : [];
+        setNotifications(items);
             } catch (err) {
                 setError(err);
             } finally {

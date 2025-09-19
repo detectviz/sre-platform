@@ -210,6 +210,77 @@ CREATE TABLE `tag_compliance_violations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='標籤合規性違規記錄表';
 
 -- ===========================================
+-- 儀表板與洞察 (Dashboards & Insights)
+-- ===========================================
+
+-- 儀表板主表
+CREATE TABLE `dashboards` (
+    `id` VARCHAR(64) PRIMARY KEY COMMENT '儀表板唯一標識 (slug 或 UUID)',
+    `name` VARCHAR(255) NOT NULL COMMENT '儀表板名稱',
+    `description` TEXT COMMENT '儀表板描述',
+    `category` ENUM('infrastructure', 'business', 'operations', 'automation', 'custom') NOT NULL COMMENT '儀表板分類',
+    `owner` VARCHAR(255) COMMENT '負責團隊或擁有者',
+    `is_default` BOOLEAN DEFAULT FALSE COMMENT '是否為預設儀表板',
+    `is_featured` BOOLEAN DEFAULT FALSE COMMENT '是否為精選儀表板',
+    `viewers_count` INT DEFAULT 0 COMMENT '瀏覽次數',
+    `favorites_count` INT DEFAULT 0 COMMENT '收藏數',
+    `panel_count` INT DEFAULT 0 COMMENT '包含面板數量',
+    `data_sources` JSON COMMENT '資料來源列表',
+    `thumbnail_url` VARCHAR(500) COMMENT '預覽縮圖 URL',
+    `target_page_key` VARCHAR(100) COMMENT '前端導覽對應鍵值',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+    INDEX `idx_category` (`category`),
+    INDEX `idx_owner` (`owner`),
+    INDEX `idx_deleted_at` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='儀表板定義';
+
+-- 基礎設施統計快照
+CREATE TABLE `infrastructure_snapshots` (
+    `id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT COMMENT '快照 ID',
+    `captured_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '快照時間',
+    `server_count` INT DEFAULT 0 COMMENT '伺服器總數',
+    `database_count` INT DEFAULT 0 COMMENT '資料庫數量',
+    `container_count` INT DEFAULT 0 COMMENT '容器數量',
+    `service_count` INT DEFAULT 0 COMMENT '服務數量',
+    `server_trend` INT DEFAULT 0 COMMENT '伺服器趨勢(較上期)',
+    `database_trend` INT DEFAULT 0 COMMENT '資料庫趨勢',
+    `container_trend` INT DEFAULT 0 COMMENT '容器趨勢',
+    `service_trend` INT DEFAULT 0 COMMENT '服務趨勢',
+    INDEX `idx_captured_at` (`captured_at` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='基礎設施統計快照';
+
+-- 資源使用率明細
+CREATE TABLE `resource_usage_metrics` (
+    `id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+    `snapshot_id` BIGINT UNSIGNED NOT NULL COMMENT '對應快照 ID',
+    `resource_id` VARCHAR(36) COMMENT '資源 ID (可為外部來源)',
+    `resource_name` VARCHAR(255) NOT NULL COMMENT '資源名稱',
+    `resource_type` VARCHAR(100) COMMENT '資源類型',
+    `usage_percent` DECIMAL(5,2) NOT NULL COMMENT '使用率百分比 (0-100)',
+    `status` ENUM('healthy', 'warning', 'critical') NOT NULL DEFAULT 'healthy' COMMENT '健康狀態',
+    `captured_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '紀錄時間',
+    FOREIGN KEY (`snapshot_id`) REFERENCES `infrastructure_snapshots`(`id`) ON DELETE CASCADE,
+    INDEX `idx_snapshot` (`snapshot_id`),
+    INDEX `idx_status` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='資源使用率明細';
+
+-- AI 風險預測記錄
+CREATE TABLE `ai_risk_predictions` (
+    `id` VARCHAR(36) PRIMARY KEY COMMENT '預測記錄 ID',
+    `resource_id` VARCHAR(36) COMMENT '關聯資源ID',
+    `resource_name` VARCHAR(255) NOT NULL COMMENT '資源名稱',
+    `risk_level` ENUM('low', 'medium', 'high') NOT NULL COMMENT '風險等級',
+    `prediction` TEXT NOT NULL COMMENT '預測描述',
+    `impact` TEXT COMMENT '可能影響',
+    `recommendation` TEXT COMMENT '建議行動',
+    `generated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '產出時間',
+    INDEX `idx_risk_level` (`risk_level`),
+    INDEX `idx_generated_at` (`generated_at` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='AI 風險預測記錄';
+
+-- ===========================================
 -- 事件管理 (Event Management)
 -- ===========================================
 

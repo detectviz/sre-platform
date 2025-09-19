@@ -13,6 +13,13 @@
 
 ![demo](demo.gif)
 
+## 📋 核心契約文件 (SSOT)
+- **[openapi.yaml](./openapi.yaml)** - API 規格唯一真實來源 (v3.0.0)
+- **[db_schema.sql](./db_schema.sql)** - 數據庫架構唯一真實來源 (v3.0)
+- **[pages.md](./pages.md)** - 完整功能規格和 UI 原型分析
+- **[TODO.md](./TODO.md)** - AI 協作開發計劃和任務分工
+- **[AI_PROMPTS.md](./AI_PROMPTS.md)** - AI 協作提示詞文件
+
 ---
 
 ## 🎯 專案亮點

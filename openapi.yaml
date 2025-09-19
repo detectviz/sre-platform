@@ -144,6 +144,162 @@ paths:
       responses: { "200": { description: "更新成功" } }
 
   # ============================================
+  # 儀表板 (Dashboards)
+  # ============================================
+  /dashboards:
+    get:
+      tags: [儀表板 (Dashboards)]
+      summary: 獲取儀表板列表
+      operationId: listDashboards
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [infrastructure, business, operations, automation, custom]
+        - name: search
+          in: query
+          schema:
+            type: string
+            description: 按名稱或描述搜尋儀表板
+      responses:
+        "200":
+          description: 儀表板列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardCollection"
+    post:
+      tags: [儀表板 (Dashboards)]
+      summary: 創建儀表板
+      operationId: createDashboard
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardCreateRequest"
+      responses:
+        "201":
+          description: 創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+
+  /dashboards/{dashboardId}:
+    get:
+      tags: [儀表板 (Dashboards)]
+      summary: 獲取單個儀表板
+      operationId: getDashboard
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 儀表板資訊
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dashboard"
+    put:
+      tags: [儀表板 (Dashboards)]
+      summary: 更新儀表板
+      operationId: updateDashboard
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DashboardUpdateRequest"
+      responses:
+        "200": { description: 更新成功 }
+    delete:
+      tags: [儀表板 (Dashboards)]
+      summary: 刪除儀表板
+      operationId: deleteDashboard
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: dashboardId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
+
+  /dashboards/stats:
+    get:
+      tags: [儀表板 (Dashboards)]
+      summary: 獲取儀表板統計指標
+      operationId: getDashboardStats
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: 儀表板統計資訊
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /infrastructure/stats:
+    get:
+      tags: [儀表板 (Dashboards)]
+      summary: 獲取基礎設施統計
+      operationId: getInfrastructureStats
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: 基礎設施統計資料
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InfrastructureStats"
+
+  /infrastructure/resource-usage:
+    get:
+      tags: [儀表板 (Dashboards)]
+      summary: 獲取資源使用率排行
+      operationId: listInfrastructureResourceUsage
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: 資源使用率資料
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceUsageCollection"
+
+  /ai/risk-predictions:
+    get:
+      tags: [分析中心 (Analysis)]
+      summary: 獲取 AI 風險預測
+      operationId: listRiskPredictions
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: AI 風險預測清單
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RiskPredictionCollection"
+
+  # ============================================
   # 平台設定 (Platform Settings) - 人員、團隊、角色
   # ============================================
   /users:
@@ -413,6 +569,265 @@ paths:
       operationId: listEventRuleMetrics
       security: [{ bearerAuth: [] }]
       responses: { "200": { description: "成功" } }
+
+  # ============================================
+  # 自動化中心 (Automation)
+  # ============================================
+  /scripts:
+    get:
+      tags: [自動化中心 (Automation)]
+      summary: 獲取自動化腳本列表
+      operationId: listAutomationScripts
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: category
+          in: query
+          schema:
+            type: string
+            description: 依腳本分類過濾
+        - name: is_enabled
+          in: query
+          schema:
+            type: boolean
+        - name: search
+          in: query
+          schema:
+            type: string
+            description: 按名稱或描述搜尋
+      responses:
+        "200":
+          description: 腳本列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScriptCollection"
+    post:
+      tags: [自動化中心 (Automation)]
+      summary: 創建自動化腳本
+      operationId: createAutomationScript
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationScriptCreateRequest"
+      responses:
+        "201":
+          description: 創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScript"
+
+  /scripts/{scriptId}:
+    get:
+      tags: [自動化中心 (Automation)]
+      summary: 獲取腳本詳情
+      operationId: getAutomationScript
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 腳本資訊
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScript"
+    put:
+      tags: [自動化中心 (Automation)]
+      summary: 更新腳本
+      operationId: updateAutomationScript
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationScriptUpdateRequest"
+      responses:
+        "200": { description: 更新成功 }
+    delete:
+      tags: [自動化中心 (Automation)]
+      summary: 刪除腳本
+      operationId: deleteAutomationScript
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
+
+  /scripts/{scriptId}/execute:
+    post:
+      tags: [自動化中心 (Automation)]
+      summary: 觸發腳本執行
+      operationId: executeAutomationScript
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scriptId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationScriptExecuteRequest"
+      responses:
+        "202":
+          description: 執行請求已接受
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationRun"
+
+  /schedules:
+    get:
+      tags: [自動化中心 (Automation)]
+      summary: 獲取排程任務列表
+      operationId: listAutomationSchedules
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: is_enabled
+          in: query
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: 排程任務列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScheduleCollection"
+    post:
+      tags: [自動化中心 (Automation)]
+      summary: 創建排程任務
+      operationId: createAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationScheduleCreateRequest"
+      responses:
+        "201":
+          description: 創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationSchedule"
+
+  /schedules/{scheduleId}:
+    get:
+      tags: [自動化中心 (Automation)]
+      summary: 獲取排程任務詳情
+      operationId: getAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 排程資訊
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationSchedule"
+    put:
+      tags: [自動化中心 (Automation)]
+      summary: 更新排程任務
+      operationId: updateAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AutomationScheduleUpdateRequest"
+      responses:
+        "200": { description: 更新成功 }
+    delete:
+      tags: [自動化中心 (Automation)]
+      summary: 刪除排程任務
+      operationId: deleteAutomationSchedule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: scheduleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
+
+  /automation-runs:
+    get:
+      tags: [自動化中心 (Automation)]
+      summary: 獲取自動化執行紀錄
+      operationId: listAutomationRuns
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, running, success, failed, cancelled, timeout]
+        - name: script_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 執行紀錄列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationRunCollection"
+
+  /automation-runs/{runId}:
+    get:
+      tags: [自動化中心 (Automation)]
+      summary: 獲取單筆自動化執行詳情
+      operationId: getAutomationRun
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: runId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 執行詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationRun"
   /silence-rules:
     get:
       tags: [事件管理 (Event Management)]
@@ -558,6 +973,293 @@ components:
       in: query
       schema: { type: string, enum: [asc, desc], default: desc }
   schemas:
+    # 共用 Schema
+    PaginationMeta:
+      type: object
+      properties:
+        page: { type: integer, example: 1 }
+        page_size: { type: integer, example: 20 }
+        total: { type: integer, example: 120 }
+        total_pages: { type: integer, example: 6 }
+
+    # ============================================
+    # 儀表板 Schemas
+    # ============================================
+    Dashboard:
+      type: object
+      required: [id, name, category, isDefault]
+      properties:
+        id: { type: string, example: "infra-overview" }
+        name: { type: string, example: "基礎設施洞察" }
+        description: { type: string }
+        category:
+          type: string
+          enum: [infrastructure, business, operations, automation, custom]
+        owner: { type: string, example: "SRE 平台團隊" }
+        tags:
+          type: array
+          items: { type: string }
+        viewers: { type: integer, example: 48 }
+        favoriteCount: { type: integer, example: 32 }
+        panelCount: { type: integer, example: 18 }
+        status:
+          type: string
+          enum: [published, draft, archived]
+        updatedAt: { type: string, format: date-time }
+        isDefault: { type: boolean, default: false }
+        isFeatured: { type: boolean, default: false }
+        dataSources:
+          type: array
+          items: { type: string }
+        thumbnailUrl: { type: string, format: uri, nullable: true }
+        targetPageKey: { type: string, nullable: true }
+    DashboardCreateRequest:
+      type: object
+      required: [name, category]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        category: { type: string, enum: [infrastructure, business, operations, automation, custom] }
+        owner: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        isDefault: { type: boolean }
+        isFeatured: { type: boolean }
+        dataSources:
+          type: array
+          items: { type: string }
+        targetPageKey: { type: string }
+    DashboardUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/DashboardCreateRequest"
+    DashboardCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dashboard"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    DashboardStats:
+      type: object
+      properties:
+        openIncidents: { type: integer, example: 3 }
+        openEvents: { type: integer, example: 18 }
+        automationSuccessRate: { type: number, example: 0.92 }
+        meanTimeToAckMinutes: { type: number, example: 6 }
+        meanTimeToResolveMinutes: { type: number, example: 42 }
+        errorBudgetBurnRate: { type: number, example: 0.18 }
+        topServices:
+          type: array
+          items:
+            type: object
+            properties:
+              service: { type: string }
+              availability: { type: number }
+
+    InfrastructureStats:
+      type: object
+      properties:
+        serverCount: { type: integer, example: 127 }
+        databaseCount: { type: integer, example: 18 }
+        containerCount: { type: integer, example: 432 }
+        serviceCount: { type: integer, example: 89 }
+        serverTrend: { type: number, example: 2 }
+        databaseTrend: { type: number, example: 0 }
+        containerTrend: { type: number, example: 12 }
+        serviceTrend: { type: number, example: 3 }
+
+    ResourceUsageEntry:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string }
+        usage: { type: number, description: '百分比 0-100' }
+        status: { type: string, enum: [healthy, warning, critical] }
+    ResourceUsageCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceUsageEntry"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    RiskPrediction:
+      type: object
+      properties:
+        id: { type: string }
+        resourceName: { type: string }
+        riskLevel: { type: string, enum: [low, medium, high] }
+        prediction: { type: string }
+        impact: { type: string }
+        recommendation: { type: string }
+    RiskPredictionCollection:
+      type: object
+      properties:
+        predictions:
+          type: array
+          items:
+            $ref: "#/components/schemas/RiskPrediction"
+
+    # ============================================
+    # 自動化中心 Schemas
+    # ============================================
+    AutomationScript:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        language: { type: string, example: "python" }
+        category: { type: string }
+        owner: { type: string }
+        repositoryUrl: { type: string, format: uri }
+        commitHash: { type: string }
+        version: { type: string }
+        isEnabled: { type: boolean }
+        executionCount: { type: integer }
+        successRate: { type: integer, description: '0-100' }
+        lastExecutedAt: { type: string, format: date-time, nullable: true }
+        createdAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time, nullable: true }
+        parameters:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              type: { type: string }
+              label: { type: string }
+              required: { type: boolean }
+              description: { type: string }
+              defaultValue:
+                oneOf:
+                  - { type: string }
+                  - { type: number }
+                  - { type: boolean }
+    AutomationScriptCreateRequest:
+      type: object
+      required: [name, language, repositoryUrl, commitHash]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        language: { type: string, enum: [python, bash, powershell] }
+        category: { type: string }
+        repositoryUrl: { type: string, format: uri }
+        commitHash: { type: string }
+        version: { type: string }
+        parameters:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              type: { type: string }
+              label: { type: string }
+              required: { type: boolean }
+              defaultValue:
+                oneOf:
+                  - { type: string }
+                  - { type: number }
+                  - { type: boolean }
+    AutomationScriptUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/AutomationScriptCreateRequest"
+    AutomationScriptExecuteRequest:
+      type: object
+      properties:
+        parameters:
+          type: object
+          additionalProperties: true
+        trigger:
+          type: string
+          enum: [manual, api, event]
+        event_id:
+          type: string
+          description: 若由事件觸發，可帶入事件ID
+    AutomationScriptCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutomationScript"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    AutomationSchedule:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string }
+        scriptId: { type: string }
+        cronExpression: { type: string }
+        parameters: { type: object, additionalProperties: true }
+        mode: { type: string, enum: [simple, advanced] }
+        frequency: { type: string, nullable: true }
+        timezone: { type: string, nullable: true }
+        isEnabled: { type: boolean }
+        lastStatus: { type: string, enum: [success, failed, pending, running], nullable: true }
+        lastRunAt: { type: string, format: date-time, nullable: true }
+        nextRunAt: { type: string, format: date-time, nullable: true }
+        creator: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time, nullable: true }
+        updatedAt: { type: string, format: date-time, nullable: true }
+    AutomationScheduleCreateRequest:
+      type: object
+      required: [name, scriptId, cronExpression]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        scriptId: { type: string }
+        cronExpression: { type: string }
+        parameters: { type: object, additionalProperties: true }
+        mode: { type: string, enum: [simple, advanced], default: simple }
+        frequency: { type: string }
+        timezone: { type: string }
+        isEnabled: { type: boolean }
+    AutomationScheduleUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/AutomationScheduleCreateRequest"
+    AutomationScheduleCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutomationSchedule"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+
+    AutomationRun:
+      type: object
+      properties:
+        id: { type: string }
+        scriptId: { type: string }
+        scheduleId: { type: string, nullable: true }
+        status: { type: string, enum: [pending, running, success, failed, cancelled, timeout] }
+        triggerType: { type: string, enum: [manual, scheduled, event, api] }
+        triggerMetadata: { type: object, additionalProperties: true }
+        startedAt: { type: string, format: date-time, nullable: true }
+        finishedAt: { type: string, format: date-time, nullable: true }
+        durationMs: { type: integer, nullable: true }
+        output: { type: string, nullable: true }
+        operator: { type: string, nullable: true }
+    AutomationRunCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AutomationRun"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     # ============================================
     # 事件管理 Schemas
     # ============================================
