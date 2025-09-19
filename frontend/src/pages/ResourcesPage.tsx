@@ -22,10 +22,27 @@ const IntegratedResourceOverviewPage = ({ onNavigate }) => {
     const { resources, loading, error } = useResources();
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [currentResource, setCurrentResource] = useState(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editingResource, setEditingResource] = useState(null);
+    const [form] = Form.useForm();
 
     const showDetailModal = (record) => {
         setCurrentResource(record);
         setIsDetailModalOpen(true);
+    };
+
+    const showEditModal = (resource = null) => {
+        setEditingResource(resource);
+        form.setFieldsValue(resource || { name: '', type: 'server', ip_address: '' });
+        setIsEditModalOpen(true);
+    };
+
+    const handleEditCancel = () => setIsEditModalOpen(false);
+
+    const onEditFinish = (values) => {
+        // Here you would typically call an API to update/create the resource
+        message.success(editingResource ? '資源更新成功' : '資源新增成功');
+        handleEditCancel();
     };
 
     if (loading) return <Spin />;
@@ -56,7 +73,10 @@ const IntegratedResourceOverviewPage = ({ onNavigate }) => {
 
     return (
         <>
-            <Button onClick={handleOpenScanModal} style={{ marginBottom: 16 }}>掃描網路</Button>
+            <Space style={{ marginBottom: 16 }}>
+                <Button onClick={handleOpenScanModal}>掃描網路</Button>
+                <Button type="primary" onClick={() => showEditModal()}>新增資源</Button>
+            </Space>
             <Table dataSource={resources} columns={columns} rowKey="key" />
             <Modal title="資源詳情" open={isDetailModalOpen} onCancel={() => setIsDetailModalOpen(false)} footer={null}>
                 {currentResource && (
@@ -82,6 +102,18 @@ const IntegratedResourceOverviewPage = ({ onNavigate }) => {
                     value={scanIpRange}
                     onChange={e => setScanIpRange(e.target.value)}
                 />
+            </Modal>
+            <Modal
+                title={editingResource ? '編輯資源' : '新增資源'}
+                open={isEditModalOpen}
+                onCancel={handleEditCancel}
+                onOk={() => form.submit()}
+            >
+                <Form form={form} layout="vertical" onFinish={onEditFinish}>
+                    <Form.Item name="name" label="資源名稱" rules={[{ required: true }]}><Input /></Form.Item>
+                    <Form.Item name="type" label="類型" rules={[{ required: true }]}><Select><Select.Option value="server">Server</Select.Option><Select.Option value="database">Database</Select.Option></Select></Form.Item>
+                    <Form.Item name="ip_address" label="IP 位址" rules={[{ required: true }]}><Input /></Form.Item>
+                </Form>
             </Modal>
         </>
     );

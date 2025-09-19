@@ -23,6 +23,7 @@ import useRoles from '../hooks/useRoles';
 const PersonnelManagementPage = ({ users, setUsers }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingUser, setEditingUser] = useState(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [form] = Form.useForm();
     const { message, modal } = antd.App.useApp();
 
@@ -33,6 +34,17 @@ const PersonnelManagementPage = ({ users, setUsers }) => {
     };
 
     const handleCancel = () => setIsModalOpen(false);
+
+    const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    const hasSelected = selectedRowKeys.length > 0;
 
     const onFinish = (values) => {
         if (editingUser) {
@@ -48,16 +60,50 @@ const PersonnelManagementPage = ({ users, setUsers }) => {
 
     if (!users) return <Spin />;
 
+    const handleDelete = (key) => {
+        modal.confirm({
+            title: '確定要刪除此人員嗎？',
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setUsers(users.filter(u => u.key !== key));
+                message.success('人員刪除成功');
+            }
+        });
+    };
+
+    const handleBatchDelete = () => {
+        modal.confirm({
+            title: `確定要刪除 ${selectedRowKeys.length} 位人員嗎？`,
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setUsers(users.filter(u => !selectedRowKeys.includes(u.key)));
+                setSelectedRowKeys([]);
+                message.success('批次刪除成功');
+            }
+        });
+    };
+
     const columns = [
         { title: '名稱', dataIndex: 'name', key: 'name' },
         { title: '電子郵件', dataIndex: 'email', key: 'email' },
         { title: '狀態', dataIndex: 'status', key: 'status' },
+        { title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+                <Button type="link" onClick={() => showModal(record)}>編輯</Button>
+                <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+            </Space>
+        )},
     ];
 
     return (
         <>
-            <Button onClick={() => showModal()} style={{ marginBottom: 16 }}>新增人員</Button>
-            <Table dataSource={users} columns={columns} rowKey="key" />
+            <Space style={{ marginBottom: 16 }}>
+                <Button onClick={() => showModal()}>新增人員</Button>
+                {hasSelected && <Button danger onClick={handleBatchDelete}>批次刪除</Button>}
+            </Space>
+            <Table rowSelection={rowSelection} dataSource={users} columns={columns} rowKey="key" />
             <Modal title={editingUser ? '編輯人員' : '新增人員'} open={isModalOpen} onCancel={handleCancel} onOk={() => form.submit()}>
                 <Form form={form} layout="vertical" onFinish={onFinish}>
                     <Form.Item name="name" label="人員姓名" rules={[{ required: true }]}><Input /></Form.Item>
@@ -72,6 +118,7 @@ const PersonnelManagementPage = ({ users, setUsers }) => {
 const TeamManagementPage = ({ teams, setTeams, users }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingTeam, setEditingTeam] = useState(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [form] = Form.useForm();
     const { message, modal } = antd.App.useApp();
 
@@ -95,18 +142,63 @@ const TeamManagementPage = ({ teams, setTeams, users }) => {
         handleCancel();
     };
 
+    const handleDelete = (key) => {
+        modal.confirm({
+            title: '確定要刪除此團隊嗎？',
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setTeams(teams.filter(t => t.key !== key));
+                message.success('團隊刪除成功');
+            }
+        });
+    };
+
+    const handleBatchDelete = () => {
+        modal.confirm({
+            title: `確定要刪除 ${selectedRowKeys.length} 個團隊嗎？`,
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setTeams(teams.filter(t => !selectedRowKeys.includes(t.key)));
+                setSelectedRowKeys([]);
+                message.success('批次刪除成功');
+            }
+        });
+    };
+
     if (!teams) return <Spin />;
 
     const columns = [
         { title: '名稱', dataIndex: 'name', key: 'name' },
         { title: '描述', dataIndex: 'description', key: 'description' },
         { title: '成員數量', dataIndex: 'members', key: 'members', render: (members) => members.length },
+        { title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+                <Button type="link" onClick={() => showModal(record)}>編輯</Button>
+                <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+            </Space>
+        )},
     ];
+
+    const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    const hasSelected = selectedRowKeys.length > 0;
 
     return (
         <>
-            <Button onClick={() => showModal()} style={{ marginBottom: 16 }}>新增團隊</Button>
-            <Table dataSource={teams} columns={columns} rowKey="key" />
+            <Space style={{ marginBottom: 16 }}>
+                <Button onClick={() => showModal()}>新增團隊</Button>
+                {hasSelected && <Button danger onClick={handleBatchDelete}>批次刪除</Button>}
+            </Space>
+            <Table rowSelection={rowSelection} dataSource={teams} columns={columns} rowKey="key" />
             <Modal title={editingTeam ? '編輯團隊' : '新增團隊'} open={isModalOpen} onCancel={handleCancel} onOk={() => form.submit()}>
                 <Form form={form} layout="vertical" onFinish={onFinish}>
                     <Form.Item name="name" label="團隊名稱" rules={[{ required: true }]}><Input /></Form.Item>
@@ -123,6 +215,7 @@ const TeamManagementPage = ({ teams, setTeams, users }) => {
 const RoleManagementPage = ({ roles, setRoles }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingRole, setEditingRole] = useState(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [form] = Form.useForm();
     const { message, modal } = antd.App.useApp();
 
@@ -146,17 +239,62 @@ const RoleManagementPage = ({ roles, setRoles }) => {
         handleCancel();
     };
 
+    const handleDelete = (id) => {
+        modal.confirm({
+            title: '確定要刪除此角色嗎？',
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setRoles(roles.filter(r => r.id !== id));
+                message.success('角色刪除成功');
+            }
+        });
+    };
+
+    const handleBatchDelete = () => {
+        modal.confirm({
+            title: `確定要刪除 ${selectedRowKeys.length} 個角色嗎？`,
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setRoles(roles.filter(r => !selectedRowKeys.includes(r.id)));
+                setSelectedRowKeys([]);
+                message.success('批次刪除成功');
+            }
+        });
+    };
+
     if (!roles) return <Spin />;
 
     const columns = [
         { title: '名稱', dataIndex: 'name', key: 'name' },
         { title: '顏色', dataIndex: 'color', key: 'color' },
+        { title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+                <Button type="link" onClick={() => showModal(record)}>編輯</Button>
+                <Button type="link" danger onClick={() => handleDelete(record.id)}>刪除</Button>
+            </Space>
+        )},
     ];
+
+    const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    const hasSelected = selectedRowKeys.length > 0;
 
     return (
         <>
-            <Button onClick={() => showModal()} style={{ marginBottom: 16 }}>新增角色</Button>
-            <Table dataSource={roles} columns={columns} rowKey="id" />
+            <Space style={{ marginBottom: 16 }}>
+                <Button onClick={() => showModal()}>新增角色</Button>
+                {hasSelected && <Button danger onClick={handleBatchDelete}>批次刪除</Button>}
+            </Space>
+            <Table rowSelection={rowSelection} dataSource={roles} columns={columns} rowKey="id" />
             <Modal title={editingRole ? '編輯角色' : '新增角色'} open={isModalOpen} onCancel={handleCancel} onOk={() => form.submit()}>
                 <Form form={form} layout="vertical" onFinish={onFinish}>
                     <Form.Item name="name" label="角色名稱" rules={[{ required: true }]}><Input /></Form.Item>

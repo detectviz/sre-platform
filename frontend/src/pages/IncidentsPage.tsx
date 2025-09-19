@@ -22,6 +22,10 @@ const IncidentListPage = ({ onNavigate }) => {
     const { incidents, loading, error } = useIncidents();
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [currentIncident, setCurrentIncident] = useState(null);
+    const [searchText, setSearchText] = useState('');
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const [isSilenceModalOpen, setIsSilenceModalOpen] = useState(false);
+    const [silenceDuration, setSilenceDuration] = useState(1);
 
     const showDetailModal = (record) => {
       setCurrentIncident(record);
@@ -42,19 +46,70 @@ const IncidentListPage = ({ onNavigate }) => {
         });
     };
 
+    const handleBatchUpdate = (newStatus) => {
+        modal.confirm({
+            title: `確定要批次 ${newStatus === 'acknowledged' ? '確認' : '解決'} ${selectedRowKeys.length} 個事件嗎？`,
+            icon: <ExclamationCircleOutlined />,
+            onOk() {
+                // Here you would typically call an API to update the incidents
+                // For now, we'll just show a success message
+                message.success('事件狀態已更新');
+                setSelectedRowKeys([]);
+            },
+        });
+    };
+
+    const showSilenceModal = (record) => {
+        setCurrentIncident(record);
+        setIsSilenceModalOpen(true);
+    };
+
+    const handleSilence = () => {
+        message.success(`事件已靜音 ${silenceDuration} 小時`);
+        setIsSilenceModalOpen(false);
+    };
+
     if (loading) return <Spin />;
     if (error) return <Alert message="Error" description={error.message} type="error" showIcon />;
 
     const columns = [
-        { title: '摘要', dataIndex: 'summary', key: 'summary', render: (text, record) => <a onClick={() => showDetailModal(record)}>{text}</a> },
-        { title: '嚴重性', dataIndex: 'severity', key: 'severity' },
-        { title: '狀態', dataIndex: 'status', key: 'status' },
-        { title: '觸發時間', dataIndex: 'created_at', key: 'created_at' },
+        { title: '嚴重性', dataIndex: 'severity', width: '8%', sorter: (a, b) => a.severity.localeCompare(b.severity), render: (severity) => (<span className={`status-badge status-${severity}`}>{severity ? severity.toUpperCase() : 'UNKNOWN'}</span>) },
+        { title: '摘要', dataIndex: 'summary', width: '18%', sorter: (a, b) => a.summary.localeCompare(b.summary), render: (text, record) => <a onClick={() => showDetailModal(record)} style={{ color: '#1890ff', textDecoration: 'none', cursor: 'pointer' }} onMouseEnter={(e) => e.target.style.textDecoration = 'underline'} onMouseLeave={(e) => e.target.style.textDecoration = 'none'}>{text}</a> },
+        { title: '資源名稱', dataIndex: 'resource_name', width: '14%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: name => name || '-' },
+        { title: '業務影響', dataIndex: 'business_impact', width: '10%', sorter: (a, b) => (a.business_impact || '').localeCompare(b.business_impact || ''), render: (impact) => { const color = impact === '高' ? 'red' : impact === '中' ? 'orange' : 'blue'; return <Tag color={color}>{impact || '-'}</Tag>; } },
+        { title: '狀態', dataIndex: 'status', width: '8%', render: (status, record) => { const statusText = { new: 'NEW', acknowledged: 'ACK', resolved: 'RESOLVED', silenced: 'SILENCED' }; if (record.storm_group) { const stormCount = incidents.filter(i => i.storm_group === record.storm_group).length; return (<div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}><Tag color="orange" size="small" style={{ margin: 0, fontSize: '10px' }}>風暴 ({stormCount})</Tag><span className={`status-badge status-${status}`}>{statusText[status] || 'UNKNOWN'}</span></div>); } return (<span className={`status-badge status-${status}`}>{statusText[status] || 'UNKNOWN'}</span>); } },
+        { title: '處理人', dataIndex: 'assignee', width: '8%', sorter: (a, b) => (a || '').localeCompare(b || ''), render: (assignee) => assignee || '-' },
+        { title: '觸發時間', dataIndex: 'created_at', width: '10%', sorter: (a, b) => dayjs(a.created_at).valueOf() - dayjs(b.created_at).valueOf(), render: time => <span title={time ? dayjs(time).format('YYYY-MM-DD HH:mm:ss') : ''}>{time ? dayjs(time).fromNow() : '-'}</span> },
+        { title: '操作', key: 'action', width: '10%', render: (_, record) => (<Space size="small"><Tooltip title="確認事件" placement="top"><Button type="text" icon={<CheckCircleOutlined style={{ color: '#52c41a' }} />} disabled={record.status !== 'new'} onClick={() => handleAcknowledge(record.key)} /></Tooltip><Tooltip title={record.status === 'silenced' ? '已靜音' : '設置靜音'} placement="top"><Button type="text" icon={<PauseCircleOutlined />} disabled={record.status === 'resolved'} onClick={() => showSilenceModal(record)} /></Tooltip></Space>) }
     ];
+
+    const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    const filteredIncidents = incidents.filter(incident =>
+        incident.summary.toLowerCase().includes(searchText.toLowerCase())
+    );
 
     return (
         <>
-            <Table dataSource={incidents} columns={columns} rowKey="key" />
+            <Space style={{ marginBottom: 16 }}>
+                <Input.Search placeholder="搜尋事件" onChange={e => setSearchText(e.target.value)} style={{ width: 200 }} />
+                <Select placeholder="狀態" mode="multiple" style={{ width: 120 }} />
+                <Select placeholder="嚴重性" mode="multiple" style={{ width: 120 }} />
+            </Space>
+            {selectedRowKeys.length > 0 && (
+                <Space style={{ marginBottom: 16 }}>
+                    <Button onClick={() => handleBatchUpdate('acknowledged')}>批次確認</Button>
+                    <Button onClick={() => handleBatchUpdate('resolved')}>批次解決</Button>
+                </Space>
+            )}
+            <Table rowSelection={rowSelection} dataSource={filteredIncidents} columns={columns} rowKey="key" />
             <Modal
                 title="事件詳情"
                 open={isDetailModalOpen}
@@ -79,6 +134,21 @@ const IncidentListPage = ({ onNavigate }) => {
                         <Descriptions.Item label="資源名稱">{currentIncident.resource_name}</Descriptions.Item>
                     </Descriptions>
                 )}
+            </Modal>
+            <Modal
+                title="建立靜音"
+                open={isSilenceModalOpen}
+                onCancel={() => setIsSilenceModalOpen(false)}
+                onOk={handleSilence}
+            >
+                <p>請選擇靜音時長：</p>
+                <Select value={silenceDuration} onChange={setSilenceDuration} style={{ width: 120 }}>
+                    <Select.Option value={1}>1 小時</Select.Option>
+                    <Select.Option value={2}>2 小時</Select.Option>
+                    <Select.Option value={4}>4 小時</Select.Option>
+                    <Select.Option value={8}>8 小時</Select.Option>
+                    <Select.Option value={24}>24 小時</Select.Option>
+                </Select>
             </Modal>
         </>
     );

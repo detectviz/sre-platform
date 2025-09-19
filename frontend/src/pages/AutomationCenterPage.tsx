@@ -23,6 +23,7 @@ import useExecutions from '../hooks/useExecutions';
 const ScriptsPage = ({ scripts, setScripts, addExecution, schedules }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingScript, setEditingScript] = useState(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [form] = Form.useForm();
     const { message, modal } = antd.App.useApp();
 
@@ -56,13 +57,56 @@ const ScriptsPage = ({ scripts, setScripts, addExecution, schedules }) => {
     if (!scripts) return <Spin />;
     if (error) return <Alert message="Error" description={error.message} type="error" showIcon />;
 
+    const handleDelete = (key) => {
+        modal.confirm({
+            title: '確定要刪除此腳本嗎？',
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setScripts(scripts.filter(s => s.key !== key));
+                message.success('腳本刪除成功');
+            }
+        });
+    };
+
+    const handleBatchDelete = () => {
+        modal.confirm({
+            title: `確定要刪除 ${selectedRowKeys.length} 個腳本嗎？`,
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setScripts(scripts.filter(s => !selectedRowKeys.includes(s.key)));
+                setSelectedRowKeys([]);
+                message.success('批次刪除成功');
+            }
+        });
+    };
+
     const columns = [
         { title: '名稱', dataIndex: 'name', key: 'name' },
         { title: '類型', dataIndex: 'type', key: 'type' },
         { title: '創建者', dataIndex: 'creator', key: 'creator' },
+        { title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+                <Button type="link" onClick={() => showModal(record)}>編輯</Button>
+                <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+                <Button type="link" onClick={() => handleRun(record)}>運行</Button>
+            </Space>
+        )},
     ];
 
     const handleCancel = () => setIsModalOpen(false);
+
+    const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    const hasSelected = selectedRowKeys.length > 0;
 
     const onFinish = (values) => {
         if (editingScript) {
@@ -78,8 +122,11 @@ const ScriptsPage = ({ scripts, setScripts, addExecution, schedules }) => {
 
     return (
         <>
-            <Button onClick={() => showModal()} style={{ marginBottom: 16 }}>新增腳本</Button>
-            <Table dataSource={scripts} columns={columns} rowKey="key" />
+            <Space style={{ marginBottom: 16 }}>
+                <Button onClick={() => showModal()}>新增腳本</Button>
+                {hasSelected && <Button danger onClick={handleBatchDelete}>批次刪除</Button>}
+            </Space>
+            <Table rowSelection={rowSelection} dataSource={scripts} columns={columns} rowKey="key" />
             <Modal title={editingScript ? '編輯腳本' : '新增腳本'} open={isModalOpen} onCancel={handleCancel} onOk={() => form.submit()}>
                 <Form form={form} layout="vertical" onFinish={onFinish}>
                     <Form.Item name="name" label="腳本名稱" rules={[{ required: true }]}><Input /></Form.Item>
@@ -95,6 +142,7 @@ const ScriptsPage = ({ scripts, setScripts, addExecution, schedules }) => {
 const SchedulesPage = ({ schedules, setSchedules, scripts }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState(null);
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
     const [form] = Form.useForm();
     const { message, modal } = antd.App.useApp();
 
@@ -118,18 +166,63 @@ const SchedulesPage = ({ schedules, setSchedules, scripts }) => {
         handleCancel();
     };
 
+    const handleDelete = (key) => {
+        modal.confirm({
+            title: '確定要刪除此排程嗎？',
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setSchedules(schedules.filter(s => s.key !== key));
+                message.success('排程刪除成功');
+            }
+        });
+    };
+
+    const handleBatchDelete = () => {
+        modal.confirm({
+            title: `確定要刪除 ${selectedRowKeys.length} 個排程嗎？`,
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setSchedules(schedules.filter(s => !selectedRowKeys.includes(s.key)));
+                setSelectedRowKeys([]);
+                message.success('批次刪除成功');
+            }
+        });
+    };
+
     if (!schedules) return <Spin />;
 
     const columns = [
         { title: '任務名稱', dataIndex: 'name', key: 'name' },
         { title: 'CRON', dataIndex: 'cron', key: 'cron' },
         { title: '腳本ID', dataIndex: 'script_id', key: 'script_id' },
+        { title: '操作', key: 'action', render: (_, record) => (
+            <Space>
+                <Button type="link" onClick={() => showModal(record)}>編輯</Button>
+                <Button type="link" danger onClick={() => handleDelete(record.key)}>刪除</Button>
+            </Space>
+        )},
     ];
+
+    const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    const hasSelected = selectedRowKeys.length > 0;
 
     return (
         <>
-            <Button onClick={() => showModal()} style={{ marginBottom: 16 }}>新增排程</Button>
-            <Table dataSource={schedules} columns={columns} rowKey="key" />
+            <Space style={{ marginBottom: 16 }}>
+                <Button onClick={() => showModal()}>新增排程</Button>
+                {hasSelected && <Button danger onClick={handleBatchDelete}>批次刪除</Button>}
+            </Space>
+            <Table rowSelection={rowSelection} dataSource={schedules} columns={columns} rowKey="key" />
             <Modal title={editingSchedule ? '編輯排程' : '新增排程'} open={isModalOpen} onCancel={handleCancel} onOk={() => form.submit()}>
                 <Form form={form} layout="vertical" onFinish={onFinish}>
                     <Form.Item name="name" label="任務名稱" rules={[{ required: true }]}><Input /></Form.Item>
@@ -142,8 +235,23 @@ const SchedulesPage = ({ schedules, setSchedules, scripts }) => {
 };
 
 const ExecutionsPage = ({ executions, setExecutions }) => {
+    const [selectedRowKeys, setSelectedRowKeys] = useState([]);
+    const { message, modal } = antd.App.useApp();
+
+    const handleBatchDelete = () => {
+        modal.confirm({
+            title: `確定要刪除 ${selectedRowKeys.length} 個執行日誌嗎？`,
+            icon: <ExclamationCircleOutlined />,
+            content: '此操作無法復原。',
+            onOk() {
+                setExecutions(executions.filter(e => !selectedRowKeys.includes(e.key)));
+                setSelectedRowKeys([]);
+                message.success('批次刪除成功');
+            }
+        });
+    };
+
     if (!executions) return <Spin />;
-    if (error) return <Alert message="Error" description={error.message} type="error" showIcon />;
 
     const columns = [
         { title: '腳本名稱', dataIndex: 'script_name', key: 'script_name' },
@@ -152,7 +260,23 @@ const ExecutionsPage = ({ executions, setExecutions }) => {
         { title: '耗時', dataIndex: 'duration', key: 'duration' },
     ];
 
-    return <Table dataSource={executions} columns={columns} rowKey="key" />;
+    const onSelectChange = (newSelectedRowKeys) => {
+        setSelectedRowKeys(newSelectedRowKeys);
+    };
+
+    const rowSelection = {
+        selectedRowKeys,
+        onChange: onSelectChange,
+    };
+
+    const hasSelected = selectedRowKeys.length > 0;
+
+    return (
+        <>
+            {hasSelected && <Button danger onClick={handleBatchDelete} style={{ marginBottom: 16 }}>批次刪除</Button>}
+            <Table rowSelection={rowSelection} dataSource={executions} columns={columns} rowKey="key" />
+        </>
+    );
 };
 
 const AutomationCenterPage = ({ onNavigate, pageKey, scripts, setScripts, addExecution, executions, setExecutions, schedules, setSchedules, pageParams }) => {

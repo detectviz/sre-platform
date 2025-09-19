@@ -113,6 +113,13 @@ const NotificationChannelsPage = ({ channels, setChannels }) => {
 };
 const NotificationHistoryPage = () => {
     const { notifications, loading, error } = useNotifications();
+    const [isDetailOpen, setIsDetailOpen] = useState(false);
+    const [selectedNotification, setSelectedNotification] = useState(null);
+
+    const showDetail = (record) => {
+        setSelectedNotification(record);
+        setIsDetailOpen(true);
+    };
 
     if (loading) return <Spin />;
     if (error) return <Alert message="Error" description={error.message} type="error" showIcon />;
@@ -122,9 +129,24 @@ const NotificationHistoryPage = () => {
         { title: '狀態', dataIndex: 'status', key: 'status' },
         { title: '管道', dataIndex: 'channel', key: 'channel' },
         { title: '告警', dataIndex: 'alert', key: 'alert' },
+        { title: '操作', key: 'action', render: (_, record) => <Button type="link" onClick={() => showDetail(record)}>詳情</Button> },
     ];
 
-    return <Table dataSource={notifications} columns={columns} rowKey="id" />;
+    return (
+        <>
+            <Table dataSource={notifications} columns={columns} rowKey="id" />
+            <Drawer title="通知詳情" placement="right" onClose={() => setIsDetailOpen(false)} open={isDetailOpen}>
+                {selectedNotification && (
+                    <Descriptions bordered column={1}>
+                        <Descriptions.Item label="時間">{selectedNotification.time}</Descriptions.Item>
+                        <Descriptions.Item label="狀態">{selectedNotification.status}</Descriptions.Item>
+                        <Descriptions.Item label="管道">{selectedNotification.channel}</Descriptions.Item>
+                        <Descriptions.Item label="告警">{selectedNotification.alert}</Descriptions.Item>
+                    </Descriptions>
+                )}
+            </Drawer>
+        </>
+    );
 };
 
 const NotificationManagementPage = ({ onNavigate, pageKey }) => {
