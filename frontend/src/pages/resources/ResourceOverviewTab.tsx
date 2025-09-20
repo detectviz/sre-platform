@@ -37,6 +37,7 @@ import {
 } from '../../components';
 import type { StatusTone } from '../../components';
 import { getStatusTone } from '../../constants/statusMaps';
+import { getChartTheme } from '../../utils/chartTheme';
 import type {
   PaginationMeta,
   Resource,
@@ -44,6 +45,7 @@ import type {
   ResourceGroup,
   ResourceQueryParams,
   ResourceStatus,
+  ResourceTag,
   TagFilter,
 } from '../../types/resources';
 
@@ -90,6 +92,7 @@ const MiniTrendChart = ({ cpuSeries, memorySeries }: MiniTrendChartProps) => {
   const cpu = Array.isArray(cpuSeries) ? cpuSeries : [];
   const memory = Array.isArray(memorySeries) ? memorySeries : [];
   const pointCount = Math.max(cpu.length, memory.length);
+  const theme = getChartTheme();
 
   if (pointCount < 2) {
     return null;
@@ -111,7 +114,7 @@ const MiniTrendChart = ({ cpuSeries, memorySeries }: MiniTrendChartProps) => {
           <polyline
             points={buildPoints(memory)}
             fill="none"
-            stroke="#722ed1"
+            stroke={theme.palette.info}
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -121,7 +124,7 @@ const MiniTrendChart = ({ cpuSeries, memorySeries }: MiniTrendChartProps) => {
           <polyline
             points={buildPoints(cpu)}
             fill="none"
-            stroke="#40a9ff"
+            stroke={theme.palette.primary}
             strokeWidth={2}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -129,8 +132,8 @@ const MiniTrendChart = ({ cpuSeries, memorySeries }: MiniTrendChartProps) => {
         )}
       </svg>
       <Space size={8} style={{ fontSize: 11 }}>
-        {cpu.length > 1 && <span style={{ color: '#40a9ff' }}>CPU</span>}
-        {memory.length > 1 && <span style={{ color: '#722ed1' }}>記憶體</span>}
+        {cpu.length > 1 && <span style={{ color: theme.palette.primary }}>CPU</span>}
+        {memory.length > 1 && <span style={{ color: theme.palette.info }}>記憶體</span>}
       </Space>
     </Space>
   );
@@ -158,13 +161,72 @@ type ResourceFormValues = {
   location?: string;
   environment?: string;
   groups?: string[];
-  tags?: string[];
+  tagFilters?: TagFilter[];
 };
 
 const formatPercent = (value?: number) => (typeof value === 'number' ? `${Math.round(value)}%` : 'N/A');
 
 const buildGroupOptions = (groups: ResourceGroup[]) =>
   groups.map((group) => ({ label: group.name, value: group.id }));
+
+const TAG_FILTER_OPERATORS: TagFilter['operator'][] = ['eq', 'neq', 'in', 'not_in', 'regex', 'not_regex'];
+
+const sanitizeTagFilters = (filters?: TagFilter[]): TagFilter[] => {
+  if (!Array.isArray(filters)) {
+    return [];
+  }
+  return filters
+    .map((filter) => {
+      if (!filter || typeof filter !== 'object') {
+        return null;
+      }
+      const key = typeof filter.key === 'string' ? filter.key.trim() : '';
+      if (!key) {
+        return null;
+      }
+      const operator: TagFilter['operator'] = TAG_FILTER_OPERATORS.includes(filter.operator)
+        ? filter.operator
+        : 'eq';
+      const values = Array.isArray(filter.values)
+        ? filter.values
+          .map((value) => (typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : ''))
+          .filter((value) => value.length > 0)
+        : [];
+      if (values.length === 0 && operator !== 'regex' && operator !== 'not_regex') {
+        return null;
+      }
+      return {
+        key,
+        operator,
+        values,
+      } satisfies TagFilter;
+    })
+    .filter((filter): filter is TagFilter => Boolean(filter));
+};
+
+const deriveTagsFromFilters = (filters: TagFilter[]): ResourceTag[] => {
+  const derived: ResourceTag[] = [];
+  filters.forEach((filter) => {
+    if (!filter.key) {
+      return;
+    }
+    if (filter.operator === 'eq') {
+      const value = filter.values[0];
+      if (value) {
+        derived.push({ key: filter.key, value });
+      }
+      return;
+    }
+    if (filter.operator === 'in') {
+      filter.values.forEach((value) => {
+        if (value) {
+          derived.push({ key: filter.key, value });
+        }
+      });
+    }
+  });
+  return derived;
+};
 
 const buildTagOptions = (resources: Resource[]) => {
   const counts = new Map<string, number>();
@@ -210,6 +272,17 @@ export const ResourceOverviewTab = ({
   const [scanValue, setScanValue] = useState('');
   const [form] = Form.useForm<ResourceFormValues>();
   const [searchValue, setSearchValue] = useState(query.search ?? '');
+  const [resourceTagDrafts, setResourceTagDrafts] = useState<Record<string, TagFilter[]>>({});
+  const previewTagFilters = Form.useWatch<TagFilter[]>('tagFilters', form);
+  const sanitizedPreviewFilters = useMemo(() => sanitizeTagFilters(previewTagFilters), [previewTagFilters]);
+  const derivedPreviewTags = useMemo(
+    () => (sanitizedPreviewFilters.length > 0 ? deriveTagsFromFilters(sanitizedPreviewFilters) : []),
+    [sanitizedPreviewFilters],
+  );
+  const previewHasUnsupportedOperators = useMemo(
+    () => sanitizedPreviewFilters.some((filter) => !['eq', 'in'].includes(filter.operator)),
+    [sanitizedPreviewFilters],
+  );
 
   useEffect(() => {
     setSearchValue(query.search ?? '');
@@ -239,6 +312,12 @@ export const ResourceOverviewTab = ({
     const target = resource ?? null;
     setEditResource(target);
     setEditOpen(true);
+    const draftFilters = target?.id ? resourceTagDrafts[target.id] : undefined;
+    const initialFilters = sanitizeTagFilters(draftFilters ?? target?.tags.map((tag) => ({
+      key: tag.key,
+      operator: 'eq' as const,
+      values: [tag.value],
+    })) ?? []);
     form.setFieldsValue({
       name: target?.name ?? '',
       type: target?.type ?? RESOURCE_TYPE_OPTIONS[0],
@@ -247,9 +326,9 @@ export const ResourceOverviewTab = ({
       location: target?.location ?? '',
       environment: target?.environment ?? '',
       groups: target?.groups ?? [],
-      tags: target?.tags.map((tag) => `${tag.key}:${tag.value}`) ?? [],
+      tagFilters: initialFilters,
     });
-  }, [form]);
+  }, [form, resourceTagDrafts]);
 
   const handleApplyTag = useCallback((tagValue: string) => {
     const normalized = tagValue.trim();
@@ -504,11 +583,52 @@ export const ResourceOverviewTab = ({
     onQueryChange({ page: paginationConfig.current ?? 1 });
   }, [onQueryChange]);
 
-  const handleFormSubmit = useCallback((_values: ResourceFormValues) => {
+  const handleFormSubmit = useCallback((values: ResourceFormValues) => {
+    const sanitizedFilters = sanitizeTagFilters(values.tagFilters);
+    const hadRawFilters = Array.isArray(values.tagFilters) && values.tagFilters.length > 0;
+    const derivedTags = sanitizedFilters.length > 0
+      ? deriveTagsFromFilters(sanitizedFilters)
+      : editResource?.tags ?? [];
+
+    if (editResource?.id) {
+      setResourceTagDrafts((previous) => {
+        const next = { ...previous };
+        if (sanitizedFilters.length > 0) {
+          next[editResource.id] = sanitizedFilters;
+        } else {
+          delete next[editResource.id];
+        }
+        return next;
+      });
+    }
+
+    if (!sanitizedFilters.length && hadRawFilters) {
+      message.info('未偵測到有效的標籤條件，已保留原有標籤設定');
+    }
+
+    const unsupported = sanitizedFilters.filter((filter) => !['eq', 'in'].includes(filter.operator));
+    if (unsupported.length > 0) {
+      message.warning('部分條件使用進階運算子，將僅儲存為條件不會轉換為標籤');
+    }
+
+    const payload = {
+      ...values,
+      tagFilters: sanitizedFilters,
+    };
+
+    // 模擬送出 API
+    console.log('Saving resource (mock)', {
+      id: editResource?.id ?? 'new-resource',
+      ...payload,
+      tags: derivedTags,
+    });
+
     message.success(`${editResource ? '已更新' : '已建立'}資源 (模擬)`);
     setEditOpen(false);
+    form.resetFields();
+    setEditResource(null);
     onRefresh();
-  }, [editResource, message, onRefresh]);
+  }, [editResource, form, message, onRefresh]);
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -777,7 +897,11 @@ export const ResourceOverviewTab = ({
       <Modal
         open={editOpen}
         title={editResource ? '編輯資源' : '新增資源'}
-        onCancel={() => setEditOpen(false)}
+        onCancel={() => {
+          setEditOpen(false);
+          form.resetFields();
+          setEditResource(null);
+        }}
         onOk={() => form.submit()}
       >
         <Form<ResourceFormValues>
@@ -814,11 +938,51 @@ export const ResourceOverviewTab = ({
               placeholder="選擇資源群組"
             />
           </Form.Item>
-          <Form.Item name="tags" label="標籤">
-            <Select
-              mode="tags"
-              placeholder="輸入標籤 (格式：key:value)"
+          <Form.Item
+            name="tagFilters"
+            label="標籤條件"
+            valuePropName="value"
+            trigger="onApply"
+            extra="使用標籤條件來定義資源的屬性組合，請按下「套用」後再儲存"
+          >
+            <SmartFilterBuilder
+              disabled={false}
             />
+          </Form.Item>
+          <Form.Item label="標籤預覽" colon={false}>
+            {derivedPreviewTags.length > 0 ? (
+              <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                <Space size={[8, 8]} wrap>
+                  {derivedPreviewTags.map((tag) => (
+                    <Tag color="blue" key={`${tag.key}:${tag.value}`}>
+                      {`${tag.key}=${tag.value}`}
+                    </Tag>
+                  ))}
+                </Space>
+                {previewHasUnsupportedOperators && (
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    部分條件使用進階運算子，將僅儲存為條件不會轉換為標籤
+                  </Text>
+                )}
+              </Space>
+            ) : sanitizedPreviewFilters.length > 0 ? (
+              <Text type="secondary">
+                {previewHasUnsupportedOperators
+                  ? '目前條件包含進階運算子，將僅儲存為條件不會轉換為標籤'
+                  : '尚未偵測到可轉換的標籤，請確認條件值'}
+              </Text>
+            ) : editResource?.tags?.length ? (
+              <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                <Text type="secondary">未套用有效條件時將沿用既有標籤設定：</Text>
+                <Space size={[8, 8]} wrap>
+                  {editResource.tags.map((tag) => (
+                    <Tag key={`${tag.key}:${tag.value}`}>{`${tag.key}=${tag.value}`}</Tag>
+                  ))}
+                </Space>
+              </Space>
+            ) : (
+              <Text type="secondary">儲存後將根據條件自動產生標籤</Text>
+            )}
           </Form.Item>
         </Form>
       </Modal>

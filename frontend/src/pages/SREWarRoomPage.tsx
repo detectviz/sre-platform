@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Col, Empty, List, Row, Space, Spin, Typography } from 'antd';
-import { ArrowRightOutlined, CheckCircleOutlined, FireOutlined, HistoryOutlined } from '@ant-design/icons';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Card, Col, Empty, List, Row, Space, Spin, Tooltip, Typography } from 'antd';
+import { ArrowRightOutlined, CheckCircleOutlined, FireOutlined, HistoryOutlined, ReloadOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { ContextualKPICard, PageHeader } from '../components';
 import type { ContextualKPICardProps, KPIStatus } from '../components/ContextualKPICard';
@@ -40,9 +40,124 @@ type RiskPrediction = {
   severity: 'high' | 'medium' | 'low';
 };
 
+type ServiceHealthSeverity = 'healthy' | 'warning' | 'critical' | 'maintenance' | 'info';
+
+type ServiceHealthCell = {
+  timeKey: string;
+  label: string;
+  severity: ServiceHealthSeverity;
+  value?: string;
+  tooltip?: string;
+};
+
+type ServiceHealthRow = {
+  key: string;
+  serviceName: string;
+  owner?: string;
+  cells: ServiceHealthCell[];
+};
+
 type WarRoomKpiCard = {
   key: string;
 } & Pick<ContextualKPICardProps, 'title' | 'value' | 'unit' | 'status' | 'description' | 'icon' | 'onClick' | 'trendValue' | 'trendLabel'>;
+
+const SERVICE_HEATMAP_BUCKETS = [
+  { key: 'now', label: '目前' },
+  { key: '1h', label: '-1 小時' },
+  { key: '3h', label: '-3 小時' },
+  { key: '6h', label: '-6 小時' },
+  { key: '12h', label: '-12 小時' },
+  { key: '24h', label: '-24 小時' },
+] as const;
+
+const SERVICE_HEATMAP_LEGEND: Record<ServiceHealthSeverity, { label: string; color: string }> = {
+  healthy: { label: '穩定', color: 'rgba(82, 196, 26, 0.28)' },
+  warning: { label: '警示', color: 'rgba(250, 173, 20, 0.32)' },
+  critical: { label: '嚴重', color: 'rgba(245, 34, 45, 0.35)' },
+  maintenance: { label: '維護', color: 'rgba(24, 144, 255, 0.28)' },
+  info: { label: '資訊', color: 'rgba(255, 255, 255, 0.12)' },
+};
+
+const INCIDENT_SEVERITY_TO_HEATMAP: Record<string, ServiceHealthSeverity> = {
+  critical: 'critical',
+  error: 'critical',
+  warning: 'warning',
+  info: 'info',
+  major: 'critical',
+  minor: 'warning',
+};
+
+const getHeatmapColor = (severity: ServiceHealthSeverity) => SERVICE_HEATMAP_LEGEND[severity].color;
+
+const getHeatmapLabel = (severity: ServiceHealthSeverity) => SERVICE_HEATMAP_LEGEND[severity].label;
+
+const fallbackServiceHealth: ServiceHealthRow[] = [
+  {
+    key: 'payment-api',
+    serviceName: '支付核心 API',
+    owner: '支付可靠性小組',
+    cells: [
+      { timeKey: 'now', label: '目前', severity: 'critical', value: 'P1', tooltip: '錯誤率 2.1%，出現支付超時' },
+      { timeKey: '1h', label: '-1 小時', severity: 'warning', value: '延遲 ↑' },
+      { timeKey: '3h', label: '-3 小時', severity: 'warning', value: '延遲 ↑' },
+      { timeKey: '6h', label: '-6 小時', severity: 'healthy', value: '99.2%' },
+      { timeKey: '12h', label: '-12 小時', severity: 'healthy', value: '99.9%' },
+      { timeKey: '24h', label: '-24 小時', severity: 'healthy', value: '99.9%' },
+    ],
+  },
+  {
+    key: 'checkout-web',
+    serviceName: '結帳前端服務',
+    owner: '電商體驗小組',
+    cells: [
+      { timeKey: 'now', label: '目前', severity: 'warning', value: '95% 可用', tooltip: '部分地區延遲升高' },
+      { timeKey: '1h', label: '-1 小時', severity: 'healthy', value: '99%' },
+      { timeKey: '3h', label: '-3 小時', severity: 'healthy', value: '99%' },
+      { timeKey: '6h', label: '-6 小時', severity: 'healthy', value: '99.5%' },
+      { timeKey: '12h', label: '-12 小時', severity: 'healthy', value: '99.8%' },
+      { timeKey: '24h', label: '-24 小時', severity: 'healthy', value: '99.9%' },
+    ],
+  },
+  {
+    key: 'identity-sso',
+    serviceName: '身份驗證 SSO',
+    owner: '平台安全小組',
+    cells: [
+      { timeKey: 'now', label: '目前', severity: 'maintenance', value: '維護', tooltip: '進行例行更新 (20 分鐘)' },
+      { timeKey: '1h', label: '-1 小時', severity: 'maintenance', value: '維護', tooltip: '維護準備階段' },
+      { timeKey: '3h', label: '-3 小時', severity: 'healthy', value: '99.9%' },
+      { timeKey: '6h', label: '-6 小時', severity: 'healthy', value: '100%' },
+      { timeKey: '12h', label: '-12 小時', severity: 'healthy', value: '100%' },
+      { timeKey: '24h', label: '-24 小時', severity: 'healthy', value: '100%' },
+    ],
+  },
+  {
+    key: 'notification-service',
+    serviceName: '通知廣播服務',
+    owner: '通訊整合小組',
+    cells: [
+      { timeKey: 'now', label: '目前', severity: 'info', value: '排程中' },
+      { timeKey: '1h', label: '-1 小時', severity: 'info', value: '排程中' },
+      { timeKey: '3h', label: '-3 小時', severity: 'healthy', value: '99.9%' },
+      { timeKey: '6h', label: '-6 小時', severity: 'healthy', value: '99.9%' },
+      { timeKey: '12h', label: '-12 小時', severity: 'healthy', value: '99.9%' },
+      { timeKey: '24h', label: '-24 小時', severity: 'healthy', value: '99.9%' },
+    ],
+  },
+  {
+    key: 'ml-batch',
+    serviceName: 'ML 批次預測',
+    owner: '智慧營運小組',
+    cells: [
+      { timeKey: 'now', label: '目前', severity: 'healthy', value: '準備就緒' },
+      { timeKey: '1h', label: '-1 小時', severity: 'healthy', value: '100%' },
+      { timeKey: '3h', label: '-3 小時', severity: 'info', value: '待排程' },
+      { timeKey: '6h', label: '-6 小時', severity: 'info', value: '待排程' },
+      { timeKey: '12h', label: '-12 小時', severity: 'info', value: '待排程' },
+      { timeKey: '24h', label: '-24 小時', severity: 'healthy', value: '100%' },
+    ],
+  },
+];
 
 const fallbackWarRoom = {
   stats: {
@@ -176,6 +291,16 @@ const SREWarRoomPage = ({ onNavigate }: SREWarRoomPageProps) => {
   const [latestIncidents, setLatestIncidents] = useState(fallbackWarRoom.latestIncidents);
   const [automationTiles, setAutomationTiles] = useState<AutomationHealthTile[]>(fallbackWarRoom.automationTiles);
   const [riskPredictions, setRiskPredictions] = useState<RiskPrediction[]>(fallbackWarRoom.riskPredictions);
+  const [serviceHealth, setServiceHealth] = useState<ServiceHealthRow[]>(fallbackServiceHealth);
+  const [refreshCounter, setRefreshCounter] = useState(0);
+  const heatmapLegendEntries = useMemo(
+    () => Object.entries(SERVICE_HEATMAP_LEGEND) as Array<[ServiceHealthSeverity, { label: string; color: string }]>,
+    [],
+  );
+
+  useEffect(() => {
+    document.title = '作戰指揮中心 - SRE 平台';
+  }, []);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -258,6 +383,36 @@ const SREWarRoomPage = ({ onNavigate }: SREWarRoomPageProps) => {
           },
         ]);
 
+        const updatedHeatmap = fallbackServiceHealth.map((row) => {
+          const cells = row.cells.map((cell) => ({ ...cell }));
+          const normalizedKey = row.key.toLowerCase();
+          const normalizedName = row.serviceName.toLowerCase();
+          const matchedIncident = eventItems.find((event) => {
+            const serviceName = (event.resource?.name ?? event.labels?.service ?? '').toLowerCase();
+            const summary = (event.summary ?? '').toLowerCase();
+            return serviceName.includes(normalizedKey)
+              || serviceName.includes(normalizedName)
+              || summary.includes(normalizedKey);
+          });
+          if (matchedIncident) {
+            const mappedSeverity = INCIDENT_SEVERITY_TO_HEATMAP[(matchedIncident.severity ?? '').toLowerCase()] ?? 'warning';
+            const nowIndex = cells.findIndex((cell) => cell.timeKey === 'now');
+            if (nowIndex >= 0) {
+              cells[nowIndex] = {
+                ...cells[nowIndex],
+                severity: mappedSeverity,
+                value: (matchedIncident.severity ?? '').toUpperCase() || cells[nowIndex].value,
+                tooltip: matchedIncident.summary ?? cells[nowIndex].tooltip,
+              };
+            }
+          }
+          return {
+            ...row,
+            cells,
+          };
+        });
+        setServiceHealth(updatedHeatmap);
+
         const highlights = Array.isArray((reportPayload as { highlights?: string[] })?.highlights)
           ? (reportPayload as { highlights?: string[] }).highlights!
           : fallbackWarRoom.aiReport.highlights;
@@ -274,18 +429,23 @@ const SREWarRoomPage = ({ onNavigate }: SREWarRoomPageProps) => {
           setStats(fallbackWarRoom.stats);
           setAiReport(fallbackWarRoom.aiReport);
           setLatestIncidents(fallbackWarRoom.latestIncidents);
-          setAutomationTiles(fallbackWarRoom.automationTiles);
-          setRiskPredictions(fallbackWarRoom.riskPredictions);
-          setIsFallback(true);
-          setError('目前顯示為內建模擬資料');
-        }
-      } finally {
-        setLoading(false);
+        setAutomationTiles(fallbackWarRoom.automationTiles);
+        setRiskPredictions(fallbackWarRoom.riskPredictions);
+        setServiceHealth(fallbackServiceHealth);
+        setIsFallback(true);
+        setError('目前顯示為內建模擬資料');
       }
+    } finally {
+      setLoading(false);
+    }
     };
 
     load();
     return () => controller.abort();
+  }, [refreshCounter]);
+
+  const handleRefreshAll = useCallback(() => {
+    setRefreshCounter((prev) => prev + 1);
   }, []);
 
   const kpiCards = useMemo(() => buildKpiCards(stats, onNavigate), [stats, onNavigate]);
@@ -306,6 +466,11 @@ const SREWarRoomPage = ({ onNavigate }: SREWarRoomPageProps) => {
       <PageHeader
         title="作戰指揮中心"
         subtitle="快速掌握事件熱度、回應效率與自動化健康度"
+        extra={(
+          <Button icon={<ReloadOutlined />} onClick={handleRefreshAll}>
+            全部重新整理
+          </Button>
+        )}
       />
 
       {isFallback && (
@@ -334,6 +499,83 @@ const SREWarRoomPage = ({ onNavigate }: SREWarRoomPageProps) => {
               </Col>
             ))}
           </Row>
+
+          <Card className="glass-surface" title="服務健康熱度">
+            {serviceHealth.length === 0 ? (
+              <Empty description="暫無服務健康資料" />
+            ) : (
+              <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                <div className="warroom-heatmap">
+                  <div
+                    className="warroom-heatmap__cell"
+                    style={{ fontWeight: 600, justifyContent: 'flex-start', paddingLeft: 12 }}
+                  >
+                    服務 / 時間
+                  </div>
+                  {SERVICE_HEATMAP_BUCKETS.map((bucket) => (
+                    <div key={`heatmap-header-${bucket.key}`} className="warroom-heatmap__cell" style={{ fontWeight: 600 }}>
+                      {bucket.label}
+                    </div>
+                  ))}
+                  {serviceHealth.map((row) => (
+                    <Fragment key={row.key}>
+                      <div
+                        className="warroom-heatmap__cell"
+                        style={{ justifyContent: 'flex-start', paddingLeft: 12 }}
+                      >
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                          <span style={{ fontWeight: 600 }}>{row.serviceName}</span>
+                          {row.owner ? (
+                            <span style={{ fontSize: 11, color: 'var(--text-secondary, rgba(255, 255, 255, 0.65))' }}>
+                              {row.owner}
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      {SERVICE_HEATMAP_BUCKETS.map((bucket) => {
+                        const cell = row.cells.find((item) => item.timeKey === bucket.key) ?? {
+                          timeKey: bucket.key,
+                          label: bucket.label,
+                          severity: 'info' as ServiceHealthSeverity,
+                        };
+                        const displayText = cell.value ?? getHeatmapLabel(cell.severity);
+                        const tooltipText = cell.tooltip ?? `${row.serviceName} · ${bucket.label}：${displayText}`;
+                        return (
+                          <Tooltip key={`${row.key}-${bucket.key}`} title={tooltipText}>
+                            <div
+                              className="warroom-heatmap__cell"
+                              style={{
+                                background: getHeatmapColor(cell.severity),
+                                border: '1px solid rgba(255, 255, 255, 0.08)',
+                              }}
+                            >
+                              {displayText}
+                            </div>
+                          </Tooltip>
+                        );
+                      })}
+                    </Fragment>
+                  ))}
+                </div>
+                <Space size={[12, 6]} wrap style={{ fontSize: 12, color: 'var(--text-secondary, rgba(255, 255, 255, 0.65))' }}>
+                  {heatmapLegendEntries.map(([key, meta]) => (
+                    <span key={key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <span
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: 4,
+                          background: meta.color,
+                          display: 'inline-block',
+                        }}
+                      />
+                      {meta.label}
+                    </span>
+                  ))}
+                </Space>
+              </Space>
+            )}
+          </Card>
 
           <Card className="glass-surface" title={aiReport.title} extra={dayjs(aiReport.generatedAt).format('YYYY/MM/DD HH:mm')}>
             <List

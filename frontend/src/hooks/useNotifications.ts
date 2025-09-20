@@ -1,32 +1,34 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import api from '../services/api';
 
 const useNotifications = () => {
-    const [notifications, setNotifications] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<unknown>(null);
 
-    useEffect(() => {
-        const fetchNotifications = async () => {
-            try {
-        const data = await api.getNotifications();
-        const items = Array.isArray(data)
-          ? data
-          : Array.isArray(data?.items)
-            ? data.items
-            : [];
-        setNotifications(items);
-            } catch (err) {
-                setError(err);
-            } finally {
-                setLoading(false);
-            }
-        };
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await api.getNotifications();
+      const items = Array.isArray(data)
+        ? data
+        : Array.isArray((data as { items?: unknown[] })?.items)
+          ? (data as { items: unknown[] }).items
+          : [];
+      setNotifications(items);
+      setError(null);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-        fetchNotifications();
-    }, []);
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
 
-    return { notifications, loading, error };
+  return { notifications, loading, error, refresh: fetchNotifications };
 };
 
 export default useNotifications;

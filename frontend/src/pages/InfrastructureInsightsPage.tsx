@@ -23,6 +23,7 @@ import type { EChartsOption } from 'echarts';
 import { ContextualKPICard, PageHeader } from '../components';
 import type { ContextualKPICardProps, KPIStatus } from '../components/ContextualKPICard';
 import { fetchJson } from '../utils/apiClient';
+import { getChartTheme, getStatusColor } from '../utils/chartTheme';
 
 const { Text } = Typography;
 
@@ -153,6 +154,7 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
   const [riskPredictions, setRiskPredictions] = useState<RiskPrediction[]>(fallbackInfraData.riskPredictions);
   const [criticalResources, setCriticalResources] = useState<CriticalResource[]>(fallbackInfraData.criticalResources);
   const usageChartRef = useRef<HTMLDivElement | null>(null);
+  const chartTheme = getChartTheme();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -289,7 +291,7 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
         unit: '台',
         status: infoStatus,
         description: `實體與虛擬伺服器總計`,
-        icon: <CloudServerOutlined style={{ fontSize: 28, color: '#1890ff' }} />,
+        icon: <CloudServerOutlined style={{ fontSize: 28, color: chartTheme.palette.primary }} />,
         trendValue: stats.serverTrend,
         trendLabel: '較上週',
         onClick: () => onNavigate?.('resources', { type: 'server' }),
@@ -301,7 +303,7 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
         unit: '個',
         status: successStatus,
         description: '包含主從與叢集配置',
-        icon: <DatabaseOutlined style={{ fontSize: 28, color: '#52c41a' }} />,
+        icon: <DatabaseOutlined style={{ fontSize: 28, color: chartTheme.palette.success }} />,
         trendValue: stats.databaseTrend,
         trendLabel: '較上週',
         onClick: () => onNavigate?.('resources', { type: 'database' }),
@@ -313,7 +315,7 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
         unit: '個',
         status: containerStatus,
         description: 'Docker 與 Kubernetes 容器',
-        icon: <NodeIndexOutlined style={{ fontSize: 28, color: '#faad14' }} />,
+        icon: <NodeIndexOutlined style={{ fontSize: 28, color: chartTheme.palette.warning }} />,
         trendValue: stats.containerTrend,
         trendLabel: '較上週',
         onClick: () => onNavigate?.('resources', { type: 'container' }),
@@ -325,7 +327,7 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
         unit: '個',
         status: infoStatus,
         description: '微服務與 API 端點',
-        icon: <ThunderboltOutlined style={{ fontSize: 28, color: '#9254de' }} />,
+        icon: <ThunderboltOutlined style={{ fontSize: 28, color: chartTheme.palette.info }} />,
         trendValue: stats.serviceTrend,
         trendLabel: '較上週',
         onClick: () => onNavigate?.('resources', { type: 'service' }),
@@ -335,12 +337,16 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
 
   useEffect(() => {
     if (!usageChartRef.current || !resourceUsage.length) return;
+    const theme = getChartTheme();
     const chart = echarts.init(usageChartRef.current);
 
     const option: EChartsOption = {
       tooltip: {
         trigger: 'axis',
         axisPointer: { type: 'shadow' },
+        backgroundColor: theme.tooltipBackground,
+        textStyle: { color: theme.textPrimary },
+        borderColor: theme.axisLine,
       },
       grid: { left: 120, right: 24, top: 20, bottom: 40 },
       xAxis: {
@@ -348,14 +354,14 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
         max: 100,
         axisLabel: {
           formatter: '{value}%',
-          color: 'rgba(255,255,255,0.65)',
+          color: theme.textSecondary,
         },
-        splitLine: { lineStyle: { color: 'rgba(255,255,255,0.1)' } },
+        splitLine: { lineStyle: { color: theme.gridLine } },
       },
       yAxis: {
         type: 'category',
         data: resourceUsage.map((resource) => resource.name),
-        axisLabel: { color: 'rgba(255,255,255,0.75)' },
+        axisLabel: { color: theme.textPrimary },
       },
       series: [
         {
@@ -365,10 +371,10 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
             value: resource.usage,
             itemStyle: {
               color: resource.status === 'critical'
-                ? '#ff4d4f'
+                ? getStatusColor('danger', theme)
                 : resource.status === 'warning'
-                  ? '#faad14'
-                  : '#52c41a',
+                  ? getStatusColor('warning', theme)
+                  : getStatusColor('success', theme),
             },
           })),
           barWidth: '60%',

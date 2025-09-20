@@ -3,6 +3,7 @@ import { Card, Spin } from 'antd';
 import * as echarts from 'echarts';
 import type { EChartsOption } from 'echarts';
 import dayjs from 'dayjs';
+import { getChartTheme } from '../utils/chartTheme';
 
 interface IncidentTrendData {
   date: string;
@@ -31,19 +32,21 @@ const IncidentTrendChart = ({
   useEffect(() => {
     if (!chartRef.current) return;
 
+    const chartTheme = getChartTheme();
+
     // Initialize chart
     const chart = echarts.init(chartRef.current, themeMode);
     chartInstanceRef.current = chart;
 
-    // Define colors for dark theme
     const colors = {
-      total: '#1890ff',
-      critical: '#ff4d4f',
-      warning: '#faad14',
-      resolved: '#52c41a',
-      text: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.85)' : 'rgba(0, 0, 0, 0.85)',
-      axisLine: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
-      tooltipBg: themeMode === 'dark' ? 'rgba(20, 20, 20, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+      total: chartTheme.palette.primary,
+      critical: chartTheme.palette.danger,
+      warning: chartTheme.palette.warning,
+      resolved: chartTheme.palette.success,
+      text: chartTheme.textPrimary,
+      axisLine: chartTheme.axisLine,
+      tooltipBg: chartTheme.tooltipBackground,
+      legend: chartTheme.textSecondary,
     };
 
     if (loading || data.length === 0) {
@@ -80,7 +83,7 @@ const IncidentTrendChart = ({
       legend: {
         data: ['總事件', '嚴重', '警告', '已解決'],
         textStyle: {
-          color: colors.text,
+          color: colors.legend,
         },
         bottom: 0,
       },
@@ -96,7 +99,7 @@ const IncidentTrendChart = ({
         boundaryGap: false,
         data: dates,
         axisLine: {
-          lineStyle: { color: colors.axisLine }
+          lineStyle: { color: colors.axisLine },
         },
         axisLabel: {
           color: colors.text,
@@ -105,7 +108,7 @@ const IncidentTrendChart = ({
       yAxis: {
         type: 'value',
         axisLine: {
-          lineStyle: { color: colors.axisLine }
+          lineStyle: { color: colors.axisLine },
         },
         axisLabel: {
           color: colors.text,
@@ -113,8 +116,8 @@ const IncidentTrendChart = ({
         splitLine: {
           lineStyle: {
             color: colors.axisLine,
-            type: 'dashed'
-          }
+            type: 'dashed',
+          },
         },
       },
       series: [
