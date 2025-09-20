@@ -2290,6 +2290,58 @@ registerRoute('post', '/incidents', (req, res) => {
   res.status(201).jsonp(incident);
 });
 
+// 更新事故狀態
+registerRoute('patch', '/incidents/:id', (req, res) => {
+  const db = router.db;
+  const { id } = req.params;
+  const { status, acknowledged_at, resolved_at } = req.body || {};
+
+  const incident = db.get('incidents').find({ id }).value();
+  if (!incident) {
+    return res.status(404).jsonp({ code: 'NOT_FOUND', message: `事故 ${id} 不存在` });
+  }
+
+  const now = new Date().toISOString();
+  const updates = {
+    updated_at: now,
+  };
+
+  if (status) {
+    updates.status = status;
+  }
+  if (acknowledged_at) {
+    updates.acknowledged_at = acknowledged_at;
+  }
+  if (resolved_at) {
+    updates.resolved_at = resolved_at;
+  }
+
+  const updatedIncident = db.get('incidents').find({ id }).assign(updates).write();
+
+  // 記錄審計日誌
+  const auditLog = {
+    id: `audit_${Date.now()}`,
+    user_id: 'current_user', // 在實際實現中應該從認證信息中獲取
+    action: 'update_incident_status',
+    resource_type: 'incident',
+    resource_id: id,
+    details: {
+      old_status: incident.status,
+      new_status: status,
+      changes: updates,
+    },
+    timestamp: now,
+  };
+
+  // 確保 audit_logs 集合存在
+  if (!db.has('audit_logs').value()) {
+    db.set('audit_logs', []).write();
+  }
+  db.get('audit_logs').push(auditLog).write();
+
+  res.status(200).jsonp(updatedIncident);
+});
+
 // 週期性靜音規則接口
 registerRoute('get', '/recurring-silence-rules', (req, res) => {
   const db = router.db;

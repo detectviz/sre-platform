@@ -19,7 +19,7 @@ interface CreateSilenceModalProps {
   open: boolean;
   onCancel: () => void;
   onSuccess: () => void;
-  eventId: string | null;
+  incidentId: string | null;
 }
 
 const DURATION_OPTIONS = [
@@ -30,19 +30,24 @@ const DURATION_OPTIONS = [
   { label: '7 天', value: '7d' },
 ];
 
-const fetchEvent = async (eventId: string): Promise<Event> => {
-  const data = await fetchJson<Event>(`/events/${eventId}`);
-  return data;
+const fetchEventByIncidentId = async (incidentId: string): Promise<Event> => {
+  // First fetch all events, then find the one matching the incident ID
+  const events = await fetchJson<Event[]>(`/events`);
+  const event = events.find(e => (e as any).incident_id === incidentId);
+  if (!event) {
+    throw new Error(`找不到與 incident ${incidentId} 相關的事件`);
+  }
+  return event;
 };
 
-export const CreateSilenceModal = ({ open, onCancel, onSuccess, eventId }: CreateSilenceModalProps) => {
+export const CreateSilenceModal = ({ open, onCancel, onSuccess, incidentId }: CreateSilenceModalProps) => {
   const { message } = App.useApp();
   const [form] = Form.useForm();
 
   const { data: event, isLoading, error } = useQuery<Event>({
-    queryKey: ['event', eventId],
-    queryFn: () => fetchEvent(eventId!),
-    enabled: !!eventId && open, // Only fetch when the modal is open and has an eventId
+    queryKey: ['event-by-incident', incidentId],
+    queryFn: () => fetchEventByIncidentId(incidentId!),
+    enabled: !!incidentId && open, // Only fetch when the modal is open and has an incidentId
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -57,9 +62,9 @@ export const CreateSilenceModal = ({ open, onCancel, onSuccess, eventId }: Creat
   const handleOk = () => {
     form.validateFields()
       .then(values => {
-        if (!eventId) return;
+        if (!event?.id) return;
         createSilence({
-          event_id: eventId,
+          event_id: event.id, // Use the actual event ID from the fetched event
           duration: values.duration,
           comment: values.comment,
         }, {

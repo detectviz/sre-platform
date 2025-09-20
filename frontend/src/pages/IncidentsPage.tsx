@@ -1289,24 +1289,52 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         okText: '確認',
         cancelText: '取消',
         onOk: async () => {
-          const timestamp = new Date().toISOString();
-          setOverrides((prev) => {
-            const existing = prev[record.id] ?? {};
-            return {
-              ...prev,
-              [record.id]: {
-                ...existing,
-                status: nextStatus,
-                acknowledged_at: nextStatus === 'acknowledged' ? timestamp : existing.acknowledged_at,
-                resolved_at: nextStatus === 'resolved' ? timestamp : existing.resolved_at,
-              },
+          try {
+            const timestamp = new Date().toISOString();
+            const updateData = {
+              status: nextStatus,
+              ...(nextStatus === 'acknowledged' && { acknowledged_at: timestamp }),
+              ...(nextStatus === 'resolved' && { resolved_at: timestamp }),
             };
-          });
-          message.success(`事件已標記為${statusLabel}`);
+
+            // Call API to update incident status
+            await fetchJson(`/incidents/${record.id}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(updateData),
+            });
+
+            // Update local state as fallback/optimistic update
+            setOverrides((prev) => {
+              const existing = prev[record.id] ?? {};
+              return {
+                ...prev,
+                [record.id]: {
+                  ...existing,
+                  status: nextStatus,
+                  acknowledged_at: nextStatus === 'acknowledged' ? timestamp : existing.acknowledged_at,
+                  resolved_at: nextStatus === 'resolved' ? timestamp : existing.resolved_at,
+                },
+              };
+            });
+
+            message.success(`事件已標記為${statusLabel}`);
+
+            // Refresh incidents list to get updated data
+            if (typeof refetch === 'function') {
+              refetch();
+            }
+          } catch (error) {
+            console.error('更新事件狀態失敗:', error);
+            const errorMessage = error instanceof Error ? error.message : '未知錯誤';
+            message.error(`更新事件狀態失敗: ${errorMessage}`);
+          }
         },
       });
     },
-    [message, modal],
+    [message, modal, refetch],
   );
 
   const handleBatchUpdate = useCallback(
@@ -2205,7 +2233,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
 
       <CreateSilenceModal
         open={silenceModalOpen}
-        eventId={silenceIncidentId}
+        incidentId={silenceIncidentId}
         onCancel={handleCloseSilence}
         onSuccess={handleSilenceSuccess}
       />
