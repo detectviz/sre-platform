@@ -114,13 +114,13 @@ type IncidentRuleFormValues = {
   severity: string;
   status: IncidentRuleRecord['status'];
   owner?: string;
-  conditionsText: string;
+  conditionFilters: TagFilter[];
   actionsText?: string;
 };
 
 const RULE_WIZARD_FIELDS: Array<(keyof IncidentRuleFormValues)[]> = [
   ['name', 'description', 'severity', 'status', 'owner'],
-  ['conditionsText'],
+  ['conditionFilters'],
   ['actionsText'],
 ];
 
@@ -139,6 +139,18 @@ type SilenceRuleFormValues = {
   tagsText?: string;
   nextExecution?: string;
 };
+
+const SILENCE_WIZARD_FIELDS: Array<(keyof SilenceRuleFormValues)[]> = [
+  ['name', 'status', 'createdBy', 'tagsText'],
+  ['schedule', 'nextExecution'],
+  ['filters'],
+];
+
+const SILENCE_WIZARD_ITEMS: StepsProps['items'] = [
+  { key: 'basic', title: '基本資訊' },
+  { key: 'schedule', title: '設定排程' },
+  { key: 'scope', title: '設定範圍' },
+];
 
 const parseScopeToFilters = (scope?: string | null): TagFilter[] => {
   if (!scope) {
@@ -203,6 +215,67 @@ const filtersToScope = (filters: TagFilter[]): string => {
       return `${filter.key} ${symbol} ${filter.values[0]}`;
     })
     .join(' AND ');
+};
+
+const conditionsToFilters = (conditions?: string[] | null): TagFilter[] => {
+  if (!conditions) {
+    return [];
+  }
+  return conditions
+    .map((segment) => {
+      const match = segment.trim().match(/^([A-Za-z0-9_.:-]+)\s*(=|!=|=~|!~|in|not\s+in)\s*(.+)$/i);
+      if (!match) {
+        return null;
+      }
+      const [, key, operatorToken, rawValue] = match;
+      const normalizedOp = operatorToken.toLowerCase().replace(/\s+/g, '');
+      const operator: TagFilter['operator'] = normalizedOp === '='
+        ? 'eq'
+        : normalizedOp === '!='
+          ? 'neq'
+          : normalizedOp === '=~'
+            ? 'regex'
+            : normalizedOp === '!~'
+              ? 'not_regex'
+              : normalizedOp === 'in'
+                ? 'in'
+                : normalizedOp === 'notin'
+                  ? 'not_in'
+                  : 'eq';
+      const values = (operator === 'regex' || operator === 'not_regex')
+        ? [rawValue.trim()]
+        : rawValue
+          .replace(/[()]/g, '')
+          .split(/[,\s]+/)
+          .map((value) => value.replace(/^"|"$/g, '').trim())
+          .filter(Boolean);
+      return {
+        key,
+        operator,
+        values: values.length > 0 ? values : [''],
+      } satisfies TagFilter;
+    })
+    .filter((item): item is TagFilter => Boolean(item));
+};
+
+const filtersToConditions = (filters: TagFilter[]): string[] => {
+  const operatorMap: Record<TagFilter['operator'], string> = {
+    eq: '=',
+    neq: '!=',
+    regex: '=~',
+    not_regex: '!~',
+    in: 'IN',
+    not_in: 'NOT IN',
+  };
+  return filters
+    .filter((filter) => filter.key && filter.values && filter.values.length > 0 && filter.values[0])
+    .map((filter) => {
+      const symbol = operatorMap[filter.operator] ?? '=';
+      if (filter.operator === 'in' || filter.operator === 'not_in') {
+        return `${filter.key} ${symbol} (${filter.values.join(', ')})`;
+      }
+      return `${filter.key} ${symbol} ${filter.values[0]}`;
+    });
 };
 
 type AIAnalysisResult = {
@@ -767,13 +840,13 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
           severity: rule.severity,
           status: rule.status,
           owner: rule.owner,
-          conditionsText: rule.conditions.join('\n'),
+          conditionFilters: conditionsToFilters(rule.conditions),
           actionsText: (rule.actions ?? []).join('\n'),
         });
       } else {
         setEditingRule(null);
         ruleForm.resetFields();
-        ruleForm.setFieldsValue({ severity: 'warning', status: 'active' });
+        ruleForm.setFieldsValue({ severity: 'warning', status: 'active', conditionFilters: [] });
       }
       setRuleModalOpen(true);
       setRuleWizardStep(0);
@@ -804,10 +877,11 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
     try {
       const values = await ruleForm.validateFields();
       const formValues = values as IncidentRuleFormValues;
-      const conditions = formValues.conditionsText
-        ?.split('\n')
-        .map((line) => line.trim())
-        .filter(Boolean) ?? [];
+      const conditions = filtersToConditions(formValues.conditionFilters);
+      if (conditions.length === 0) {
+        message.error('請設定至少一個觸發條件');
+        return;
+      }
       const actions = formValues.actionsText
         ?.split('\n')
         .map((line) => line.trim())
@@ -1058,6 +1132,8 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
     });
   }, [silenceRules, silenceSearchText, silenceStatusFilter]);
 
+  const [silenceWizardStep, setSilenceWizardStep] = useState(0);
+
   const handleSilenceRuleModalOpen = useCallback(
     (rule?: SilenceRuleRecord) => {
       if (rule) {
@@ -1076,6 +1152,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         silenceRuleForm.resetFields();
         silenceRuleForm.setFieldsValue({ status: 'active', filters: [] });
       }
+      setSilenceWizardStep(0);
       setSilenceRuleModalOpen(true);
     },
     [silenceRuleForm],
@@ -2149,19 +2226,18 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
 
           <div style={{ display: ruleWizardStep === 1 ? 'block' : 'none' }}>
             <Form.Item
-              name="conditionsText"
+              name="conditionFilters"
               label="觸發條件"
-              rules={[{ required: true, message: '請輸入至少一個條件' }]}
-              extra="每行代表一個條件，例如：resource.type = database"
+              valuePropName="value"
+              trigger="onApply"
+              rules={[{
+                validator: (_rule, value: TagFilter[] | undefined) =>
+                  value && value.length > 0 ? Promise.resolve() : Promise.reject('請設定至少一個觸發條件'),
+              }]}
+              extra="使用標籤條件與指標閾值，組合出進階的事件偵測規則。"
             >
-              <Input.TextArea rows={4} placeholder={'resource.type = database\ncpu.usage > 85%'} />
+              <SmartFilterBuilder disabled={false} />
             </Form.Item>
-            <Alert
-              type="info"
-              showIcon
-              message="提示"
-              description="可搭配智慧標籤條件與指標閾值，組合出進階的事件偵測規則。"
-            />
           </div>
 
           <div style={{ display: ruleWizardStep === 2 ? 'block' : 'none' }}>
@@ -2175,10 +2251,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
 
             {(() => {
               const preview = ruleForm.getFieldsValue();
-              const conditions = (preview.conditionsText ?? '')
-                .split('\n')
-                .map((line: string) => line.trim())
-                .filter(Boolean);
+              const conditions = filtersToConditions(preview.conditionFilters ?? []);
               const actions = (preview.actionsText ?? '')
                 .split('\n')
                 .map((line: string) => line.trim())
@@ -2309,73 +2382,78 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
       <GlassModal
         open={silenceRuleModalOpen}
         onCancel={handleSilenceRuleModalClose}
-        onOk={handleSilenceRuleSubmit}
-        okText={editingSilenceRule ? '儲存變更' : '建立靜音規則'}
         title={editingSilenceRule ? '編輯靜音規則' : '新增靜音規則'}
+        width={760}
+        footer={(
+          <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+            <Button onClick={handleSilenceRuleModalClose}>取消</Button>
+            <Space>
+              {silenceWizardStep > 0 && (
+                <Button onClick={() => setSilenceWizardStep(silenceWizardStep - 1)}>
+                  上一步
+                </Button>
+              )}
+              {silenceWizardStep < 2 ? (
+                <Button
+                  type="primary"
+                  onClick={async () => {
+                    await silenceRuleForm.validateFields(SILENCE_WIZARD_FIELDS[silenceWizardStep]);
+                    setSilenceWizardStep(silenceWizardStep + 1);
+                  }}
+                >
+                  下一步
+                </Button>
+              ) : (
+                <Button type="primary" onClick={handleSilenceRuleSubmit}>
+                  {editingSilenceRule ? '儲存變更' : '建立規則'}
+                </Button>
+              )}
+            </Space>
+          </Space>
+        )}
       >
+        <Steps current={silenceWizardStep} items={SILENCE_WIZARD_ITEMS} style={{ marginBottom: 24 }} responsive={false} />
         <Form<SilenceRuleFormValues> form={silenceRuleForm} layout="vertical">
-          <Form.Item
-            name="name"
-            label="靜音名稱"
-            rules={[{ required: true, message: '請輸入靜音名稱' }]}
-          >
-            <Input placeholder="例如：資料庫夜間維護" />
-          </Form.Item>
+          <div style={{ display: silenceWizardStep === 0 ? 'block' : 'none' }}>
+            <Form.Item name="name" label="靜音名稱" rules={[{ required: true, message: '請輸入靜音名稱' }]}>
+              <Input placeholder="例如：資料庫夜間維護" />
+            </Form.Item>
+            <Row gutter={16}>
+              <Col xs={24} md={12}>
+                <Form.Item name="status" label="狀態" rules={[{ required: true, message: '請選擇狀態' }]}>
+                  <Select
+                    options={['active', 'scheduled', 'expired'].map((value) => ({
+                      value,
+                      label: { active: '進行中', expired: '已結束', scheduled: '已排程' }[value as SilenceRuleRecord['status']],
+                    }))}
+                  />
+                </Form.Item>
+              </Col>
+              <Col xs={24} md={12}>
+                <Form.Item name="createdBy" label="建立者">
+                  <Input placeholder="例如：Admin User" />
+                </Form.Item>
+              </Col>
+            </Row>
+            <Form.Item name="tagsText" label="標籤 (選填)" extra="以換行或逗號分隔">
+              <Input.TextArea rows={2} placeholder={'db\nmaintenance'} />
+            </Form.Item>
+          </div>
 
-          <Form.Item
-            name="filters"
-            label="作用範圍"
-            valuePropName="value"
-            trigger="onApply"
-            rules={[{
-              validator: (_rule, value: TagFilter[] | undefined) =>
-                value && value.length > 0
-                  ? Promise.resolve()
-                  : Promise.reject('請設定至少一個作用範圍條件'),
-            }]}
-            extra="使用標籤條件鎖定需靜音的服務或資源"
-          >
-            <SmartFilterBuilder disabled={false} />
-          </Form.Item>
+          <div style={{ display: silenceWizardStep === 1 ? 'block' : 'none' }}>
+            <Form.Item name="schedule" label="排程" rules={[{ required: true, message: '請填寫排程資訊' }]} extra="例如：每週二 01:00 ~ 03:00 或 立即生效，持續 4 小時">
+              <Input.TextArea rows={2} placeholder="每週二 01:00 ~ 03:00" />
+            </Form.Item>
+            <Form.Item name="nextExecution" label="下次生效時間" extra="ISO 時間格式或保留空白">
+              <Input placeholder="2025-09-23T01:00:00Z" />
+            </Form.Item>
+          </div>
 
-          <Row gutter={16}>
-            <Col xs={24} md={12}>
-              <Form.Item
-                name="status"
-                label="狀態"
-                rules={[{ required: true, message: '請選擇狀態' }]}
-              >
-                <Select
-                  options={['active', 'scheduled', 'expired'].map((value) => ({
-                    value,
-                    label: silenceStatusLabelMap[value as SilenceRuleRecord['status']],
-                  }))}
-                />
-              </Form.Item>
-            </Col>
-            <Col xs={24} md={12}>
-              <Form.Item name="createdBy" label="建立者">
-                <Input placeholder="例如：Admin User" />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item
-            name="schedule"
-            label="排程"
-            rules={[{ required: true, message: '請填寫排程資訊' }]}
-            extra="例如：每週二 01:00 ~ 03:00 或 立即生效，持續 4 小時"
-          >
-            <Input.TextArea rows={2} placeholder="每週二 01:00 ~ 03:00" />
-          </Form.Item>
-
-          <Form.Item name="nextExecution" label="下次生效時間" extra="ISO 時間格式或保留空白">
-            <Input placeholder="2025-09-23T01:00:00Z" />
-          </Form.Item>
-
-          <Form.Item name="tagsText" label="標籤 (選填)" extra="以換行或逗號分隔">
-            <Input.TextArea rows={2} placeholder={'db\nmaintenance'} />
-          </Form.Item>
+          <div style={{ display: silenceWizardStep === 2 ? 'block' : 'none' }}>
+            <Form.Item name="filters" label="作用範圍" valuePropName="value" trigger="onApply" rules={[{ validator: (_rule, value: TagFilter[] | undefined) => value && value.length > 0 ? Promise.resolve() : Promise.reject('請設定至少一個作用範圍條件'),}]} extra="使用標籤條件鎖定需靜音的服務或資源">
+              <SmartFilterBuilder disabled={false} />
+            </Form.Item>
+          </div>
         </Form>
       </GlassModal>
 
