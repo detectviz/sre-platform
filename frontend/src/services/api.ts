@@ -23,8 +23,8 @@ const mockApi = {
     db.users[0].preferences = { ...db.users[0].preferences, ...prefs };
     return Promise.resolve(db.users[0].preferences);
   },
-  inviteUser: (email: string) => {
-    console.log(`Mock inviting user: ${email}`);
+  inviteUser: (payload: { email: string; first_name: string; last_name: string; note?: string }) => {
+    console.log('Mock inviting user with payload:', payload);
     return Promise.resolve({ success: true });
   },
   updateUser: (userId: string, data: any) => {
@@ -37,7 +37,8 @@ const mockApi = {
   },
   createTeam: (data: any) => {
     console.log('Mock creating team with data:', data);
-    const newTeam = { id: `team_${Date.now()}`, ...data, member_count: 0 };
+    const memberCount = Array.isArray(data?.member_ids) ? data.member_ids.length : 0;
+    const newTeam = { id: `team_${Date.now()}`, ...data, member_count: memberCount };
     // @ts-ignore
     db.teams.push(newTeam);
     return Promise.resolve(newTeam);
@@ -91,10 +92,10 @@ const realApi = {
     },
     body: JSON.stringify(prefs),
   }).then(res => res.json()),
-  inviteUser: (email: string) => fetch('/api/v1/users/invite', {
+  inviteUser: (payload: { email: string; first_name: string; last_name: string; note?: string }) => fetch('/api/v1/users/invite', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify(payload),
   }).then(res => res.json()),
   updateUser: (userId: string, data: any) => fetch(`/api/v1/users/${userId}`, {
     method: 'PUT',

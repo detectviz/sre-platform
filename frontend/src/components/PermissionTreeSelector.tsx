@@ -109,13 +109,15 @@ interface PermissionTreeSelectorProps {
   onChange?: (selectedPermissions: string[]) => void;
   loading?: boolean;
   disabled?: boolean;
+  searchValue?: string;
 }
 
 const PermissionTreeSelector: React.FC<PermissionTreeSelectorProps> = ({
   value = [],
   onChange,
   loading = false,
-  disabled = false
+  disabled = false,
+  searchValue = '',
 }) => {
 
   // 將扁平的權限列表轉換為樹狀結構所需的 checked keys
@@ -145,6 +147,33 @@ const PermissionTreeSelector: React.FC<PermissionTreeSelectorProps> = ({
     </div>
   );
 
+  const filteredTreeData = useMemo(() => {
+    const keyword = searchValue.trim().toLowerCase();
+    if (!keyword) {
+      return PERMISSION_TREE;
+    }
+
+    const filterNode = (node: any): any | null => {
+      const titleText = typeof node.title === 'string' ? node.title.toLowerCase() : '';
+      const keyText = typeof node.key === 'string' ? node.key.toLowerCase() : '';
+      const filteredChildren = node.children
+        ?.map(filterNode)
+        .filter((child): child is typeof node => Boolean(child));
+
+      if (titleText.includes(keyword) || keyText.includes(keyword) || (filteredChildren && filteredChildren.length > 0)) {
+        return {
+          ...node,
+          children: filteredChildren,
+        };
+      }
+      return null;
+    };
+
+    return PERMISSION_TREE
+      .map(filterNode)
+      .filter((node): node is typeof PERMISSION_TREE[number] => Boolean(node));
+  }, [searchValue]);
+
   // 為樹狀數據添加渲染的標題
   const treeDataWithRenderedTitles = useMemo(() => {
     const renderNode = (node: any): any => ({
@@ -153,8 +182,8 @@ const PermissionTreeSelector: React.FC<PermissionTreeSelectorProps> = ({
       children: node.children?.map(renderNode)
     });
 
-    return PERMISSION_TREE.map(renderNode);
-  }, []);
+    return filteredTreeData.map(renderNode);
+  }, [filteredTreeData]);
 
   if (loading) {
     return (
