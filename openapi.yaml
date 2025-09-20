@@ -469,7 +469,54 @@ paths:
       summary: 獲取事件列表
       operationId: listEvents
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status
+          in: query
+          description: 事件狀態篩選
+          schema:
+            type: string
+            enum: [FIRING, RESOLVED, PENDING]
+        - name: severity
+          in: query
+          description: 嚴重度篩選
+          schema:
+            type: string
+            enum: [CRITICAL, WARNING, INFO]
+        - name: incident_id
+          in: query
+          description: 關聯事故ID篩選
+          schema:
+            type: string
+        - name: resource_name
+          in: query
+          description: 資源名稱關鍵字搜尋
+          schema:
+            type: string
+        - name: source
+          in: query
+          description: 事件來源篩選
+          schema:
+            type: string
+        - name: sort_by
+          in: query
+          description: 排序欄位
+          schema:
+            type: string
+        - name: sort_order
+          in: query
+          description: 排序順序
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: "事件列表"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventCollection"
   /events/{eventId}:
     get:
       tags: [事件管理 (Event Management)]

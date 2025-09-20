@@ -2152,7 +2152,7 @@ registerRoute('get', '/events', (req, res) => {
   const db = router.db;
   const page = parsePageParam(req.query.page, 1);
   const pageSize = parsePageParam(req.query.page_size, 20);
-  const { status, severity, resource_name, source, sort_by, sort_order } = req.query;
+  const { status, severity, resource_name, source, incident_id, sort_by, sort_order } = req.query;
 
   let events = db.get('events').value();
 
@@ -2178,6 +2178,11 @@ registerRoute('get', '/events', (req, res) => {
   // 來源過濾
   if (source) {
     events = events.filter(event => event.source.toLowerCase() === source.toLowerCase());
+  }
+
+  // 事故 ID 過濾
+  if (incident_id) {
+    events = events.filter(event => event.incident_id === incident_id);
   }
 
   // 排序

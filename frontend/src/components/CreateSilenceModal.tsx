@@ -31,13 +31,18 @@ const DURATION_OPTIONS = [
 ];
 
 const fetchEventByIncidentId = async (incidentId: string): Promise<Event> => {
-  // First fetch all events, then find the one matching the incident ID
-  const events = await fetchJson<Event[]>(`/events`);
-  const event = events.find(e => (e as any).incident_id === incidentId);
-  if (!event) {
+  // Use incident_id query parameter for efficient filtering
+  const response = await fetchJson<{ items: Event[] } | Event[]>(`/events?incident_id=${encodeURIComponent(incidentId)}`);
+
+  // Handle both paginated and direct array responses
+  const events = Array.isArray(response) ? response : response.items || [];
+
+  if (events.length === 0) {
     throw new Error(`找不到與 incident ${incidentId} 相關的事件`);
   }
-  return event;
+
+  // Return the first matching event (there should typically be one primary event per incident)
+  return events[0];
 };
 
 export const CreateSilenceModal = ({ open, onCancel, onSuccess, incidentId }: CreateSilenceModalProps) => {

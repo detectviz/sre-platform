@@ -1703,6 +1703,26 @@
       "message": "響應正常",
       "checked_at": "2025-09-20T08:24:24.118Z",
       "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758365985937_qc7j",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 216,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T10:59:45.937Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758365985938_8f8f",
+      "channel_id": "channel_slack_checkout",
+      "status": "warning",
+      "latency_ms": 157,
+      "attempts": 2,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T10:59:45.937Z",
+      "source": "scheduled_probe"
     }
   ]
 }
