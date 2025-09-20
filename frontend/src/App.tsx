@@ -16,6 +16,7 @@ import {
   SettingOutlined,
   UserOutlined,
   BellOutlined,
+  LineChartOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -25,6 +26,7 @@ import PrivateRoute from './components/PrivateRoute';
 import IncidentsPage from './pages/IncidentsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import AutomationCenterPage from './pages/AutomationCenterPage';
+import CapacityPlanningPage from './pages/CapacityPlanningPage';
 import AnalyzingPage from './pages/AnalyzingPage';
 import SettingsPage from './pages/SettingsPage';
 import UserPermissionsPage from './pages/UserPermissionsPage';
@@ -43,7 +45,15 @@ const menuItems: MenuProps['items'] = [
   { key: '/resources', icon: <HddOutlined />, label: '資源管理' },
   { key: '/dashboard', icon: <BarChartOutlined />, label: '儀表板' },
   { key: '/analyzing', icon: <BarChartOutlined />, label: '分析中心' },
-  { key: '/automation', icon: <CodeOutlined />, label: '自動化中心' },
+  {
+    key: '/automation',
+    icon: <CodeOutlined />,
+    label: '自動化中心',
+    children: [
+      { key: '/automation/center', label: '自動化總覽' },
+      { key: '/automation/capacity-planning', label: '容量規劃', icon: <LineChartOutlined /> },
+    ]
+  },
   {
     key: '/settings',
     icon: <SettingOutlined />,
@@ -64,14 +74,12 @@ const AppShell = () => {
   const { message } = AntdApp.useApp();
 
   const handleNavigate = (key: string) => {
-    console.log('🔍 Navigation triggered:', key);
     if (key === 'logout') {
       logout();
       message.success('已成功登出');
       navigate('/login');
       return;
     }
-    console.log('🚀 Navigating to:', key);
     navigate(key);
   };
 
@@ -100,7 +108,12 @@ const AppShell = () => {
       return false;
     };
 
-    findTrail(location.pathname, menuItems);
+    let currentPath = location.pathname;
+    if (currentPath.startsWith('/automation') && currentPath !== '/automation/capacity-planning') {
+      currentPath = '/automation/center';
+    }
+
+    findTrail(currentPath, menuItems);
 
     if (trail.length === 0 && location.pathname !== '/') {
       trail.push({ title: '首頁', href: '/' });
@@ -142,14 +155,14 @@ const router = createBrowserRouter([
           { path: '/resources', element: <ResourcesPage onNavigate={() => { }} pageKey="resource-list" themeMode="dark" /> },
           { path: '/dashboard', element: <DashboardAdministrationPage onNavigate={() => { }} /> },
           { path: '/analyzing', element: <AnalyzingPage onNavigate={() => { }} pageKey="capacity-planning" themeMode="dark" /> },
-          { path: '/automation', element: <AutomationCenterPage onNavigate={() => { }} pageKey="scripts" /> },
+          { path: '/automation/center', element: <AutomationCenterPage onNavigate={() => { }} pageKey="scripts" /> },
+          { path: '/automation/capacity-planning', element: <CapacityPlanningPage /> },
           { path: '/settings', element: <SettingsPage /> },
           { path: '/settings/iam', element: <UserPermissionsPage onNavigate={() => { }} pageKey="personnel-management" /> },
           { path: '/settings/roles', element: <RoleManagementPage /> },
           { path: '/settings/audit', element: <AuditLogPage /> },
           { path: '/settings/notifications', element: <NotificationManagementPage onNavigate={() => { }} pageKey="notification-channels" /> },
           { path: '/settings/platform', element: <PlatformSettingsPage onNavigate={() => { }} pageKey="tag-management" /> },
-          // TODO: 新增其他頁面的路由
         ],
       },
     ],
