@@ -239,29 +239,6 @@ const statusLabelMap: Record<string, string> = {
   suppressed: '已抑制',
 };
 
-const incidentRuleStatusToneMap: Record<IncidentRuleRecord['status'], StatusBadgeProps['tone']> = {
-  active: 'success',
-  paused: 'warning',
-  draft: 'info',
-};
-
-const incidentRuleStatusLabelMap: Record<IncidentRuleRecord['status'], string> = {
-  active: '啟用',
-  paused: '暫停',
-  draft: '草稿',
-};
-
-const silenceStatusToneMap: Record<SilenceRuleRecord['status'], StatusBadgeProps['tone']> = {
-  active: 'info',
-  expired: 'neutral',
-  scheduled: 'warning',
-};
-
-const silenceStatusLabelMap: Record<SilenceRuleRecord['status'], string> = {
-  active: '進行中',
-  expired: '已結束',
-  scheduled: '已排程',
-};
 
 const impactToneMap: Record<string, StatusBadgeProps['tone']> = {
   high: 'danger',
@@ -531,10 +508,10 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
       try {
         setIncidentRulesLoading(true);
         setIncidentRulesError(null);
-        const payload: any = await fetchJson('incident-rules?page_size=200', { signal: controller.signal });
-        const items = Array.isArray(payload?.items)
-          ? payload.items
-          : Array.isArray(payload)
+        const payload: { items: Record<string, unknown>[] } | Record<string, unknown>[] = await fetchJson('incident-rules?page_size=200', { signal: controller.signal });
+        const items = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.items)
             ? payload
             : [];
         const normalized = items.map((item: Record<string, unknown>) => ({
@@ -572,10 +549,10 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
       try {
         setSilenceRulesLoading(true);
         setSilenceRulesError(null);
-        const payload: any = await fetchJson('recurring-silence-rules?page_size=200', { signal: controller.signal });
-        const items = Array.isArray(payload?.items)
-          ? payload.items
-          : Array.isArray(payload)
+        const payload: { items: Record<string, unknown>[] } | Record<string, unknown>[] = await fetchJson('recurring-silence-rules?page_size=200', { signal: controller.signal });
+        const items = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload?.items)
             ? payload
             : [];
         const normalized = items.map((item: Record<string, unknown>) => mapSilenceRuleFromApi(item));
@@ -929,9 +906,19 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         title: '狀態',
         dataIndex: 'status',
         width: 120,
-        render: (status: IncidentRuleRecord['status']) => (
-          <StatusBadge label={incidentRuleStatusLabelMap[status]} tone={incidentRuleStatusToneMap[status]} />
-        ),
+        render: (status: IncidentRuleRecord['status']) => {
+          const statusLabels: Record<IncidentRuleRecord['status'], string> = {
+            active: '啟用',
+            paused: '暫停',
+            draft: '草稿',
+          };
+          return (
+            <StatusBadge
+              label={statusLabels[status] ?? status}
+              tone={getStatusTone(status, 'rule')}
+            />
+          );
+        },
       },
       {
         title: '條件',
@@ -1165,11 +1152,13 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         title: '靜音名稱',
         dataIndex: 'name',
         render: (_: string, record) => (
-          <Space direction="vertical" size={2}>
+          <Space direction="vertical" size={4} align="start">
             <Text strong>{record.name}</Text>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              {record.scope}
-            </Text>
+            <Space size={[0, 4]} wrap>
+              {record.scope.split('AND').map((condition) => (
+                <Tag key={condition.trim()}>{condition.trim()}</Tag>
+              ))}
+            </Space>
           </Space>
         ),
       },
@@ -1177,9 +1166,19 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         title: '狀態',
         dataIndex: 'status',
         width: 120,
-        render: (status: SilenceRuleRecord['status']) => (
-          <StatusBadge label={silenceStatusLabelMap[status]} tone={silenceStatusToneMap[status]} />
-        ),
+        render: (status: SilenceRuleRecord['status']) => {
+          const statusLabels: Record<SilenceRuleRecord['status'], string> = {
+            active: '進行中',
+            expired: '已結束',
+            scheduled: '已排程',
+          };
+          return (
+            <StatusBadge
+              label={statusLabels[status] ?? status}
+              tone={getStatusTone(status, 'general')}
+            />
+          );
+        },
       },
       {
         title: '排程',
@@ -1600,7 +1599,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
   const rowSelection = useMemo(
     () => ({
       selectedRowKeys,
-      onChange: (keys: any) => setSelectedRowKeys(keys),
+      onChange: (keys: React.Key[]) => setSelectedRowKeys(keys),
       preserveSelectedRowKeys: true,
     }),
     [selectedRowKeys],

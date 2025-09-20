@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react';
-import { App as AntdApp, Button, Space, Tooltip, Typography, Alert, Modal, Descriptions, Divider, Tag, Form, Input, Select, Row, Col } from 'antd';
+import { useCallback, useMemo, useState } from 'react';
+import { App as AntdApp, Button, Space, Tooltip, Typography, Alert, Modal, Descriptions, Divider, Tag, Form, Input, Select, Row, Col, Transfer } from 'antd';
 import { PlusOutlined, ReloadOutlined, FilterOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { DataTable } from '../../components';
-import type { ResourceGroupWithInsights } from '../../types/resources';
+import type { Resource, ResourceGroupWithInsights } from '../../types/resources';
 import { buildStackedSegments, getChartTheme, getStatusColor } from '../../utils/chartTheme';
+import { useResources } from '../../hooks/useResources';
 
 const { Title, Text } = Typography;
 
@@ -18,6 +19,7 @@ type ResourceGroupFormValues = {
   name: string;
   description: string;
   tags: string[];
+  members: string[];
 };
 
 type ResourceGroupsTabProps = {
@@ -29,6 +31,7 @@ type ResourceGroupsTabProps = {
 
 export const ResourceGroupsTab = ({ resourceGroups, loading, error, onRefresh }: ResourceGroupsTabProps) => {
   const { message } = AntdApp.useApp();
+  const { resources: allResources } = useResources({});
   const [activeGroup, setActiveGroup] = useState<ResourceGroupWithInsights | null>(null);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
@@ -42,12 +45,12 @@ export const ResourceGroupsTab = ({ resourceGroups, loading, error, onRefresh }:
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
   const [filterModalOpen, setFilterModalOpen] = useState(false);
 
-  const handleOpenDetails = (group: ResourceGroupWithInsights) => {
+  const handleOpenDetails = useCallback((group: ResourceGroupWithInsights) => {
     setActiveGroup(group);
     setDetailModalOpen(true);
-  };
+  }, []);
 
-  const handleOpenEdit = (group: ResourceGroupWithInsights | null) => {
+  const handleOpenEdit = useCallback((group: ResourceGroupWithInsights | null) => {
     setEditingGroup(group);
     form.setFieldsValue(
       group
@@ -55,11 +58,12 @@ export const ResourceGroupsTab = ({ resourceGroups, loading, error, onRefresh }:
           name: group.name,
           description: group.description ?? '',
           tags: group.tags.map((t) => `${t.key}:${t.value}`),
+          members: group.members?.map(m => m.id) ?? [],
         }
-        : { name: '', description: '', tags: [] },
+        : { name: '', description: '', tags: [], members: [] },
     );
     setEditModalOpen(true);
-  };
+  }, [form]);
 
   const handleFormSubmit = (values: ResourceGroupFormValues) => {
     console.log('Submitting group form:', values);
@@ -203,7 +207,7 @@ export const ResourceGroupsTab = ({ resourceGroups, loading, error, onRefresh }:
         </Space>
       ),
     },
-  ], [form, handleOpenDetails, handleOpenEdit]);
+  ], [handleOpenDetails, handleOpenEdit]);
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -372,6 +376,20 @@ export const ResourceGroupsTab = ({ resourceGroups, loading, error, onRefresh }:
           </Form.Item>
           <Form.Item name="tags" label="標籤">
             <Select mode="tags" tokenSeparators={[' ']} placeholder="格式：key:value" />
+          </Form.Item>
+          <Form.Item name="members" label="群組資源">
+            <Transfer
+                dataSource={allResources.map((r: Resource) => ({ key: r.id, title: r.name, description: r.type }))}
+                showSearch
+                filterOption={(inputValue, option) =>
+                    option.title.toLowerCase().indexOf(inputValue.toLowerCase()) > -1 ||
+                    option.description.toLowerCase().indexOf(inputValue.toLowerCase()) > -1
+                }
+                targetKeys={form.getFieldValue('members')}
+                onChange={(newTargetKeys) => form.setFieldsValue({ members: newTargetKeys })}
+                render={item => item.title}
+                listStyle={{width: '100%', height: 300}}
+            />
           </Form.Item>
         </Form>
       </Modal>
