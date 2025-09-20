@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   LockOutlined,
   MailOutlined,
@@ -29,6 +29,8 @@ import type { TabsProps } from 'antd';
 import { ContextualKPICard, DataTable, PageHeader } from '../components';
 import useTags from '../hooks/useTags';
 import type { Tag } from '../hooks/useTags';
+import useTagMetadata from '../hooks/useTagMetadata';
+import type { TagValueOption } from '../types/tags';
 
 const { Paragraph } = Typography;
 
@@ -45,12 +47,22 @@ const stats = {
   lastBackup: '2 小時前',
 };
 
-const TagManagementTab = () => {
+type TagManagementTabProps = {
+  refreshSignal: number;
+};
+
+const TagManagementTab = ({ refreshSignal }: TagManagementTabProps) => {
   const { message } = AntdApp.useApp();
   const { tags, loading, error, refresh } = useTags();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Tag | null>(null);
   const [form] = Form.useForm<Tag>();
+
+  useEffect(() => {
+    if (refreshSignal > 0) {
+      refresh();
+    }
+  }, [refresh, refreshSignal]);
 
   const handleEdit = useCallback((record?: Tag) => {
     setEditing(record ?? null);
@@ -170,6 +182,234 @@ const TagManagementTab = () => {
                     <Input placeholder="例如: ^[a-z0-9-]+$" />
                 </Form.Item>
             </Form>
+        </Modal>
+      </Space>
+    </Spin>
+  );
+};
+
+type TagValueManagementTabProps = {
+  refreshSignal: number;
+};
+
+const TagValueManagementTab = ({ refreshSignal }: TagValueManagementTabProps) => {
+  const { message } = AntdApp.useApp();
+  const { tags, loading, error, isFallback, refresh } = useTagMetadata();
+  const [selectedKey, setSelectedKey] = useState<string | undefined>(undefined);
+  const [valueStore, setValueStore] = useState<Record<string, TagValueOption[]>>({});
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingValue, setEditingValue] = useState<TagValueOption | null>(null);
+  const [form] = Form.useForm<{ value: string; label?: string; color?: string }>();
+
+  useEffect(() => {
+    if (refreshSignal > 0) {
+      refresh();
+    }
+  }, [refresh, refreshSignal]);
+
+  useEffect(() => {
+    if (!selectedKey && tags.length > 0) {
+      setSelectedKey(tags[0].key);
+    }
+  }, [selectedKey, tags]);
+
+  useEffect(() => {
+    setValueStore((previous) => {
+      const next: Record<string, TagValueOption[]> = {};
+      tags.forEach((tag) => {
+        const initialValues = previous[tag.key]
+          ?? tag.allowedValues
+          ?? tag.sampleValues
+          ?? [];
+        next[tag.key] = initialValues.map((item) => ({ ...item }));
+      });
+      return next;
+    });
+  }, [tags]);
+
+  const selectedTag = useMemo(
+    () => tags.find((tag) => tag.key === selectedKey),
+    [selectedKey, tags],
+  );
+
+  const managedValues = useMemo(() => {
+    if (!selectedKey) {
+      return [] as TagValueOption[];
+    }
+    return valueStore[selectedKey]
+      ?? selectedTag?.allowedValues
+      ?? selectedTag?.sampleValues
+      ?? [];
+  }, [selectedKey, selectedTag, valueStore]);
+
+  const canManageValues = selectedTag?.valueMode !== 'FREEFORM';
+
+  const handleOpenModal = useCallback((record?: TagValueOption) => {
+    setEditingValue(record ?? null);
+    form.setFieldsValue({
+      value: record?.value ?? '',
+      label: record?.label ?? record?.value ?? '',
+      color: record?.color ?? undefined,
+    });
+    setModalOpen(true);
+  }, [form]);
+
+  const handleModalClose = useCallback(() => {
+    setModalOpen(false);
+    setEditingValue(null);
+    form.resetFields();
+  }, [form]);
+
+  const handleSubmit = useCallback((values: { value: string; label?: string; color?: string }) => {
+    const key = selectedKey;
+    if (!key) {
+      message.warning('請先選擇標籤鍵');
+      return;
+    }
+    const trimmedValue = values.value.trim();
+    if (!trimmedValue) {
+      message.error('請輸入有效的標籤值');
+      return;
+    }
+    const nextEntry: TagValueOption = {
+      value: trimmedValue,
+      label: values.label?.trim() || trimmedValue,
+      color: values.color ? values.color.trim() : null,
+    };
+    setValueStore((prev) => {
+      const current = prev[key] ?? [];
+      const exists = editingValue ? current.some((item) => item.value === editingValue.value) : false;
+      const updated = exists
+        ? current.map((item) => (item.value === editingValue?.value ? { ...item, ...nextEntry } : item))
+        : [...current, nextEntry];
+      return { ...prev, [key]: updated };
+    });
+    handleModalClose();
+    message.success(editingValue ? '標籤值已更新 (模擬)' : '標籤值已新增 (模擬)');
+  }, [editingValue, handleModalClose, message, selectedKey]);
+
+  const handleDelete = useCallback((record: TagValueOption) => {
+    if (!selectedKey) {
+      return;
+    }
+    Modal.confirm({
+      title: `刪除標籤值「${record.value}」`,
+      content: '刪除後將無法使用此預設值，確認要繼續嗎？',
+      okText: '刪除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        setValueStore((prev) => {
+          const current = prev[selectedKey] ?? [];
+          return {
+            ...prev,
+            [selectedKey]: current.filter((item) => item.value !== record.value),
+          };
+        });
+        message.success(`標籤值「${record.value}」已移除 (模擬)`);
+      },
+    });
+  }, [message, selectedKey]);
+
+  const columns = useMemo(() => [
+    { title: '值', dataIndex: 'value', key: 'value' },
+    { title: '顯示名稱', dataIndex: 'label', key: 'label', render: (label: string | undefined) => label ?? '—' },
+    {
+      title: '顏色',
+      dataIndex: 'color',
+      key: 'color',
+      render: (color: string | null | undefined) => (color ? <AntdTag color={color}>{color}</AntdTag> : '—'),
+    },
+    {
+      title: '使用次數',
+      dataIndex: 'usageCount',
+      key: 'usageCount',
+      align: 'right' as const,
+      render: (count: number | undefined) => count ?? 0,
+    },
+    {
+      title: '操作',
+      key: 'actions',
+      render: (_: unknown, record: TagValueOption) => (
+        <Space size={4} wrap>
+          <Button type="link" onClick={() => handleOpenModal(record)} disabled={!canManageValues}>
+            編輯
+          </Button>
+          <Button type="link" danger onClick={() => handleDelete(record)} disabled={!canManageValues}>
+            刪除
+          </Button>
+        </Space>
+      ),
+    },
+  ], [canManageValues, handleDelete, handleOpenModal]);
+
+  if (error) {
+    return <Alert type="error" message="無法載入標籤值" description={(error as Error).message} showIcon />;
+  }
+
+  return (
+    <Spin spinning={loading}>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space align="center" wrap>
+          <Select
+            showSearch
+            placeholder="選擇標籤鍵"
+            value={selectedKey}
+            options={tags.map((tag) => ({ value: tag.key, label: tag.label ?? tag.key }))}
+            onChange={(value) => setSelectedKey(value)}
+            style={{ minWidth: 220 }}
+          />
+          <Button icon={<ReloadOutlined />} onClick={refresh}>
+            重新整理
+          </Button>
+          <Button type="primary" onClick={() => handleOpenModal()} disabled={!canManageValues}>
+            新增標籤值
+          </Button>
+        </Space>
+
+        {isFallback && (
+          <Alert
+            type="warning"
+            showIcon
+            message="目前顯示為離線標籤資料"
+            description="尚未連接 /tags API，以下列表為樣本資料。"
+          />
+        )}
+
+        {selectedTag && !canManageValues && (
+          <Alert
+            type="info"
+            showIcon
+            message={`標籤「${selectedTag.label ?? selectedTag.key}」為自由輸入模式，僅能瀏覽常用值。`}
+          />
+        )}
+
+        <DataTable<TagValueOption>
+          dataSource={managedValues}
+          columns={columns}
+          rowKey={(record) => record.value}
+          titleContent={<span style={{ fontWeight: 600 }}>標籤值清單</span>}
+        />
+
+        <Modal
+          open={modalOpen}
+          title={editingValue ? '編輯標籤值' : '新增標籤值'}
+          onCancel={handleModalClose}
+          onOk={() => form.submit()}
+          okText="儲存"
+          cancelText="取消"
+        >
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Form.Item name="value" label="標籤值" rules={[{ required: true, message: '請輸入標籤值' }]}> 
+              <Input placeholder="例如：production" />
+            </Form.Item>
+            <Form.Item name="label" label="顯示名稱">
+              <Input placeholder="顯示於介面的名稱" />
+            </Form.Item>
+            <Form.Item name="color" label="顏色">
+              <Input placeholder="例如：#1890ff 或留空" />
+            </Form.Item>
+          </Form>
         </Modal>
       </Space>
     </Spin>
@@ -361,6 +601,16 @@ const AuthSettingsTab = () => {
 
 
 const PlatformSettingsPage = ({ onNavigate, pageKey }: PlatformSettingsPageProps) => {
+  const [refreshSignal, setRefreshSignal] = useState(0);
+
+  useEffect(() => {
+    document.title = '平台設定 - SRE 平台';
+  }, []);
+
+  const handleRefreshAll = useCallback(() => {
+    setRefreshSignal((prev) => prev + 1);
+  }, []);
+
   const items: TabsProps['items'] = useMemo(() => [
     {
       key: 'tag-management',
@@ -369,7 +619,16 @@ const PlatformSettingsPage = ({ onNavigate, pageKey }: PlatformSettingsPageProps
           <TagsOutlined /> 標籤管理
         </span>
       ),
-      children: <TagManagementTab />,
+      children: <TagManagementTab refreshSignal={refreshSignal} />,
+    },
+    {
+      key: 'tag-value-management',
+      label: (
+        <span>
+          <TagsOutlined /> 標籤值管理
+        </span>
+      ),
+      children: <TagValueManagementTab refreshSignal={refreshSignal} />,
     },
     {
       key: 'email-settings',
@@ -389,7 +648,7 @@ const PlatformSettingsPage = ({ onNavigate, pageKey }: PlatformSettingsPageProps
       ),
       children: <AuthSettingsTab />,
     },
-  ], []);
+  ], [refreshSignal]);
 
   const activeKey = items.some((item) => item?.key === pageKey) ? pageKey : 'tag-management';
 
@@ -398,6 +657,11 @@ const PlatformSettingsPage = ({ onNavigate, pageKey }: PlatformSettingsPageProps
       <PageHeader
         title="平台設定"
         subtitle="管理平台核心參數、通知與身份驗證整合"
+        extra={(
+          <Button icon={<ReloadOutlined />} onClick={handleRefreshAll}>
+            全部重新整理
+          </Button>
+        )}
       />
 
       <Row gutter={[16, 16]}>

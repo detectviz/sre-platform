@@ -1,11 +1,18 @@
 import { useMemo, useState } from 'react';
-import { App as AntdApp, Button, Space, Tooltip, Typography, Alert, Modal, Descriptions, Divider, Tag, Progress, Form, Input, Select, Row, Col } from 'antd';
+import { App as AntdApp, Button, Space, Tooltip, Typography, Alert, Modal, Descriptions, Divider, Tag, Form, Input, Select, Row, Col } from 'antd';
 import { PlusOutlined, ReloadOutlined, FilterOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { DataTable } from '../../components';
 import type { ResourceGroupWithInsights } from '../../types/resources';
+import { buildStackedSegments, getChartTheme, getStatusColor } from '../../utils/chartTheme';
 
 const { Title, Text } = Typography;
+
+const healthLabelMap: Record<'healthy' | 'warning' | 'critical', string> = {
+  healthy: '健康',
+  warning: '警告',
+  critical: '危急',
+};
 
 type ResourceGroupFormValues = {
   name: string;
@@ -136,20 +143,40 @@ export const ResourceGroupsTab = ({ resourceGroups, loading, error, onRefresh }:
       key: 'health',
       render: (_: unknown, group) => {
         const total = group.memberCount || 1;
+        const theme = getChartTheme();
+        const segments = buildStackedSegments([
+          { key: 'healthy', value: group.healthBreakdown.healthy },
+          { key: 'warning', value: group.healthBreakdown.warning },
+          { key: 'critical', value: group.healthBreakdown.critical },
+        ]);
         const healthyPercent = total > 0 ? (group.healthBreakdown.healthy / total) * 100 : 0;
-        const warningPercent = total > 0 ? (group.healthBreakdown.warning / total) * 100 : 0;
-        const criticalPercent = total > 0 ? (group.healthBreakdown.critical / total) * 100 : 0;
+
         return (
-          <Space>
-            <Tooltip title={`健康: ${Math.round(healthyPercent)}%`}>
-              <Progress type="circle" percent={healthyPercent} size={30} status="success" showInfo={false} />
-            </Tooltip>
-            <Tooltip title={`警告: ${Math.round(warningPercent)}%`}>
-              <Progress type="circle" percent={warningPercent} size={30} status="active" strokeColor="#faad14" showInfo={false} />
-            </Tooltip>
-            <Tooltip title={`危急: ${Math.round(criticalPercent)}%`}>
-              <Progress type="circle" percent={criticalPercent} size={30} status="exception" showInfo={false} />
-            </Tooltip>
+          <Space size={8} align="center">
+            <div className="health-bar">
+              {segments.map((segment) => {
+                const tone = segment.key === 'critical'
+                  ? 'danger'
+                  : segment.key === 'warning'
+                    ? 'warning'
+                    : 'success';
+                const background = segment.percent > 0
+                  ? getStatusColor(tone as 'danger' | 'warning' | 'success', theme)
+                  : 'transparent';
+                return (
+                  <Tooltip
+                    key={`${group.id}-${segment.key}`}
+                    title={`${healthLabelMap[segment.key as keyof typeof healthLabelMap]}: ${Math.round(segment.percent)}%`}
+                  >
+                    <div
+                      className={`health-bar__segment ${segment.percent === 0 ? 'is-empty' : ''}`}
+                      style={{ width: `${segment.percent}%`, background }}
+                    />
+                  </Tooltip>
+                );
+              })}
+            </div>
+            <Text type="secondary">{`${Math.round(healthyPercent)}% 健康`}</Text>
           </Space>
         );
       },

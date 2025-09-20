@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   App as AntdApp,
   Alert,
   Button,
   Col,
+  Descriptions,
   Form,
   Input,
   Modal,
@@ -11,10 +12,13 @@ import {
   Select,
   Space,
   Switch,
+  Steps,
   Tabs,
   Spin,
+  Tag,
+  Typography,
 } from 'antd';
-import type { TabsProps } from 'antd';
+import type { StepsProps, TabsProps } from 'antd';
 import {
   BellOutlined,
   CheckCircleOutlined,
@@ -34,6 +38,31 @@ import type { NotificationPolicy } from '../hooks/useNotificationPolicies';
 
 dayjs.extend(relativeTime);
 
+const { Text } = Typography;
+
+const SEVERITY_META: Record<string, { label: string; color: string; helper: string }> = {
+  critical: {
+    label: '緊急 (Critical)',
+    color: 'volcano',
+    helper: '立即通知值班團隊並啟動重大事件處理流程',
+  },
+  error: {
+    label: '錯誤 (Error)',
+    color: 'magenta',
+    helper: '於 15 分鐘內指派人員排除影響服務的錯誤',
+  },
+  warning: {
+    label: '警告 (Warning)',
+    color: 'gold',
+    helper: '安排值班人員追蹤，避免狀況擴大',
+  },
+  info: {
+    label: '資訊 (Info)',
+    color: 'geekblue',
+    helper: '同步狀態或提供背景資訊供參考',
+  },
+};
+
 type NotificationRecord = {
   id: string;
   channel_name: string;
@@ -44,16 +73,57 @@ type NotificationRecord = {
   error_message?: string | null;
 };
 
-const NotificationStrategiesSection = () => {
+type NotificationPolicyFormValues = {
+  name: string;
+  description?: string;
+  channels: string[];
+  severity: string[];
+};
+
+const POLICY_WIZARD_FIELDS: Array<(keyof NotificationPolicyFormValues)[]> = [
+  ['name', 'description'],
+  ['channels', 'severity'],
+  [],
+];
+
+const POLICY_WIZARD_ITEMS: StepsProps['items'] = [
+  { key: 'basic', title: '基本資訊' },
+  { key: 'channels', title: '通知設定' },
+  { key: 'review', title: '確認與預覽' },
+];
+
+const NotificationStrategiesSection = ({ refreshSignal }: { refreshSignal: number }) => {
   const { message } = AntdApp.useApp();
   const { policies, loading, error, isFallback, refresh } = useNotificationPolicies();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<NotificationPolicy | null>(null);
-  const [form] = Form.useForm<NotificationPolicy>();
+  const [wizardStep, setWizardStep] = useState(0);
+  const [form] = Form.useForm<NotificationPolicyFormValues>();
+
+  useEffect(() => {
+    if (refreshSignal > 0) {
+      refresh();
+    }
+  }, [refresh, refreshSignal]);
+
+  const handleModalClose = useCallback(() => {
+    setOpen(false);
+    setEditing(null);
+    form.resetFields();
+    setWizardStep(0);
+  }, [form]);
 
   const handleEdit = useCallback((record?: NotificationPolicy) => {
     setEditing(record ?? null);
-    form.setFieldsValue(record ?? { name: '', channels: [], severity: [] });
+    setWizardStep(0);
+    form.setFieldsValue(record
+      ? {
+          name: record.name,
+          description: record.description ?? '',
+          channels: record.channels ?? [],
+          severity: record.severity ?? [],
+        }
+      : { name: '', description: '', channels: [], severity: [] });
     setOpen(true);
   }, [form]);
 
@@ -88,7 +158,22 @@ const NotificationStrategiesSection = () => {
         title: '監控嚴重性',
         dataIndex: 'severity',
         key: 'severity',
-        render: (severity?: string[]) => (severity && severity.length > 0 ? severity.join(', ') : '未設定'),
+        render: (severity?: string[]) => (
+          severity && severity.length > 0 ? (
+            <Space size={[4, 4]} wrap>
+              {severity.map((level) => {
+                const meta = SEVERITY_META[level] ?? { label: level, color: 'default', helper: '' };
+                return (
+                  <Tag color={meta.color} key={level}>
+                    {meta.label}
+                  </Tag>
+                );
+              })}
+            </Space>
+          ) : (
+            '未設定'
+          )
+        ),
       },
       {
         title: '操作',
@@ -111,18 +196,45 @@ const NotificationStrategiesSection = () => {
     [handleClone, handleEdit, handleTest],
   );
 
-  const handleSubmit = (values: NotificationPolicy) => {
+  const handleWizardNext = useCallback(async () => {
+    const fields = POLICY_WIZARD_FIELDS[wizardStep] ?? [];
+    if (fields.length > 0) {
+      await form.validateFields(fields);
+    }
+    setWizardStep((prev) => Math.min(prev + 1, POLICY_WIZARD_FIELDS.length - 1));
+  }, [form, wizardStep]);
+
+  const handleWizardPrev = useCallback(() => {
+    setWizardStep((prev) => Math.max(prev - 1, 0));
+  }, []);
+
+  const handleSubmit = (values: NotificationPolicyFormValues) => {
     if (editing) {
-      // TODO: API call to update policy
-      console.log('Updating policy', { ...editing, ...values });
+      const payload: NotificationPolicy = {
+        ...editing,
+        name: values.name,
+        description: values.description?.trim() ? values.description.trim() : null,
+        channels: values.channels ?? [],
+        severity: values.severity ?? [],
+        updatedAt: new Date().toISOString(),
+      };
+      console.log('Updating policy', payload);
       message.success('策略更新成功 (模擬)');
     } else {
-      // TODO: API call to create policy
-      console.log('Creating policy', values);
+      const payload: NotificationPolicy = {
+        id: `policy_${Date.now()}`,
+        name: values.name,
+        description: values.description?.trim() ? values.description.trim() : null,
+        channels: values.channels ?? [],
+        severity: values.severity ?? [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      console.log('Creating policy', payload);
       message.success('策略新增成功 (模擬)');
     }
     refresh();
-    setOpen(false);
+    handleModalClose();
   };
 
   if (error) {
@@ -153,29 +265,128 @@ const NotificationStrategiesSection = () => {
         <Modal
           open={open}
           title={editing ? '編輯通知策略' : '新增通知策略'}
-          onCancel={() => setOpen(false)}
-          onOk={() => form.submit()}
-          okText="儲存"
-          cancelText="取消"
+          onCancel={handleModalClose}
+          footer={(
+            <Space style={{ width: '100%', justifyContent: 'space-between' }}>
+              <Button onClick={handleModalClose}>取消</Button>
+              <Space>
+                {wizardStep > 0 && (
+                  <Button onClick={handleWizardPrev}>上一步</Button>
+                )}
+                {wizardStep < POLICY_WIZARD_FIELDS.length - 1 ? (
+                  <Button
+                    type="primary"
+                    onClick={() => handleWizardNext().catch(() => undefined)}
+                  >
+                    下一步
+                  </Button>
+                ) : (
+                  <Button type="primary" onClick={() => form.submit()}>
+                    儲存
+                  </Button>
+                )}
+              </Space>
+            </Space>
+          )}
         >
+          <Steps current={wizardStep} items={POLICY_WIZARD_ITEMS} style={{ marginBottom: 24 }} responsive={false} />
           <Form form={form} layout="vertical" onFinish={handleSubmit}>
-            <Form.Item name="name" label="策略名稱" rules={[{ required: true, message: '請輸入策略名稱' }]}>
-              <Input placeholder="例如：Checkout Critical Pager" />
-            </Form.Item>
-            <Form.Item name="description" label="描述">
-              <Input.TextArea rows={3} placeholder="策略用途與適用範圍" />
-            </Form.Item>
-            <Form.Item name="channels" label="通知管道" rules={[{ required: true, message: '請至少選擇一個管道' }]}>
-              <Select mode="tags" placeholder="輸入或選擇管道識別" />
-            </Form.Item>
-            <Form.Item name="severity" label="監控嚴重性">
-              <Select mode="multiple" placeholder="選擇適用的嚴重性">
-                <Select.Option value="critical">critical</Select.Option>
-                <Select.Option value="high">high</Select.Option>
-                <Select.Option value="medium">medium</Select.Option>
-                <Select.Option value="low">low</Select.Option>
-              </Select>
-            </Form.Item>
+            <div style={{ display: wizardStep === 0 ? 'block' : 'none' }}>
+              <Form.Item name="name" label="策略名稱" rules={[{ required: true, message: '請輸入策略名稱' }]}>
+                <Input placeholder="例如：Checkout Critical Pager" />
+              </Form.Item>
+              <Form.Item name="description" label="描述">
+                <Input.TextArea rows={3} placeholder="策略用途與適用範圍" />
+              </Form.Item>
+            </div>
+
+            <div style={{ display: wizardStep === 1 ? 'block' : 'none' }}>
+              <Form.Item
+                name="channels"
+                label="通知管道"
+                rules={[{ required: true, message: '請至少選擇一個管道' }]}
+                extra="輸入或選擇管道識別，例如：pagerduty_checkout"
+              >
+                <Select mode="tags" placeholder="輸入或選擇管道識別" />
+              </Form.Item>
+              <Form.Item name="severity" label="監控嚴重性">
+                <Select mode="multiple" placeholder="選擇適用的嚴重性" optionLabelProp="label">
+                  {Object.entries(SEVERITY_META).map(([value, meta]) => (
+                    <Select.Option value={value} key={value} label={meta.label}>
+                      <Space direction="vertical" size={0} style={{ width: '100%' }}>
+                        <Space size={8}>
+                          <Tag color={meta.color}>{meta.label}</Tag>
+                        </Space>
+                        <Text type="secondary" style={{ fontSize: 12 }}>
+                          {meta.helper}
+                        </Text>
+                      </Space>
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+              <Alert
+                type="info"
+                showIcon
+                message="最佳實務建議"
+                description="針對不同嚴重性設定通知節奏與升級節點，確保重大事件優先處理。"
+              />
+            </div>
+
+            <div style={{ display: wizardStep === 2 ? 'block' : 'none' }}>
+              {(() => {
+                const preview = form.getFieldsValue();
+                const channels = preview.channels ?? [];
+                const severity = preview.severity ?? [];
+                return (
+                  <Space direction="vertical" size={16} style={{ width: '100%' }}>
+                    <Descriptions column={1} bordered size="small">
+                      <Descriptions.Item label="策略名稱">{preview.name || '尚未填寫'}</Descriptions.Item>
+                      <Descriptions.Item label="描述">{preview.description || '—'}</Descriptions.Item>
+                    </Descriptions>
+                    <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                      <Text strong>通知管道</Text>
+                      {channels.length ? (
+                        <Space size={[8, 8]} wrap>
+                          {channels.map((channel) => (
+                            <Tag color="blue" key={channel}>
+                              {channel}
+                            </Tag>
+                          ))}
+                        </Space>
+                      ) : (
+                        <Text type="secondary">尚未選擇通知管道</Text>
+                      )}
+                    </Space>
+                    <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                      <Text strong>監控嚴重性</Text>
+                      {severity.length ? (
+                        <Space size={[8, 8]} wrap>
+                          {severity.map((item) => {
+                            const meta = SEVERITY_META[item] ?? { label: item, color: 'default', helper: '' };
+                            return (
+                              <Tag color={meta.color} key={item}>
+                                {meta.label}
+                              </Tag>
+                            );
+                          })}
+                        </Space>
+                      ) : (
+                        <Text type="secondary">未指定嚴重性，將沿用預設策略</Text>
+                      )}
+                    </Space>
+                    {severity.length > 0 && (
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        {severity
+                          .map((item) => SEVERITY_META[item]?.helper)
+                          .filter(Boolean)
+                          .join('；')}
+                      </Text>
+                    )}
+                  </Space>
+                );
+              })()}
+            </div>
           </Form>
         </Modal>
       </Space>
@@ -183,12 +394,18 @@ const NotificationStrategiesSection = () => {
   );
 };
 
-const NotificationChannelsSection = () => {
+const NotificationChannelsSection = ({ refreshSignal }: { refreshSignal: number }) => {
   const { message } = AntdApp.useApp();
   const { channels, loading, error, isFallback, refresh } = useNotificationChannels();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<NotificationChannel | null>(null);
   const [form] = Form.useForm<NotificationChannel>();
+
+  useEffect(() => {
+    if (refreshSignal > 0) {
+      refresh();
+    }
+  }, [refresh, refreshSignal]);
 
   const handleEdit = useCallback((record?: NotificationChannel) => {
     setEditing(record ?? null);
@@ -322,10 +539,16 @@ const NotificationChannelsSection = () => {
   );
 };
 
-const NotificationHistorySection = () => {
+const NotificationHistorySection = ({ refreshSignal }: { refreshSignal: number }) => {
   const { message } = AntdApp.useApp();
-  const { notifications, loading, error } = useNotifications();
+  const { notifications, loading, error, refresh } = useNotifications();
   const [detail, setDetail] = useState<NotificationRecord | null>(null);
+
+  useEffect(() => {
+    if (refreshSignal > 0) {
+      refresh();
+    }
+  }, [refresh, refreshSignal]);
 
   const data: NotificationRecord[] = Array.isArray(notifications)
     ? notifications.map((item, index) => {
@@ -415,10 +638,16 @@ const NotificationHistorySection = () => {
 };
 
 const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key: string) => void; pageKey: string }) => {
-  // The hook is now used in the child component, so we don't need it here.
-  // We can add it back if we need channel data for the stats.
+  const [refreshSignal, setRefreshSignal] = useState(0);
 
-  // TODO: Replace these hardcoded stats with data derived from hooks.
+  useEffect(() => {
+    document.title = '通知管理 - SRE 平台';
+  }, []);
+
+  const handleRefreshAll = useCallback(() => {
+    setRefreshSignal((prev) => prev + 1);
+  }, []);
+
   const stats = {
     totalChannels: 10, // from useNotificationChannels
     activeChannels: 8, // from useNotificationChannels
@@ -428,7 +657,7 @@ const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key:
     avgResponseTime: 1.2, // from useNotificationChannels
   };
 
-  const tabs: TabsProps['items'] = [
+  const tabs: TabsProps['items'] = useMemo(() => [
     {
       key: 'notification-strategies',
       label: (
@@ -436,7 +665,7 @@ const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key:
           <SettingOutlined /> 通知策略
         </span>
       ),
-      children: <NotificationStrategiesSection />,
+      children: <NotificationStrategiesSection refreshSignal={refreshSignal} />,
     },
     {
       key: 'notification-channels',
@@ -445,7 +674,7 @@ const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key:
           <BellOutlined /> 通知管道
         </span>
       ),
-      children: <NotificationChannelsSection />,
+      children: <NotificationChannelsSection refreshSignal={refreshSignal} />,
     },
     {
       key: 'notification-history',
@@ -454,9 +683,9 @@ const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key:
           <HistoryOutlined /> 通知歷史
         </span>
       ),
-      children: <NotificationHistorySection />,
+      children: <NotificationHistorySection refreshSignal={refreshSignal} />,
     },
-  ];
+  ], [refreshSignal]);
 
   const activeKey = tabs.some((tab) => tab?.key === pageKey) ? pageKey : 'notification-strategies';
 
@@ -465,6 +694,11 @@ const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key:
       <PageHeader
         title="通知管理"
         subtitle="配置通知策略和傳送管道，確保關鍵資訊即時傳達"
+        extra={(
+          <Button icon={<ReloadOutlined />} onClick={handleRefreshAll}>
+            全部重新整理
+          </Button>
+        )}
       />
 
       <Row gutter={[16, 16]}>

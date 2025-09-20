@@ -31,6 +31,7 @@ import {
   CloudServerOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import Editor from '@monaco-editor/react';
 import { ContextualKPICard, DataTable, GlassModal, PageHeader, StatusBadge } from '../components';
 import { formatDurationMs } from '../utils/formatters';
 import { getStatusTone } from '../constants/statusMaps';
@@ -56,6 +57,7 @@ type ScriptFormValues = {
   category?: string;
   language?: string;
   description?: string;
+  content?: string;
 };
 
 
@@ -63,6 +65,77 @@ type ScriptFormValues = {
 type AutomationKpiCard = {
   key: string;
 } & Pick<ContextualKPICardProps, 'title' | 'value' | 'unit' | 'status' | 'description' | 'icon'>;
+
+const DEFAULT_SCRIPT_TEMPLATES: Record<string, string> = {
+  python: '#!/usr/bin/env python3\n"""Automation script scaffold."""\n\nimport sys\n\n\ndef main() -> None:\n    print("[automation] 任務開始")\n    # TODO: 實作自動化邏輯\n    print("[automation] 任務完成")\n\n\nif __name__ == "__main__":\n    main()\n',
+  shell: '#!/usr/bin/env bash\nset -euo pipefail\n\necho "[automation] 任務開始"\n# TODO: 實作自動化指令\necho "[automation] 任務完成"\n',
+  javascript: 'export async function handler(context) {\n  console.log("[automation] 任務開始", context);\n  // TODO: 實作自動化邏輯\n  return { status: "ok" };\n}\n',
+  typescript: 'export async function handler(context: Record<string, unknown>) {\n  console.log("[automation] 任務開始", context);\n  // TODO: 實作自動化邏輯\n  return { status: "ok" };\n}\n',
+  powershell: 'Write-Host "[automation] 任務開始"\n# TODO: 實作自動化邏輯\nWrite-Host "[automation] 任務完成"\n',
+  go: 'package main\n\nimport "fmt"\n\nfunc main() {\n    fmt.Println("[automation] 任務開始")\n    // TODO: 實作自動化邏輯\n    fmt.Println("[automation] 任務完成")\n}\n',
+  yaml: '# automation workflow\nsteps:\n  - name: 範例步驟\n    action: echo "hello"\n',
+};
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  python: 'Python',
+  shell: 'Shell',
+  javascript: 'JavaScript',
+  typescript: 'TypeScript',
+  powershell: 'PowerShell',
+  go: 'Go',
+  yaml: 'YAML',
+};
+
+const resolveMonacoLanguage = (value?: string): string => {
+  const normalized = (value ?? '').toLowerCase();
+  if (normalized.includes('power')) {
+    return 'powershell';
+  }
+  if (normalized.includes('bash') || normalized.includes('shell')) {
+    return 'shell';
+  }
+  if (normalized.includes('ts') || normalized.includes('type')) {
+    return 'typescript';
+  }
+  if (normalized.includes('js') || normalized.includes('node')) {
+    return 'javascript';
+  }
+  if (normalized.includes('yaml') || normalized.includes('yml')) {
+    return 'yaml';
+  }
+  if (normalized.includes('go')) {
+    return 'go';
+  }
+  return 'python';
+};
+
+const getDefaultScriptContent = (language?: string) => {
+  const languageKey = resolveMonacoLanguage(language);
+  return DEFAULT_SCRIPT_TEMPLATES[languageKey] ?? DEFAULT_SCRIPT_TEMPLATES.python;
+};
+
+type ScriptCodeEditorProps = {
+  value?: string;
+  onChange?: (value: string) => void;
+  language: string;
+};
+
+const ScriptCodeEditor = ({ value, onChange, language }: ScriptCodeEditorProps) => (
+  <Editor
+    height="320px"
+    language={language}
+    theme="vs-dark"
+    value={value}
+    onChange={(nextValue) => onChange?.(nextValue ?? '')}
+    options={{
+      minimap: { enabled: false },
+      fontSize: 13,
+      scrollBeyondLastLine: false,
+      automaticLayout: true,
+      wordWrap: 'on',
+    }}
+  />
+);
 
 const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps) => {
   const { message } = AntdApp.useApp();
@@ -78,6 +151,24 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
   const [editingScript, setEditingScript] = useState<AutomationScript | null>(null);
   const [executionDetail, setExecutionDetail] = useState<AutomationExecution | null>(null);
   const [form] = Form.useForm<ScriptFormValues>();
+  const watchedLanguage = Form.useWatch('language', form);
+  const editorLanguage = resolveMonacoLanguage(watchedLanguage ?? editingScript?.language ?? 'python');
+  const rawLanguageValue = watchedLanguage ?? editingScript?.language ?? 'Python';
+  const languageWarning = useMemo(() => {
+    if (typeof rawLanguageValue !== 'string') {
+      return null;
+    }
+    const trimmed = rawLanguageValue.trim();
+    if (!trimmed) {
+      return null;
+    }
+    const resolved = resolveMonacoLanguage(trimmed);
+    if (resolved !== trimmed.toLowerCase()) {
+      const resolvedLabel = LANGUAGE_LABELS[resolved] ?? resolved;
+      return `偵測到語言「${trimmed}」，編輯器已自動切換為 ${resolvedLabel} 模式`;
+    }
+    return null;
+  }, [rawLanguageValue]);
 
   const [localScripts, setLocalScripts] = useState<AutomationScript[]>(scripts);
   const [localSchedules, setLocalSchedules] = useState<AutomationSchedule[]>(schedules);
@@ -571,27 +662,43 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
   const openScriptModal = (script: AutomationScript | null) => {
     setEditingScript(script);
     setScriptModalOpen(true);
+    const languageValue = script?.language ?? 'Python';
     form.setFieldsValue({
       name: script?.name ?? '',
       category: script?.category ?? '',
-      language: script?.language ?? '',
+      language: languageValue,
       description: script?.description ?? '',
+      content: script?.content ?? getDefaultScriptContent(languageValue),
     });
   };
 
   const handleScriptModalOk = async () => {
     try {
       const values = await form.validateFields();
+      const normalizedLanguageInput = values.language?.trim() || 'Python';
+      const resolvedLanguage = resolveMonacoLanguage(normalizedLanguageInput);
+      const canonicalLanguage = resolvedLanguage === normalizedLanguageInput.toLowerCase()
+        ? normalizedLanguageInput
+        : (LANGUAGE_LABELS[resolvedLanguage] ?? resolvedLanguage);
+      const normalizedContent = values.content ?? getDefaultScriptContent(resolvedLanguage);
       if (editingScript) {
-        setLocalScripts((prev) => prev.map((script) => (script.id === editingScript.id ? { ...script, ...values } : script)));
+        setLocalScripts((prev) => prev.map((script) => (script.id === editingScript.id
+          ? {
+              ...script,
+              ...values,
+              language: canonicalLanguage,
+              content: normalizedContent,
+            }
+          : script)));
         message.success(`已更新腳本「${values.name}」(模擬)`);
       } else {
         const newScript: AutomationScript = {
           id: `script_${Date.now()}`,
           name: values.name,
           category: values.category,
-          language: values.language ?? 'Python',
+          language: canonicalLanguage,
           description: values.description,
+          content: normalizedContent,
           owner: '模擬使用者',
           executionCount: 0,
           isEnabled: true,
@@ -601,6 +708,8 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
         message.success(`已建立腳本「${values.name}」(模擬)`);
       }
       setScriptModalOpen(false);
+      form.resetFields();
+      setEditingScript(null);
     } catch (err) {
       if ((err as { errorFields?: unknown }).errorFields) {
         return;
@@ -774,7 +883,11 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
       <GlassModal
         open={scriptModalOpen}
         title={editingScript ? `編輯腳本：${editingScript.name}` : '新增腳本 (模擬)'}
-        onCancel={() => setScriptModalOpen(false)}
+        onCancel={() => {
+          setScriptModalOpen(false);
+          form.resetFields();
+          setEditingScript(null);
+        }}
         onOk={handleScriptModalOk}
         okText="保存"
         cancelText="取消"
@@ -797,11 +910,26 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
           <Form.Item label="分類" name="category">
             <Input placeholder="例如：deployment、incident-response" />
           </Form.Item>
-          <Form.Item label="腳本語言" name="language">
-            <Input placeholder="Python / Bash / Go" />
+          <Form.Item
+            label="腳本語言"
+            name="language"
+            rules={[{ required: true, message: '請輸入腳本語言' }]}
+            extra={languageWarning
+              ? <Text type="warning">{languageWarning}</Text>
+              : '輸入或選擇腳本主要語言，以套用語法高亮與預設模板'}
+          >
+            <Input placeholder="例如：Python、Bash、TypeScript" />
           </Form.Item>
           <Form.Item label="描述" name="description">
             <Input.TextArea rows={4} placeholder="說明腳本用途與注意事項" />
+          </Form.Item>
+          <Form.Item
+            label="腳本內容"
+            name="content"
+            rules={[{ required: true, message: '請輸入腳本內容' }]}
+            extra="支援 Python、Shell、TypeScript 等語言，編輯後將儲存於腳本庫中"
+          >
+            <ScriptCodeEditor language={editorLanguage} />
           </Form.Item>
         </Form>
       </GlassModal>

@@ -14,6 +14,7 @@ export type AutomationScript = {
   language: string;
   category?: string;
   description?: string;
+  content?: string;
   owner?: string;
   repositoryUrl?: string;
   lastExecutedAt?: string;
