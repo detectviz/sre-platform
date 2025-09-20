@@ -82,7 +82,10 @@ export const AppLayout = ({
           mode="inline"
           selectedKeys={[activeKey]}
           items={menuItems}
-          onClick={({ key }) => onSelect(key)}
+          onClick={({ key }) => {
+            console.log('📱 Menu clicked:', key);
+            onSelect(key);
+          }}
           style={{ background: 'transparent', borderRight: 0 }}
         />
       </Sider>

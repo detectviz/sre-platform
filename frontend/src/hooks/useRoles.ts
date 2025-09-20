@@ -4,7 +4,7 @@ import api from '../services/api';
 const useRoles = () => {
     const [roles, setRoles] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<Error | null>(null);
 
     useEffect(() => {
         const fetchRoles = async () => {
@@ -12,7 +12,7 @@ const useRoles = () => {
                 const data = await api.getRoles();
                 setRoles(data);
             } catch (err) {
-                setError(err);
+                setError(err as Error);
             } finally {
                 setLoading(false);
             }
@@ -24,4 +24,4 @@ const useRoles = () => {
     return { roles, loading, error };
 };
 
-export default useRoles;
+export { useRoles };

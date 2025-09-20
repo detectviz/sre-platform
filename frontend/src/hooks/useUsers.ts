@@ -4,7 +4,7 @@ import api from '../services/api';
 const useUsers = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<Error | null>(null);
 
     const fetchUsers = useCallback(async () => {
         setLoading(true);
@@ -13,7 +13,7 @@ const useUsers = () => {
             setUsers(data);
             setError(null);
         } catch (err) {
-            setError(err);
+            setError(err as Error);
         } finally {
             setLoading(false);
         }
@@ -26,4 +26,4 @@ const useUsers = () => {
     return { users, loading, error, refetch: fetchUsers };
 };
 
-export default useUsers;
+export { useUsers };

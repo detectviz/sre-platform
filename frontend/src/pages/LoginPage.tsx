@@ -93,7 +93,7 @@ const LoginPage: React.FC = () => {
         <LoginSubTitle>智慧化系統可靠性管理平台</LoginSubTitle>
         <Form
           name="normal_login"
-          initialValues={{ remember: true, username: 'admin@example.com' }}
+          initialValues={{ remember: true, username: 'admin@sre-platform.local' }}
           onFinish={onFinish}
         >
           <StyledFormItem

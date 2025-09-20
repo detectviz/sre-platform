@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const mockUser: User = {
         id: 'user-001',
         name: '管理員',
-        email: 'admin@example.com',
+        email: 'admin@sre-platform.local',
         roles: ['super_admin'],
       };
       setUser(mockUser);
@@ -46,11 +46,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // 模擬 API 呼叫
     return new Promise<void>((resolve, reject) => {
       setTimeout(() => {
-        if (email === 'admin@example.com' && pass === 'password') {
+        if (email === 'admin@sre-platform.local' && pass === 'admin123') {
           const mockUser: User = {
             id: 'user-001',
             name: '管理員',
-            email: 'admin@example.com',
+            email: 'admin@sre-platform.local',
             roles: ['super_admin'],
           };
           setUser(mockUser);

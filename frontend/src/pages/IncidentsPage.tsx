@@ -41,11 +41,11 @@ import {
   ThunderboltOutlined,
   TagsOutlined,
 } from '@ant-design/icons';
-import type { ColumnsType, TableRowSelection } from 'antd/es/table';
+import type { ColumnsType } from 'antd/es/table';
 
 import { ContextualKPICard, DataTable, GlassModal, PageHeader, StatusBadge } from '../components';
 import useIncidents from '../hooks/useIncidents';
-import useUsers from '../hooks/useUsers';
+import { useUsers } from '../hooks/useUsers';
 import { fetchJson } from '../utils/apiClient';
 
 import type { StatusBadgeProps } from '../components/StatusBadge';
@@ -495,7 +495,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
       try {
         setIncidentRulesLoading(true);
         setIncidentRulesError(null);
-        const payload = await fetchJson('incident-rules?page_size=200', { signal: controller.signal });
+        const payload: any = await fetchJson('incident-rules?page_size=200', { signal: controller.signal });
         const items = Array.isArray(payload?.items)
           ? payload.items
           : Array.isArray(payload)
@@ -536,7 +536,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
       try {
         setSilenceRulesLoading(true);
         setSilenceRulesError(null);
-        const payload = await fetchJson('recurring-silence-rules?page_size=200', { signal: controller.signal });
+        const payload: any = await fetchJson('recurring-silence-rules?page_size=200', { signal: controller.signal });
         const items = Array.isArray(payload?.items)
           ? payload.items
           : Array.isArray(payload)
@@ -699,11 +699,11 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
 
     const avgResolution = resolutionDurations.length
       ? Number(
-          (
-            resolutionDurations.reduce((sum, value) => sum + value, 0) /
-            resolutionDurations.length
-          ).toFixed(1),
-        )
+        (
+          resolutionDurations.reduce((sum, value) => sum + value, 0) /
+          resolutionDurations.length
+        ).toFixed(1),
+      )
       : null;
 
     const automationRate = incidentsWithOverrides.length
@@ -823,10 +823,10 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         prev.map((rule) =>
           rule.id === record.id
             ? {
-                ...rule,
-                status: rule.status === 'active' ? 'paused' : 'active',
-                lastUpdated: new Date().toISOString(),
-              }
+              ...rule,
+              status: rule.status === 'active' ? 'paused' : 'active',
+              lastUpdated: new Date().toISOString(),
+            }
             : rule,
         ),
       );
@@ -1452,7 +1452,6 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
           <StatusBadge
             label={impact}
             tone={impactToneMap[normalized] ?? 'neutral'}
-            bordered
           />
         );
       },
@@ -1533,10 +1532,10 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
     },
   ], [handleCreateSilence, handleOpenAIAnalysis, handleOpenDetail, handleStatusChange]);
 
-  const rowSelection: TableRowSelection<IncidentRecord> = useMemo(
+  const rowSelection = useMemo(
     () => ({
       selectedRowKeys,
-      onChange: (keys) => setSelectedRowKeys(keys),
+      onChange: (keys: any) => setSelectedRowKeys(keys),
       preserveSelectedRowKeys: true,
     }),
     [selectedRowKeys],
@@ -1659,7 +1658,6 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
                   <StatusBadge
                     label={currentIncident.business_impact}
                     tone={impactToneMap[currentIncident.business_impact.toLowerCase()] ?? 'neutral'}
-                    bordered
                   />
                 ) : (
                   <Text type="secondary">—</Text>
@@ -1714,45 +1712,45 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
               },
               currentIncident.acknowledged_at
                 ? {
-                    color: 'gold',
-                    children: (
-                      <Space direction="vertical" size={0}>
-                        <Text strong>已確認</Text>
-                        <Text>{formatDateTime(currentIncident.acknowledged_at)}</Text>
-                        {currentIncident.assigneeName && (
-                          <Text type="secondary">由 {currentIncident.assigneeName} 確認</Text>
-                        )}
-                      </Space>
-                    ),
-                  }
+                  color: 'gold',
+                  children: (
+                    <Space direction="vertical" size={0}>
+                      <Text strong>已確認</Text>
+                      <Text>{formatDateTime(currentIncident.acknowledged_at)}</Text>
+                      {currentIncident.assigneeName && (
+                        <Text type="secondary">由 {currentIncident.assigneeName} 確認</Text>
+                      )}
+                    </Space>
+                  ),
+                }
                 : {
-                    color: 'gray',
-                    children: (
-                      <Space direction="vertical" size={0}>
-                        <Text strong>等待確認</Text>
-                        <Text type="secondary">尚未接手此事件</Text>
-                      </Space>
-                    ),
-                  },
+                  color: 'gray',
+                  children: (
+                    <Space direction="vertical" size={0}>
+                      <Text strong>等待確認</Text>
+                      <Text type="secondary">尚未接手此事件</Text>
+                    </Space>
+                  ),
+                },
               currentIncident.resolved_at
                 ? {
-                    color: 'green',
-                    children: (
-                      <Space direction="vertical" size={0}>
-                        <Text strong>已解決</Text>
-                        <Text>{formatDateTime(currentIncident.resolved_at)}</Text>
-                      </Space>
-                    ),
-                  }
+                  color: 'green',
+                  children: (
+                    <Space direction="vertical" size={0}>
+                      <Text strong>已解決</Text>
+                      <Text>{formatDateTime(currentIncident.resolved_at)}</Text>
+                    </Space>
+                  ),
+                }
                 : {
-                    color: 'blue',
-                    children: (
-                      <Space direction="vertical" size={0}>
-                        <Text strong>目前狀態</Text>
-                        <Text type="secondary">{getStatusLabel(currentIncident.status)}</Text>
-                      </Space>
-                    ),
-                  },
+                  color: 'blue',
+                  children: (
+                    <Space direction="vertical" size={0}>
+                      <Text strong>目前狀態</Text>
+                      <Text type="secondary">{getStatusLabel(currentIncident.status)}</Text>
+                    </Space>
+                  ),
+                },
             ]}
           />
         ),
@@ -1903,17 +1901,17 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
   );
 
   const renderIncidentList = () => (
-        <>
-          <Row gutter={[16, 16]}>
-            {kpiCards.map(({ key: cardKey, ...card }) => (
-              <Col key={cardKey} xs={24} sm={12} xl={6}>
-                <ContextualKPICard
-                  {...card}
-                  status={card.status as ContextualKPICardProps['status']}
-                />
-              </Col>
-            ))}
-          </Row>
+    <>
+      <Row gutter={[16, 16]}>
+        {kpiCards.map(({ key: cardKey, ...card }) => (
+          <Col key={cardKey} xs={24} sm={12} xl={6}>
+            <ContextualKPICard
+              {...card}
+              status={card.status as ContextualKPICardProps['status']}
+            />
+          </Col>
+        ))}
+      </Row>
 
       {incidentsError && (
         <Alert

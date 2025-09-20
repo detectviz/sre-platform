@@ -4,7 +4,7 @@ import api from '../services/api';
 const useTeams = () => {
     const [teams, setTeams] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<Error | null>(null);
 
     const fetchTeams = useCallback(async () => {
         setLoading(true);
@@ -13,7 +13,7 @@ const useTeams = () => {
             setTeams(data);
             setError(null);
         } catch (err) {
-            setError(err);
+            setError(err as Error);
         } finally {
             setLoading(false);
         }
@@ -26,4 +26,4 @@ const useTeams = () => {
     return { teams, loading, error, refetch: fetchTeams };
 };
 
-export default useTeams;
+export { useTeams };

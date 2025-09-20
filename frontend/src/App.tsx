@@ -22,7 +22,6 @@ import type { MenuProps } from 'antd';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginPage from './pages/LoginPage';
 import PrivateRoute from './components/PrivateRoute';
-import HomePage from './pages/HomePage';
 import IncidentsPage from './pages/IncidentsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import AutomationCenterPage from './pages/AutomationCenterPage';
@@ -65,12 +64,14 @@ const AppShell = () => {
   const { message } = AntdApp.useApp();
 
   const handleNavigate = (key: string) => {
+    console.log('🔍 Navigation triggered:', key);
     if (key === 'logout') {
       logout();
       message.success('已成功登出');
       navigate('/login');
       return;
     }
+    console.log('🚀 Navigating to:', key);
     navigate(key);
   };
 
@@ -102,13 +103,13 @@ const AppShell = () => {
     findTrail(location.pathname, menuItems);
 
     if (trail.length === 0 && location.pathname !== '/') {
-        trail.push({ title: '首頁', href: '/' });
-        trail.push({ title: pathSnippets.join(' > ') });
+      trail.push({ title: '首頁', href: '/' });
+      trail.push({ title: pathSnippets.join(' > ') });
     } else if (trail.length === 0 && location.pathname === '/') {
-        trail.push({ title: '首頁' });
+      trail.push({ title: '首頁' });
     }
 
-    return trail.map(item => ({ title: item.title, onClick: item.href ? () => navigate(item.href) : undefined }));
+    return trail.map(item => ({ title: item.title, onClick: item.href ? () => navigate(item.href!) : undefined }));
   }, [location.pathname, navigate]);
 
 
@@ -116,7 +117,7 @@ const AppShell = () => {
     <AppLayout
       menuItems={menuItems}
       activeKey={location.pathname}
-      onSelect={({ key }) => handleNavigate(key)}
+      onSelect={(key) => handleNavigate(key)}
       breadcrumbItems={breadcrumbItems}
     >
       <Outlet />
@@ -136,18 +137,18 @@ const router = createBrowserRouter([
       {
         element: <AppShell />,
         children: [
-          { path: '/', element: <SREWarRoomPage onNavigate={() => {}} /> },
-          { path: '/incidents', element: <IncidentsPage onNavigate={() => {}} pageKey="incident-list" /> },
-          { path: '/resources', element: <ResourcesPage onNavigate={() => {}} pageKey="resource-list" themeMode="dark" /> },
-          { path: '/dashboard', element: <DashboardAdministrationPage onNavigate={() => {}} /> },
-          { path: '/analyzing', element: <AnalyzingPage onNavigate={() => {}} pageKey="capacity-planning" themeMode="dark" /> },
-          { path: '/automation', element: <AutomationCenterPage onNavigate={() => {}} pageKey="scripts" /> },
-          { path: '/settings', element: <SettingsPage onNavigate={() => {}} /> },
-          { path: '/settings/iam', element: <UserPermissionsPage onNavigate={() => {}} pageKey="personnel-management" /> },
+          { path: '/', element: <SREWarRoomPage onNavigate={() => { }} /> },
+          { path: '/incidents', element: <IncidentsPage onNavigate={() => { }} pageKey="incident-list" /> },
+          { path: '/resources', element: <ResourcesPage onNavigate={() => { }} pageKey="resource-list" themeMode="dark" /> },
+          { path: '/dashboard', element: <DashboardAdministrationPage onNavigate={() => { }} /> },
+          { path: '/analyzing', element: <AnalyzingPage onNavigate={() => { }} pageKey="capacity-planning" themeMode="dark" /> },
+          { path: '/automation', element: <AutomationCenterPage onNavigate={() => { }} pageKey="scripts" /> },
+          { path: '/settings', element: <SettingsPage /> },
+          { path: '/settings/iam', element: <UserPermissionsPage onNavigate={() => { }} pageKey="personnel-management" /> },
           { path: '/settings/roles', element: <RoleManagementPage /> },
           { path: '/settings/audit', element: <AuditLogPage /> },
-          { path: '/settings/notifications', element: <NotificationManagementPage onNavigate={() => {}} pageKey="notification-channels" /> },
-          { path: '/settings/platform', element: <PlatformSettingsPage onNavigate={() => {}} pageKey="tag-management" /> },
+          { path: '/settings/notifications', element: <NotificationManagementPage onNavigate={() => { }} pageKey="notification-channels" /> },
+          { path: '/settings/platform', element: <PlatformSettingsPage onNavigate={() => { }} pageKey="tag-management" /> },
           // TODO: 新增其他頁面的路由
         ],
       },
