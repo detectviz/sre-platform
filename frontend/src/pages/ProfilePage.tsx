@@ -1,15 +1,71 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert, AutoComplete } from 'antd';
-import { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, HomeOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, ArrowUpOutlined, ArrowDownOutlined, AlignCenterOutlined, CompressOutlined, ExpandOutlined, MinusOutlined, UnorderedListOutlined, WarningOutlined, GlobalOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import {
+  Layout,
+  Menu,
+  ConfigProvider,
+  theme,
+  Typography,
+  Input,
+  Avatar,
+  Button,
+  Row,
+  Col,
+  Card,
+  Statistic,
+  Table,
+  Tag,
+  Modal,
+  Form,
+  Select,
+  Breadcrumb,
+  message,
+  Tabs,
+  DatePicker,
+  List,
+  Divider,
+  Dropdown,
+  Badge,
+  Drawer,
+  Tree,
+  Collapse,
+  InputNumber,
+  Transfer,
+  Spin,
+  Empty,
+  Switch,
+  Space,
+  Radio,
+  Progress,
+  Popover,
+  Tooltip,
+  Descriptions,
+  Timeline,
+  Checkbox,
+  Steps,
+  TimePicker,
+  Alert,
+  AutoComplete,
+  App as AntdApp,
+} from 'antd';
+import {
+  UserOutlined,
+  LinkOutlined,
+  SettingOutlined,
+  SafetyCertificateOutlined,
+  BellOutlined,
+} from '@ant-design/icons';
+import useUserProfile from '../hooks/useUserProfile';
 
 const { Title, Paragraph } = Typography;
 
 const PersonalInfoPage = () => {
+    // This could also fetch from useUserProfile to display name/email,
+    // but for now, it just shows the external link.
     return (
       <div style={{ maxWidth: 500, paddingTop: 16 }}>
         <Descriptions bordered column={1} size="small">
-          <Descriptions.Item label="姓名">Admin User</Descriptions.Item>
-          <Descriptions.Item label="電子郵件">admin@example.com</Descriptions.Item>
+          <Descriptions.Item label="姓名">Admin User (來自 SSO)</Descriptions.Item>
+          <Descriptions.Item label="電子郵件">admin@example.com (來自 SSO)</Descriptions.Item>
         </Descriptions>
         <Alert
           message="個人資料管理說明"
@@ -61,36 +117,68 @@ const PersonalInfoPage = () => {
   };
 
   const PreferencesPage = ({ themeMode, setThemeMode }) => {
+    const { message: antdMessage } = AntdApp.useApp();
+    const { preferences, loading, error, updatePreferences } = useUserProfile();
     const [form] = Form.useForm();
+
+    useEffect(() => {
+        if(preferences) {
+            form.setFieldsValue(preferences);
+        }
+    }, [preferences, form]);
+
+    const handleSave = async (values: any) => {
+        try {
+            await updatePreferences(values);
+            antdMessage.success('偏好設定已儲存');
+            // Also update the theme if it changed
+            if (values.theme && values.theme !== themeMode) {
+                setThemeMode(values.theme);
+            }
+        } catch (e) {
+            antdMessage.error('儲存失敗，請稍後再試');
+        }
+    };
+
+    if (loading && !preferences) {
+        return <Spin />;
+    }
+
+    if (error) {
+        return <Alert type="error" message="無法載入偏好設定" />;
+    }
+
     return (
-      <div style={{ maxWidth: 500, paddingTop: 16 }}>
-        <Form layout="vertical" form={form}>
-          <Form.Item label="介面主題" name="theme">
-            <Select value={themeMode} onChange={setThemeMode}>
-              <Select.Option value="dark">Dark</Select.Option>
-              <Select.Option value="light">Light</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item label="預設頁面" name="homeDashboard" initialValue="default">
-            <Select>
-              <Select.Option value="default">Default</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item label="時區" name="timezone" initialValue="utc">
-            <Select>
-              <Select.Option value="utc">UTC</Select.Option>
-              <Select.Option value="local">Browser Time</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item style={{ marginBottom: 0 }}>
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
-              <Button type="primary" onClick={() => message.success('偏好設定已儲存')}>
-                儲存偏好設定
-              </Button>
-            </div>
-          </Form.Item>
-        </Form>
-      </div>
+      <Spin spinning={loading}>
+        <div style={{ maxWidth: 500, paddingTop: 16 }}>
+            <Form form={form} layout="vertical" onFinish={handleSave}>
+            <Form.Item label="介面主題" name="theme">
+                <Select>
+                <Select.Option value="dark">Dark</Select.Option>
+                <Select.Option value="light">Light</Select.Option>
+                </Select>
+            </Form.Item>
+            <Form.Item label="預設頁面" name="homeDashboard" initialValue="default">
+                <Select>
+                <Select.Option value="default">Default</Select.Option>
+                </Select>
+            </Form.Item>
+            <Form.Item label="時區" name="timezone" initialValue="utc">
+                <Select>
+                <Select.Option value="Asia/Taipei">Asia/Taipei</Select.Option>
+                <Select.Option value="utc">UTC</Select.Option>
+                </Select>
+            </Form.Item>
+            <Form.Item style={{ marginBottom: 0 }}>
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
+                <Button type="primary" htmlType="submit" loading={loading}>
+                    儲存偏好設定
+                </Button>
+                </div>
+            </Form.Item>
+            </Form>
+        </div>
+      </Spin>
     );
   };
 

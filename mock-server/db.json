@@ -1194,5 +1194,47 @@
       "checked_at": "2025-09-20T01:40:23.765Z",
       "source": "scheduled_probe"
     }
+  ],
+  "tag_keys": [
+    {
+      "id": "tag_key_01",
+      "key_name": "env",
+      "description": "部署環境，例如 production, staging, development。",
+      "is_required": true,
+      "validation_regex": "^(production|staging|development)$",
+      "compliance_category": "Environment",
+      "usage_count": 125,
+      "enforcement_level": "blocking"
+    },
+    {
+      "id": "tag_key_02",
+      "key_name": "service",
+      "description": "服務或應用程式的名稱。",
+      "is_required": true,
+      "validation_regex": "^[a-z0-9-]+$",
+      "compliance_category": "Application",
+      "usage_count": 88,
+      "enforcement_level": "warning"
+    },
+    {
+      "id": "tag_key_03",
+      "key_name": "owner_team",
+      "description": "負責此資源的團隊。",
+      "is_required": false,
+      "validation_regex": null,
+      "compliance_category": "Ownership",
+      "usage_count": 76,
+      "enforcement_level": "advisory"
+    },
+    {
+      "id": "tag_key_04",
+      "key_name": "cost_center",
+      "description": "成本中心代碼，用於財務追蹤。",
+      "is_required": false,
+      "validation_regex": "^[0-9]{4,6}$",
+      "compliance_category": "Finance",
+      "usage_count": 45,
+      "enforcement_level": "advisory"
+    }
   ]
 }

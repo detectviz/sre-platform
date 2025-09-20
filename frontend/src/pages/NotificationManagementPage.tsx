@@ -21,35 +21,18 @@ import {
   HistoryOutlined,
   MailOutlined,
   SettingOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
-import fallbackData from '../mocks/db.json';
-import { ContextualKPICard, DataTable, PageHeader, StatusBadge } from '../components';
+import { ContextualKPICard, DataTable, PageHeader } from '../components';
 import useNotifications from '../hooks/useNotifications';
 import useNotificationChannels from '../hooks/useNotificationChannels';
+import useNotificationPolicies from '../hooks/useNotificationPolicies';
 import type { NotificationChannel } from '../types/notifications';
-import { fetchJson } from '../utils/apiClient';
+import type { NotificationPolicy } from '../hooks/useNotificationPolicies';
 
 dayjs.extend(relativeTime);
-
-type NotificationStrategy = {
-  key: string;
-  name: string;
-  description?: string;
-  channels: string[];
-  severity?: string[];
-  created_at?: string;
-};
-
-type NotificationChannel = {
-  key: string;
-  name: string;
-  type: string;
-  enabled: boolean;
-  created_at?: string;
-  updated_at?: string;
-};
 
 type NotificationRecord = {
   id: string;
@@ -61,67 +44,35 @@ type NotificationRecord = {
   error_message?: string | null;
 };
 
-const buildInitialStrategies = (): NotificationStrategy[] => {
-  const raw = fallbackData.notification_policies ?? [];
-  return raw.map((policy) => ({
-    key: policy.id ?? `ns_${policy.name}`,
-    name: policy.name,
-    description: policy.description,
-    channels: policy.channels ?? [],
-    severity: policy.severity ?? [],
-    created_at: policy.created_at,
-  }));
-};
-
-const buildInitialChannels = (): NotificationChannel[] => {
-  const raw = fallbackData.notification_channels ?? [];
-  return raw.map((channel) => ({
-    key: channel.id ?? `nc_${channel.name}`,
-    name: channel.name,
-    type: channel.type,
-    enabled: channel.enabled,
-    created_at: channel.created_at,
-    updated_at: channel.updated_at,
-  }));
-};
-
-const NotificationStrategiesSection = ({
-  data,
-  setData,
-}: {
-  data: NotificationStrategy[];
-  setData: (strategies: NotificationStrategy[]) => void;
-}) => {
+const NotificationStrategiesSection = () => {
   const { message } = AntdApp.useApp();
+  const { policies, loading, error, isFallback, refresh } = useNotificationPolicies();
   const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState<NotificationStrategy | null>(null);
-  const [form] = Form.useForm<NotificationStrategy>();
+  const [editing, setEditing] = useState<NotificationPolicy | null>(null);
+  const [form] = Form.useForm<NotificationPolicy>();
 
-  const handleEdit = useCallback((record?: NotificationStrategy) => {
+  const handleEdit = useCallback((record?: NotificationPolicy) => {
     setEditing(record ?? null);
     form.setFieldsValue(record ?? { name: '', channels: [], severity: [] });
     setOpen(true);
   }, [form]);
 
   const handleTest = useCallback(
-    (record: NotificationStrategy) => {
+    (record: NotificationPolicy) => {
       message.success(`已發送「${record.name}」策略的測試通知 (模擬)`);
+      // TODO: API call to test policy
     },
     [message],
   );
 
   const handleClone = useCallback(
-    (record: NotificationStrategy) => {
-      const key = `ns_${Date.now()}`;
-      const clone: NotificationStrategy = {
-        ...record,
-        key,
-        name: `${record.name} (複製)`,
-      };
-      setData([clone, ...data]);
-      message.success(`已複製策略「${record.name}」`);
+    (record: NotificationPolicy) => {
+      // TODO: API call to clone policy
+      console.log("Cloning policy", record);
+      message.success(`已複製策略「${record.name}」(模擬)`);
+      refresh();
     },
-    [data, message, setData],
+    [message, refresh],
   );
 
   const columns = useMemo(
@@ -142,7 +93,7 @@ const NotificationStrategiesSection = ({
       {
         title: '操作',
         key: 'actions',
-        render: (_: unknown, record: NotificationStrategy) => (
+        render: (_: unknown, record: NotificationPolicy) => (
           <Space size={4} wrap>
             <Button type="link" onClick={() => handleEdit(record)}>
               編輯
@@ -160,71 +111,81 @@ const NotificationStrategiesSection = ({
     [handleClone, handleEdit, handleTest],
   );
 
-  const handleSubmit = (values: NotificationStrategy) => {
+  const handleSubmit = (values: NotificationPolicy) => {
     if (editing) {
-      setData(data.map((item) => (item.key === editing.key ? { ...editing, ...values } : item)));
-      message.success('策略更新成功');
+      // TODO: API call to update policy
+      console.log('Updating policy', { ...editing, ...values });
+      message.success('策略更新成功 (模擬)');
     } else {
-      const key = `ns_${Date.now()}`;
-      setData([{ ...values, key }, ...data]);
-      message.success('策略新增成功');
+      // TODO: API call to create policy
+      console.log('Creating policy', values);
+      message.success('策略新增成功 (模擬)');
     }
+    refresh();
     setOpen(false);
   };
 
+  if (error) {
+    return <Alert type="error" message="無法載入通知策略" description={(error as Error).message} showIcon />;
+  }
+
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Button type="primary" onClick={() => handleEdit()}>
-        新增策略
-      </Button>
+    <Spin spinning={loading}>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space>
+            <Button type="primary" onClick={() => handleEdit()}>
+            新增策略
+            </Button>
+            <Button icon={<ReloadOutlined />} onClick={refresh}>
+                刷新
+            </Button>
+        </Space>
 
-      <DataTable<NotificationStrategy>
-        dataSource={data}
-        columns={columns}
-        rowKey={(record) => record.key}
-        titleContent={<span style={{ fontWeight: 600 }}>通知策略</span>}
-      />
+        {isFallback && <Alert type="warning" message="無法從後端獲取資料，目前顯示的是離線樣本資料。" showIcon />}
 
-      <Modal
-        open={open}
-        title={editing ? '編輯通知策略' : '新增通知策略'}
-        onCancel={() => setOpen(false)}
-        onOk={() => form.submit()}
-        okText="儲存"
-        cancelText="取消"
-      >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="name" label="策略名稱" rules={[{ required: true, message: '請輸入策略名稱' }]}>
-            <Input placeholder="例如：Checkout Critical Pager" />
-          </Form.Item>
-          <Form.Item name="description" label="描述">
-            <Input.TextArea rows={3} placeholder="策略用途與適用範圍" />
-          </Form.Item>
-          <Form.Item name="channels" label="通知管道" rules={[{ required: true, message: '請至少選擇一個管道' }]}>
-            <Select mode="tags" placeholder="輸入或選擇管道識別" />
-          </Form.Item>
-          <Form.Item name="severity" label="監控嚴重性">
-            <Select mode="multiple" placeholder="選擇適用的嚴重性">
-              <Select.Option value="critical">critical</Select.Option>
-              <Select.Option value="high">high</Select.Option>
-              <Select.Option value="medium">medium</Select.Option>
-              <Select.Option value="low">low</Select.Option>
-            </Select>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </Space>
+        <DataTable<NotificationPolicy>
+            dataSource={policies}
+            columns={columns}
+            rowKey={(record) => record.id}
+            titleContent={<span style={{ fontWeight: 600 }}>通知策略</span>}
+        />
+
+        <Modal
+            open={open}
+            title={editing ? '編輯通知策略' : '新增通知策略'}
+            onCancel={() => setOpen(false)}
+            onOk={() => form.submit()}
+            okText="儲存"
+            cancelText="取消"
+        >
+            <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Form.Item name="name" label="策略名稱" rules={[{ required: true, message: '請輸入策略名稱' }]}>
+                <Input placeholder="例如：Checkout Critical Pager" />
+            </Form.Item>
+            <Form.Item name="description" label="描述">
+                <Input.TextArea rows={3} placeholder="策略用途與適用範圍" />
+            </Form.Item>
+            <Form.Item name="channels" label="通知管道" rules={[{ required: true, message: '請至少選擇一個管道' }]}>
+                <Select mode="tags" placeholder="輸入或選擇管道識別" />
+            </Form.Item>
+            <Form.Item name="severity" label="監控嚴重性">
+                <Select mode="multiple" placeholder="選擇適用的嚴重性">
+                <Select.Option value="critical">critical</Select.Option>
+                <Select.Option value="high">high</Select.Option>
+                <Select.Option value="medium">medium</Select.Option>
+                <Select.Option value="low">low</Select.Option>
+                </Select>
+            </Form.Item>
+            </Form>
+        </Modal>
+      </Space>
+    </Spin>
   );
 };
 
-const NotificationChannelsSection = ({
-  data,
-  setData,
-}: {
-  data: NotificationChannel[];
-  setData: (channels: NotificationChannel[]) => void;
-}) => {
+const NotificationChannelsSection = () => {
   const { message } = AntdApp.useApp();
+  const { channels, loading, error, isFallback, refresh } = useNotificationChannels();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<NotificationChannel | null>(null);
   const [form] = Form.useForm<NotificationChannel>();
@@ -236,21 +197,19 @@ const NotificationChannelsSection = ({
   }, [form]);
 
   const handleToggle = useCallback(
-    (record: NotificationChannel) => {
-      setData((prev) =>
-        prev.map((channel) =>
-          channel.key === record.key
-            ? { ...channel, enabled: !channel.enabled }
-            : channel,
-        ),
-      );
-      message.info(`通知管道「${record.name}」已${record.enabled ? '停用' : '啟用'} (模擬)`);
+    async (record: NotificationChannel) => {
+      // TODO: Replace with API call
+      console.log('Toggling channel', record);
+      message.info(`通知管道「${record.name}」狀態已更新 (模擬)`);
+      refresh();
     },
-    [message, setData],
+    [message, refresh],
   );
 
   const handleTest = useCallback(
     (record: NotificationChannel) => {
+      // TODO: Replace with API call
+      console.log('Testing channel', record);
       message.success(`已發送「${record.name}」的測試通知 (模擬)`);
     },
     [message],
@@ -291,55 +250,72 @@ const NotificationChannelsSection = ({
 
   const handleSubmit = (values: NotificationChannel) => {
     if (editing) {
-      setData(data.map((item) => (item.key === editing.key ? { ...editing, ...values } : item)));
-      message.success('通知管道更新成功');
+      // TODO: API call to update channel
+      console.log('Updating channel', { ...editing, ...values });
+      message.success('通知管道更新成功 (模擬)');
     } else {
-      const key = `nc_${Date.now()}`;
-      setData([{ ...values, key }, ...data]);
-      message.success('通知管道新增成功');
+      // TODO: API call to create channel
+      console.log('Creating channel', values);
+      message.success('通知管道新增成功 (模擬)');
     }
+    refresh();
     setOpen(false);
   };
 
+  if (error) {
+    return <Alert type="error" message="無法載入通知管道" description={(error as Error).message} showIcon />;
+  }
+
   return (
-    <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      <Button type="primary" onClick={() => handleEdit()}>
-        新增通知管道
-      </Button>
+    <Spin spinning={loading}>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Space>
+            <Button type="primary" onClick={() => handleEdit()}>
+              新增通知管道
+            </Button>
+            <Button icon={<ReloadOutlined />} onClick={refresh}>
+                刷新
+            </Button>
+        </Space>
 
-      <DataTable<NotificationChannel>
-        dataSource={data}
-        columns={columns}
-        rowKey={(record) => record.key ?? record.id ?? record.name}
-        titleContent={<span style={{ fontWeight: 600 }}>通知管道</span>}
-      />
+        {isFallback && <Alert type="warning" message="無法從後端獲取資料，目前顯示的是離線樣本資料。" showIcon />}
 
-      <Modal
-        open={open}
-        title={editing ? '編輯通知管道' : '新增通知管道'}
-        onCancel={() => setOpen(false)}
-        onOk={() => form.submit()}
-        okText="儲存"
-        cancelText="取消"
-      >
-        <Form form={form} layout="vertical" onFinish={handleSubmit}>
-          <Form.Item name="name" label="管道名稱" rules={[{ required: true, message: '請輸入管道名稱' }]}>
-            <Input placeholder="例如：PagerDuty Checkout Team" />
-          </Form.Item>
-          <Form.Item name="type" label="管道類型" rules={[{ required: true }] }>
-            <Select>
-              <Select.Option value="email">Email</Select.Option>
-              <Select.Option value="slack">Slack</Select.Option>
-              <Select.Option value="pagerduty">PagerDuty</Select.Option>
-              <Select.Option value="webhook">Webhook</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="enabled" label="是否啟用" valuePropName="checked">
-            <Switch />
-          </Form.Item>
+        <DataTable<NotificationChannel>
+          dataSource={channels}
+          columns={columns}
+          rowKey={(record) => record.id ?? record.name}
+          titleContent={<span style={{ fontWeight: 600 }}>通知管道</span>}
+        />
+
+        <Modal
+          open={open}
+          title={editing ? '編輯通知管道' : '新增通知管道'}
+          onCancel={() => setOpen(false)}
+          onOk={() => form.submit()}
+          okText="儲存"
+          cancelText="取消"
+        >
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
+            <Form.Item name="name" label="管道名稱" rules={[{ required: true, message: '請輸入管道名稱' }]}>
+              <Input placeholder="例如：PagerDuty Checkout Team" />
+            </Form.Item>
+            <Form.Item name="type" label="管道類型" rules={[{ required: true }] }>
+              <Select>
+                <Select.Option value="email">Email</Select.Option>
+                <Select.Option value="slack">Slack</Select.Option>
+                <Select.Option value="pagerduty">PagerDuty</Select.Option>
+                <Select.Option value="webhook">Webhook</Select.Option>
+              </Select>
+            </Form.Item>
+            {/* TODO: Add more fields based on channel type */}
+            <Form.Item name="enabled" label="是否啟用" valuePropName="checked">
+              <Switch />
+            </Form.Item>
+          </Form>
         </Form>
       </Modal>
     </Space>
+    </Spin>
   );
 };
 
@@ -347,6 +323,7 @@ const NotificationHistorySection = () => {
   const { message } = AntdApp.useApp();
   const { notifications, loading, error } = useNotifications();
   const [detail, setDetail] = useState<NotificationRecord | null>(null);
+
   const data: NotificationRecord[] = Array.isArray(notifications)
     ? notifications.map((item, index) => {
         const record = item as Partial<NotificationRecord> & { channel?: string };
@@ -370,11 +347,12 @@ const NotificationHistorySection = () => {
   }
 
   const handleRetry = (record: NotificationRecord) => {
+    // TODO: API call to retry notification
     message.success(`已重新發送給 ${record.recipient} (模擬)`);
   };
 
   const columns = [
-    { title: '時間', dataIndex: 'sent_at', key: 'sent_at' },
+    { title: '時間', dataIndex: 'sent_at', key: 'sent_at', render: (ts: string) => dayjs(ts).fromNow() },
     { title: '狀態', dataIndex: 'status', key: 'status' },
     { title: '管道', dataIndex: 'channel_name', key: 'channel_name' },
     { title: '收件者', dataIndex: 'recipient', key: 'recipient' },
@@ -421,7 +399,7 @@ const NotificationHistorySection = () => {
       >
         {detail && (
           <Space direction="vertical" size={8} style={{ width: '100%' }}>
-            <div>時間：{detail.sent_at ?? '—'}</div>
+            <div>時間：{dayjs(detail.sent_at).format('YYYY-MM-DD HH:mm:ss')}</div>
             <div>狀態：{detail.status}</div>
             <div>管道：{detail.channel_name}</div>
             <div>收件者：{detail.recipient}</div>
@@ -434,16 +412,17 @@ const NotificationHistorySection = () => {
 };
 
 const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key: string) => void; pageKey: string }) => {
-  const [strategies, setStrategies] = useState<NotificationStrategy[]>(buildInitialStrategies());
-  const [channels, setChannels] = useState<NotificationChannel[]>(buildInitialChannels());
+  // The hook is now used in the child component, so we don't need it here.
+  // We can add it back if we need channel data for the stats.
 
+  // TODO: Replace these hardcoded stats with data derived from hooks.
   const stats = {
-    totalChannels: channels.length,
-    activeChannels: channels.filter((channel) => channel.enabled).length,
-    todayNotifications: 47,
-    deliveryRate: 97.3,
-    failedNotifications: 2,
-    avgResponseTime: 1.2,
+    totalChannels: 10, // from useNotificationChannels
+    activeChannels: 8, // from useNotificationChannels
+    todayNotifications: 47, // from useNotifications
+    deliveryRate: 97.3, // from useNotifications
+    failedNotifications: 2, // from useNotifications
+    avgResponseTime: 1.2, // from useNotificationChannels
   };
 
   const tabs: TabsProps['items'] = [
@@ -454,7 +433,7 @@ const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key:
           <SettingOutlined /> 通知策略
         </span>
       ),
-      children: <NotificationStrategiesSection data={strategies} setData={setStrategies} />,
+      children: <NotificationStrategiesSection />,
     },
     {
       key: 'notification-channels',
@@ -463,7 +442,7 @@ const NotificationManagementPage = ({ onNavigate, pageKey }: { onNavigate: (key:
           <BellOutlined /> 通知管道
         </span>
       ),
-      children: <NotificationChannelsSection data={channels} setData={setChannels} />,
+      children: <NotificationChannelsSection />,
     },
     {
       key: 'notification-history',

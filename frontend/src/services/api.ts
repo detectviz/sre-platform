@@ -15,6 +15,14 @@ const mockApi = {
   getNotifications: () => Promise.resolve(db.notification_history),
   getNotificationPolicies: () => Promise.resolve(db.notification_policies),
   getNotificationChannels: () => Promise.resolve(db.notification_channels),
+  getTags: () => Promise.resolve(db.tag_keys),
+  getUserPreferences: () => Promise.resolve(db.users[0].preferences),
+  updateUserPreferences: (prefs: any) => {
+    console.log('Mock updating user preferences with:', prefs);
+    // @ts-ignore
+    db.users[0].preferences = { ...db.users[0].preferences, ...prefs };
+    return Promise.resolve(db.users[0].preferences);
+  },
   inviteUser: (email: string) => {
     console.log(`Mock inviting user: ${email}`);
     return Promise.resolve({ success: true });
@@ -66,6 +74,15 @@ const realApi = {
   getNotifications: () => fetch('/api/v1/notification-history').then(res => res.json()),
   getNotificationPolicies: () => fetch('/api/v1/notification-policies').then(res => res.json()),
   getNotificationChannels: () => fetch('/api/v1/notification-channels').then(res => res.json()),
+  getTags: () => fetch('/api/v1/tags').then(res => res.json()),
+  getUserPreferences: () => fetch('/api/v1/users/me/preferences').then(res => res.json()),
+  updateUserPreferences: (prefs: any) => fetch('/api/v1/users/me/preferences', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(prefs),
+  }).then(res => res.json()),
   // Add real API calls for user/team management later
 };
 
