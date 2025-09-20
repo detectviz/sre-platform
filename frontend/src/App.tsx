@@ -1,5 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { App as AntdApp, ConfigProvider, theme } from 'antd';
+import {
+  createBrowserRouter,
+  RouterProvider,
+  useNavigate,
+  Outlet,
+  useLocation,
+} from 'react-router-dom';
 import {
   BarChartOutlined,
   CodeOutlined,
@@ -12,70 +19,64 @@ import {
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import LoginPage from './pages/LoginPage';
+import PrivateRoute from './components/PrivateRoute';
 import HomePage from './pages/HomePage';
 import IncidentsPage from './pages/IncidentsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import AutomationCenterPage from './pages/AutomationCenterPage';
 import AnalyzingPage from './pages/AnalyzingPage';
 import SettingsPage from './pages/SettingsPage';
-import ProfilePage from './pages/ProfilePage';
 import UserPermissionsPage from './pages/UserPermissionsPage';
 import NotificationManagementPage from './pages/NotificationManagementPage';
 import PlatformSettingsPage from './pages/PlatformSettingsPage';
 import DashboardAdministrationPage from './pages/DashboardAdministrationPage';
 import SREWarRoomPage from './pages/SREWarRoomPage';
+import RoleManagementPage from './pages/RoleManagementPage';
+import AuditLogPage from './pages/AuditLogPage';
 import { AppLayout } from './layouts/AppLayout';
-
-const useLocalStorageState = <T,>(key: string, defaultValue: T): [T, (value: T) => void] => {
-  const stored = typeof window !== 'undefined' ? window.localStorage.getItem(key) : null;
-  const initial = stored ? (JSON.parse(stored) as T) : defaultValue;
-  const [state, setState] = useState<T>(initial);
-
-  const updateState = (value: T) => {
-    setState(value);
-    try {
-      window.localStorage.setItem(key, JSON.stringify(value));
-    } catch (err) {
-      console.warn('無法寫入 localStorage', err);
-    }
-  };
-
-  return [state, updateState];
-};
+import { useLocalStorage } from './hooks/useLocalStorage';
 
 const menuItems: MenuProps['items'] = [
-  { key: 'home', icon: <DashboardOutlined />, label: '首頁' },
-  { key: 'incidents', icon: <HistoryOutlined />, label: '事件管理' },
-  { key: 'resources', icon: <HddOutlined />, label: '資源管理' },
-  { key: 'dashboard', icon: <BarChartOutlined />, label: '儀表板' },
-  { key: 'analyzing', icon: <BarChartOutlined />, label: '分析中心' },
-  { key: 'automation', icon: <CodeOutlined />, label: '自動化中心' },
+  { key: '/', icon: <DashboardOutlined />, label: '首頁' },
+  { key: '/incidents', icon: <HistoryOutlined />, label: '事件管理' },
+  { key: '/resources', icon: <HddOutlined />, label: '資源管理' },
+  { key: '/dashboard', icon: <BarChartOutlined />, label: '儀表板' },
+  { key: '/analyzing', icon: <BarChartOutlined />, label: '分析中心' },
+  { key: '/automation', icon: <CodeOutlined />, label: '自動化中心' },
   {
-    key: 'settings',
+    key: '/settings',
     icon: <SettingOutlined />,
     label: '設定',
     children: [
-      { key: 'identity-access-management', icon: <UserOutlined />, label: '身份與存取管理' },
-      { key: 'notification-management', icon: <BellOutlined />, label: '通知管理' },
-      { key: 'platform-settings', icon: <SettingOutlined />, label: '平台設定' },
+      { key: '/settings/iam', icon: <UserOutlined />, label: '身份與存取管理' },
+      { key: '/settings/notifications', icon: <BellOutlined />, label: '通知管理' },
+      { key: '/settings/platform', icon: <SettingOutlined />, label: '平台設定' },
     ],
   },
 ];
 
-type AppShellProps = {
-  themeMode: 'dark' | 'light';
-  setThemeMode: (mode: 'dark' | 'light') => void;
-};
+const AppShell = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
 
-const AppShell = ({ themeMode, setThemeMode }: AppShellProps) => {
+  const { logout } = useAuth();
   const { message } = AntdApp.useApp();
-  const [currentPage, setCurrentPage] = useState('home');
-  const [, setPageParams] = useState<Record<string, unknown>>({});
+
+  const handleNavigate = (key: string) => {
+    if (key === 'logout') {
+      logout();
+      message.success('已成功登出');
+      navigate('/login');
+      return;
+    }
+    navigate(key);
+  };
 
   const breadcrumbItems = useMemo(() => {
-    const trail: { title: string; onClick?: () => void }[] = [
-      { title: 'Home', onClick: () => setCurrentPage('home') },
-    ];
+    const trail: { title: string; href?: string }[] = [];
+    const pathSnippets = location.pathname.split('/').filter(i => i);
 
     const findTrail = (key: string, items: any[], parents: any[] = []) => {
       for (const item of items) {
@@ -83,7 +84,7 @@ const AppShell = ({ themeMode, setThemeMode }: AppShellProps) => {
         if (item.key === key) {
           parents.forEach((parent) => {
             if (parent?.label) {
-              trail.push({ title: String(parent.label) });
+              trail.push({ title: String(parent.label), href: parent.key });
             }
           });
           if (item.label) {
@@ -98,97 +99,64 @@ const AppShell = ({ themeMode, setThemeMode }: AppShellProps) => {
       return false;
     };
 
-    findTrail(currentPage, menuItems);
+    findTrail(location.pathname, menuItems);
 
-    if (currentPage === 'business-dashboard') {
-      trail.push({ title: '儀表板', onClick: () => setCurrentPage('dashboard') });
-      trail.push({ title: 'SRE 戰情室' });
+    if (trail.length === 0 && location.pathname !== '/') {
+        trail.push({ title: '首頁', href: '/' });
+        trail.push({ title: pathSnippets.join(' > ') });
+    } else if (trail.length === 0 && location.pathname === '/') {
+        trail.push({ title: '首頁' });
     }
 
-    return trail.map(({ title, onClick }) => ({ title, onClick }));
-  }, [currentPage]);
+    return trail.map(item => ({ title: item.title, onClick: item.href ? () => navigate(item.href) : undefined }));
+  }, [location.pathname, navigate]);
 
-  const handleNavigate = (key: string, params: Record<string, unknown> = {}) => {
-    if (key === 'logout') {
-      message.success('已成功登出');
-      setTimeout(() => window.location.reload(), 500);
-      return;
-    }
-    setCurrentPage(key);
-    setPageParams(params);
-  };
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'home':
-        return <SREWarRoomPage onNavigate={handleNavigate} />;
-      case 'incidents':
-      case 'incident-list':
-      case 'alerting-rules':
-      case 'silences':
-        return <IncidentsPage onNavigate={handleNavigate} pageKey={currentPage} />;
-      case 'resources':
-      case 'resource-overview':
-      case 'resource-list':
-      case 'resource-groups':
-      case 'resource-topology':
-        return <ResourcesPage onNavigate={handleNavigate} pageKey={currentPage} themeMode={themeMode} />;
-      case 'dashboard':
-        return <DashboardAdministrationPage onNavigate={handleNavigate} />;
-      case 'business-dashboard':
-        return <SREWarRoomPage onNavigate={handleNavigate} />;
-      case 'analyzing':
-      case 'capacity-planning':
-      case 'performance-insights':
-      case 'cost-analysis':
-      case 'incident-trends':
-      case 'mttr-analysis':
-      case 'sla-reports':
-        return <AnalyzingPage onNavigate={handleNavigate} pageKey={currentPage} themeMode={themeMode} />;
-      case 'automation':
-      case 'scripts':
-      case 'schedules':
-      case 'executions':
-        return <AutomationCenterPage onNavigate={handleNavigate} pageKey={currentPage} />;
-      case 'settings':
-        return <SettingsPage onNavigate={handleNavigate} />;
-      case 'identity-access-management':
-      case 'personnel-management':
-      case 'team-management':
-      case 'role-management':
-      case 'audit-logs':
-        return <UserPermissionsPage onNavigate={handleNavigate} pageKey={currentPage} />;
-      case 'notification-management':
-      case 'notification-strategies':
-      case 'notification-channels':
-      case 'notification-history':
-        return <NotificationManagementPage onNavigate={handleNavigate} pageKey={currentPage} />;
-      case 'platform-settings':
-      case 'tag-management':
-      case 'email-settings':
-      case 'auth-settings':
-        return <PlatformSettingsPage onNavigate={handleNavigate} pageKey={currentPage} />;
-      case 'profile':
-        return <ProfilePage themeMode={themeMode} setThemeMode={setThemeMode} />;
-      default:
-        return <HomePage onNavigate={handleNavigate} themeMode={themeMode} />;
-    }
-  };
 
   return (
     <AppLayout
       menuItems={menuItems}
-      activeKey={currentPage}
-      onSelect={handleNavigate}
+      activeKey={location.pathname}
+      onSelect={({ key }) => handleNavigate(key)}
       breadcrumbItems={breadcrumbItems}
     >
-      {renderPage()}
+      <Outlet />
     </AppLayout>
   );
 };
 
+const router = createBrowserRouter([
+  {
+    path: '/login',
+    element: <LoginPage />,
+  },
+  {
+    path: '/',
+    element: <PrivateRoute />,
+    children: [
+      {
+        element: <AppShell />,
+        children: [
+          { path: '/', element: <SREWarRoomPage onNavigate={() => {}} /> },
+          { path: '/incidents', element: <IncidentsPage onNavigate={() => {}} pageKey="incident-list" /> },
+          { path: '/resources', element: <ResourcesPage onNavigate={() => {}} pageKey="resource-list" themeMode="dark" /> },
+          { path: '/dashboard', element: <DashboardAdministrationPage onNavigate={() => {}} /> },
+          { path: '/analyzing', element: <AnalyzingPage onNavigate={() => {}} pageKey="capacity-planning" themeMode="dark" /> },
+          { path: '/automation', element: <AutomationCenterPage onNavigate={() => {}} pageKey="scripts" /> },
+          { path: '/settings', element: <SettingsPage onNavigate={() => {}} /> },
+          { path: '/settings/iam', element: <UserPermissionsPage onNavigate={() => {}} pageKey="personnel-management" /> },
+          { path: '/settings/roles', element: <RoleManagementPage /> },
+          { path: '/settings/audit', element: <AuditLogPage /> },
+          { path: '/settings/notifications', element: <NotificationManagementPage onNavigate={() => {}} pageKey="notification-channels" /> },
+          { path: '/settings/platform', element: <PlatformSettingsPage onNavigate={() => {}} pageKey="tag-management" /> },
+          // TODO: 新增其他頁面的路由
+        ],
+      },
+    ],
+  },
+]);
+
 const App = () => {
-  const [themeMode, setThemeMode] = useLocalStorageState<'dark' | 'light'>('sre-theme-mode', 'dark');
+  const [themeMode] = useLocalStorage<'dark' | 'light'>('sre-theme-mode', 'dark');
 
   return (
     <ConfigProvider
@@ -203,7 +171,9 @@ const App = () => {
       }}
     >
       <AntdApp>
-        <AppShell themeMode={themeMode} setThemeMode={setThemeMode} />
+        <AuthProvider>
+          <RouterProvider router={router} />
+        </AuthProvider>
       </AntdApp>
     </ConfigProvider>
   );

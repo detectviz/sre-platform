@@ -35,8 +35,105 @@
     { "id": "super_admin", "name": "超級管理員", "color": "red" },
     { "id": "team_manager", "name": "團隊管理員", "color": "orange" }
   ],
+  "notification_history": [
+    { "id": "nh_1", "event_id": "i_1", "policy_id": "pol_1", "channel_name": "Email", "recipient": "admin@example.com", "status": "delivered", "error_message": null, "raw_payload": {}, "sent_at": "2025-09-18T02:25:05Z", "created_at": "2025-09-18T02:25:00Z" },
+    { "id": "nh_2", "event_id": null, "policy_id": "pol_2", "channel_name": "Slack", "recipient": "#devops-alerts", "status": "sent", "error_message": null, "raw_payload": {}, "sent_at": "2025-09-18T01:15:10Z", "created_at": "2025-09-18T01:15:00Z" },
+    { "id": "nh_3", "event_id": "i_2", "policy_id": "pol_1", "channel_name": "Webhook", "recipient": "https://service.com/webhook", "status": "failed", "error_message": "Connection timeout after 30s", "raw_payload": {}, "sent_at": "2025-09-18T00:30:10Z", "created_at": "2025-09-18T00:30:00Z" },
+    { "id": "nh_4", "event_id": null, "policy_id": "pol_3", "channel_name": "SMS", "recipient": "+15005550006", "status": "pending", "error_message": null, "raw_payload": {}, "sent_at": null, "created_at": "2025-09-17T23:55:00Z" },
+    { "id": "nh_5", "event_id": "i_3", "policy_id": "pol_1", "channel_name": "Email", "recipient": "sre-team@example.com", "status": "delivered", "error_message": null, "raw_payload": {}, "sent_at": "2025-09-17T22:40:00Z", "created_at": "2025-09-17T22:39:55Z" },
+    { "id": "nh_6", "event_id": "i_4", "policy_id": "pol_2", "channel_name": "Slack", "recipient": "#critical-alerts", "status": "sent", "error_message": null, "raw_payload": {}, "sent_at": "2025-09-17T21:30:00Z", "created_at": "2025-09-17T21:29:58Z" }
+  ],
   "notifications": [
     { "id": 1, "type": "error", "title": "CPU high on db-prod-01", "description": "資源 db-prod-01 CPU 使用率超過 90%", "time": "2025-09-18T08:30:00Z", "read": false, "severity": "critical" },
     { "id": 2, "type": "system", "title": "Script \"Daily Backup\" executed successfully", "description": "每日備份腳本已成功執行", "time": "2025-09-18T02:00:00Z", "read": false, "severity": "info" }
+  ],
+  "permissions": [
+    {
+      "key": "dashboard",
+      "title": "儀表板",
+      "children": [
+        { "key": "dashboard:read", "title": "查看儀表板" }
+      ]
+    },
+    {
+      "key": "resources",
+      "title": "資源管理",
+      "children": [
+        { "key": "resources:read", "title": "讀取資源" },
+        { "key": "resources:create", "title": "建立資源" },
+        { "key": "resources:update", "title": "更新資源" },
+        { "key": "resources:delete", "title": "刪除資源" }
+      ]
+    },
+    {
+      "key": "incidents",
+      "title": "事件管理",
+      "children": [
+        { "key": "incidents:read", "title": "讀取事件" },
+        { "key": "incidents:update", "title": "更新事件" },
+        { "key": "incidents:comment", "title": "評論事件" }
+      ]
+    },
+    {
+      "key": "admin",
+      "title": "平台管理",
+      "children": [
+        { "key": "admin:users:read", "title": "查看人員" },
+        { "key": "admin:users:write", "title": "管理人員" },
+        { "key": "admin:teams:read", "title": "查看團隊" },
+        { "key": "admin:teams:write", "title": "管理團隊" },
+        { "key": "admin:roles:read", "title": "查看角色" },
+        { "key": "admin:roles:write", "title": "管理角色" }
+      ]
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": "log_1",
+      "timestamp": "2025-09-19T10:30:00Z",
+      "user": { "id": "user_1", "name": "Admin User" },
+      "action": "update",
+      "resource_type": "User",
+      "resource_id": "user_2",
+      "status": "success",
+      "details": {
+        "before": { "roles": ["team_member"] },
+        "after": { "roles": ["team_member", "team_manager"] }
+      }
+    },
+    {
+      "id": "log_2",
+      "timestamp": "2025-09-19T09:15:00Z",
+      "user": { "id": "user_2", "name": "Dev User" },
+      "action": "create",
+      "resource_type": "Team",
+      "resource_id": "team_3",
+      "status": "success",
+      "details": {
+        "after": { "name": "New Awesome Team" }
+      }
+    },
+    {
+      "id": "log_3",
+      "timestamp": "2025-09-18T17:00:00Z",
+      "user": { "id": "user_1", "name": "Admin User" },
+      "action": "login",
+      "resource_type": "Session",
+      "resource_id": null,
+      "status": "success",
+      "details": { "ip_address": "192.168.1.100" }
+    },
+    {
+      "id": "log_4",
+      "timestamp": "2025-09-18T16:30:00Z",
+      "user": { "id": "user_1", "name": "Admin User" },
+      "action": "delete",
+      "resource_type": "Role",
+      "resource_id": "role_123",
+      "status": "failure",
+      "details": {
+        "reason": "Cannot delete a role that is currently in use."
+      }
+    }
   ]
 }

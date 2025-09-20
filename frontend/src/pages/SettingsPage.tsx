@@ -1,13 +1,16 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert, AutoComplete } from 'antd';
-import { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, HomeOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, ArrowUpOutlined, ArrowDownOutlined, AlignCenterOutlined, CompressOutlined, ExpandOutlined, MinusOutlined, UnorderedListOutlined, WarningOutlined, GlobalOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } from '@ant-design/icons';
+import { UserOutlined, TeamOutlined, ApartmentOutlined, AuditOutlined, BellOutlined, TagsOutlined, MailOutlined, SafetyOutlined } from '@ant-design/icons';
 
 const { Title, Paragraph } = Typography;
 
-const SettingsAdministrationPage = ({ onNavigate }) => {
+const SettingsPage = () => {
+    const navigate = useNavigate();
+
     const settingsCards = [
       {
-        key: 'personnel-management',
+        key: '/settings/iam',
         icon: <UserOutlined />,
         title: '人員管理',
         description: '管理使用者帳號與權限。',
@@ -16,7 +19,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
         enabled: true
       },
       {
-        key: 'team-management',
+        key: '/settings/iam', // Note: Same key as personnel management
         icon: <TeamOutlined />,
         title: '團隊管理',
         description: '管理團隊結構與成員配置。',
@@ -25,7 +28,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
         enabled: true
       },
       {
-        key: 'role-management',
+        key: '/settings/roles',
         icon: <ApartmentOutlined />,
         title: '角色管理',
         description: '定義系統角色與其權限。',
@@ -34,7 +37,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
         enabled: true
       },
       {
-        key: 'audit-logs',
+        key: '/settings/audit',
         icon: <AuditOutlined />,
         title: '審計日誌',
         description: '查看系統操作審計記錄。',
@@ -43,7 +46,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
         enabled: true
       },
       {
-        key: 'notification-strategies',
+        key: '/settings/notifications',
         icon: <ApartmentOutlined />,
         title: '通知策略',
         description: '設定事件通知的路由策略。',
@@ -52,7 +55,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
         enabled: true
       },
       {
-        key: 'notification-channels',
+        key: '/settings/notifications',
         icon: <BellOutlined />,
         title: '通知管道',
         description: '管理系統通知管道。',
@@ -61,7 +64,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
         enabled: true
       },
       {
-        key: 'tag-management',
+        key: '/settings/platform',
         icon: <TagsOutlined />,
         title: '標籤管理',
         description: '管理全域標籤與分類。',
@@ -70,7 +73,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
         enabled: true
       },
       {
-        key: 'email-settings',
+        key: '/settings/platform',
         icon: <MailOutlined />,
         title: '郵件設定',
         description: '配置 SMTP 伺服器。',
@@ -79,7 +82,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
         enabled: true
       },
       {
-        key: 'auth-settings',
+        key: '/settings/platform',
         icon: <SafetyOutlined />,
         title: '身份驗證',
         description: '配置登入方式與安全策略。',
@@ -89,13 +92,13 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
       },
     ];
 
-    const CardContent = ({ item }) => (
+    const CardContent = ({ item }: { item: typeof settingsCards[0] }) => (
       <div
         className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-        onClick={() => item.enabled && onNavigate(item.key)}
-        style={{ height: '100%', width: '100%' }}
+        onClick={() => item.enabled && navigate(item.key)}
+        style={{ height: '100%', width: '100%', cursor: item.enabled ? 'pointer' : 'not-allowed' }}
       >
-        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+        <div className="nav-item-content" style={{ flexDirection: 'column', alignItems: 'flex-start', padding: '16px' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', marginBottom: '6px', width: '100%' }}>
             <div className="nav-item-icon" style={{
               background: 'rgba(24, 144, 255, 0.1)',
@@ -117,7 +120,7 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
       </div>
     );
 
-    const renderCategory = (categoryName) => (
+    const renderCategory = (categoryName: string) => (
       <div style={{ marginBottom: '24px' }}>
         <Title level={5} style={{
           color: 'var(--text-secondary)',
@@ -128,21 +131,22 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
           {categoryName}
         </Title>
         <Row gutter={[16, 16]}>
-          {settingsCards.filter(item => item.category === categoryName).map(item => (
-            <Col key={item.key} xs={24} md={12} lg={8} style={{ display: 'flex' }}>
-              {item.enabled ? (
-                <CardContent item={item} />
-              ) : (
-                <Badge.Ribbon text="即將推出">
+          {settingsCards.filter(item => item.category === categoryName).map((item, index) => (
+            <Col key={`${item.key}-${index}`} xs={24} md={12} lg={8} style={{ display: 'flex' }}>
+              <Card hoverable style={{ width: '100%', background: 'var(--bg-elevated)', border: '1px solid var(--border-color-split)' }}>
+                {item.enabled ? (
                   <CardContent item={item} />
-                </Badge.Ribbon>
-              )}
+                ) : (
+                  <Badge.Ribbon text="即將推出">
+                    <CardContent item={item} />
+                  </Badge.Ribbon>
+                )}
+              </Card>
             </Col>
           ))}
         </Row>
       </div>
     );
-
 
     return (
       <React.Fragment>
@@ -159,4 +163,4 @@ const SettingsAdministrationPage = ({ onNavigate }) => {
     );
   };
 
-  export default SettingsAdministrationPage;
+  export default SettingsPage;

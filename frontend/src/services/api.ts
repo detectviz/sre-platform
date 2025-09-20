@@ -15,6 +15,42 @@ const mockApi = {
   getNotifications: () => Promise.resolve(db.notification_history),
   getNotificationPolicies: () => Promise.resolve(db.notification_policies),
   getNotificationChannels: () => Promise.resolve(db.notification_channels),
+  inviteUser: (email: string) => {
+    console.log(`Mock inviting user: ${email}`);
+    return Promise.resolve({ success: true });
+  },
+  updateUser: (userId: string, data: any) => {
+    console.log(`Mock updating user ${userId} with data:`, data);
+    return Promise.resolve({ success: true });
+  },
+  deleteUser: (userId: string) => {
+    console.log(`Mock deleting user ${userId}`);
+    return Promise.resolve({ success: true });
+  },
+  createTeam: (data: any) => {
+    console.log('Mock creating team with data:', data);
+    const newTeam = { id: `team_${Date.now()}`, ...data, member_count: 0 };
+    // @ts-ignore
+    db.teams.push(newTeam);
+    return Promise.resolve(newTeam);
+  },
+   updateTeam: (teamId: string, data: any) => {
+    console.log(`Mock updating team ${teamId} with data:`, data);
+    return Promise.resolve({ success: true });
+  },
+  getPermissions: () => Promise.resolve(db.permissions),
+  createRole: (data: any) => {
+    console.log('Mock creating role with data:', data);
+    const newRole = { id: `role_${Date.now()}`, ...data, is_built_in: false };
+    // @ts-ignore
+    db.roles.push(newRole);
+    return Promise.resolve(newRole);
+  },
+  updateRole: (roleId: string, data: any) => {
+    console.log(`Mock updating role ${roleId} with data:`, data);
+    return Promise.resolve({ success: true });
+  },
+  getAuditLogs: () => Promise.resolve(db.audit_logs),
 };
 
 const realApi = {
@@ -30,6 +66,7 @@ const realApi = {
   getNotifications: () => fetch('/api/v1/notification-history').then(res => res.json()),
   getNotificationPolicies: () => fetch('/api/v1/notification-policies').then(res => res.json()),
   getNotificationChannels: () => fetch('/api/v1/notification-channels').then(res => res.json()),
+  // Add real API calls for user/team management later
 };
 
 const api = USE_MOCK_DATA ? mockApi : realApi;

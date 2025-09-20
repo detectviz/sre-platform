@@ -1,16 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
-const useUsers = () => {
-    const [users, setUsers] = useState([]);
+const useAuditLogs = () => {
+    const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const fetchUsers = useCallback(async () => {
+    const fetchLogs = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await api.getUsers();
-            setUsers(data);
+            // @ts-ignore
+            const data = await api.getAuditLogs();
+            setLogs(data);
             setError(null);
         } catch (err) {
             setError(err);
@@ -20,10 +21,10 @@ const useUsers = () => {
     }, []);
 
     useEffect(() => {
-        fetchUsers();
-    }, [fetchUsers]);
+        fetchLogs();
+    }, [fetchLogs]);
 
-    return { users, loading, error, refetch: fetchUsers };
+    return { logs, loading, error, refetch: fetchLogs };
 };
 
-export default useUsers;
+export default useAuditLogs;

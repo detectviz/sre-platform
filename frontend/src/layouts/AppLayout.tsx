@@ -113,12 +113,7 @@ export const AppLayout = ({
               style={{ width: 260 }}
             />
             <NotificationCenter />
-            <UserMenu
-              username="Admin User"
-              email="admin@sre-platform.com"
-              onProfile={() => onSelect('profile')}
-              onLogout={() => onSelect('logout')}
-            />
+            <UserMenu />
           </Space>
         </Header>
         <Content style={{ padding: '24px', background: 'transparent', overflow: 'auto' }}>

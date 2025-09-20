@@ -1,8 +1,9 @@
 import { BellOutlined, CheckCircleOutlined, ExclamationCircleOutlined, InfoCircleOutlined } from '@ant-design/icons';
-import { App as AntdApp, Avatar, Badge, Button, Divider, Empty, List, Popover, Space, Spin, Typography } from 'antd';
+import { App as AntdApp, Avatar, Badge, Button, Divider, Empty, Flex, List, Popover, Space, Spin, Typography } from 'antd';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import fallbackData from '../mocks/db.json';
 
 dayjs.extend(relativeTime);
@@ -31,6 +32,7 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/
 
 export const NotificationCenter = () => {
   const { message } = AntdApp.useApp();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [records, setRecords] = useState<NotificationRecord[]>([]);
@@ -51,7 +53,7 @@ export const NotificationCenter = () => {
           throw new Error('無法取得通知歷史');
         }
         const data = await res.json();
-        const items: NotificationRecord[] = Array.isArray(data.items) ? data.items : data;
+        const items: NotificationRecord[] = Array.isArray(data.items) ? data.items : (data.notification_history || []);
         setRecords(items);
       } catch (err) {
         if ((err as { name?: string }).name !== 'AbortError') {
@@ -66,7 +68,7 @@ export const NotificationCenter = () => {
 
     loadNotifications();
     return () => controller.abort();
-  }, [open, records.length]);
+  }, [open, records.length, message]);
 
   const handleMarkAllAsRead = () => {
     setReadIds(new Set(records.map((record) => record.id)));
@@ -75,12 +77,19 @@ export const NotificationCenter = () => {
   const handleItemClick = (record: NotificationRecord) => {
     setReadIds((prev) => new Set(prev).add(record.id));
     if (record.event_id) {
-      message.info(`前往事件 ${record.event_id}`);
+      // 這部分可以根據實際路由進行調整
+      navigate(`/incidents/${record.event_id}`);
+      setOpen(false);
     }
   };
 
+  const handleViewAll = () => {
+    navigate('/settings/notifications'); // 導航至通知歷史頁面
+    setOpen(false);
+  };
+
   const content = (
-    <div className="notification-dropdown">
+    <div className="notification-dropdown" style={{ width: 380 }}>
       <div className="notification-dropdown__header">
         <Space align="center" size={12}>
           <div className="notification-dropdown__icon">
@@ -100,7 +109,7 @@ export const NotificationCenter = () => {
         )}
       </div>
       <Divider style={{ margin: 0 }} />
-      <div className="notification-dropdown__body">
+      <div className="notification-dropdown__body" style={{ maxHeight: 400, overflowY: 'auto' }}>
         {loading ? (
           <div className="notification-dropdown__empty"><Spin /></div>
         ) : records.length === 0 ? (
@@ -109,6 +118,7 @@ export const NotificationCenter = () => {
           </div>
         ) : (
           <List
+            itemLayout="horizontal"
             dataSource={records}
             renderItem={(item) => {
               const tone = STATUS_TONE[item.status] ?? STATUS_TONE.sent;
@@ -117,40 +127,42 @@ export const NotificationCenter = () => {
                 <List.Item
                   className={`notification-dropdown__item ${isRead ? '' : 'notification-dropdown__item--unread'}`}
                   onClick={() => handleItemClick(item)}
+                  style={{ cursor: 'pointer' }}
                 >
-                  <List.Item.Meta
-                    avatar={
-                      <Avatar
-                        size={36}
-                        icon={tone.icon}
-                        style={{
-                          backgroundColor: `${tone.color}15`,
-                          color: tone.color,
-                          border: `1px solid ${tone.color}30`,
-                        }}
-                      />
-                    }
-                    title={
-                      <Space direction="vertical" size={2}>
+                  <Flex gap="middle" align="start">
+                    <Avatar
+                      size={32}
+                      icon={tone.icon}
+                      style={{
+                        backgroundColor: `${tone.color}1A`,
+                        color: tone.color,
+                      }}
+                    />
+                    <Flex vertical style={{ flex: 1 }}>
+                      <Flex justify="space-between">
                         <Typography.Text strong>{item.channel_name}</Typography.Text>
-                        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                        <Typography.Text type="secondary" style={{ fontSize: 12, whiteSpace: 'nowrap' }}>
                           {dayjs(item.sent_at || item.created_at).fromNow()}
                         </Typography.Text>
-                      </Space>
-                    }
-                    description={
+                      </Flex>
                       <Typography.Text type="secondary">
                         {item.status === 'failed' && item.error_message
-                          ? item.error_message
-                          : item.recipient}
+                          ? `失敗: ${item.error_message}`
+                          : `發送至: ${item.recipient}`}
                       </Typography.Text>
-                    }
-                  />
+                    </Flex>
+                  </Flex>
                 </List.Item>
               );
             }}
           />
         )}
+      </div>
+      <Divider style={{ margin: 0 }} />
+      <div className="notification-dropdown__footer">
+        <Button type="link" block onClick={handleViewAll}>
+          查看所有通知
+        </Button>
       </div>
     </div>
   );

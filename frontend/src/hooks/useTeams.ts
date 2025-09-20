@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 const useTeams = () => {
@@ -6,22 +6,24 @@ const useTeams = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchTeams = async () => {
-            try {
-                const data = await api.getTeams();
-                setTeams(data);
-            } catch (err) {
-                setError(err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchTeams();
+    const fetchTeams = useCallback(async () => {
+        setLoading(true);
+        try {
+            const data = await api.getTeams();
+            setTeams(data);
+            setError(null);
+        } catch (err) {
+            setError(err);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    return { teams, loading, error };
+    useEffect(() => {
+        fetchTeams();
+    }, [fetchTeams]);
+
+    return { teams, loading, error, refetch: fetchTeams };
 };
 
 export default useTeams;
