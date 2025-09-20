@@ -1,8 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
+interface User {
+    id: string;
+    name: string;
+    email: string;
+    is_active: boolean;
+    last_login_at: string;
+    roles: string[];
+    teams: string[];
+}
+
 const useUsers = () => {
-    const [users, setUsers] = useState([]);
+    const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 

@@ -10,11 +10,10 @@ import {
   Statistic,
   Empty,
   Button,
-  Tag,
   Progress,
   Divider,
 } from 'antd';
-import { LineChartOutlined, HddOutlined, SaveOutlined, CpuOutlined, PieChartOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { SaveOutlined, PieChartOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { PageHeader } from '../components';
 import { useCapacityPlanning } from '../hooks/useCapacityPlanning';
 import { ForecastChart } from './capacity-planning/ForecastChart';
@@ -23,7 +22,7 @@ const { Title, Text, Paragraph } = Typography;
 
 const CapacityPlanningPage = () => {
   const [selectedService, setSelectedService] = useState<string | null>('service-a');
-  const { data, loading, error, services, refresh } = useCapacityPlanning(selectedService);
+  const { data, loading, error, services } = useCapacityPlanning(selectedService);
 
   const handleServiceChange = (value: string) => {
     setSelectedService(value);
@@ -41,7 +40,7 @@ const CapacityPlanningPage = () => {
     if (!selectedService) {
       return (
         <Empty
-          image={<PieChartOutlined style={{ fontSize: 60, color: 'var(--sre-text-color-secondary)'}} />}
+          image={<PieChartOutlined style={{ fontSize: 60, color: 'var(--sre-text-color-secondary)' }} />}
           description={
             <Space direction="vertical" align="center">
               <Title level={5}>請選擇一個服務以開始</Title>
@@ -123,7 +122,7 @@ const CapacityPlanningPage = () => {
       <PageHeader
         title="容量規劃"
         subtitle="預測資源使用趨勢，主動應對未來需求"
-        actions={[
+        extra={[
           <Select
             key="service-select"
             style={{ width: 220 }}

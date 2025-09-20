@@ -5,6 +5,9 @@ import {
   ThunderboltOutlined,
   PlusOutlined,
   ReloadOutlined,
+  EyeOutlined,
+  EditOutlined,
+  MoreOutlined,
 } from '@ant-design/icons';
 import {
   App as AntdApp,
@@ -460,30 +463,43 @@ export const ResourceOverviewTab = ({
 
         return (
           <Space size={4} wrap>
-            <Button type="link" onClick={() => handleOpenDetail(resource)}>
+            <Button
+              type="link"
+              onClick={() => handleOpenDetail(resource)}
+            >
               詳情
             </Button>
-            <Button type="link" onClick={() => handleOpenEdit(resource)}>
+            <Button
+              type="link"
+              onClick={() => handleOpenEdit(resource)}
+            >
               編輯
             </Button>
-            {inlineActions.map((action) => (
-              <Tooltip key={action.key} title={action.description ?? '執行操作'}>
-                <Button type="link" onClick={() => runResourceAction(action, resource)}>
-                  {action.label}
+            {actionList.length > 0 ? (
+              <Dropdown
+                menu={{
+                  items: actionList.map((action) => ({
+                    key: action.key,
+                    label: action.label,
+                    icon: action.type === 'automation' ? <ThunderboltOutlined /> : undefined,
+                    onClick: () => runResourceAction(action, resource),
+                  })),
+                }}
+                trigger={['click']}
+              >
+                <Button
+                  type="link"
+                >
+                  操作
                 </Button>
-              </Tooltip>
-            ))}
-            {overflowMenu && (
-              <Dropdown menu={overflowMenu} trigger={['click']}>
-                <Button type="link">更多</Button>
               </Dropdown>
-            )}
-            {!actionList.length && (
-              <Tooltip title="觸發自動化修復 (模擬)">
-                <Button type="link" onClick={() => message.success(`已觸發 ${resource.name} 的修復腳本 (模擬)`)}>
-                  自動化
-                </Button>
-              </Tooltip>
+            ) : (
+              <Button
+                type="link"
+                onClick={() => message.success(`已觸發 ${resource.name} 的修復腳本 (模擬)`)}
+              >
+                自動化
+              </Button>
             )}
           </Space>
         );

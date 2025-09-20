@@ -1,8 +1,16 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 
+interface Role {
+    id: string;
+    name: string;
+    description?: string;
+    is_built_in: boolean;
+    permissions: string[];
+}
+
 const useRoles = () => {
-    const [roles, setRoles] = useState([]);
+    const [roles, setRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 

@@ -538,12 +538,12 @@ const serializeChannel = (channel, db, options = {}) => {
     updated_at: channel.updated_at ?? null,
     health: health
       ? {
-          status: health.status ?? 'unknown',
-          latency_ms: health.latency_ms ?? null,
-          attempts: health.attempts ?? null,
-          message: health.message ?? null,
-          checked_at: health.checked_at ?? null,
-        }
+        status: health.status ?? 'unknown',
+        latency_ms: health.latency_ms ?? null,
+        attempts: health.attempts ?? null,
+        message: health.message ?? null,
+        checked_at: health.checked_at ?? null,
+      }
       : null,
     history_count: Array.isArray(health?.history)
       ? health.history.length
@@ -565,12 +565,12 @@ const BACKGROUND_JOB_BLUEPRINTS = {
       const staleThresholdMs = 5 * 60 * 1000;
       const staleResources = Array.isArray(context?.resources)
         ? context.resources.filter((resource) => {
-            const updatedAt = resource.updated_at || resource.updatedAt || resource.last_checked_at || resource.lastCheckedAt;
-            if (!updatedAt) {
-              return true;
-            }
-            return Date.now() - new Date(updatedAt).getTime() > staleThresholdMs;
-          }).length
+          const updatedAt = resource.updated_at || resource.updatedAt || resource.last_checked_at || resource.lastCheckedAt;
+          if (!updatedAt) {
+            return true;
+          }
+          return Date.now() - new Date(updatedAt).getTime() > staleThresholdMs;
+        }).length
         : 0;
 
       const durationMs = Math.round(40 + Math.random() * 50);
@@ -1548,6 +1548,13 @@ registerRoute('get', '/dashboard/stats', (req, res) => {
   res.jsonp(stats);
 });
 
+// 儀表板統計數據接口（複數形式）
+registerRoute('get', '/dashboards/stats', (req, res) => {
+  const db = router.db;
+  const stats = db.get('dashboard_stats').value();
+  res.jsonp(stats);
+});
+
 registerRoute('get', '/dashboards', (req, res) => {
   const db = router.db;
   const page = parsePageParam(req.query.page, 1);
@@ -1852,12 +1859,12 @@ registerRoute('get', '/tags', (req, res) => {
 
   const filtered = search
     ? metadataList.filter((item) => {
-        const haystack = [item.key, item.description, item.category]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        return haystack.includes(search);
-      })
+      const haystack = [item.key, item.description, item.category]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(search);
+    })
     : metadataList;
 
   res.jsonp({
@@ -1896,11 +1903,11 @@ registerRoute('get', '/tags/:tagKey/values', (req, res) => {
 
   let candidates = metadata?.allowed_values && metadata.allowed_values.length > 0
     ? metadata.allowed_values.map((entry) => ({
-        value: entry.value,
-        label: entry.label || entry.value,
-        color: entry.color || null,
-        usage_count: entry.usage_count ?? stats?.counts.get(entry.value)?.count ?? 0,
-      }))
+      value: entry.value,
+      label: entry.label || entry.value,
+      color: entry.color || null,
+      usage_count: entry.usage_count ?? stats?.counts.get(entry.value)?.count ?? 0,
+    }))
     : collectFromStats();
 
   if (search) {
@@ -2889,7 +2896,7 @@ registerRoute('post', '/silence-rules', (req, res) => {
 
   // 確保至少有一個 matcher，通常是 alertname
   if (!matchers.some(m => m.name === 'alertname') && event.summary) {
-      matchers.push({ name: 'alertname', value: event.summary, isEqual: true, isRegex: false });
+    matchers.push({ name: 'alertname', value: event.summary, isEqual: true, isRegex: false });
   }
 
   const now = new Date();

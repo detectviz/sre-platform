@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { App as AntdApp, ConfigProvider, theme } from 'antd';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
   createBrowserRouter,
   RouterProvider,
@@ -16,7 +17,6 @@ import {
   SettingOutlined,
   UserOutlined,
   BellOutlined,
-  LineChartOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -26,7 +26,6 @@ import PrivateRoute from './components/PrivateRoute';
 import IncidentsPage from './pages/IncidentsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import AutomationCenterPage from './pages/AutomationCenterPage';
-import CapacityPlanningPage from './pages/CapacityPlanningPage';
 import AnalyzingPage from './pages/AnalyzingPage';
 import SettingsPage from './pages/SettingsPage';
 import UserPermissionsPage from './pages/UserPermissionsPage';
@@ -51,7 +50,6 @@ const menuItems: MenuProps['items'] = [
     label: '自動化中心',
     children: [
       { key: '/automation/center', label: '自動化總覽' },
-      { key: '/automation/capacity-planning', label: '容量規劃', icon: <LineChartOutlined /> },
     ]
   },
   {
@@ -152,11 +150,10 @@ const router = createBrowserRouter([
         children: [
           { path: '/', element: <SREWarRoomPage onNavigate={() => { }} /> },
           { path: '/incidents', element: <IncidentsPage onNavigate={() => { }} pageKey="incident-list" /> },
-          { path: '/resources', element: <ResourcesPage onNavigate={() => { }} pageKey="resource-list" themeMode="dark" /> },
+          { path: '/resources', element: <ResourcesPage onNavigate={() => { }} pageKey="resource-overview" themeMode="dark" /> },
           { path: '/dashboard', element: <DashboardAdministrationPage onNavigate={() => { }} /> },
           { path: '/analyzing', element: <AnalyzingPage onNavigate={() => { }} pageKey="capacity-planning" themeMode="dark" /> },
           { path: '/automation/center', element: <AutomationCenterPage onNavigate={() => { }} pageKey="scripts" /> },
-          { path: '/automation/capacity-planning', element: <CapacityPlanningPage /> },
           { path: '/settings', element: <SettingsPage /> },
           { path: '/settings/iam', element: <UserPermissionsPage onNavigate={() => { }} pageKey="personnel-management" /> },
           { path: '/settings/roles', element: <RoleManagementPage /> },
@@ -172,24 +169,36 @@ const router = createBrowserRouter([
 const App = () => {
   const [themeMode] = useLocalStorage<'dark' | 'light'>('sre-theme-mode', 'dark');
 
+  // Create a client for React Query
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        retry: 1,
+      },
+    },
+  });
+
   return (
-    <ConfigProvider
-      theme={{
-        algorithm: themeMode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
-        token: {
-          colorPrimary: '#1890ff',
-          colorBgContainer: '#141519',
-          colorBgElevated: '#1A1D23',
-          colorText: '#e6f4ff',
-        },
-      }}
-    >
-      <AntdApp>
-        <AuthProvider>
-          <RouterProvider router={router} />
-        </AuthProvider>
-      </AntdApp>
-    </ConfigProvider>
+    <QueryClientProvider client={queryClient}>
+      <ConfigProvider
+        theme={{
+          algorithm: themeMode === 'dark' ? theme.darkAlgorithm : theme.defaultAlgorithm,
+          token: {
+            colorPrimary: '#1890ff',
+            colorBgContainer: '#141519',
+            colorBgElevated: '#1A1D23',
+            colorText: '#e6f4ff',
+          },
+        }}
+      >
+        <AntdApp>
+          <AuthProvider>
+            <RouterProvider router={router} />
+          </AuthProvider>
+        </AntdApp>
+      </ConfigProvider>
+    </QueryClientProvider>
   );
 };
 

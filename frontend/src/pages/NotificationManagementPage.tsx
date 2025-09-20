@@ -133,50 +133,50 @@ const NotificationStrategiesSection = () => {
     <Spin spinning={loading}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Space>
-            <Button type="primary" onClick={() => handleEdit()}>
+          <Button type="primary" onClick={() => handleEdit()}>
             新增策略
-            </Button>
-            <Button icon={<ReloadOutlined />} onClick={refresh}>
-                刷新
-            </Button>
+          </Button>
+          <Button icon={<ReloadOutlined />} onClick={refresh}>
+            刷新
+          </Button>
         </Space>
 
         {isFallback && <Alert type="warning" message="無法從後端獲取資料，目前顯示的是離線樣本資料。" showIcon />}
 
         <DataTable<NotificationPolicy>
-            dataSource={policies}
-            columns={columns}
-            rowKey={(record) => record.id}
-            titleContent={<span style={{ fontWeight: 600 }}>通知策略</span>}
+          dataSource={policies}
+          columns={columns}
+          rowKey={(record) => record.id}
+          titleContent={<span style={{ fontWeight: 600 }}>通知策略</span>}
         />
 
         <Modal
-            open={open}
-            title={editing ? '編輯通知策略' : '新增通知策略'}
-            onCancel={() => setOpen(false)}
-            onOk={() => form.submit()}
-            okText="儲存"
-            cancelText="取消"
+          open={open}
+          title={editing ? '編輯通知策略' : '新增通知策略'}
+          onCancel={() => setOpen(false)}
+          onOk={() => form.submit()}
+          okText="儲存"
+          cancelText="取消"
         >
-            <Form form={form} layout="vertical" onFinish={handleSubmit}>
+          <Form form={form} layout="vertical" onFinish={handleSubmit}>
             <Form.Item name="name" label="策略名稱" rules={[{ required: true, message: '請輸入策略名稱' }]}>
-                <Input placeholder="例如：Checkout Critical Pager" />
+              <Input placeholder="例如：Checkout Critical Pager" />
             </Form.Item>
             <Form.Item name="description" label="描述">
-                <Input.TextArea rows={3} placeholder="策略用途與適用範圍" />
+              <Input.TextArea rows={3} placeholder="策略用途與適用範圍" />
             </Form.Item>
             <Form.Item name="channels" label="通知管道" rules={[{ required: true, message: '請至少選擇一個管道' }]}>
-                <Select mode="tags" placeholder="輸入或選擇管道識別" />
+              <Select mode="tags" placeholder="輸入或選擇管道識別" />
             </Form.Item>
             <Form.Item name="severity" label="監控嚴重性">
-                <Select mode="multiple" placeholder="選擇適用的嚴重性">
+              <Select mode="multiple" placeholder="選擇適用的嚴重性">
                 <Select.Option value="critical">critical</Select.Option>
                 <Select.Option value="high">high</Select.Option>
                 <Select.Option value="medium">medium</Select.Option>
                 <Select.Option value="low">low</Select.Option>
-                </Select>
+              </Select>
             </Form.Item>
-            </Form>
+          </Form>
         </Modal>
       </Space>
     </Spin>
@@ -192,7 +192,11 @@ const NotificationChannelsSection = () => {
 
   const handleEdit = useCallback((record?: NotificationChannel) => {
     setEditing(record ?? null);
-    form.setFieldsValue(record ?? { name: '', type: 'email', enabled: true });
+    if (record) {
+      form.setFieldsValue(record as any);
+    } else {
+      form.setFieldsValue({ name: '', type: 'email', enabled: true });
+    }
     setOpen(true);
   }, [form]);
 
@@ -270,12 +274,12 @@ const NotificationChannelsSection = () => {
     <Spin spinning={loading}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Space>
-            <Button type="primary" onClick={() => handleEdit()}>
-              新增通知管道
-            </Button>
-            <Button icon={<ReloadOutlined />} onClick={refresh}>
-                刷新
-            </Button>
+          <Button type="primary" onClick={() => handleEdit()}>
+            新增通知管道
+          </Button>
+          <Button icon={<ReloadOutlined />} onClick={refresh}>
+            刷新
+          </Button>
         </Space>
 
         {isFallback && <Alert type="warning" message="無法從後端獲取資料，目前顯示的是離線樣本資料。" showIcon />}
@@ -299,7 +303,7 @@ const NotificationChannelsSection = () => {
             <Form.Item name="name" label="管道名稱" rules={[{ required: true, message: '請輸入管道名稱' }]}>
               <Input placeholder="例如：PagerDuty Checkout Team" />
             </Form.Item>
-            <Form.Item name="type" label="管道類型" rules={[{ required: true }] }>
+            <Form.Item name="type" label="管道類型" rules={[{ required: true }]}>
               <Select>
                 <Select.Option value="email">Email</Select.Option>
                 <Select.Option value="slack">Slack</Select.Option>
@@ -312,9 +316,8 @@ const NotificationChannelsSection = () => {
               <Switch />
             </Form.Item>
           </Form>
-        </Form>
-      </Modal>
-    </Space>
+        </Modal>
+      </Space>
     </Spin>
   );
 };
@@ -326,16 +329,16 @@ const NotificationHistorySection = () => {
 
   const data: NotificationRecord[] = Array.isArray(notifications)
     ? notifications.map((item, index) => {
-        const record = item as Partial<NotificationRecord> & { channel?: string };
-        return {
-          id: String(record.id ?? `notification_${index}`),
-          channel_name: record.channel_name ?? record.channel ?? '未定義',
-          recipient: record.recipient ?? '未知收件者',
-          status: (record.status as NotificationRecord['status']) ?? 'pending',
-          sent_at: record.sent_at ?? record.created_at,
-          error_message: record.error_message ?? null,
-        };
-      })
+      const record = item as Partial<NotificationRecord> & { channel?: string };
+      return {
+        id: String(record.id ?? `notification_${index}`),
+        channel_name: record.channel_name ?? record.channel ?? '未定義',
+        recipient: record.recipient ?? '未知收件者',
+        status: (record.status as NotificationRecord['status']) ?? 'pending',
+        sent_at: record.sent_at ?? record.created_at,
+        error_message: record.error_message ?? null,
+      };
+    })
     : [];
 
   if (loading) {

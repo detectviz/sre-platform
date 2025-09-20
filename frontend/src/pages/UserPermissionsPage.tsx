@@ -1,19 +1,20 @@
 import { useMemo, useState } from 'react';
 import {
   ApartmentOutlined,
-  AuditOutlined,
   TeamOutlined,
   UserOutlined,
   PlusOutlined,
   EditOutlined,
   DeleteOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
-import { Alert, Button, Col, Modal, Row, Space, Tabs, Tag, message } from 'antd';
+import { Button, Col, Modal, Row, Space, Tabs, Tag, message } from 'antd';
 import type { TabsProps } from 'antd';
 import { ContextualKPICard, DataTable, PageHeader } from '../components';
 import InviteUserModal from '../components/InviteUserModal';
 import EditUserModal from '../components/EditUserModal';
 import TeamFormModal from '../components/TeamFormModal';
+import RoleFormModal from '../components/RoleFormModal';
 import { useUsers } from '../hooks/useUsers';
 import { useTeams } from '../hooks/useTeams';
 import { useRoles } from '../hooks/useRoles';
@@ -41,18 +42,72 @@ type RoleRecord = {
   name: string;
   description?: string;
   is_built_in: boolean;
+  permissions: string[];
 };
 
-const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string) => void; pageKey: string }) => {
+type AuditLogRecord = {
+  id: string;
+  timestamp: string;
+  user: string;
+  action: string;
+  resource: string;
+  details: string;
+  ip_address: string;
+};
+
+const UserPermissionsPage = ({ onNavigate: _onNavigate, pageKey }: { onNavigate?: (key: string) => void; pageKey: string }) => {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isTeamModalOpen, setIsTeamModalOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
   const [selectedTeam, setSelectedTeam] = useState<TeamRecord | null>(null);
+  const [selectedRole, setSelectedRole] = useState<RoleRecord | null>(null);
+  const [activeTab, setActiveTab] = useState(pageKey || 'personnel-management');
 
   const { users, loading: usersLoading, error: usersError, refetch: refetchUsers } = useUsers();
   const { teams, loading: teamsLoading, error: teamsError, refetch: refetchTeams } = useTeams();
   const { roles, loading: rolesLoading, error: rolesError } = useRoles();
+
+  // Mock audit logs data
+  const auditLogs: AuditLogRecord[] = useMemo(() => [
+    {
+      id: '1',
+      timestamp: '2025-09-20 10:30:15',
+      user: 'admin@sre-platform.local',
+      action: '登入',
+      resource: '系統',
+      details: '成功登入系統',
+      ip_address: '192.168.1.100',
+    },
+    {
+      id: '2',
+      timestamp: '2025-09-20 10:25:30',
+      user: 'admin@sre-platform.local',
+      action: '建立使用者',
+      resource: '使用者管理',
+      details: '建立新使用者: john.doe@example.com',
+      ip_address: '192.168.1.100',
+    },
+    {
+      id: '3',
+      timestamp: '2025-09-20 10:20:45',
+      user: 'admin@sre-platform.local',
+      action: '修改團隊',
+      resource: '團隊管理',
+      details: '修改團隊: SRE Team 的描述',
+      ip_address: '192.168.1.100',
+    },
+    {
+      id: '4',
+      timestamp: '2025-09-20 10:15:20',
+      user: 'admin@sre-platform.local',
+      action: '刪除角色',
+      resource: '角色管理',
+      details: '刪除角色: Guest',
+      ip_address: '192.168.1.100',
+    },
+  ], []);
 
   const handleEditUser = (user: UserRecord) => {
     setSelectedUser(user);
@@ -102,6 +157,41 @@ const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string
           await api.deleteTeam(team.id);
           message.success('團隊已刪除');
           refetchTeams();
+        } catch {
+          message.error('刪除失敗');
+        }
+      },
+    });
+  };
+
+  const handleCreateRole = () => {
+    setSelectedRole(null);
+    setIsRoleModalOpen(true);
+  };
+
+  const handleEditRole = (role: RoleRecord) => {
+    setSelectedRole(role);
+    setIsRoleModalOpen(true);
+  };
+
+  const handleDeleteRole = (role: RoleRecord) => {
+    if (role.is_built_in) {
+      message.warning('內建角色無法刪除');
+      return;
+    }
+
+    Modal.confirm({
+      title: `確定要刪除角色 ${role.name} 嗎？`,
+      content: '此操作無法復原。已分配此角色的使用者將失去相關權限。',
+      okText: '確定刪除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: async () => {
+        try {
+          // @ts-ignore
+          await api.deleteRole(role.id);
+          message.success('角色已刪除');
+          // In real app, refetch roles
         } catch {
           message.error('刪除失敗');
         }
@@ -182,6 +272,33 @@ const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string
           <Tag color={isBuiltIn ? 'geekblue' : 'gold'}>{isBuiltIn ? '內建' : '自訂'}</Tag>
         ),
       },
+      {
+        title: '操作',
+        key: 'action',
+        render: (_: any, record: RoleRecord) => (
+          <Space size="middle">
+            <Button icon={<EditOutlined />} onClick={() => handleEditRole(record)} />
+            <Button
+              icon={<DeleteOutlined />}
+              danger
+              disabled={record.is_built_in}
+              onClick={() => handleDeleteRole(record)}
+            />
+          </Space>
+        ),
+      },
+    ],
+    [handleEditRole, handleDeleteRole]
+  );
+
+  const auditLogColumns = useMemo(
+    () => [
+      { title: '時間', dataIndex: 'timestamp', key: 'timestamp', width: 150 },
+      { title: '使用者', dataIndex: 'user', key: 'user', width: 200 },
+      { title: '操作', dataIndex: 'action', key: 'action', width: 100 },
+      { title: '資源', dataIndex: 'resource', key: 'resource', width: 120 },
+      { title: '詳情', dataIndex: 'details', key: 'details' },
+      { title: 'IP 位址', dataIndex: 'ip_address', key: 'ip_address', width: 120 },
     ],
     []
   );
@@ -200,8 +317,7 @@ const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string
           dataSource={users}
           columns={userColumns}
           rowKey="id"
-          error={usersError}
-          actions={
+          titleContent={
             <Button type="primary" icon={<PlusOutlined />} onClick={() => setIsInviteModalOpen(true)}>
               邀請人員
             </Button>
@@ -222,8 +338,7 @@ const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string
           dataSource={teams}
           columns={teamColumns}
           rowKey="id"
-          error={teamsError}
-           actions={
+          titleContent={
             <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateTeam}>
               新增團隊
             </Button>
@@ -244,9 +359,8 @@ const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string
           dataSource={roles}
           columns={roleColumns}
           rowKey="id"
-          error={rolesError}
-           actions={
-            <Button type="primary" icon={<PlusOutlined />}>
+          titleContent={
+            <Button type="primary" icon={<PlusOutlined />} onClick={handleCreateRole}>
               新增角色
             </Button>
           }
@@ -257,16 +371,28 @@ const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string
       key: 'audit-logs',
       label: (
         <Space>
-          <AuditOutlined /> 審計日誌
+          <FileTextOutlined /> 審計日誌
         </Space>
       ),
       children: (
-        <Alert type="info" showIcon message="審計日誌模組建置中" />
+        <DataTable<AuditLogRecord>
+          loading={false}
+          dataSource={auditLogs}
+          columns={auditLogColumns}
+          rowKey="id"
+          titleContent={
+            <Space>
+              <Button icon={<PlusOutlined />}>
+                匯出日誌
+              </Button>
+            </Space>
+          }
+        />
       ),
     },
-  ], [users, teams, roles, userColumns, teamColumns, roleColumns, usersLoading, teamsLoading, rolesLoading, usersError, teamsError, rolesError]);
+  ], [users, teams, roles, auditLogs, userColumns, teamColumns, roleColumns, auditLogColumns, usersLoading, teamsLoading, rolesLoading, usersError, teamsError, rolesError, handleCreateTeam]);
 
-  const activeKey = tabItems.some((item) => item?.key === pageKey) ? pageKey : 'personnel-management';
+  const activeKey = activeTab;
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
@@ -308,7 +434,7 @@ const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string
         </Col>
       </Row>
 
-      <Tabs items={tabItems} activeKey={activeKey} onChange={(key) => onNavigate(key)} />
+      <Tabs items={tabItems} activeKey={activeKey} onChange={(key) => setActiveTab(key)} />
 
       <InviteUserModal
         open={isInviteModalOpen}
@@ -344,6 +470,20 @@ const UserPermissionsPage = ({ onNavigate, pageKey }: { onNavigate: (key: string
           setIsTeamModalOpen(false);
           setSelectedTeam(null);
           refetchTeams();
+        }}
+      />
+
+      <RoleFormModal
+        open={isRoleModalOpen}
+        role={selectedRole}
+        onCancel={() => {
+          setIsRoleModalOpen(false);
+          setSelectedRole(null);
+        }}
+        onSuccess={() => {
+          setIsRoleModalOpen(false);
+          setSelectedRole(null);
+          // In real app, refetch roles
         }}
       />
     </Space>

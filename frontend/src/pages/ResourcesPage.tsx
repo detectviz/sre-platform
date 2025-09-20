@@ -11,7 +11,6 @@ import {
 import { Button, Col, Row, Space, Tabs } from 'antd';
 
 import { ContextualKPICard, PageHeader } from '../components';
-import useBackgroundJobs from '../hooks/useBackgroundJobs';
 import useResources from '../hooks/useResources';
 import useResourceGroups from '../hooks/useResourceGroups';
 import useResourceStatistics from '../hooks/useResourceStatistics';
@@ -20,30 +19,29 @@ import type { ResourceQueryParams } from '../types/resources';
 import { enrichResourceGroups } from '../utils/resourceTransforms';
 
 import {
-  BackgroundJobsPanel,
   ResourceGroupsTab,
   ResourceOverviewTab,
   ResourceTopologyTab,
 } from './resources';
 
 export type ResourcesPageProps = {
-  onNavigate: (key: string, params?: Record<string, unknown>) => void;
+  onNavigate?: (key: string, params?: Record<string, unknown>) => void;
   pageKey: string;
   themeMode?: 'light' | 'dark';
 };
 
 const ResourcesPage = ({ onNavigate, pageKey, themeMode = 'dark' }: ResourcesPageProps) => {
   const [query, setQuery] = useState<ResourceQueryParams>({ page: 1, pageSize: 10, status: 'ALL' });
+  const [activeTab, setActiveTab] = useState(pageKey || 'resource-overview');
 
   // Data fetching hooks
   const { resources, pagination, loading: resourcesLoading, error: resourcesError, isFallback: resourcesFallback, refresh: refreshResources } = useResources(query);
   const { resourceGroups, loading: groupsLoading, error: groupsError, refresh: refreshGroups } = useResourceGroups();
-  const { topology, loading: topologyLoading, error: topologyError, refresh: refreshTopology } = useResourceTopology(
+  const { topology, loading: topologyLoading, error: topologyError } = useResourceTopology(
     resources,
     resourceGroups,
     { enabled: pageKey === 'resource-topology' },
   );
-  const { jobs, loading: jobLoading, error: jobError, isFallback: jobFallback, summary: jobSummary, refresh: refreshJobs } = useBackgroundJobs();
 
   // Memoized derived data
   const enrichedGroups = useMemo(
@@ -60,11 +58,8 @@ const ResourcesPage = ({ onNavigate, pageKey, themeMode = 'dark' }: ResourcesPag
   const handleRefreshAll = useCallback(() => {
     refreshResources();
     refreshGroups();
-    refreshJobs();
-    if (pageKey === 'resource-topology') {
-      refreshTopology();
-    }
-  }, [refreshResources, refreshGroups, refreshJobs, pageKey, refreshTopology]);
+    // Note: Topology refreshes automatically when resources/groups change
+  }, [refreshResources, refreshGroups]);
 
   const kpiCards = [
     {
@@ -100,7 +95,7 @@ const ResourcesPage = ({ onNavigate, pageKey, themeMode = 'dark' }: ResourcesPag
       value: stats.groups,
       unit: '組',
       status: 'info' as const,
-      description: `${stats.emptyGroups} 個為空`,
+      description: `${stats.groups} 組資源`,
       icon: <ApartmentOutlined />,
     },
   ];
@@ -121,7 +116,7 @@ const ResourcesPage = ({ onNavigate, pageKey, themeMode = 'dark' }: ResourcesPag
           error={resourcesError}
           query={query}
           onQueryChange={handleQueryChange}
-          onNavigate={onNavigate}
+          onNavigate={onNavigate || (() => { })}
           onRefresh={refreshResources}
           resourceGroups={resourceGroups}
           isFallback={resourcesFallback}
@@ -157,33 +152,50 @@ const ResourcesPage = ({ onNavigate, pageKey, themeMode = 'dark' }: ResourcesPag
           topology={topology}
           loading={topologyLoading}
           error={topologyError}
-          onRefresh={refreshTopology}
+          onRefresh={() => {
+            // Topology refreshes automatically when resources/groups change
+            refreshResources();
+            refreshGroups();
+          }}
           themeMode={themeMode}
         />
       ),
     },
   ]), [
-    resources, pagination, resourcesLoading, resourcesError, query, handleQueryChange, onNavigate, refreshResources, resourceGroups, resourcesFallback,
+    resources, pagination, resourcesLoading, resourcesError, query, handleQueryChange, refreshResources, resourceGroups, resourcesFallback,
     enrichedGroups, groupsLoading, groupsError, refreshGroups,
-    topology, topologyLoading, topologyError, refreshTopology, themeMode,
+    topology, topologyLoading, topologyError, themeMode,
   ]);
 
-  const activeKey = tabItems.some((item) => item.key === pageKey) ? pageKey : 'resource-overview';
+  const activeKey = activeTab;
 
   // Set document title
   useEffect(() => {
     const currentTab = tabItems.find(item => item.key === activeKey);
     if (currentTab) {
-      document.title = `${currentTab.label.props.children[1].props.children} - SRE 平台`;
+      // Extract text from tab label
+      const labelText = (() => {
+        switch (activeKey) {
+          case 'resource-overview':
+            return '資源列表';
+          case 'resource-groups':
+            return '資源群組';
+          case 'resource-topology':
+            return '拓撲視圖';
+          default:
+            return '資源管理';
+        }
+      })();
+      document.title = `${labelText} - SRE 平台`;
     }
   }, [activeKey, tabItems]);
 
   return (
     <Space direction="vertical" size={24} style={{ width: '100%' }}>
       <PageHeader
-        title="資源管理中心"
+        title="資源管理"
         subtitle="探索、組織與管理您的所有基礎設施資源"
-        actions={[
+        extra={[
           <Button key="refresh" icon={<ReloadOutlined />} onClick={handleRefreshAll}>
             重新整理
           </Button>,
@@ -206,20 +218,11 @@ const ResourcesPage = ({ onNavigate, pageKey, themeMode = 'dark' }: ResourcesPag
         ))}
       </Row>
 
-      <BackgroundJobsPanel
-        jobs={jobs}
-        loading={jobLoading}
-        error={jobError}
-        isFallback={jobFallback}
-        summary={jobSummary}
-        onRefresh={refreshJobs}
-      />
 
       <Tabs
-        type="card"
         items={tabItems}
         activeKey={activeKey}
-        onChange={(key) => onNavigate(key)}
+        onChange={(key) => setActiveTab(key)}
       />
     </Space>
   );

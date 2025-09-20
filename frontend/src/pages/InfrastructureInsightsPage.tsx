@@ -435,11 +435,14 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
 
           {/* KPI 指標卡片 */}
           <Row gutter={[16, 16]}>
-            {kpiCards.map((card) => (
-              <Col key={card.key} xs={24} sm={12} xl={6}>
-                <ContextualKPICard {...card} glass={false} />
-              </Col>
-            ))}
+            {kpiCards.map((card) => {
+              const { key, ...cardProps } = card;
+              return (
+                <Col key={key} xs={24} sm={12} xl={6}>
+                  <ContextualKPICard {...cardProps} />
+                </Col>
+              );
+            })}
           </Row>
 
           <Row gutter={[16, 16]}>
@@ -451,25 +454,25 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
                 ) : (
                   <>
                     <div ref={usageChartRef} style={{ width: '100%', height: 280 }} />
-          <Space direction="vertical" size={8} style={{ width: '100%', marginTop: 16 }}>
-            <Text type="secondary" style={{ fontSize: 12 }}>
-              顯示使用率最高的 {resourceUsage.length} 個資源
-            </Text>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 12, height: 12, backgroundColor: '#52c41a', borderRadius: 2 }} />
-                <Text type="secondary">健康 (&lt;75%)</Text>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 12, height: 12, backgroundColor: '#faad14', borderRadius: 2 }} />
-                <Text type="secondary">警告 (75-90%)</Text>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                <div style={{ width: 12, height: 12, backgroundColor: '#ff4d4f', borderRadius: 2 }} />
-                <Text type="secondary">嚴重 (&gt;90%)</Text>
-              </div>
-            </div>
-          </Space>
+                    <Space direction="vertical" size={8} style={{ width: '100%', marginTop: 16 }}>
+                      <Text type="secondary" style={{ fontSize: 12 }}>
+                        顯示使用率最高的 {resourceUsage.length} 個資源
+                      </Text>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <div style={{ width: 12, height: 12, backgroundColor: '#52c41a', borderRadius: 2 }} />
+                          <Text type="secondary">健康 (&lt;75%)</Text>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <div style={{ width: 12, height: 12, backgroundColor: '#faad14', borderRadius: 2 }} />
+                          <Text type="secondary">警告 (75-90%)</Text>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <div style={{ width: 12, height: 12, backgroundColor: '#ff4d4f', borderRadius: 2 }} />
+                          <Text type="secondary">嚴重 (&gt;90%)</Text>
+                        </div>
+                      </div>
+                    </Space>
                   </>
                 )}
               </Card>
@@ -499,7 +502,7 @@ const InfrastructureInsightsPage = ({ onNavigate }: InfrastructureInsightsPagePr
                               }}
                             >
                               {risk.riskLevel === 'high' ? '高風險' :
-                               risk.riskLevel === 'medium' ? '中風險' : '低風險'}
+                                risk.riskLevel === 'medium' ? '中風險' : '低風險'}
                             </div>
                           </div>
                           <Text type="secondary" style={{ fontSize: 13 }}>

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Modal, Form, Input, Button, message, Tree, Spin } from 'antd';
+import { Modal, Form, Input, Button, message, Typography } from 'antd';
 import api from '../services/api';
-import usePermissions from '../hooks/usePermissions';
+import PermissionTreeSelector from './PermissionTreeSelector';
 
 type Role = {
   id: string;
   name: string;
+  description?: string;
   is_built_in: boolean;
   permissions: string[];
 };
@@ -20,7 +21,6 @@ interface RoleFormModalProps {
 const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onCancel, onSuccess }) => {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const { permissions, loading: permissionsLoading } = usePermissions();
 
   useEffect(() => {
     if (open) {
@@ -32,7 +32,7 @@ const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onCancel, onS
     }
   }, [role, open, form]);
 
-  const handleSubmit = async (values: { name: string; permissions: string[] }) => {
+  const handleSubmit = async (values: { name: string; description: string; permissions: string[] }) => {
     setLoading(true);
     try {
       if (role) {
@@ -72,20 +72,40 @@ const RoleFormModal: React.FC<RoleFormModalProps> = ({ open, role, onCancel, onS
           label="角色名稱"
           rules={[{ required: true, message: '請輸入角色名稱' }]}
         >
-          <Input placeholder="例如：唯讀使用者" disabled={!!role} />
+          <Input
+            placeholder="例如：SRE 工程師"
+            disabled={role?.is_built_in}
+          />
         </Form.Item>
-        <Form.Item name="permissions" label="權限">
-          {permissionsLoading ? <Spin /> : (
-            <Tree
-              checkable
-              defaultExpandAll
-              treeData={permissions}
-              onCheck={(checked) => {
-                form.setFieldsValue({ permissions: checked });
-              }}
-            />
-          )}
+
+        <Form.Item
+          name="description"
+          label="角色描述"
+        >
+          <Input.TextArea
+            rows={2}
+            placeholder="描述這個角色的職責和權限範圍"
+            disabled={role?.is_built_in}
+          />
         </Form.Item>
+
+        <Form.Item
+          name="permissions"
+          label="權限配置"
+          rules={[{ required: true, message: '請至少選擇一個權限' }]}
+        >
+          <PermissionTreeSelector
+            value={form.getFieldValue('permissions')}
+            onChange={(permissions) => form.setFieldsValue({ permissions })}
+            disabled={role?.is_built_in}
+          />
+        </Form.Item>
+
+        {role?.is_built_in && (
+          <Typography.Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
+            ℹ️ 內建角色無法修改，如需自訂權限請建立新角色
+          </Typography.Text>
+        )}
       </Form>
     </Modal>
   );

@@ -3,6 +3,7 @@ import {
   App as AntdApp,
   Alert,
   Button,
+  Card,
   Col,
   Form,
   Input,
@@ -26,6 +27,8 @@ import {
   RobotOutlined,
   ScheduleOutlined,
   SettingOutlined,
+  LineChartOutlined,
+  CloudServerOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import durationPlugin from 'dayjs/plugin/duration';
@@ -33,6 +36,8 @@ import relativeTimePlugin from 'dayjs/plugin/relativeTime';
 import { ContextualKPICard, DataTable, GlassModal, PageHeader, StatusBadge } from '../components';
 import type { ContextualKPICardProps, KPIStatus } from '../components/ContextualKPICard';
 import useAutomationCenter from '../hooks/useAutomationCenter';
+import useBackgroundJobs from '../hooks/useBackgroundJobs';
+import { BackgroundJobsPanel } from './resources/BackgroundJobsPanel';
 import type {
   AutomationExecution,
   AutomationSchedule,
@@ -88,6 +93,7 @@ type AutomationKpiCard = {
 const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps) => {
   const { message } = AntdApp.useApp();
   const { scripts, schedules, executions, stats, loading, error, isFallback, scriptCategories, refresh } = useAutomationCenter();
+  const { jobs, loading: jobLoading, error: jobError, isFallback: jobFallback, summary: jobSummary, refresh: refreshJobs } = useBackgroundJobs();
 
   const [activeTab, setActiveTab] = useState<string>(pageKey ?? 'scripts');
   const [scriptCategoryFilter, setScriptCategoryFilter] = useState<string>('ALL');
@@ -215,7 +221,6 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
             <StatusBadge
               label={record.computedLastStatus === 'success' ? '成功' : record.computedLastStatus === 'failed' ? '失敗' : '執行中'}
               tone={statusToneMap[record.computedLastStatus] ?? 'info'}
-              bordered
             />
           )}
         </Space>
@@ -468,6 +473,79 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
     />
   );
 
+  const capacityPlanningTab = (
+    <div style={{ padding: '24px 0' }}>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <Alert
+          type="info"
+          showIcon
+          message="容量規劃整合"
+          description="點擊下方按鈕跳轉至專門的容量規劃頁面，查看詳細的資源使用預測與擴容建議。"
+          action={
+            <Button
+              type="primary"
+              icon={<LineChartOutlined />}
+              onClick={() => onNavigate?.('capacity-planning')}
+            >
+              開啟容量規劃
+            </Button>
+          }
+        />
+
+        <Row gutter={[16, 16]}>
+          <Col xs={24} md={8}>
+            <Card>
+              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Text type="secondary">自動化擴容腳本</Text>
+                <Text style={{ fontSize: 24, fontWeight: 600 }}>
+                  {localScripts.filter(s => s.category === 'deployment' || s.name.toLowerCase().includes('scale')).length}
+                </Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  已就緒的自動擴容腳本數量
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+          <Col xs={24} md={8}>
+            <Card>
+              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Text type="secondary">本週自動擴容</Text>
+                <Text style={{ fontSize: 24, fontWeight: 600 }}>12</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  自動化觸發的擴容次數
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+          <Col xs={24} md={8}>
+            <Card>
+              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Text type="secondary">節省成本</Text>
+                <Text style={{ fontSize: 24, fontWeight: 600 }}>2.4K</Text>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  預計每月節省運維成本 (USD)
+                </Text>
+              </Space>
+            </Card>
+          </Col>
+        </Row>
+      </Space>
+    </div>
+  );
+
+  const backgroundJobsTab = (
+    <div style={{ padding: '24px 0' }}>
+      <BackgroundJobsPanel
+        jobs={jobs}
+        loading={jobLoading}
+        error={jobError}
+        isFallback={jobFallback}
+        summary={jobSummary}
+        onRefresh={refreshJobs}
+      />
+    </div>
+  );
+
   const tabs: TabsProps['items'] = [
     {
       key: 'scripts',
@@ -495,6 +573,24 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
         </span>
       ),
       children: executionTable,
+    },
+    {
+      key: 'background-jobs',
+      label: (
+        <span>
+          <CloudServerOutlined /> 背景作業
+        </span>
+      ),
+      children: backgroundJobsTab,
+    },
+    {
+      key: 'capacity',
+      label: (
+        <span>
+          <LineChartOutlined /> 容量規劃
+        </span>
+      ),
+      children: capacityPlanningTab,
     },
   ];
 
@@ -666,11 +762,14 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
       )}
 
       <Row gutter={[16, 16]}>
-        {kpiCards.map((card) => (
-          <Col key={card.key} xs={24} sm={12} xl={6}>
-            <ContextualKPICard {...card} loading={loading} />
-          </Col>
-        ))}
+        {kpiCards.map((card) => {
+          const { key, ...cardProps } = card;
+          return (
+            <Col key={key} xs={24} sm={12} xl={6}>
+              <ContextualKPICard {...cardProps} loading={loading} />
+            </Col>
+          );
+        })}
       </Row>
 
       <Tabs

@@ -4,9 +4,7 @@ import {
   App as AntdApp,
   Alert,
   Button,
-  Checkbox,
   Col,
-  DatePicker,
   Descriptions,
   Empty,
   Form,
@@ -23,7 +21,6 @@ import {
   Typography,
 } from 'antd';
 import type { TabsProps } from 'antd';
-import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import {
@@ -51,9 +48,8 @@ import { fetchJson } from '../utils/apiClient';
 import type { StatusBadgeProps } from '../components/StatusBadge';
 import type { ContextualKPICardProps } from '../components/ContextualKPICard';
 
-const { Paragraph, Text } = Typography;
+const { Text } = Typography;
 const { Search } = Input;
-const { RangePicker } = DatePicker;
 
 dayjs.extend(relativeTime);
 
@@ -396,7 +392,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
   const { message, modal } = AntdApp.useApp();
   const incidentTabKey = pageKey === 'alerting-rules' || pageKey === 'silences' ? pageKey : pageKey === 'incidents' ? 'incident-list' : pageKey ?? 'incident-list';
   const availableTabs: Array<'incident-list' | 'alerting-rules' | 'silences'> = ['incident-list', 'alerting-rules', 'silences'];
-  const activeTab = availableTabs.includes(incidentTabKey as typeof availableTabs[number]) ? (incidentTabKey as typeof availableTabs[number]) : 'incident-list';
+  const [activeTab, setActiveTab] = useState(availableTabs.includes(incidentTabKey as typeof availableTabs[number]) ? (incidentTabKey as typeof availableTabs[number]) : 'incident-list');
   const { incidents, loading: incidentsLoading, error: incidentsError, refetch } = useIncidents();
   const { users, loading: usersLoading } = useUsers();
 
@@ -462,10 +458,6 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
   const [activeIncidentId, setActiveIncidentId] = useState<string | null>(null);
   const [silenceModalOpen, setSilenceModalOpen] = useState(false);
   const [silenceIncidentId, setSilenceIncidentId] = useState<string | null>(null);
-  const [silenceDuration, setSilenceDuration] = useState('1h');
-  const [customSilenceRange, setCustomSilenceRange] = useState<[Dayjs | null, Dayjs | null] | null>(null);
-  const [silenceIncludeSimilar, setSilenceIncludeSimilar] = useState(true);
-  const [silenceNotifyAssignee, setSilenceNotifyAssignee] = useState(true);
   const [silenceRules, setSilenceRules] = useState<SilenceRuleRecord[]>([]);
   const [silenceSearchText, setSilenceSearchText] = useState('');
   const [silenceStatusFilter, setSilenceStatusFilter] = useState<'all' | SilenceRuleRecord['status']>('all');
@@ -571,10 +563,6 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
     [incidentsWithOverrides, activeIncidentId],
   );
 
-  const silenceIncident = useMemo(
-    () => incidentsWithOverrides.find((incident) => incident.id === silenceIncidentId) ?? null,
-    [incidentsWithOverrides, silenceIncidentId],
-  );
 
   const severityOptions = useMemo(() => {
     const set = new Set<string>();
@@ -893,7 +881,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         render: (_: string, record) => (
           <Space direction="vertical" size={4}>
             {record.conditions.slice(0, 2).map((condition, index) => (
-              <Text type="secondary" key={`${record.id}-cond-${index}`} style={{ fontSize: 12 }}>
+              <Text type="secondary" key={`cond-${record.id}-${index}`} style={{ fontSize: 12 }}>
                 • {condition}
               </Text>
             ))}
@@ -1281,6 +1269,12 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
     setSilenceIncidentId(null);
   }, []);
 
+  const handleSilenceSuccess = useCallback(() => {
+    setSilenceModalOpen(false);
+    setSilenceIncidentId(null);
+    message.success('靜音規則創建成功');
+  }, [message]);
+
   const handleStatusChange = useCallback(
     (record: IncidentRecord, nextStatus: 'acknowledged' | 'resolved') => {
       const statusLabel = getStatusLabel(nextStatus);
@@ -1361,28 +1355,6 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
     }
   }, [message, refetch]);
 
-  const handleSilenceSubmit = useCallback(() => {
-    if (!silenceIncident) return;
-    const durationLabelMap: Record<string, string> = {
-      '1h': '1 小時',
-      '4h': '4 小時',
-      '12h': '12 小時',
-      '24h': '24 小時',
-      custom: '自訂時段',
-    };
-
-    const customRangeLabel =
-      silenceDuration === 'custom' && customSilenceRange && customSilenceRange[0] && customSilenceRange[1]
-        ? `${customSilenceRange[0].format('MM/DD HH:mm')} ~ ${customSilenceRange[1].format('MM/DD HH:mm')}`
-        : null;
-
-    const durationLabel =
-      silenceDuration === 'custom' ? customRangeLabel ?? '自訂時段' : durationLabelMap[silenceDuration] ?? silenceDuration;
-
-    message.success(`已建立 ${durationLabel} 靜音，目標：${silenceIncident.summary}`);
-    setSilenceModalOpen(false);
-    setSilenceIncidentId(null);
-  }, [customSilenceRange, message, silenceDuration, silenceIncident]);
 
   const relatedIncidents = useMemo(() => {
     if (!currentIncident) return [];
@@ -1960,7 +1932,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
       <Tabs
         items={tabItems}
         activeKey={activeTab}
-        onChange={(key) => onNavigate?.(key)}
+        onChange={(key) => setActiveTab(key as typeof availableTabs[number])}
       />
 
       {(incidentsLoading && !incidentsWithOverrides.length) || usersLoading ? (

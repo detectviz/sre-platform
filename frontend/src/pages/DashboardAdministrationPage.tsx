@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import {
   App as AntdApp,
@@ -92,8 +93,9 @@ type DashboardAdministrationPageProps = {
   onNavigate?: (key: string, params?: Record<string, unknown>) => void;
 };
 
-const DashboardAdministrationPage = ({ onNavigate }: DashboardAdministrationPageProps) => {
+const DashboardAdministrationPage = ({ onNavigate: _onNavigate }: DashboardAdministrationPageProps) => {
   const { message } = AntdApp.useApp();
+  const navigate = useNavigate();
   const { dashboards, stats, categorized, loading, error, isFallback, refresh } = useDashboards();
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [tableCategoryFilter, setTableCategoryFilter] = useState<'ALL' | DashboardCategory>('ALL');
@@ -128,9 +130,16 @@ const DashboardAdministrationPage = ({ onNavigate }: DashboardAdministrationPage
   }, [message]);
 
   const handleOpenDashboard = useCallback((dashboard: DashboardDefinition) => {
-    const target = dashboard.targetPageKey ?? dashboard.id;
-    onNavigate?.(target, { dashboardId: dashboard.id });
-  }, [onNavigate]);
+    // Map targetPageKey to actual routes
+    const routeMapping: Record<string, string> = {
+      'infrastructure-insights': '/resources',
+      'war-room': '/',
+      'capacity-planning': '/automation/capacity-planning',
+    };
+
+    const target = routeMapping[dashboard.targetPageKey ?? ''] ?? '/';
+    navigate(target);
+  }, [navigate]);
 
   const handleCloneDashboard = useCallback((dashboard: DashboardDefinition) => {
     message.info(`已複製「${dashboard.name}」的儀表板設定 (模擬)`);

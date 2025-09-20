@@ -7,3 +7,5 @@ export * from './CreateSilenceModal';
 export * from './NotificationCenter';
 export * from './UserMenu';
 export { default as SmartFilterBuilder } from './SmartFilterBuilder';
+export { default as PermissionTreeSelector } from './PermissionTreeSelector';
+export { default as IncidentTrendChart } from './IncidentTrendChart';

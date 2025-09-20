@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../utils/apiClient';
+import { fetchJson } from '../utils/apiClient';
 
 interface CreateSilencePayload {
   event_id: string;
@@ -8,8 +8,13 @@ interface CreateSilencePayload {
 }
 
 const createSilence = async (payload: CreateSilencePayload) => {
-  const response = await apiClient.post('/silence-rules', payload);
-  return response.data;
+  return await fetchJson('/silence-rules', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
 };
 
 export const useCreateSilence = () => {

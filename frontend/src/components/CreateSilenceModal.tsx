@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { Modal, Form, Input, Select, Button, Spin, Alert, Typography, Tag, Divider, App } from 'antd';
+import { useEffect } from 'react';
+import { Modal, Form, Input, Select, Spin, Alert, Typography, Tag, Divider, App } from 'antd';
 import { BellOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 
-import { apiClient } from '../utils/apiClient';
+import { fetchJson } from '../utils/apiClient';
 import { useCreateSilence } from '../hooks/useCreateSilence';
 
 const { Text, Title } = Typography;
@@ -30,8 +30,8 @@ const DURATION_OPTIONS = [
   { label: '7 天', value: '7d' },
 ];
 
-const fetchEvent = async (eventId: string) => {
-  const { data } = await apiClient.get(`/events/${eventId}`);
+const fetchEvent = async (eventId: string): Promise<Event> => {
+  const data = await fetchJson<Event>(`/events/${eventId}`);
   return data;
 };
 
@@ -39,7 +39,7 @@ export const CreateSilenceModal = ({ open, onCancel, onSuccess, eventId }: Creat
   const { message } = App.useApp();
   const [form] = Form.useForm();
 
-  const { data: event, isLoading, error, isFetching } = useQuery<Event>({
+  const { data: event, isLoading, error } = useQuery<Event>({
     queryKey: ['event', eventId],
     queryFn: () => fetchEvent(eventId!),
     enabled: !!eventId && open, // Only fetch when the modal is open and has an eventId
@@ -96,7 +96,7 @@ export const CreateSilenceModal = ({ open, onCancel, onSuccess, eventId }: Creat
       {isLoading ? (
         <Spin />
       ) : error ? (
-        <Alert message={error} type="error" />
+        <Alert message={error instanceof Error ? error.message : '載入事件失敗'} type="error" />
       ) : event ? (
         <Form form={form} layout="vertical" name="create_silence_form">
           <Title level={5}>事件資訊</Title>
@@ -109,7 +109,7 @@ export const CreateSilenceModal = ({ open, onCancel, onSuccess, eventId }: Creat
 
           <Title level={5}>靜音匹配條件 (從事件標籤自動帶入)</Title>
           <div>
-            {event.tags.map(tag => (
+            {event.tags.map((tag: { key: string; value: string; color?: string }) => (
               <Tag key={`${tag.key}:${tag.value}`} color={tag.color || 'default'}>
                 {tag.key}={tag.value}
               </Tag>

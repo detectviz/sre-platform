@@ -1,8 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
+interface Team {
+    id: string;
+    name: string;
+    description?: string;
+    member_count: number;
+}
+
 const useTeams = () => {
-    const [teams, setTeams] = useState([]);
+    const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
 

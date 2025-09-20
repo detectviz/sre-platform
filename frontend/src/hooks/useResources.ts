@@ -51,8 +51,8 @@ const normalizeTagFilters = (filters: TagFilter[] | undefined): TagFilter[] => {
         : 'eq';
       const values = Array.isArray(filter.values)
         ? filter.values
-            .map((value) => (typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : ''))
-            .filter((value) => Boolean(value))
+          .map((value) => (typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : ''))
+          .filter((value) => Boolean(value))
         : [];
       return {
         key,
@@ -147,8 +147,8 @@ const buildQuery = (query: ResourceQueryParams = {}) => ({
   groupId: query.groupId?.trim() ?? '',
   tags: Array.isArray(query.tags)
     ? query.tags
-        .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
-        .filter((tag) => Boolean(tag))
+      .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
+      .filter((tag) => Boolean(tag))
     : [],
   tagFilters: normalizeTagFilters(query.tagFilters),
 });
@@ -236,19 +236,19 @@ const extractPayload = (
 
   const resolvedPagination: PaginationMeta = pagination
     ? {
-        page: typeof pagination.page === 'number' ? pagination.page : query.page,
-        page_size: typeof pagination.page_size === 'number' ? pagination.page_size : query.pageSize,
-        total: typeof pagination.total === 'number' ? pagination.total : normalized.length,
-        total_pages: typeof pagination.total_pages === 'number'
-          ? pagination.total_pages
-          : Math.max(1, Math.ceil((typeof pagination.total === 'number' ? pagination.total : normalized.length) / query.pageSize)),
-      }
+      page: typeof pagination.page === 'number' ? pagination.page : query.page,
+      page_size: typeof pagination.page_size === 'number' ? pagination.page_size : query.pageSize,
+      total: typeof pagination.total === 'number' ? pagination.total : normalized.length,
+      total_pages: typeof pagination.total_pages === 'number'
+        ? pagination.total_pages
+        : Math.max(1, Math.ceil((typeof pagination.total === 'number' ? pagination.total : normalized.length) / query.pageSize)),
+    }
     : {
-        page: query.page,
-        page_size: query.pageSize,
-        total: normalized.length,
-        total_pages: Math.max(1, Math.ceil(normalized.length / query.pageSize)),
-      };
+      page: query.page,
+      page_size: query.pageSize,
+      total: normalized.length,
+      total_pages: Math.max(1, Math.ceil(normalized.length / query.pageSize)),
+    };
 
   return {
     resources: normalized,
@@ -281,7 +281,7 @@ const useResources = (query: ResourceQueryParams = {}): UseResourcesResult => {
       normalizedQuery.pageSize,
     ).pagination
   ));
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false since we have fallback data
   const [error, setError] = useState<unknown>(null);
   const [isFallback, setIsFallback] = useState(true);
 
@@ -292,7 +292,9 @@ const useResources = (query: ResourceQueryParams = {}): UseResourcesResult => {
     setResources(paginated.items);
     setPagination(paginated.pagination);
     setIsFallback(true);
+    setLoading(false); // Ensure loading is set to false for fallback data
   }, [normalizedQuery]);
+
 
   const fetchData = useCallback(
     async (signal?: AbortSignal) => {
@@ -322,6 +324,11 @@ const useResources = (query: ResourceQueryParams = {}): UseResourcesResult => {
     },
     [normalizedQuery],
   );
+
+  // Fetch data on mount
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     const controller = new AbortController();

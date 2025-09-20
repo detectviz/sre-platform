@@ -93,8 +93,8 @@ const RoleManagementPage: React.FC = () => {
                 <List.Item
                   onClick={() => handleSelectRole(role)}
                   actions={!role.is_built_in ? [
-                    <Button type="text" icon={<EditOutlined />} onClick={(e) => { e.stopPropagation(); handleEditRole(role); }} />,
-                    <Button type="text" icon={<DeleteOutlined />} danger onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}/>
+                    <Button type="link" icon={<EditOutlined />} onClick={(e) => { e.stopPropagation(); handleEditRole(role); }} />,
+                    <Button type="link" icon={<DeleteOutlined />} danger onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}/>
                   ] : []}
                   style={{
                     cursor: 'pointer',

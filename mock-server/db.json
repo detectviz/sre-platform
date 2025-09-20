@@ -936,33 +936,43 @@
   ],
   "tag_keys": [
     {
-      "id": "tag_key_environment",
-      "key_name": "environment",
-      "description": "部署環境",
+      "id": "tag_key_01",
+      "key_name": "env",
+      "description": "部署環境，例如 production, staging, development。",
       "is_required": true,
-      "validation_regex": "^(production|staging|development|test)$",
-      "compliance_category": "infrastructure",
-      "usage_count": 148,
+      "validation_regex": "^(production|staging|development)$",
+      "compliance_category": "Environment",
+      "usage_count": 125,
       "enforcement_level": "blocking"
     },
     {
-      "id": "tag_key_service",
+      "id": "tag_key_02",
       "key_name": "service",
-      "description": "服務名稱",
+      "description": "服務或應用程式的名稱。",
       "is_required": true,
-      "validation_regex": "^[a-z][a-z0-9-]{2,30}$",
-      "compliance_category": "application",
-      "usage_count": 212,
+      "validation_regex": "^[a-z0-9-]+$",
+      "compliance_category": "Application",
+      "usage_count": 88,
       "enforcement_level": "warning"
     },
     {
-      "id": "tag_key_team",
-      "key_name": "team",
-      "description": "責任團隊",
+      "id": "tag_key_03",
+      "key_name": "owner_team",
+      "description": "負責此資源的團隊。",
       "is_required": false,
       "validation_regex": null,
-      "compliance_category": "ownership",
-      "usage_count": 95,
+      "compliance_category": "Ownership",
+      "usage_count": 76,
+      "enforcement_level": "advisory"
+    },
+    {
+      "id": "tag_key_04",
+      "key_name": "cost_center",
+      "description": "成本中心代碼，用於財務追蹤。",
+      "is_required": false,
+      "validation_regex": "^[0-9]{4,6}$",
+      "compliance_category": "Finance",
+      "usage_count": 45,
       "enforcement_level": "advisory"
     }
   ],
@@ -1193,48 +1203,506 @@
       "message": "響應正常",
       "checked_at": "2025-09-20T01:40:23.765Z",
       "source": "scheduled_probe"
-    }
-  ],
-  "tag_keys": [
-    {
-      "id": "tag_key_01",
-      "key_name": "env",
-      "description": "部署環境，例如 production, staging, development。",
-      "is_required": true,
-      "validation_regex": "^(production|staging|development)$",
-      "compliance_category": "Environment",
-      "usage_count": 125,
-      "enforcement_level": "blocking"
     },
     {
-      "id": "tag_key_02",
-      "key_name": "service",
-      "description": "服務或應用程式的名稱。",
-      "is_required": true,
-      "validation_regex": "^[a-z0-9-]+$",
-      "compliance_category": "Application",
-      "usage_count": 88,
-      "enforcement_level": "warning"
+      "id": "channel_health_1758346890129_x789",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "critical",
+      "latency_ms": 105,
+      "attempts": 3,
+      "message": "多次嘗試後仍無響應",
+      "checked_at": "2025-09-20T05:41:30.129Z",
+      "source": "scheduled_probe"
     },
     {
-      "id": "tag_key_03",
-      "key_name": "owner_team",
-      "description": "負責此資源的團隊。",
-      "is_required": false,
-      "validation_regex": null,
-      "compliance_category": "Ownership",
-      "usage_count": 76,
-      "enforcement_level": "advisory"
+      "id": "channel_health_1758346890130_pbva",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 99,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T05:41:30.129Z",
+      "source": "scheduled_probe"
     },
     {
-      "id": "tag_key_04",
-      "key_name": "cost_center",
-      "description": "成本中心代碼，用於財務追蹤。",
-      "is_required": false,
-      "validation_regex": "^[0-9]{4,6}$",
-      "compliance_category": "Finance",
-      "usage_count": 45,
-      "enforcement_level": "advisory"
+      "id": "channel_health_1758347074276_czri",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 254,
+      "attempts": 1,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T05:44:34.276Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758347074277_qgxx",
+      "channel_id": "channel_slack_checkout",
+      "status": "critical",
+      "latency_ms": 190,
+      "attempts": 4,
+      "message": "多次嘗試後仍無響應",
+      "checked_at": "2025-09-20T05:44:34.276Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758347074781_g4t2",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 254,
+      "attempts": 1,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T05:44:34.781Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758347074782_lac7",
+      "channel_id": "channel_slack_checkout",
+      "status": "critical",
+      "latency_ms": 190,
+      "attempts": 4,
+      "message": "多次嘗試後仍無響應",
+      "checked_at": "2025-09-20T05:44:34.781Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758347209514_mon6",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 113,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T05:46:49.514Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758347209515_qq2s",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 289,
+      "attempts": 4,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T05:46:49.514Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349200602_d3x7",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 252,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:00.602Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349200603_yqo4",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 127,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:00.602Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349219920_ch7x",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 252,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:19.920Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349219920_pqmy",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 127,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:19.920Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349220265_reuj",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 252,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:20.265Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349220265_a67x",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 127,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:20.265Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349256101_g75i",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 252,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:56.101Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349256102_qio4",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 127,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:56.101Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349256550_t5tz",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 252,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:56.550Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349256550_ixyh",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 127,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:56.550Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349256805_defp",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 252,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:56.805Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349256806_u7i7",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 127,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:20:56.805Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349264190_tl8m",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 202,
+      "attempts": 4,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:21:04.190Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349264192_78ek",
+      "channel_id": "channel_slack_checkout",
+      "status": "warning",
+      "latency_ms": 177,
+      "attempts": 4,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T06:21:04.190Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349276787_z3cn",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 202,
+      "attempts": 4,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:21:16.787Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349276788_36o5",
+      "channel_id": "channel_slack_checkout",
+      "status": "warning",
+      "latency_ms": 177,
+      "attempts": 4,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T06:21:16.787Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349388862_l4zy",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "warning",
+      "latency_ms": 103,
+      "attempts": 4,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T06:23:08.862Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349388863_41vw",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 317,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:23:08.862Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349395797_1w8p",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "warning",
+      "latency_ms": 103,
+      "attempts": 4,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T06:23:15.797Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349395798_xfwj",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 317,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:23:15.797Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349396621_dk52",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "warning",
+      "latency_ms": 103,
+      "attempts": 4,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T06:23:16.621Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349396622_xs2g",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 317,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:23:16.621Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349399627_9wm9",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "warning",
+      "latency_ms": 103,
+      "attempts": 4,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T06:23:19.627Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349399627_828w",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 317,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:23:19.627Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349407279_w6rb",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "warning",
+      "latency_ms": 103,
+      "attempts": 4,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T06:23:27.279Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349407280_5ov9",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 317,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:23:27.279Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349460865_lfi8",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 210,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:24:20.865Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349460866_didr",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 86,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:24:20.865Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349496807_ghg4",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 210,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:24:56.807Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758349496808_vdi8",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 86,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:24:56.807Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758350644162_9kdg",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 140,
+      "attempts": 4,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:44:04.162Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758350644165_6h7d",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 121,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T06:44:04.162Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758352088456_ijqk",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "warning",
+      "latency_ms": 247,
+      "attempts": 2,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T07:08:08.456Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758352088457_v61l",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 116,
+      "attempts": 1,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T07:08:08.456Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758353387064_9yq4",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 134,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T07:29:47.064Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758353387066_fluv",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 229,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T07:29:47.064Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758354502930_zf23",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "warning",
+      "latency_ms": 280,
+      "attempts": 3,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T07:48:22.930Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758354502930_gzya",
+      "channel_id": "channel_slack_checkout",
+      "status": "warning",
+      "latency_ms": 276,
+      "attempts": 4,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-20T07:48:22.930Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758355411952_fqlp",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 199,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T08:03:31.952Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758355411953_fc65",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 168,
+      "attempts": 1,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T08:03:31.952Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758356664118_1ch3",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 269,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T08:24:24.118Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758356664120_qg45",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 179,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T08:24:24.118Z",
+      "source": "scheduled_probe"
     }
   ]
 }
