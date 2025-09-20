@@ -835,6 +835,24 @@ paths:
       operationId: listSilenceRules
       security: [{ bearerAuth: [] }]
       responses: { "200": { description: "成功" } }
+    post:
+      tags: [事件管理 (Event Management)]
+      summary: 根據事件快速建立一次性靜音
+      operationId: createSilenceFromEvent
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SilenceCreateRequest"
+      responses:
+        "201":
+          description: 靜音規則建立成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Silence"
   /recurring-silence-rules:
     get:
       tags: [事件管理 (Event Management)]
@@ -1401,6 +1419,19 @@ components:
         assignee_id: { type: string, nullable: true }
         created_at: { type: string, format: "date-time" }
         updated_at: { type: string, format: "date-time" }
+    SilenceCreateRequest:
+      type: object
+      required: [event_id, duration, comment]
+      properties:
+        event_id:
+          type: string
+          description: "用於提取標籤以建立靜音匹配條件的事件 ID"
+        duration:
+          type: string
+          description: "靜音的持續時間 (例如 '1h', '30m', '2d')"
+        comment:
+          type: string
+          description: "建立此靜音規則的原因 (必須提供)"
     UserPlatformRolesUpdateRequest:
       type: object
       properties:

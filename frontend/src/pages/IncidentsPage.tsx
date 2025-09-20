@@ -43,7 +43,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 
-import { ContextualKPICard, DataTable, GlassModal, PageHeader, StatusBadge } from '../components';
+import { ContextualKPICard, CreateSilenceModal, DataTable, GlassModal, PageHeader, StatusBadge } from '../components';
 import useIncidents from '../hooks/useIncidents';
 import { useUsers } from '../hooks/useUsers';
 import { fetchJson } from '../utils/apiClient';
@@ -1274,10 +1274,6 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
   const handleCreateSilence = useCallback((record: IncidentRecord) => {
     setSilenceIncidentId(record.id);
     setSilenceModalOpen(true);
-    setSilenceDuration('1h');
-    setCustomSilenceRange(null);
-    setSilenceIncludeSimilar(true);
-    setSilenceNotifyAssignee(true);
   }, []);
 
   const handleCloseSilence = useCallback(() => {
@@ -2235,71 +2231,12 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         )}
       </GlassModal>
 
-      <GlassModal
-        open={silenceModalOpen && Boolean(silenceIncident)}
+      <CreateSilenceModal
+        open={silenceModalOpen}
+        eventId={silenceIncidentId}
         onCancel={handleCloseSilence}
-        onOk={handleSilenceSubmit}
-        okText="建立靜音"
-        title="建立靜音規則"
-      >
-        {silenceIncident && (
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            <Paragraph>
-              為 <Text strong>{silenceIncident.summary}</Text> 建立即時靜音。系統會使用事件標籤預填對應條件。
-            </Paragraph>
-
-            <Space direction="vertical" size={12} style={{ width: '100%' }}>
-              <Text strong>靜音時長</Text>
-              <Select
-                value={silenceDuration}
-                onChange={(value) => setSilenceDuration(value)}
-                options={[
-                  { value: '1h', label: '1 小時' },
-                  { value: '4h', label: '4 小時' },
-                  { value: '12h', label: '12 小時' },
-                  { value: '24h', label: '24 小時' },
-                  { value: 'custom', label: '自訂時段' },
-                ]}
-                style={{ width: 200 }}
-              />
-              {silenceDuration === 'custom' && (
-                <RangePicker
-                  showTime
-                  value={customSilenceRange ?? undefined}
-                  onChange={(value) => setCustomSilenceRange(value)}
-                  style={{ width: '100%' }}
-                />
-              )}
-            </Space>
-
-            {silenceIncident.labels && Object.keys(silenceIncident.labels).length > 0 && (
-              <Space direction="vertical" size={12}>
-                <Text strong>套用的標籤條件</Text>
-                <Space wrap>
-                  {Object.entries(silenceIncident.labels).map(([key, value]) => (
-                    <Tag key={`silence-${key}`} color="geekblue">
-                      {key}: {value}
-                    </Tag>
-                  ))}
-                </Space>
-              </Space>
-            )}
-
-            <Checkbox
-              checked={silenceIncludeSimilar}
-              onChange={(event) => setSilenceIncludeSimilar(event.target.checked)}
-            >
-              同時靜音相同資源的相似事件
-            </Checkbox>
-            <Checkbox
-              checked={silenceNotifyAssignee}
-              onChange={(event) => setSilenceNotifyAssignee(event.target.checked)}
-            >
-              通知目前處理人
-            </Checkbox>
-          </Space>
-        )}
-      </GlassModal>
+        onSuccess={handleSilenceSuccess}
+      />
     </Space>
   );
 };

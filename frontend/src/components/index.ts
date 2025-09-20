@@ -3,6 +3,7 @@ export * from './ContextualKPICard';
 export * from './StatusBadge';
 export * from './GlassModal';
 export * from './DataTable';
+export * from './CreateSilenceModal';
 export * from './NotificationCenter';
 export * from './UserMenu';
 export { default as SmartFilterBuilder } from './SmartFilterBuilder';

@@ -2863,6 +2863,74 @@ registerRoute('get', '/automation-runs/:runId', (req, res) => {
   res.jsonp(run);
 });
 
+// 根據事件建立一次性靜音規則
+registerRoute('post', '/silence-rules', (req, res) => {
+  const db = router.db;
+  const { event_id, duration, comment } = req.body;
+
+  if (!event_id || !duration || !comment) {
+    return res.status(400).jsonp({
+      code: 'INVALID_PAYLOAD',
+      message: 'event_id, duration, and comment are required fields.'
+    });
+  }
+
+  const event = db.get('events').find({ id: event_id }).value();
+  if (!event) {
+    return res.status(404).jsonp({ code: 'EVENT_NOT_FOUND', message: '指定的事件不存在' });
+  }
+
+  const matchers = (event.tags || []).map(tag => ({
+    name: tag.key,
+    value: tag.value,
+    isEqual: true,
+    isRegex: false
+  }));
+
+  // 確保至少有一個 matcher，通常是 alertname
+  if (!matchers.some(m => m.name === 'alertname') && event.summary) {
+      matchers.push({ name: 'alertname', value: event.summary, isEqual: true, isRegex: false });
+  }
+
+  const now = new Date();
+  const startsAt = now.toISOString();
+  let endsAt;
+
+  try {
+    const durationRegex = /(\d+)(h|m|d)/g;
+    let totalMs = 0;
+    let match;
+    while ((match = durationRegex.exec(duration)) !== null) {
+      const value = parseInt(match[1], 10);
+      const unit = match[2];
+      if (unit === 'h') totalMs += value * 60 * 60 * 1000;
+      if (unit === 'm') totalMs += value * 60 * 1000;
+      if (unit === 'd') totalMs += value * 24 * 60 * 60 * 1000;
+    }
+    if (totalMs === 0) throw new Error('Invalid duration format');
+    endsAt = new Date(now.getTime() + totalMs).toISOString();
+  } catch (e) {
+    return res.status(400).jsonp({ code: 'INVALID_DURATION', message: '無效的 duration 格式，請使用例如 "1h", "30m", "2d"。' });
+  }
+
+  const newSilence = {
+    id: `silence_${Date.now()}`,
+    matchers,
+    startsAt,
+    endsAt,
+    createdBy: 'mock-user',
+    comment,
+    status: {
+      state: 'active'
+    }
+  };
+
+  const silencesCollection = ensureArrayCollection(db, 'silences');
+  silencesCollection.push(newSilence).write();
+
+  res.status(201).jsonp(newSilence);
+});
+
 // 其他接口使用默認的 json-server 路由
 server.use('/', router);
 server.use('/api/v1', router);
