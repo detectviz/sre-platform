@@ -11,6 +11,14 @@ export type ResourceTag = {
   value: string;
 };
 
+export type TagFilterOperator = 'eq' | 'neq' | 'in' | 'not_in' | 'regex' | 'not_regex';
+
+export type TagFilter = {
+  key: string;
+  operator: TagFilterOperator;
+  values: string[];
+};
+
 export type ResourceMetricSnapshot = {
   cpuUsage?: number;
   memoryUsage?: number;
@@ -18,6 +26,37 @@ export type ResourceMetricSnapshot = {
   networkIn?: number;
   networkOut?: number;
   latencyMs?: number;
+};
+
+export type ResourceMetricHistory = {
+  timestamps: string[];
+  cpuSeries?: number[];
+  memorySeries?: number[];
+};
+
+export type ResourceActionType = 'link' | 'automation' | 'navigate' | 'modal' | 'api';
+
+export type ResourceAction = {
+  key: string;
+  label: string;
+  type?: ResourceActionType;
+  url?: string;
+  target?: string;
+  description?: string;
+};
+
+export type ResourceObservability = {
+  grafanaUrl?: string;
+  logsUrl?: string;
+  runbookUrl?: string;
+};
+
+export type ResourceEventSummary = {
+  id: string;
+  summary?: string;
+  severity?: string;
+  status?: string;
+  updatedAt?: string;
 };
 
 export type Resource = {
@@ -34,6 +73,12 @@ export type Resource = {
   groups: string[];
   relatedIncidents?: number;
   metrics: ResourceMetricSnapshot;
+  metricsHistory?: ResourceMetricHistory;
+  healthSummary?: string;
+  healthReasons?: string[];
+  actions?: ResourceAction[];
+  observability?: ResourceObservability;
+  relatedEvents?: ResourceEventSummary[];
   lastCheckedAt?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -59,6 +104,7 @@ export type ResourceQueryParams = {
   teamId?: string;
   groupId?: string;
   tags?: string[];
+  tagFilters?: TagFilter[];
 };
 
 export type ResourceGroup = {
@@ -69,9 +115,24 @@ export type ResourceGroup = {
   ownerName?: string;
   memberIds: string[];
   tags: ResourceTag[];
+  status?: string;
   createdAt?: string;
   updatedAt?: string;
-  metadata?: Record<string, unknown>;
+  metadata?: ResourceGroupMetadata;
+};
+
+export type ResourceGroupMetadata = {
+  member_count?: number;
+  health_breakdown?: {
+    healthy?: number;
+    warning?: number;
+    critical?: number;
+    maintenance?: number;
+  };
+  recent_changes?: number;
+  automation_coverage?: number;
+  generated_at?: string;
+  [key: string]: unknown;
 };
 
 export type ResourceGroupListResponse = {

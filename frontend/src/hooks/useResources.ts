@@ -4,6 +4,8 @@ import type {
   Resource,
   ResourceListResponse,
   ResourceQueryParams,
+  TagFilter,
+  TagFilterOperator,
 } from '../types/resources';
 import fallbackDb from '../mocks/db.json';
 import { fetchJson } from '../utils/apiClient';
@@ -29,6 +31,113 @@ const fallbackRawResources = Array.isArray((fallbackDb as Record<string, unknown
   : [];
 const fallbackResources = normalizeResources(fallbackRawResources);
 
+const TAG_FILTER_OPERATORS: TagFilterOperator[] = ['eq', 'neq', 'in', 'not_in', 'regex', 'not_regex'];
+
+const normalizeTagFilters = (filters: TagFilter[] | undefined): TagFilter[] => {
+  if (!Array.isArray(filters)) {
+    return [];
+  }
+  return filters
+    .map((filter) => {
+      if (!filter || typeof filter !== 'object') {
+        return null;
+      }
+      const key = typeof filter.key === 'string' ? filter.key.trim() : '';
+      if (!key) {
+        return null;
+      }
+      const operator = TAG_FILTER_OPERATORS.includes(filter.operator)
+        ? filter.operator
+        : 'eq';
+      const values = Array.isArray(filter.values)
+        ? filter.values
+            .map((value) => (typeof value === 'string' ? value.trim() : typeof value === 'number' ? String(value) : ''))
+            .filter((value) => Boolean(value))
+        : [];
+      return {
+        key,
+        operator,
+        values,
+      };
+    })
+    .filter((filter): filter is TagFilter => Boolean(filter));
+};
+
+const safeCreateRegExp = (pattern: string) => {
+  try {
+    return new RegExp(pattern);
+  } catch (_error) {
+    return null;
+  }
+};
+
+const extractTagValues = (resource: Resource, key: string): string[] => {
+  if (!resource || !Array.isArray(resource.tags)) {
+    return [];
+  }
+  return resource.tags
+    .filter((tag) => tag && tag.key === key)
+    .map((tag) => tag.value)
+    .filter((value): value is string => typeof value === 'string' && value.length > 0);
+};
+
+const matchesTagFilter = (resource: Resource, filter: TagFilter): boolean => {
+  const values = extractTagValues(resource, filter.key);
+  const primaryValue = filter.values[0];
+
+  switch (filter.operator) {
+    case 'eq':
+      if (!primaryValue) {
+        return true;
+      }
+      return values.includes(primaryValue);
+    case 'neq':
+      if (!primaryValue) {
+        return true;
+      }
+      return !values.includes(primaryValue);
+    case 'in':
+      if (filter.values.length === 0) {
+        return true;
+      }
+      return filter.values.some((candidate) => values.includes(candidate));
+    case 'not_in':
+      if (filter.values.length === 0) {
+        return true;
+      }
+      return filter.values.every((candidate) => !values.includes(candidate));
+    case 'regex': {
+      if (!primaryValue) {
+        return true;
+      }
+      const regex = safeCreateRegExp(primaryValue);
+      if (!regex) {
+        return false;
+      }
+      return values.some((candidate) => regex.test(candidate));
+    }
+    case 'not_regex': {
+      if (!primaryValue) {
+        return true;
+      }
+      const regex = safeCreateRegExp(primaryValue);
+      if (!regex) {
+        return true;
+      }
+      return values.every((candidate) => !regex.test(candidate));
+    }
+    default:
+      return true;
+  }
+};
+
+const applyTagFilters = (resources: Resource[], filters: TagFilter[] = []): Resource[] => {
+  if (!Array.isArray(filters) || filters.length === 0) {
+    return resources;
+  }
+  return resources.filter((resource) => filters.every((filter) => matchesTagFilter(resource, filter)));
+};
+
 const buildQuery = (query: ResourceQueryParams = {}) => ({
   page: Math.max(1, query.page ?? 1),
   pageSize: Math.max(1, query.pageSize ?? 20),
@@ -41,6 +150,7 @@ const buildQuery = (query: ResourceQueryParams = {}) => ({
         .map((tag) => (typeof tag === 'string' ? tag.trim() : ''))
         .filter((tag) => Boolean(tag))
     : [],
+  tagFilters: normalizeTagFilters(query.tagFilters),
 });
 
 const serializeParams = (query: ReturnType<typeof buildQuery>) => {
@@ -53,6 +163,9 @@ const serializeParams = (query: ReturnType<typeof buildQuery>) => {
   if (query.groupId) params.set('group_id', query.groupId);
   if (query.tags.length > 0) {
     query.tags.forEach((tag) => params.append('tags', tag));
+  }
+  if (query.tagFilters.length > 0) {
+    params.set('tag_filters', JSON.stringify(query.tagFilters));
   }
   return params;
 };
@@ -121,16 +234,25 @@ const extractPayload = (
 
   const normalized = normalizeResources(rawItems);
 
+  const resolvedPagination: PaginationMeta = pagination
+    ? {
+        page: typeof pagination.page === 'number' ? pagination.page : query.page,
+        page_size: typeof pagination.page_size === 'number' ? pagination.page_size : query.pageSize,
+        total: typeof pagination.total === 'number' ? pagination.total : normalized.length,
+        total_pages: typeof pagination.total_pages === 'number'
+          ? pagination.total_pages
+          : Math.max(1, Math.ceil((typeof pagination.total === 'number' ? pagination.total : normalized.length) / query.pageSize)),
+      }
+    : {
+        page: query.page,
+        page_size: query.pageSize,
+        total: normalized.length,
+        total_pages: Math.max(1, Math.ceil(normalized.length / query.pageSize)),
+      };
+
   return {
     resources: normalized,
-    pagination: pagination ?? {
-      page: query.page,
-      page_size: query.pageSize,
-      total: typeof pagination?.total === 'number' ? pagination.total : normalized.length,
-      total_pages: typeof pagination?.total_pages === 'number'
-        ? pagination.total_pages
-        : Math.max(1, Math.ceil((typeof pagination?.total === 'number' ? pagination.total : normalized.length) / query.pageSize)),
-    },
+    pagination: resolvedPagination,
     usedFallback,
   };
 };
@@ -144,14 +266,20 @@ const useResources = (query: ResourceQueryParams = {}): UseResourcesResult => {
     query.teamId,
     query.groupId,
     Array.isArray(query.tags) ? query.tags.join('|') : '',
+    Array.isArray(query.tagFilters) ? JSON.stringify(query.tagFilters) : '',
   ]);
 
   const [resources, setResources] = useState<Resource[]>(() => {
     const initial = filterResources(fallbackResources, normalizedQuery);
-    return paginateResources(initial, normalizedQuery.page, normalizedQuery.pageSize).items;
+    const filtered = applyTagFilters(initial, normalizedQuery.tagFilters);
+    return paginateResources(filtered, normalizedQuery.page, normalizedQuery.pageSize).items;
   });
   const [pagination, setPagination] = useState<PaginationMeta>(() => (
-    paginateResources(filterResources(fallbackResources, normalizedQuery), normalizedQuery.page, normalizedQuery.pageSize).pagination
+    paginateResources(
+      applyTagFilters(filterResources(fallbackResources, normalizedQuery), normalizedQuery.tagFilters),
+      normalizedQuery.page,
+      normalizedQuery.pageSize,
+    ).pagination
   ));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
@@ -159,7 +287,8 @@ const useResources = (query: ResourceQueryParams = {}): UseResourcesResult => {
 
   useEffect(() => {
     const filtered = filterResources(fallbackResources, normalizedQuery);
-    const paginated = paginateResources(filtered, normalizedQuery.page, normalizedQuery.pageSize);
+    const filteredByTags = applyTagFilters(filtered, normalizedQuery.tagFilters);
+    const paginated = paginateResources(filteredByTags, normalizedQuery.page, normalizedQuery.pageSize);
     setResources(paginated.items);
     setPagination(paginated.pagination);
     setIsFallback(true);
@@ -173,14 +302,17 @@ const useResources = (query: ResourceQueryParams = {}): UseResourcesResult => {
         const endpoint = params.toString() ? `/resources?${params.toString()}` : '/resources';
         const response = await fetchJson<ApiPayload>(endpoint, { signal });
         const payload = extractPayload(response, normalizedQuery);
-        setResources(payload.resources);
-        setPagination(payload.pagination);
+        const filteredByTags = applyTagFilters(payload.resources, normalizedQuery.tagFilters);
+        const paginated = paginateResources(filteredByTags, normalizedQuery.page, normalizedQuery.pageSize);
+        setResources(paginated.items);
+        setPagination(paginated.pagination);
         setIsFallback(payload.usedFallback);
         setError(null);
       } catch (err) {
         setError(err);
         const filtered = filterResources(fallbackResources, normalizedQuery);
-        const paginated = paginateResources(filtered, normalizedQuery.page, normalizedQuery.pageSize);
+        const filteredByTags = applyTagFilters(filtered, normalizedQuery.tagFilters);
+        const paginated = paginateResources(filteredByTags, normalizedQuery.page, normalizedQuery.pageSize);
         setResources(paginated.items);
         setPagination(paginated.pagination);
         setIsFallback(true);

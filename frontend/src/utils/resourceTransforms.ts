@@ -1,9 +1,14 @@
 import type {
   Resource,
+  ResourceAction,
+  ResourceEventSummary,
   ResourceFilter,
   ResourceGroup,
+  ResourceGroupMetadata,
   ResourceGroupWithInsights,
+  ResourceMetricHistory,
   ResourceMetricSnapshot,
+  ResourceObservability,
   ResourceStatistics,
   ResourceStatus,
   ResourceTag,
@@ -67,6 +72,164 @@ const parseNumber = (input: unknown): number | undefined => {
   return Number.isFinite(numberValue) ? numberValue : undefined;
 };
 
+const parseNumberArray = (input: unknown): number[] => {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+  return input
+    .map((value) => parseNumber(value))
+    .filter((value): value is number => typeof value === 'number');
+};
+
+const parseMetricHistoryPayload = (input: unknown): ResourceMetricHistory | undefined => {
+  if (!input || typeof input !== 'object') {
+    return undefined;
+  }
+  const raw = input as Record<string, unknown>;
+  const timestamps = Array.isArray(raw.timestamps)
+    ? raw.timestamps.map((timestamp) => String(timestamp))
+    : [];
+
+  const cpuSeries = parseNumberArray(
+    raw.cpuSeries ?? raw.cpu_series ?? raw.cpu_usage ?? raw.cpu,
+  );
+  const memorySeries = parseNumberArray(
+    raw.memorySeries ?? raw.memory_series ?? raw.memory_usage ?? raw.memory,
+  );
+
+  if (timestamps.length === 0 && cpuSeries.length === 0 && memorySeries.length === 0) {
+    return undefined;
+  }
+
+  return {
+    timestamps,
+    cpuSeries: cpuSeries.length > 0 ? cpuSeries : undefined,
+    memorySeries: memorySeries.length > 0 ? memorySeries : undefined,
+  };
+};
+
+const parseResourceActionsPayload = (input: unknown): ResourceAction[] => {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return input
+    .map((item, index) => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+      const raw = item as Record<string, unknown>;
+      const key = typeof raw.key === 'string'
+        ? raw.key
+        : typeof raw.id === 'string'
+          ? raw.id
+          : `action_${index}`;
+      const label = typeof raw.label === 'string'
+        ? raw.label
+        : typeof raw.name === 'string'
+          ? raw.name
+          : key;
+
+      if (!key || !label) {
+        return null;
+      }
+
+      const action: ResourceAction = {
+        key,
+        label,
+        type: typeof raw.type === 'string' ? (raw.type as ResourceAction['type']) : undefined,
+        url: typeof raw.url === 'string' ? raw.url : typeof raw.href === 'string' ? raw.href : undefined,
+        target: typeof raw.target === 'string' ? raw.target : undefined,
+        description: typeof raw.description === 'string' ? raw.description : undefined,
+      };
+
+      return action;
+    })
+    .filter((action): action is ResourceAction => Boolean(action));
+};
+
+const parseObservabilityPayload = (input: unknown): ResourceObservability | undefined => {
+  if (!input || typeof input !== 'object') {
+    return undefined;
+  }
+  const raw = input as Record<string, unknown>;
+  const grafanaUrl = typeof raw.grafana_url === 'string'
+    ? raw.grafana_url
+    : typeof raw.grafanaUrl === 'string'
+      ? raw.grafanaUrl
+      : undefined;
+  const logsUrl = typeof raw.logs_url === 'string'
+    ? raw.logs_url
+    : typeof raw.logsUrl === 'string'
+      ? raw.logsUrl
+      : undefined;
+  const runbookUrl = typeof raw.runbook_url === 'string'
+    ? raw.runbook_url
+    : typeof raw.runbookUrl === 'string'
+      ? raw.runbookUrl
+      : undefined;
+
+  if (!grafanaUrl && !logsUrl && !runbookUrl) {
+    return undefined;
+  }
+
+  return {
+    grafanaUrl,
+    logsUrl,
+    runbookUrl,
+  };
+};
+
+const parseRelatedEventsPayload = (input: unknown): ResourceEventSummary[] => {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return input
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+      const raw = item as Record<string, unknown>;
+      const id = typeof raw.id === 'string'
+        ? raw.id
+        : typeof raw.event_id === 'string'
+          ? raw.event_id
+          : undefined;
+      if (!id) {
+        return null;
+      }
+
+      const summary: ResourceEventSummary = {
+        id,
+        summary: typeof raw.summary === 'string'
+          ? raw.summary
+          : typeof raw.title === 'string'
+            ? raw.title
+            : undefined,
+        severity: typeof raw.severity === 'string' ? raw.severity : undefined,
+        status: typeof raw.status === 'string' ? raw.status : undefined,
+        updatedAt: typeof raw.updated_at === 'string'
+          ? raw.updated_at
+          : typeof raw.updatedAt === 'string'
+            ? raw.updatedAt
+            : undefined,
+      };
+
+      return summary;
+    })
+    .filter((event): event is ResourceEventSummary => Boolean(event));
+};
+
+const parseStringArray = (input: unknown): string[] => {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+  return input
+    .map((value) => (typeof value === 'string' ? value.trim() : null))
+    .filter((value): value is string => Boolean(value));
+};
+
 export const normalizeResource = (input: unknown, fallbackIndex?: number): Resource => {
   const raw = (input ?? {}) as Record<string, unknown>;
   const rawTags = Array.isArray(raw.tags) ? raw.tags : [];
@@ -113,6 +276,29 @@ export const normalizeResource = (input: unknown, fallbackIndex?: number): Resou
   const relatedIncidents = parseNumber(raw.related_incidents ?? raw.incident_count);
   const alarms = Array.isArray(raw.alarms) ? raw.alarms.length : undefined;
 
+  const metricsHistory = parseMetricHistoryPayload(
+    raw.metrics_history ?? raw.metric_history ?? raw.metricsHistory,
+  );
+
+  const observability = parseObservabilityPayload(raw.observability);
+
+  const healthReasonsRaw = Array.isArray(raw.health_reasons)
+    ? parseStringArray(raw.health_reasons)
+    : Array.isArray(raw.healthReasons)
+      ? parseStringArray(raw.healthReasons)
+      : typeof raw.health_reason === 'string'
+        ? [raw.health_reason]
+        : [];
+
+  const actions = parseResourceActionsPayload(raw.actions);
+  const relatedEvents = parseRelatedEventsPayload(raw.related_events ?? raw.relatedEvents);
+
+  const healthSummary = typeof raw.health_summary === 'string'
+    ? raw.health_summary
+    : typeof raw.healthSummary === 'string'
+      ? raw.healthSummary
+      : healthReasonsRaw[0];
+
   return {
     id,
     name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : id,
@@ -131,6 +317,12 @@ export const normalizeResource = (input: unknown, fallbackIndex?: number): Resou
     groups,
     relatedIncidents: relatedIncidents ?? alarms,
     metrics,
+    metricsHistory,
+    healthSummary,
+    healthReasons: healthReasonsRaw,
+    actions,
+    observability,
+    relatedEvents,
     lastCheckedAt: typeof raw.last_checked_at === 'string' ? raw.last_checked_at : typeof raw.lastCheckedAt === 'string' ? raw.lastCheckedAt : undefined,
     createdAt: typeof raw.created_at === 'string' ? raw.created_at : undefined,
     updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
@@ -143,13 +335,17 @@ export const normalizeResources = (input: unknown[]): Resource[] =>
 export const normalizeResourceGroup = (input: unknown, fallbackIndex?: number): ResourceGroup => {
   const raw = (input ?? {}) as Record<string, unknown>;
   const tagsRaw = Array.isArray(raw.tags) ? raw.tags : [];
-  const memberIdsRaw = Array.isArray(raw.members) ? raw.members : [];
+  const memberIdsSource = Array.isArray(raw.members)
+    ? raw.members
+    : Array.isArray(raw.member_ids)
+      ? raw.member_ids
+      : [];
 
   const tags = tagsRaw
     .map((item) => normalizeTag(item))
     .filter((tag): tag is ResourceTag => Boolean(tag));
 
-  const memberIds = memberIdsRaw
+  const memberIds = memberIdsSource
     .map((value) => (typeof value === 'string' ? value : typeof value === 'number' ? String(value) : null))
     .filter((value): value is string => Boolean(value));
 
@@ -157,6 +353,10 @@ export const normalizeResourceGroup = (input: unknown, fallbackIndex?: number): 
   const id = typeof idCandidate === 'string' && idCandidate.trim()
     ? idCandidate.trim()
     : `resource_group_${String(fallbackIndex ?? Date.now())}`;
+
+  const metadata = typeof raw.metadata === 'object' && raw.metadata !== null
+    ? (raw.metadata as ResourceGroupMetadata)
+    : undefined;
 
   return {
     id,
@@ -170,9 +370,10 @@ export const normalizeResourceGroup = (input: unknown, fallbackIndex?: number): 
     ownerName: typeof raw.owner === 'string' ? raw.owner : undefined,
     memberIds,
     tags,
+    status: typeof raw.status === 'string' ? raw.status : undefined,
     createdAt: typeof raw.created_at === 'string' ? raw.created_at : undefined,
     updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
-    metadata: typeof raw.metadata === 'object' && raw.metadata !== null ? (raw.metadata as Record<string, unknown>) : undefined,
+    metadata,
   };
 };
 

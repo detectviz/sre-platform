@@ -7,9 +7,18 @@
     "mean_time_to_resolve_minutes": 42,
     "error_budget_burn_rate": 0.18,
     "top_services": [
-      { "service": "checkout-api", "availability": 99.85 },
-      { "service": "payment-gateway", "availability": 99.72 },
-      { "service": "customer-portal", "availability": 99.91 }
+      {
+        "service": "checkout-api",
+        "availability": 99.85
+      },
+      {
+        "service": "payment-gateway",
+        "availability": 99.72
+      },
+      {
+        "service": "customer-portal",
+        "availability": 99.91
+      }
     ]
   },
   "dashboards": [
@@ -24,7 +33,11 @@
       "viewers_count": 48,
       "favorites_count": 32,
       "panel_count": 18,
-      "data_sources": ["Prometheus", "CloudWatch", "ElasticSearch"],
+      "data_sources": [
+        "Prometheus",
+        "CloudWatch",
+        "ElasticSearch"
+      ],
       "thumbnail_url": null,
       "target_page_key": "infrastructure-insights",
       "updated_at": "2025-09-18T09:15:00Z"
@@ -40,7 +53,10 @@
       "viewers_count": 65,
       "favorites_count": 54,
       "panel_count": 22,
-      "data_sources": ["PagerDuty", "ServiceNow"],
+      "data_sources": [
+        "PagerDuty",
+        "ServiceNow"
+      ],
       "thumbnail_url": null,
       "target_page_key": "war-room",
       "updated_at": "2025-09-18T09:45:00Z"
@@ -56,7 +72,9 @@
       "viewers_count": 34,
       "favorites_count": 18,
       "panel_count": 11,
-      "data_sources": ["Internal API"],
+      "data_sources": [
+        "Internal API"
+      ],
       "thumbnail_url": null,
       "target_page_key": "automation-center",
       "updated_at": "2025-09-17T11:40:00Z"
@@ -73,12 +91,48 @@
     "service_trend": 3
   },
   "infrastructure_resource_usage": [
-    { "id": "1", "name": "prod-web-01", "type": "Server", "usage": 89, "status": "warning" },
-    { "id": "2", "name": "prod-db-master", "type": "Database", "usage": 76, "status": "healthy" },
-    { "id": "3", "name": "redis-cluster-01", "type": "Cache", "usage": 92, "status": "critical" },
-    { "id": "4", "name": "app-worker-pool", "type": "Service", "usage": 67, "status": "healthy" },
-    { "id": "5", "name": "elasticsearch-01", "type": "Search", "usage": 84, "status": "warning" },
-    { "id": "6", "name": "kafka-broker-01", "type": "Message Queue", "usage": 71, "status": "healthy" }
+    {
+      "id": "1",
+      "name": "prod-web-01",
+      "type": "Server",
+      "usage": 89,
+      "status": "warning"
+    },
+    {
+      "id": "2",
+      "name": "prod-db-master",
+      "type": "Database",
+      "usage": 76,
+      "status": "healthy"
+    },
+    {
+      "id": "3",
+      "name": "redis-cluster-01",
+      "type": "Cache",
+      "usage": 92,
+      "status": "critical"
+    },
+    {
+      "id": "4",
+      "name": "app-worker-pool",
+      "type": "Service",
+      "usage": 67,
+      "status": "healthy"
+    },
+    {
+      "id": "5",
+      "name": "elasticsearch-01",
+      "type": "Search",
+      "usage": 84,
+      "status": "warning"
+    },
+    {
+      "id": "6",
+      "name": "kafka-broker-01",
+      "type": "Message Queue",
+      "usage": 71,
+      "status": "healthy"
+    }
   ],
   "ai_risk_predictions": [
     {
@@ -117,8 +171,12 @@
       "status": "active",
       "last_login": "2025-09-18T07:45:00Z",
       "created_at": "2024-01-15T02:40:00Z",
-      "teams": ["team_platform"],
-      "roles": ["super_admin"],
+      "teams": [
+        "team_platform"
+      ],
+      "roles": [
+        "super_admin"
+      ],
       "preferences": {
         "theme": "dark",
         "timezone": "Asia/Taipei"
@@ -131,8 +189,12 @@
       "status": "active",
       "last_login": "2025-09-19T03:21:00Z",
       "created_at": "2024-06-04T11:18:00Z",
-      "teams": ["team_database"],
-      "roles": ["team_manager"],
+      "teams": [
+        "team_database"
+      ],
+      "roles": [
+        "team_manager"
+      ],
       "preferences": {
         "theme": "dark",
         "timezone": "Asia/Taipei"
@@ -145,8 +207,12 @@
       "status": "active",
       "last_login": "2025-09-19T09:02:00Z",
       "created_at": "2024-10-29T08:12:00Z",
-      "teams": ["team_observability"],
-      "roles": ["team_member"],
+      "teams": [
+        "team_observability"
+      ],
+      "roles": [
+        "team_member"
+      ],
       "preferences": {
         "theme": "light",
         "timezone": "Asia/Taipei"
@@ -191,9 +257,18 @@
         "disk_usage": 58.1
       },
       "tags": [
-        { "key": "environment", "value": "production" },
-        { "key": "tier", "value": "database" },
-        { "key": "team", "value": "database" }
+        {
+          "key": "environment",
+          "value": "production"
+        },
+        {
+          "key": "tier",
+          "value": "database"
+        },
+        {
+          "key": "team",
+          "value": "database"
+        }
       ]
     },
     {
@@ -213,9 +288,18 @@
         "disk_usage": 81.5
       },
       "tags": [
-        { "key": "environment", "value": "production" },
-        { "key": "tier", "value": "database" },
-        { "key": "team", "value": "database" }
+        {
+          "key": "environment",
+          "value": "production"
+        },
+        {
+          "key": "tier",
+          "value": "database"
+        },
+        {
+          "key": "team",
+          "value": "database"
+        }
       ]
     },
     {
@@ -235,9 +319,18 @@
         "error_rate": 7.2
       },
       "tags": [
-        { "key": "environment", "value": "production" },
-        { "key": "tier", "value": "application" },
-        { "key": "service", "value": "checkout" }
+        {
+          "key": "environment",
+          "value": "production"
+        },
+        {
+          "key": "tier",
+          "value": "application"
+        },
+        {
+          "key": "service",
+          "value": "checkout"
+        }
       ]
     },
     {
@@ -257,8 +350,14 @@
         "connections": 1820
       },
       "tags": [
-        { "key": "environment", "value": "production" },
-        { "key": "tier", "value": "cache" }
+        {
+          "key": "environment",
+          "value": "production"
+        },
+        {
+          "key": "tier",
+          "value": "cache"
+        }
       ]
     },
     {
@@ -278,8 +377,14 @@
         "latency_p95": 420
       },
       "tags": [
-        { "key": "environment", "value": "production" },
-        { "key": "tier", "value": "edge" }
+        {
+          "key": "environment",
+          "value": "production"
+        },
+        {
+          "key": "tier",
+          "value": "edge"
+        }
       ]
     }
   ],
@@ -289,7 +394,10 @@
       "name": "Production Databases",
       "description": "生產環境資料庫叢集",
       "owner_team_id": "team_database",
-      "resource_ids": ["res_db_prod01", "res_db_prod02"],
+      "resource_ids": [
+        "res_db_prod01",
+        "res_db_prod02"
+      ],
       "created_at": "2024-05-19T09:50:00Z"
     },
     {
@@ -297,7 +405,11 @@
       "name": "Checkout Stack",
       "description": "Checkout API 相關服務與資源",
       "owner_team_id": "team_platform",
-      "resource_ids": ["res_app_checkout", "res_cache_prod01", "res_lb_prod"],
+      "resource_ids": [
+        "res_app_checkout",
+        "res_cache_prod01",
+        "res_lb_prod"
+      ],
       "created_at": "2024-11-01T09:45:00Z"
     },
     {
@@ -310,11 +422,36 @@
     }
   ],
   "resource_tags": [
-    { "resource_id": "res_db_prod01", "tag_key": "environment", "tag_value": "production", "tagged_at": "2024-05-19T10:00:00Z" },
-    { "resource_id": "res_db_prod01", "tag_key": "tier", "tag_value": "database", "tagged_at": "2024-05-19T10:00:00Z" },
-    { "resource_id": "res_db_prod02", "tag_key": "environment", "tag_value": "production", "tagged_at": "2024-05-19T10:05:00Z" },
-    { "resource_id": "res_app_checkout", "tag_key": "service", "tag_value": "checkout", "tagged_at": "2024-11-01T10:00:00Z" },
-    { "resource_id": "res_lb_prod", "tag_key": "tier", "tag_value": "edge", "tagged_at": "2024-02-14T09:00:00Z" }
+    {
+      "resource_id": "res_db_prod01",
+      "tag_key": "environment",
+      "tag_value": "production",
+      "tagged_at": "2024-05-19T10:00:00Z"
+    },
+    {
+      "resource_id": "res_db_prod01",
+      "tag_key": "tier",
+      "tag_value": "database",
+      "tagged_at": "2024-05-19T10:00:00Z"
+    },
+    {
+      "resource_id": "res_db_prod02",
+      "tag_key": "environment",
+      "tag_value": "production",
+      "tagged_at": "2024-05-19T10:05:00Z"
+    },
+    {
+      "resource_id": "res_app_checkout",
+      "tag_key": "service",
+      "tag_value": "checkout",
+      "tagged_at": "2024-11-01T10:00:00Z"
+    },
+    {
+      "resource_id": "res_lb_prod",
+      "tag_key": "tier",
+      "tag_value": "edge",
+      "tagged_at": "2024-02-14T09:00:00Z"
+    }
   ],
   "incidents": [
     {
@@ -378,22 +515,50 @@
         "value": "432ms"
       },
       "tags": [
-        { "key": "environment", "value": "production", "color": "#f5222d" },
-        { "key": "service", "value": "checkout", "color": "#13c2c2" }
+        {
+          "key": "environment",
+          "value": "production",
+          "color": "#f5222d"
+        },
+        {
+          "key": "service",
+          "value": "checkout",
+          "color": "#13c2c2"
+        }
       ],
       "quick_links": [
-        { "name": "Grafana Dashboard", "url": "https://grafana.example.com/d/checkout" },
-        { "name": "Service Pager", "url": "https://pager.example.com/checkout" }
+        {
+          "name": "Grafana Dashboard",
+          "url": "https://grafana.example.com/d/checkout"
+        },
+        {
+          "name": "Service Pager",
+          "url": "https://pager.example.com/checkout"
+        }
       ],
       "available_actions": [
-        { "key": "ACKNOWLEDGE", "label": "確認事件", "api_endpoint": "/events/evt_checkout_latency/acknowledge", "method": "POST" },
-        { "key": "RUN_AUTO_REMEDIATION", "label": "啟動自動化腳本", "api_endpoint": "/automation/runs", "method": "POST" }
+        {
+          "key": "ACKNOWLEDGE",
+          "label": "確認事件",
+          "api_endpoint": "/events/evt_checkout_latency/acknowledge",
+          "method": "POST"
+        },
+        {
+          "key": "RUN_AUTO_REMEDIATION",
+          "label": "啟動自動化腳本",
+          "api_endpoint": "/automation/runs",
+          "method": "POST"
+        }
       ],
       "history_logs": [
         {
           "id": "hist_evt_checkout_1",
           "type": "SYSTEM_STATE_CHANGE",
-          "actor": { "type": "system", "id": "alertmanager", "name": "Grafana Alert" },
+          "actor": {
+            "type": "system",
+            "id": "alertmanager",
+            "name": "Grafana Alert"
+          },
           "content": "事件於 05:40 觸發",
           "metadata": {},
           "created_at": "2025-09-19T05:40:00Z"
@@ -401,7 +566,11 @@
         {
           "id": "hist_evt_checkout_2",
           "type": "USER_COMMENT",
-          "actor": { "type": "user", "id": "user_oncall", "name": "王雅婷" },
+          "actor": {
+            "type": "user",
+            "id": "user_oncall",
+            "name": "王雅婷"
+          },
           "content": "# 目前狀態\n- 初判為資料庫延遲導致\n- 已啟動 read replica 觀察",
           "metadata": {},
           "created_at": "2025-09-19T05:48:00Z"
@@ -475,21 +644,46 @@
         "value": "88.1%"
       },
       "tags": [
-        { "key": "environment", "value": "production", "color": "#fadb14" },
-        { "key": "tier", "value": "database", "color": "#2f54eb" }
+        {
+          "key": "environment",
+          "value": "production",
+          "color": "#fadb14"
+        },
+        {
+          "key": "tier",
+          "value": "database",
+          "color": "#2f54eb"
+        }
       ],
       "quick_links": [
-        { "name": "Query Performance Dashboard", "url": "https://grafana.example.com/d/db-performance" }
+        {
+          "name": "Query Performance Dashboard",
+          "url": "https://grafana.example.com/d/db-performance"
+        }
       ],
       "available_actions": [
-        { "key": "ACKNOWLEDGE", "label": "確認事件", "api_endpoint": "/events/evt_db_cpu/acknowledge", "method": "POST" },
-        { "key": "RESOLVE", "label": "標記為已解決", "api_endpoint": "/events/evt_db_cpu/resolve", "method": "POST" }
+        {
+          "key": "ACKNOWLEDGE",
+          "label": "確認事件",
+          "api_endpoint": "/events/evt_db_cpu/acknowledge",
+          "method": "POST"
+        },
+        {
+          "key": "RESOLVE",
+          "label": "標記為已解決",
+          "api_endpoint": "/events/evt_db_cpu/resolve",
+          "method": "POST"
+        }
       ],
       "history_logs": [
         {
           "id": "hist_evt_db_cpu_1",
           "type": "SYSTEM_STATE_CHANGE",
-          "actor": { "type": "system", "id": "alertmanager", "name": "Grafana Alert" },
+          "actor": {
+            "type": "system",
+            "id": "alertmanager",
+            "name": "Grafana Alert"
+          },
           "content": "事件於 11:50 觸發",
           "metadata": {},
           "created_at": "2025-09-18T11:50:00Z"
@@ -497,7 +691,11 @@
         {
           "id": "hist_evt_db_cpu_2",
           "type": "ASSIGNEE_CHANGE",
-          "actor": { "type": "user", "id": "user_ops_lead", "name": "陳思齊" },
+          "actor": {
+            "type": "user",
+            "id": "user_ops_lead",
+            "name": "陳思齊"
+          },
           "content": "指派給 林冠宇 (user_database_eng)",
           "metadata": {},
           "created_at": "2025-09-18T11:54:00Z"
@@ -551,8 +749,16 @@
       "name": "週末資料庫維護",
       "description": "週末凌晨維護窗口，靜音資料庫告警",
       "matchers": [
-        { "name": "environment", "value": "production", "isRegex": false },
-        { "name": "service", "value": "database", "isRegex": false }
+        {
+          "name": "environment",
+          "value": "production",
+          "isRegex": false
+        },
+        {
+          "name": "service",
+          "value": "database",
+          "isRegex": false
+        }
       ],
       "cron_expression": "0 2 * * 6,0",
       "duration_minutes": 240,
@@ -568,8 +774,16 @@
       "name": "平日夜間部署窗口",
       "description": "平日 23:00~02:00 部署靜音",
       "matchers": [
-        { "name": "alertname", "value": "DeploymentAlert", "isRegex": false },
-        { "name": "team", "value": "platform", "isRegex": false }
+        {
+          "name": "alertname",
+          "value": "DeploymentAlert",
+          "isRegex": false
+        },
+        {
+          "name": "team",
+          "value": "platform",
+          "isRegex": false
+        }
       ],
       "cron_expression": "0 23 * * 1-5",
       "duration_minutes": 180,
@@ -611,7 +825,9 @@
         "error_rate > 3%",
         "rolling_window = 5m"
       ],
-      "actions": ["通知: Web Platform Oncall"],
+      "actions": [
+        "通知: Web Platform Oncall"
+      ],
       "owner": "Web Platform Team",
       "last_updated": "2025-09-18T01:00:00Z"
     },
@@ -626,7 +842,9 @@
         "latency_p95 > 2000ms",
         "env = staging"
       ],
-      "actions": ["通知: QA Oncall"],
+      "actions": [
+        "通知: QA Oncall"
+      ],
       "owner": "Performance Guild",
       "last_updated": "2025-09-15T14:30:00Z"
     }
@@ -636,8 +854,13 @@
       "id": "policy_checkout_pager",
       "name": "Checkout Critical Pager",
       "description": "Checkout 服務嚴重告警發送 Pager",
-      "channels": ["channel_pagerduty_checkout", "channel_slack_checkout"],
-      "severity": ["critical"],
+      "channels": [
+        "channel_pagerduty_checkout",
+        "channel_slack_checkout"
+      ],
+      "severity": [
+        "critical"
+      ],
       "created_at": "2024-05-01T03:00:00Z"
     }
   ],
@@ -744,11 +967,36 @@
     }
   ],
   "tag_allowed_values": [
-    { "id": "tag_val_environment_prod", "tag_key_id": "tag_key_environment", "value": "production", "color": "#f5222d" },
-    { "id": "tag_val_environment_stg", "tag_key_id": "tag_key_environment", "value": "staging", "color": "#faad14" },
-    { "id": "tag_val_environment_dev", "tag_key_id": "tag_key_environment", "value": "development", "color": "#2f54eb" },
-    { "id": "tag_val_service_checkout", "tag_key_id": "tag_key_service", "value": "checkout", "color": "#13c2c2" },
-    { "id": "tag_val_service_payment", "tag_key_id": "tag_key_service", "value": "payment", "color": "#531dab" }
+    {
+      "id": "tag_val_environment_prod",
+      "tag_key_id": "tag_key_environment",
+      "value": "production",
+      "color": "#f5222d"
+    },
+    {
+      "id": "tag_val_environment_stg",
+      "tag_key_id": "tag_key_environment",
+      "value": "staging",
+      "color": "#faad14"
+    },
+    {
+      "id": "tag_val_environment_dev",
+      "tag_key_id": "tag_key_environment",
+      "value": "development",
+      "color": "#2f54eb"
+    },
+    {
+      "id": "tag_val_service_checkout",
+      "tag_key_id": "tag_key_service",
+      "value": "checkout",
+      "color": "#13c2c2"
+    },
+    {
+      "id": "tag_val_service_payment",
+      "tag_key_id": "tag_key_service",
+      "value": "payment",
+      "color": "#531dab"
+    }
   ],
   "tag_compliance_violations": [
     {
@@ -773,7 +1021,11 @@
       "creator_id": "user_ops_lead",
       "category": "deployment",
       "parameters_definition": {
-        "replica_count": { "type": "integer", "description": "目標副本數", "required": true }
+        "replica_count": {
+          "type": "integer",
+          "description": "目標副本數",
+          "required": true
+        }
       },
       "git_repo_url": "https://github.com/sre-platform/automation-scripts",
       "commit_hash": "7f9a1c2",
@@ -791,7 +1043,9 @@
       "description": "每日自動執行資料庫備份",
       "script_id": "script_scale_checkout",
       "cron_expression": "0 2 * * *",
-      "parameters": { "replica_count": 6 },
+      "parameters": {
+        "replica_count": 6
+      },
       "is_enabled": true,
       "last_status": "success",
       "last_run_at": "2025-09-19T02:00:00Z",
@@ -832,8 +1086,12 @@
       "result": "success",
       "created_at": "2025-08-01T04:30:00Z",
       "changes": {
-        "duration_minutes": { "old": 120, "new": 180 }
+        "duration_minutes": {
+          "old": 120,
+          "new": 180
+        }
       }
     }
-  ]
+  ],
+  "channel_health_checks": []
 }

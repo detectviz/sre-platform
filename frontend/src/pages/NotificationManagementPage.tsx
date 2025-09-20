@@ -22,9 +22,16 @@ import {
   MailOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
 import fallbackData from '../mocks/db.json';
-import { ContextualKPICard, DataTable, PageHeader } from '../components';
+import { ContextualKPICard, DataTable, PageHeader, StatusBadge } from '../components';
 import useNotifications from '../hooks/useNotifications';
+import useNotificationChannels from '../hooks/useNotificationChannels';
+import type { NotificationChannel } from '../types/notifications';
+import { fetchJson } from '../utils/apiClient';
+
+dayjs.extend(relativeTime);
 
 type NotificationStrategy = {
   key: string;
