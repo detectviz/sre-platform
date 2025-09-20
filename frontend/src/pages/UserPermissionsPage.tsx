@@ -18,6 +18,7 @@ import RoleFormModal from '../components/RoleFormModal';
 import { useUsers } from '../hooks/useUsers';
 import { useTeams } from '../hooks/useTeams';
 import { useRoles } from '../hooks/useRoles';
+import api from '../services/api';
 
 // Define types based on openapi.yaml
 type UserRecord = {
@@ -123,7 +124,6 @@ const UserPermissionsPage = ({ onNavigate: _onNavigate, pageKey }: { onNavigate?
       cancelText: '取消',
       onOk: async () => {
         try {
-          // @ts-ignore
           await api.deleteUser(user.id);
           message.success('人員已刪除');
           refetchUsers();
@@ -153,7 +153,6 @@ const UserPermissionsPage = ({ onNavigate: _onNavigate, pageKey }: { onNavigate?
       cancelText: '取消',
       onOk: async () => {
         try {
-          // @ts-ignore
           await api.deleteTeam(team.id);
           message.success('團隊已刪除');
           refetchTeams();
@@ -188,7 +187,6 @@ const UserPermissionsPage = ({ onNavigate: _onNavigate, pageKey }: { onNavigate?
       cancelText: '取消',
       onOk: async () => {
         try {
-          // @ts-ignore
           await api.deleteRole(role.id);
           message.success('角色已刪除');
           // In real app, refetch roles

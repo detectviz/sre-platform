@@ -11,7 +11,7 @@ import {
   ThunderboltOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
-import { Alert, Col, Row, Space, Tabs, Select as AntdSelect, Card, Empty, Button, Progress, Typography } from 'antd';
+import { Alert, Col, Row, Space, Tabs, Select as AntdSelect, Card, Empty, Button, Progress, Typography, Spin } from 'antd';
 import type { TabsProps } from 'antd';
 import { ContextualKPICard, PageHeader } from '../components';
 import { useCapacityPlanning } from '../hooks/useCapacityPlanning';
@@ -57,7 +57,11 @@ const CapacityPlanningContent = () => {
 
   const renderContent = () => {
     if (loading) {
-      return null; // Charts have their own loading spinners
+      return (
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 120 }}>
+          <Spin tip="正在載入容量規劃資料..." size="large" />
+        </div>
+      );
     }
 
     if (error) {

@@ -319,7 +319,7 @@ const DashboardAdministrationPage = ({ onNavigate: _onNavigate }: DashboardAdmin
           return (
             <Col key={categoryKey} xs={24} md={12} xl={8}>
               <Card
-                className="glass-surface"
+                className="nav-item"
                 title={
                   <Space size={12} align="start">
                     <div
@@ -407,7 +407,7 @@ const DashboardAdministrationPage = ({ onNavigate: _onNavigate }: DashboardAdmin
         })}
       </Row>
 
-      <Card className="glass-surface" title="熱門儀表板">
+      <Card className="nav-item" title="熱門儀表板">
         {popularDashboards.length === 0 ? (
           <Empty description="暫無統計資料" image={Empty.PRESENTED_IMAGE_SIMPLE} />
         ) : (

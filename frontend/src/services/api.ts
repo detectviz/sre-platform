@@ -58,6 +58,14 @@ const mockApi = {
     console.log(`Mock updating role ${roleId} with data:`, data);
     return Promise.resolve({ success: true });
   },
+  deleteTeam: (teamId: string) => {
+    console.log(`Mock deleting team ${teamId}`);
+    return Promise.resolve({ success: true });
+  },
+  deleteRole: (roleId: string) => {
+    console.log(`Mock deleting role ${roleId}`);
+    return Promise.resolve({ success: true });
+  },
   getAuditLogs: () => Promise.resolve(db.audit_logs),
 };
 
@@ -83,7 +91,47 @@ const realApi = {
     },
     body: JSON.stringify(prefs),
   }).then(res => res.json()),
-  // Add real API calls for user/team management later
+  inviteUser: (email: string) => fetch('/api/v1/users/invite', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  }).then(res => res.json()),
+  updateUser: (userId: string, data: any) => fetch(`/api/v1/users/${userId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).then(res => res.json()),
+  deleteUser: (userId: string) => fetch(`/api/v1/users/${userId}`, {
+    method: 'DELETE',
+  }).then(res => res.json()),
+  createTeam: (data: any) => fetch('/api/v1/teams', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).then(res => res.json()),
+  updateTeam: (teamId: string, data: any) => fetch(`/api/v1/teams/${teamId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).then(res => res.json()),
+  deleteTeam: (teamId: string) => fetch(`/api/v1/teams/${teamId}`, {
+    method: 'DELETE',
+  }).then(res => res.json()),
+  getPermissions: () => fetch('/api/v1/permissions').then(res => res.json()),
+  createRole: (data: any) => fetch('/api/v1/roles', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).then(res => res.json()),
+  updateRole: (roleId: string, data: any) => fetch(`/api/v1/roles/${roleId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).then(res => res.json()),
+  deleteRole: (roleId: string) => fetch(`/api/v1/roles/${roleId}`, {
+    method: 'DELETE',
+  }).then(res => res.json()),
+  getAuditLogs: () => fetch('/api/v1/audit-logs').then(res => res.json()),
 };
 
 const api = USE_MOCK_DATA ? mockApi : realApi;

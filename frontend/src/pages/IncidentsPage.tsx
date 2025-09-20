@@ -14,6 +14,7 @@ import {
   Select,
   Space,
   Spin,
+  Switch,
   Tabs,
   Tag,
   Timeline,
@@ -21,8 +22,6 @@ import {
   Typography,
 } from 'antd';
 import type { TabsProps } from 'antd';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
 import {
   BellOutlined,
   CheckCircleOutlined,
@@ -40,18 +39,19 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 
+import dayjs from 'dayjs';
 import { ContextualKPICard, CreateSilenceModal, DataTable, GlassModal, PageHeader, StatusBadge } from '../components';
 import useIncidents from '../hooks/useIncidents';
 import { useUsers } from '../hooks/useUsers';
 import { fetchJson } from '../utils/apiClient';
+import { formatDateTime, formatRelative } from '../utils/formatters';
+import { getStatusTone } from '../constants/statusMaps';
 
 import type { StatusBadgeProps } from '../components/StatusBadge';
 import type { ContextualKPICardProps } from '../components/ContextualKPICard';
 
 const { Text } = Typography;
 const { Search } = Input;
-
-dayjs.extend(relativeTime);
 
 type IncidentRecord = {
   id: string;
@@ -135,20 +135,6 @@ type AIAnalysisResult = {
   relatedSignals?: string[];
 };
 
-const severityToneMap: Record<string, StatusBadgeProps['tone']> = {
-  critical: 'danger',
-  high: 'danger',
-  major: 'danger',
-  error: 'danger',
-  warning: 'warning',
-  elevated: 'warning',
-  medium: 'warning',
-  moderate: 'warning',
-  low: 'info',
-  minor: 'info',
-  info: 'info',
-  informational: 'info',
-};
 
 const severityLabelMap: Record<string, string> = {
   critical: 'P0 重大',
@@ -161,17 +147,6 @@ const severityLabelMap: Record<string, string> = {
   info: '資訊',
 };
 
-const statusToneMap: Record<string, StatusBadgeProps['tone']> = {
-  new: 'danger',
-  acknowledged: 'warning',
-  investigating: 'warning',
-  in_progress: 'warning',
-  escalated: 'warning',
-  resolved: 'success',
-  closed: 'success',
-  silenced: 'info',
-  suppressed: 'info',
-};
 
 const statusLabelMap: Record<string, string> = {
   new: '新事件',
@@ -215,17 +190,6 @@ const impactToneMap: Record<string, StatusBadgeProps['tone']> = {
   low: 'info',
 };
 
-const formatDateTime = (value?: string | null) => {
-  if (!value) return '—';
-  const parsed = dayjs(value);
-  return parsed.isValid() ? parsed.format('YYYY/MM/DD HH:mm') : '—';
-};
-
-const formatRelative = (value?: string | null) => {
-  if (!value) return '—';
-  const parsed = dayjs(value);
-  return parsed.isValid() ? parsed.fromNow() : '—';
-};
 
 const normalizeId = (raw: { id?: string; key?: string; summary?: string; created_at?: string; rule_id?: string | null; resource_name?: string | null }) => {
   if (raw.id) return String(raw.id);
@@ -863,7 +827,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         render: (severity: string) => (
           <StatusBadge
             label={getSeverityLabel(severity)}
-            tone={severityToneMap[severity?.toLowerCase() ?? ''] ?? 'neutral'}
+            tone={getStatusTone(severity, 'severity')}
           />
         ),
       },
@@ -919,9 +883,12 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
             <Button type="link" onClick={() => handleRuleModalOpen(record)}>
               編輯
             </Button>
-            <Button type="link" onClick={() => handleRuleStatusToggle(record)}>
-              {record.status === 'active' ? '暫停' : '啟用'}
-            </Button>
+            <Switch
+              checked={record.status === 'active'}
+              onChange={() => handleRuleStatusToggle(record)}
+              checkedChildren="啟用"
+              unCheckedChildren="暫停"
+            />
             <Button type="link" danger onClick={() => handleDeleteRule(record)}>
               刪除
             </Button>
@@ -1406,7 +1373,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         return (
           <StatusBadge
             label={getSeverityLabel(normalized)}
-            tone={severityToneMap[normalized] ?? 'neutral'}
+            tone={getStatusTone(severity, 'severity')}
           />
         );
       },
@@ -1462,7 +1429,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         return (
           <StatusBadge
             label={getStatusLabel(normalized)}
-            tone={statusToneMap[normalized] ?? 'neutral'}
+            tone={getStatusTone(status, 'incident')}
           />
         );
       },
@@ -1611,13 +1578,13 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
               <Descriptions.Item label="嚴重性">
                 <StatusBadge
                   label={getSeverityLabel(currentIncident.severity)}
-                  tone={currentIncident.severity ? severityToneMap[currentIncident.severity] ?? 'neutral' : 'neutral'}
+                  tone={getStatusTone(currentIncident.severity, 'severity')}
                 />
               </Descriptions.Item>
               <Descriptions.Item label="狀態">
                 <StatusBadge
                   label={getStatusLabel(currentIncident.status)}
-                  tone={currentIncident.status ? statusToneMap[currentIncident.status] ?? 'neutral' : 'neutral'}
+                  tone={getStatusTone(currentIncident.status, 'incident')}
                 />
               </Descriptions.Item>
               <Descriptions.Item label="來源">
@@ -1693,6 +1660,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         children: (
           <Timeline
             mode="left"
+            className="incident-timeline"
             items={[
               {
                 color: 'red',
@@ -1775,7 +1743,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
                     <Space size={12} wrap>
                       <StatusBadge
                         label={getStatusLabel(item.status)}
-                        tone={item.status ? statusToneMap[item.status] ?? 'neutral' : 'neutral'}
+                        tone={getStatusTone(item.status, 'incident')}
                       />
                       <Text type="secondary">{formatRelative(item.created_at)}</Text>
                     </Space>
@@ -1936,6 +1904,23 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
     </>
   );
 
+  // Dynamic page title based on active tab
+  useEffect(() => {
+    const labelText = (() => {
+      switch (activeTab) {
+        case 'incident-list':
+          return '事件列表';
+        case 'alerting-rules':
+          return '事件規則';
+        case 'silences':
+          return '靜音規則';
+        default:
+          return '事件管理';
+      }
+    })();
+    document.title = `${labelText} - SRE 平台`;
+  }, [activeTab]);
+
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'incident-list':
@@ -1955,6 +1940,15 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         title="事件管理"
         subtitle="集中掌握事件熱度、篩選噪音並協調跨團隊作業"
         description="查看活躍事件、應用批次操作，並深入檢視事件上下文與自動化流程。"
+        extra={
+          <Button
+            icon={<ReloadOutlined />}
+            onClick={() => refetch()}
+            loading={incidentsLoading}
+          >
+            重新整理
+          </Button>
+        }
       />
 
       <Tabs

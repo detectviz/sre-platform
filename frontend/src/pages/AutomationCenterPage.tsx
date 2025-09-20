@@ -31,9 +31,9 @@ import {
   CloudServerOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import durationPlugin from 'dayjs/plugin/duration';
-import relativeTimePlugin from 'dayjs/plugin/relativeTime';
 import { ContextualKPICard, DataTable, GlassModal, PageHeader, StatusBadge } from '../components';
+import { formatDurationMs } from '../utils/formatters';
+import { getStatusTone } from '../constants/statusMaps';
 import type { ContextualKPICardProps, KPIStatus } from '../components/ContextualKPICard';
 import useAutomationCenter from '../hooks/useAutomationCenter';
 import useBackgroundJobs from '../hooks/useBackgroundJobs';
@@ -45,9 +45,6 @@ import type {
 } from '../types/automation';
 
 const { Text, Paragraph } = Typography;
-
-dayjs.extend(relativeTimePlugin);
-dayjs.extend(durationPlugin);
 
 type AutomationCenterPageProps = {
   onNavigate?: (key: string, params?: Record<string, unknown>) => void;
@@ -61,30 +58,7 @@ type ScriptFormValues = {
   description?: string;
 };
 
-const statusToneMap: Record<string, React.ComponentProps<typeof StatusBadge>['tone']> = {
-  success: 'success',
-  failed: 'danger',
-  running: 'info',
-  pending: 'info',
-  cancelled: 'neutral',
-};
 
-const formatDuration = (value?: number) => {
-  if (!value || Number.isNaN(value)) {
-    return '—';
-  }
-  if (value < 1000) {
-    return `${value} ms`;
-  }
-  const totalSeconds = value / 1000;
-  if (totalSeconds < 60) {
-    return `${totalSeconds.toFixed(totalSeconds < 10 ? 1 : 0)} 秒`;
-  }
-  const duration = dayjs.duration(value, 'milliseconds');
-  const minutes = Math.floor(duration.asMinutes());
-  const seconds = Math.round(duration.seconds());
-  return `${minutes} 分 ${seconds} 秒`;
-};
 
 type AutomationKpiCard = {
   key: string;
@@ -220,7 +194,7 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
           {record.computedLastStatus && (
             <StatusBadge
               label={record.computedLastStatus === 'success' ? '成功' : record.computedLastStatus === 'failed' ? '失敗' : '執行中'}
-              tone={statusToneMap[record.computedLastStatus] ?? 'info'}
+              tone={getStatusTone(record.computedLastStatus, 'automation')}
             />
           )}
         </Space>
@@ -340,7 +314,7 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
       render: (value?: string) => (
         <StatusBadge
           label={value ? (value === 'success' ? '成功' : value === 'failed' ? '失敗' : '執行中') : '未知'}
-          tone={value ? statusToneMap[value] ?? 'neutral' : 'neutral'}
+          tone={getStatusTone(value, 'automation')}
         />
       ),
     },
@@ -419,7 +393,7 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
       title: '耗時',
       dataIndex: 'durationMs',
       key: 'durationMs',
-      render: (value?: number) => formatDuration(value),
+      render: (value?: number) => formatDurationMs(value),
     },
     {
       title: '狀態',
@@ -428,7 +402,7 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
       render: (value: string) => (
         <StatusBadge
           label={value === 'success' ? '成功' : value === 'failed' ? '失敗' : value === 'running' ? '執行中' : '已取消'}
-          tone={statusToneMap[value] ?? 'neutral'}
+          tone={getStatusTone(value, 'automation')}
         />
       ),
     },
@@ -725,6 +699,25 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
     onNavigate?.(key);
   };
 
+  // Dynamic page title based on active tab
+  useEffect(() => {
+    const labelText = (() => {
+      switch (activeTab) {
+        case 'scripts':
+          return '腳本庫';
+        case 'schedules':
+          return '排程管理';
+        case 'executions':
+          return '執行日誌';
+        case 'jobs':
+          return '背景任務';
+        default:
+          return '自動化中心';
+      }
+    })();
+    document.title = `${labelText} - SRE 平台`;
+  }, [activeTab]);
+
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
       <PageHeader
@@ -828,7 +821,7 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
               <Text strong>狀態：</Text>
               <StatusBadge
                 label={executionDetail.status === 'success' ? '成功' : executionDetail.status === 'failed' ? '失敗' : executionDetail.status === 'running' ? '執行中' : '已取消'}
-                tone={statusToneMap[executionDetail.status] ?? 'neutral'}
+                tone={getStatusTone(executionDetail.status, 'automation')}
               />
             </Paragraph>
             <Paragraph>
@@ -841,7 +834,7 @@ const AutomationCenterPage = ({ onNavigate, pageKey }: AutomationCenterPageProps
               <Text strong>結束時間：</Text> {executionDetail.finishedAt ? dayjs(executionDetail.finishedAt).format('YYYY/MM/DD HH:mm:ss') : '—'}
             </Paragraph>
             <Paragraph>
-              <Text strong>耗時：</Text> {formatDuration(executionDetail.durationMs)}
+              <Text strong>耗時：</Text> {formatDurationMs(executionDetail.durationMs)}
             </Paragraph>
             <Paragraph>
               <Text strong>輸出：</Text>

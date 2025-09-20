@@ -1723,6 +1723,26 @@
       "message": "延遲偏高，已通知值班人員",
       "checked_at": "2025-09-20T10:59:45.937Z",
       "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758371939102_9hba",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 169,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T12:38:59.102Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758371939103_xem6",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 178,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-20T12:38:59.102Z",
+      "source": "scheduled_probe"
     }
   ]
 }

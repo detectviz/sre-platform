@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert, AutoComplete } from 'antd';
 import { UserOutlined, TeamOutlined, ApartmentOutlined, AuditOutlined, BellOutlined, TagsOutlined, MailOutlined, SafetyOutlined } from '@ant-design/icons';
+import { PageHeader } from '../components';
 
 const { Title, Paragraph } = Typography;
 
@@ -149,17 +150,19 @@ const SettingsPage = () => {
     );
 
     return (
-      <React.Fragment>
-        <Title level={2} className="page-title" style={{ marginBottom: '2px' }}>設定</Title>
-        <Paragraph className="page-subtitle" type="secondary" style={{ marginBottom: '4px' }}>
-          配置平台的人員、權限與系統功能設定。
-        </Paragraph>
-        <div style={{ marginTop: '16px' }}>
+      <Space direction="vertical" size="large" style={{ width: '100%' }}>
+        <PageHeader
+          title="設定"
+          subtitle="配置平台的人員、權限與系統功能設定"
+          description="管理身份存取、通知策略與平台核心配置，確保系統安全與運作效率。"
+        />
+
+        <div>
           {renderCategory('身份與存取管理')}
           {renderCategory('通知管理')}
           {renderCategory('平台設定')}
         </div>
-      </React.Fragment>
+      </Space>
     );
   };
 

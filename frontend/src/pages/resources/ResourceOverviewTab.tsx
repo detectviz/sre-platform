@@ -36,6 +36,7 @@ import {
   SmartFilterBuilder,
 } from '../../components';
 import type { StatusTone } from '../../components';
+import { getStatusTone } from '../../constants/statusMaps';
 import type {
   PaginationMeta,
   Resource,
@@ -62,14 +63,6 @@ const STATUS_OPTIONS: Array<{ label: string; value: ResourceStatus | 'ALL' }> = 
 const RESOURCE_TYPE_OPTIONS = ['application', 'service', 'database', 'cache', 'queue', 'infrastructure'];
 const ENVIRONMENT_OPTIONS = ['production', 'staging', 'testing', 'development'];
 
-const statusToneMap: Record<ResourceStatus, StatusTone> = {
-  HEALTHY: 'success',
-  WARNING: 'warning',
-  CRITICAL: 'danger',
-  SILENCED: 'info',
-  MAINTENANCE: 'neutral',
-  UNKNOWN: 'neutral',
-};
 
 const statusLabelMap: Record<ResourceStatus, string> = {
   HEALTHY: '健康',
@@ -327,7 +320,7 @@ export const ResourceOverviewTab = ({
           <Tooltip title={tooltipText}>
             <StatusBadge
               label={statusLabelMap[resource.status] ?? resource.status}
-              tone={statusToneMap[resource.status] ?? 'neutral'}
+              tone={getStatusTone(resource.status, 'resource')}
             />
           </Tooltip>
         );

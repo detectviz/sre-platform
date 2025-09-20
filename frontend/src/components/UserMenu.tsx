@@ -78,7 +78,12 @@ export const UserMenu = ({
   ];
 
   return (
-    <Dropdown menu={{ items }} trigger={['click']} placement="bottomRight">
+    <Dropdown
+      menu={{ items }}
+      trigger={['click']}
+      placement="bottomRight"
+      overlayClassName="user-dropdown-menu"
+    >
       <Button type="text" className="user-menu__trigger">
         <Space size={8}>
           {avatar ?? (

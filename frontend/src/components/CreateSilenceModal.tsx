@@ -102,6 +102,7 @@ export const CreateSilenceModal = ({ open, onCancel, onSuccess, incidentId }: Cr
       okText="建立靜音"
       cancelText="取消"
       width={600}
+      className="silence-modal"
     >
       {isLoading ? (
         <Spin />

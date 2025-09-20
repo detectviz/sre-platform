@@ -2,19 +2,14 @@ import { useMemo } from 'react';
 import { Space, Typography, Tooltip, Button, Alert, Tag } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import dayjs from 'dayjs';
 import { DataTable, StatusBadge } from '../../components';
+import { formatRelative, formatDurationMs } from '../../utils/formatters';
+import { getStatusTone } from '../../constants/statusMaps';
 import type { StatusTone } from '../../components';
 import type { BackgroundJob } from '../../types/backgroundJobs';
 
 const { Text, Title } = Typography;
 
-const jobStatusToneMap: Record<string, StatusTone> = {
-  healthy: 'success',
-  warning: 'warning',
-  critical: 'danger',
-  paused: 'neutral',
-};
 
 const jobStatusLabelMap: Record<string, string> = {
   healthy: '健康',
@@ -23,32 +18,7 @@ const jobStatusLabelMap: Record<string, string> = {
   paused: '暫停',
 };
 
-const formatDurationShort = (value?: number | null) => {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return '—';
-  }
-  if (value < 1000) {
-    return `${value} ms`;
-  }
-  if (value < 60_000) {
-    const seconds = value / 1000;
-    return `${seconds.toFixed(seconds < 10 ? 1 : 0)} 秒`;
-  }
-  const minutes = Math.floor(value / 60_000);
-  const seconds = Math.round((value % 60_000) / 1000);
-  return `${minutes} 分 ${seconds.toString().padStart(2, '0')} 秒`;
-};
 
-const formatRelativeTime = (value?: string | null) => {
-  if (!value) {
-    return '—';
-  }
-  const parsed = dayjs(value);
-  if (!parsed.isValid()) {
-    return value;
-  }
-  return `${parsed.fromNow()} · ${parsed.format('YYYY/MM/DD HH:mm:ss')}`;
-};
 
 type BackgroundJobsPanelProps = {
   jobs: BackgroundJob[];
@@ -79,7 +49,7 @@ export const BackgroundJobsPanel = ({ jobs, loading, error, isFallback, summary,
       render: (value: BackgroundJob['status']) => (
         <StatusBadge
           label={jobStatusLabelMap[value ?? 'healthy'] ?? value ?? '健康'}
-          tone={jobStatusToneMap[value ?? 'healthy'] ?? 'neutral'}
+          tone={getStatusTone(value ?? 'healthy', 'general')}
         />
       ),
     },
@@ -151,9 +121,9 @@ export const BackgroundJobsPanel = ({ jobs, loading, error, isFallback, summary,
       width: 220,
       render: (_: unknown, record: BackgroundJob) => (
         <Space direction="vertical" size={2}>
-          <Text>{formatRelativeTime(record.last_run_at)}</Text>
+          <Text>{formatRelative(record.last_run_at)}</Text>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            耗時 {formatDurationShort(record.last_duration_ms)}
+            耗時 {formatDurationMs(record.last_duration_ms)}
           </Text>
         </Space>
       ),
@@ -163,7 +133,7 @@ export const BackgroundJobsPanel = ({ jobs, loading, error, isFallback, summary,
       dataIndex: 'next_run_at',
       key: 'nextRun',
       width: 220,
-      render: (value: BackgroundJob['next_run_at']) => formatRelativeTime(value),
+      render: (value: BackgroundJob['next_run_at']) => formatRelative(value),
     },
     {
       title: '最近訊息',
