@@ -474,10 +474,10 @@ paths:
         - $ref: "#/components/parameters/PageSizeParam"
         - name: status
           in: query
-          description: 事件狀態篩選
+          description: 事件狀態篩選。Grafana Alertmanager 原始狀態 `firing` 會在此映射為 `new`，以保持與前端 UI 與資料庫欄位的一致性。
           schema:
             type: string
-            enum: [FIRING, RESOLVED, PENDING]
+            enum: [new, acknowledged, resolved, silenced]
         - name: severity
           in: query
           description: 嚴重度篩選
@@ -1335,7 +1335,11 @@ components:
         id: { type: string, example: "evt_2a7d3e9f" }
         summary: { type: string, example: "CPU high on db-mysql-prod-02" }
         severity: { type: string, enum: [CRITICAL, WARNING, INFO] }
-        status: { type: string, enum: [FIRING, ACKNOWLEDGED, RESOLVED, MERGED] }
+        status:
+          type: string
+          description: "事件狀態。Grafana Alertmanager 的 `firing` 狀態會轉換為 `new`，確保與 UI 與資料庫一致。"
+          enum: [new, acknowledged, resolved, silenced]
+          x-enum-varnames: [NEW, ACKNOWLEDGED, RESOLVED, SILENCED]
         source: { type: string, example: "Prometheus" }
         triggered_at: { type: string, format: "date-time" }
         acknowledged_at: { type: string, format: "date-time", nullable: true }

@@ -303,7 +303,7 @@ CREATE TABLE `events` (
     `summary` VARCHAR(500) NOT NULL COMMENT '事件摘要',
     `description` TEXT COMMENT '事件描述',
     `severity` ENUM('critical', 'warning', 'info') DEFAULT 'warning' COMMENT '嚴重性',
-    `status` ENUM('firing', 'resolved', 'acknowledged', 'merged') DEFAULT 'firing' COMMENT '狀態',
+    `status` ENUM('new', 'acknowledged', 'resolved', 'silenced') DEFAULT 'new' COMMENT '狀態 (Grafana firing 對應 new)',
     `source` VARCHAR(100) COMMENT '事件來源 (e.g. Prometheus)',
     `resource_id` VARCHAR(36) COMMENT '相關資源ID',
     `rule_id` VARCHAR(255) COMMENT '觸發規則的UID (來自Grafana)',
