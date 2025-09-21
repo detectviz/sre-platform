@@ -58,6 +58,50 @@ body {
   margin-top: 0;
 }
 
+/* === Drawer 抽屜玻璃化設計 === */
+.platform-drawer .ant-drawer-mask {
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.platform-drawer .ant-drawer-content-wrapper {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+  overflow: hidden;
+}
+
+.platform-drawer .ant-drawer-content {
+  background: var(--bg-elevated);
+  border: var(--glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.platform-drawer .ant-drawer-header {
+  background: transparent;
+  border-bottom: 1px solid var(--border-light);
+  padding: var(--spacing-xl);
+}
+
+.platform-drawer .ant-drawer-title {
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.platform-drawer .ant-drawer-body {
+  padding: var(--spacing-xl);
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+.platform-drawer .ant-drawer-footer {
+  background: transparent;
+  border-top: 1px solid var(--border-light);
+  padding: var(--spacing-lg) var(--spacing-xl);
+}
+
 /* === 狀態標籤樣式 === */
 .status-badge {
   display: inline-flex;

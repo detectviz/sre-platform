@@ -22,11 +22,12 @@ import {
   Space,
   Spin,
   Tabs,
+  Divider,
   Tag as AntdTag,
   Typography,
 } from 'antd';
 import type { TabsProps } from 'antd';
-import { ContextualKPICard, DataTable, PageHeader } from '../components';
+import { ContextualKPICard, DataTable, GlassModal, PageHeader } from '../components';
 import useTags from '../hooks/useTags';
 import type { Tag } from '../hooks/useTags';
 import useTagMetadata from '../hooks/useTagMetadata';
@@ -47,6 +48,24 @@ const stats = {
   lastBackup: '2 小時前',
 };
 
+const ENFORCEMENT_META: Record<string, { label: string; color: string; helper: string }> = {
+  advisory: {
+    label: '建議 (Advisory)',
+    color: 'blue',
+    helper: '建議遵守，允許例外並記錄審計。',
+  },
+  warning: {
+    label: '警告 (Warning)',
+    color: 'orange',
+    helper: '儲存時提示警告，可由管理員覆寫。',
+  },
+  blocking: {
+    label: '阻擋 (Blocking)',
+    color: 'red',
+    helper: '不符合規則時拒絕提交，需走例外流程。',
+  },
+};
+
 type TagManagementTabProps = {
   refreshSignal: number;
 };
@@ -57,6 +76,11 @@ const TagManagementTab = ({ refreshSignal }: TagManagementTabProps) => {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Tag | null>(null);
   const [form] = Form.useForm<Tag>();
+  const keyNameValue = Form.useWatch('key_name', form);
+  const descriptionValue = Form.useWatch('description', form);
+  const enforcementValue = Form.useWatch('enforcement_level', form);
+  const regexValue = Form.useWatch('validation_regex', form);
+  const enforcementMeta = ENFORCEMENT_META[String(enforcementValue ?? 'advisory')] ?? ENFORCEMENT_META.advisory;
 
   useEffect(() => {
     if (refreshSignal > 0) {
@@ -130,8 +154,16 @@ const TagManagementTab = ({ refreshSignal }: TagManagementTabProps) => {
       message.success('標籤規則新增成功 (模擬)');
     }
     refresh();
+    setEditing(null);
     setOpen(false);
+    form.resetFields();
   };
+
+  const handleModalCancel = useCallback(() => {
+    setOpen(false);
+    setEditing(null);
+    form.resetFields();
+  }, [form]);
 
   if (error) {
     return <Alert type="error" message="無法載入標籤規則" description={(error as Error).message} showIcon />;
@@ -156,33 +188,100 @@ const TagManagementTab = ({ refreshSignal }: TagManagementTabProps) => {
           titleContent={<span style={{ fontWeight: 600 }}>標籤治理規則</span>}
         />
 
-        <Modal
-            open={open}
-            title={editing ? '編輯標籤規則' : '新增標籤規則'}
-            onCancel={() => setOpen(false)}
-            onOk={() => form.submit()}
-            okText="儲存"
-            cancelText="取消"
+        <GlassModal
+          open={open}
+          title={editing ? '編輯標籤規則' : '新增標籤規則'}
+          onCancel={handleModalCancel}
+          onOk={() => form.submit()}
+          okText={editing ? '儲存變更' : '建立標籤規則'}
+          cancelText="取消"
+          width={760}
         >
-            <Form form={form} layout="vertical" onFinish={handleSubmit}>
-                <Form.Item name="key_name" label="標籤鍵" rules={[{ required: true, message: '請輸入標籤鍵' }]}>
-                    <Input placeholder="例如: env, service, owner_team" />
-                </Form.Item>
-                <Form.Item name="description" label="描述">
-                    <Input.TextArea rows={3} placeholder="說明此標籤的用途與格式" />
-                </Form.Item>
-                <Form.Item name="enforcement_level" label="強制等級" rules={[{ required: true }]}>
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Alert
+              showIcon
+              type="info"
+              message="標籤治理規範"
+              description="標籤鍵是事件、資源與通知策略的共同語言。請為每個鍵提供清晰的描述與驗證規則，確保跨團隊的資料一致性。"
+            />
+
+            <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
+              <Row gutter={[16, 16]}>
+                <Col xs={24} md={16}>
+                  <Form.Item
+                    name="key_name"
+                    label="標籤鍵"
+                    rules={[{ required: true, message: '請輸入標籤鍵' }]}
+                    tooltip="使用小寫英文字母與底線，便於在自動化腳本與通知中引用"
+                  >
+                    <Input placeholder="例如：env、service、owner_team" />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="description"
+                    label="描述"
+                    tooltip="描述此標籤的來源與適用情境，協助跨團隊理解"
+                  >
+                    <Input.TextArea rows={3} placeholder="說明此標籤的用途與命名範例" />
+                  </Form.Item>
+
+                  <Form.Item
+                    name="enforcement_level"
+                    label="強制等級"
+                    rules={[{ required: true, message: '請選擇強制等級' }]}
+                  >
                     <Select>
-                        <Select.Option value="advisory">Advisory (建議)</Select.Option>
-                        <Select.Option value="warning">Warning (警告)</Select.Option>
-                        <Select.Option value="blocking">Blocking (阻擋)</Select.Option>
+                      <Select.Option value="advisory">建議 (Advisory)</Select.Option>
+                      <Select.Option value="warning">警告 (Warning)</Select.Option>
+                      <Select.Option value="blocking">阻擋 (Blocking)</Select.Option>
                     </Select>
-                </Form.Item>
-                <Form.Item name="validation_regex" label="驗證規則 (Regex)">
-                    <Input placeholder="例如: ^[a-z0-9-]+$" />
-                </Form.Item>
+                  </Form.Item>
+
+                  <Form.Item
+                    name="validation_regex"
+                    label="驗證規則 (Regex)"
+                    tooltip="為標籤值設定格式，例如僅允許小寫字母與破折號"
+                  >
+                    <Input placeholder="例如：^[a-z0-9-]+$" />
+                  </Form.Item>
+                </Col>
+
+                <Col xs={24} md={8}>
+                  <Card size="small" title="規則預覽" style={{ borderRadius: 16 }}>
+                    <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                      <Space align="center" size={8}>
+                        <Text strong style={{ fontSize: 16 }}>
+                          {keyNameValue || '尚未輸入標籤鍵'}
+                        </Text>
+                        <AntdTag color={enforcementMeta.color}>{enforcementMeta.label}</AntdTag>
+                      </Space>
+                      <Text type="secondary">
+                        {descriptionValue || '輸入描述來協助使用者理解標籤用途。'}
+                      </Text>
+                      <Divider style={{ margin: '12px 0' }} />
+                      <Text type="secondary">驗證規則</Text>
+                      <Paragraph
+                        code
+                        style={{ marginBottom: 8 }}
+                      >
+                        {regexValue || '未設定正則驗證'}
+                      </Paragraph>
+                      <Text type="secondary">{enforcementMeta.helper}</Text>
+                    </Space>
+                  </Card>
+                </Col>
+              </Row>
             </Form>
-        </Modal>
+
+            <Card size="small" title="最佳實踐" style={{ borderRadius: 16 }}>
+              <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                <Text type="secondary">• 標籤鍵建議以資料域為前綴，例如 `infra.env`、`app.service`。</Text>
+                <Text type="secondary">• 於通知與自動化流程中引用此標準鍵值，確保跨系統一致。</Text>
+                <Text type="secondary">• 強制等級為阻擋時，請同步建立例外流程並通知治理負責人。</Text>
+              </Space>
+            </Card>
+          </Space>
+        </GlassModal>
       </Space>
     </Spin>
   );
@@ -200,6 +299,9 @@ const TagValueManagementTab = ({ refreshSignal }: TagValueManagementTabProps) =>
   const [modalOpen, setModalOpen] = useState(false);
   const [editingValue, setEditingValue] = useState<TagValueOption | null>(null);
   const [form] = Form.useForm<{ value: string; label?: string; color?: string }>();
+  const valueDraft = Form.useWatch('value', form);
+  const labelDraft = Form.useWatch('label', form);
+  const colorDraft = Form.useWatch('color', form);
 
   useEffect(() => {
     if (refreshSignal > 0) {
@@ -391,26 +493,61 @@ const TagValueManagementTab = ({ refreshSignal }: TagValueManagementTabProps) =>
           titleContent={<span style={{ fontWeight: 600 }}>標籤值清單</span>}
         />
 
-        <Modal
+        <GlassModal
           open={modalOpen}
           title={editingValue ? '編輯標籤值' : '新增標籤值'}
           onCancel={handleModalClose}
           onOk={() => form.submit()}
-          okText="儲存"
+          okText={editingValue ? '儲存變更' : '新增標籤值'}
           cancelText="取消"
+          width={640}
         >
-          <Form form={form} layout="vertical" onFinish={handleSubmit}>
-            <Form.Item name="value" label="標籤值" rules={[{ required: true, message: '請輸入標籤值' }]}> 
-              <Input placeholder="例如：production" />
-            </Form.Item>
-            <Form.Item name="label" label="顯示名稱">
-              <Input placeholder="顯示於介面的名稱" />
-            </Form.Item>
-            <Form.Item name="color" label="顏色">
-              <Input placeholder="例如：#1890ff 或留空" />
-            </Form.Item>
-          </Form>
-        </Modal>
+          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Alert
+              showIcon
+              type="info"
+              message="標籤值建議"
+              description="建議採用可讀性良好的顯示名稱與顏色標註，協助儀表板與通知快速辨識環境。"
+            />
+
+            <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
+              <Form.Item
+                name="value"
+                label="標籤值"
+                rules={[{ required: true, message: '請輸入標籤值' }]}
+              >
+                <Input placeholder="例如：production" />
+              </Form.Item>
+              <Form.Item
+                name="label"
+                label="顯示名稱"
+                tooltip="自訂顯示名稱以便在 UI 上呈現更友善的文字"
+              >
+                <Input placeholder="顯示於介面的名稱，例如：Production 環境" />
+              </Form.Item>
+              <Form.Item
+                name="color"
+                label="顏色"
+                tooltip="可輸入十六進位色碼或留白沿用預設色彩"
+              >
+                <Input placeholder="例如：#1890ff 或留空" />
+              </Form.Item>
+            </Form>
+
+            <Card size="small" title="預覽" style={{ borderRadius: 16 }}>
+              <Space direction="vertical" size={12} style={{ width: '100%' }}>
+                <Space align="center" size={8}>
+                  <AntdTag color={colorDraft || 'geekblue'}>
+                    {labelDraft || valueDraft || '標籤值預覽'}
+                  </AntdTag>
+                  <Text type="secondary">值：{valueDraft || '—'}</Text>
+                </Space>
+                <Text type="secondary">顏色 {colorDraft || '使用預設色彩'}</Text>
+                <Text type="secondary">顯示名稱 {labelDraft || '尚未設定'}</Text>
+              </Space>
+            </Card>
+          </Space>
+        </GlassModal>
       </Space>
     </Spin>
   );

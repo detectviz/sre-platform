@@ -1,10 +1,18 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { fetchJson } from '../utils/apiClient';
 
+export interface SilenceMatcher {
+  key: string;
+  operator: string;
+  values: string[];
+}
+
 interface CreateSilencePayload {
   event_id: string;
   duration: string;
   comment: string;
+  matchers?: SilenceMatcher[];
+  reminder_offset?: string | null;
 }
 
 const createSilence = async (payload: CreateSilencePayload) => {
