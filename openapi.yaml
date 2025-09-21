@@ -3,7 +3,7 @@
 # 更新日期: 2025-09-18
 # 描述: 此文件為 SRE 平台前端與後端之間的 API 契約唯一真實來源 (Single Source of Truth)，
 #      根據 pages.md 的全面分析進行了重構。
-openapi: 3.1.0
+openapi: 3.0.3
 info:
   title: SRE 平台 - API 規格書
   description: |
@@ -440,7 +440,54 @@ paths:
       summary: 獲取審計日誌
       operationId: getAuditLogs
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: action_type
+          in: query
+          description: 篩選特定操作類型 (例如 create、update、delete)
+          schema: { type: string }
+        - name: resource_type
+          in: query
+          description: 篩選特定資源類型 (例如 Incident、AlertRule)
+          schema: { type: string }
+        - name: result
+          in: query
+          description: 依執行結果篩選 (success、failure、partial)
+          schema:
+            type: string
+            enum: [success, failure, partial]
+        - name: risk_level
+          in: query
+          description: 依風險等級篩選 (low、medium、high、critical)
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: user_id
+          in: query
+          description: 指定操作者 ID
+          schema: { type: string }
+        - name: search
+          in: query
+          description: 關鍵字搜尋 (支援操作者、資源名稱、訊息)
+          schema: { type: string }
+        - name: start_time
+          in: query
+          description: 起始時間 (ISO 8601)
+          schema: { type: string, format: date-time }
+        - name: end_time
+          in: query
+          description: 結束時間 (ISO 8601)
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: 審計日誌列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogCollection"
 
   # ============================================
   # 資源管理 (Resource Management)
@@ -451,14 +498,110 @@ paths:
       summary: 獲取資源列表
       operationId: listResources
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: status[]
+          in: query
+          description: 資源狀態多選篩選 (healthy、warning、critical、unknown)
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [healthy, warning, critical, unknown]
+          style: form
+          explode: true
+        - name: type[]
+          in: query
+          description: 資源類型多選篩選 (server、database、gateway...)
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+        - name: environment[]
+          in: query
+          description: 依部署環境篩選 (production、staging 等)
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+        - name: region
+          in: query
+          description: 指定雲端區域或資料中心
+          schema: { type: string }
+        - name: team_id
+          in: query
+          description: 負責團隊 ID
+          schema: { type: string }
+        - name: group_id
+          in: query
+          description: 資源群組 ID (用於從群組列表下鑽)
+          schema: { type: string }
+        - name: tag[]
+          in: query
+          description: 指定標籤鍵值做為篩選條件，格式為 key:value
+          schema:
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
+        - name: search
+          in: query
+          description: 關鍵字搜尋 (支援名稱、IP、標籤)
+          schema: { type: string }
+        - name: has_active_events
+          in: query
+          description: 僅回傳具有活躍事件的資源
+          schema: { type: boolean }
+        - name: last_check_before
+          in: query
+          description: 最後健康檢查時間上限 (ISO 8601)
+          schema: { type: string, format: date-time }
+        - name: last_check_after
+          in: query
+          description: 最後健康檢查時間下限 (ISO 8601)
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: 資源列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceCollection"
   /resource-groups:
     get:
       tags: [資源管理 (Resource Management)]
       summary: 獲取資源群組列表
       operationId: listResourceGroups
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: search
+          in: query
+          description: 依群組名稱或描述關鍵字搜尋
+          schema: { type: string }
+        - name: team_id
+          in: query
+          description: 指定負責團隊 ID
+          schema: { type: string }
+        - name: include_health_summary
+          in: query
+          description: 是否回傳預先計算的健康統計
+          schema: { type: boolean, default: false }
+      responses:
+        "200":
+          description: 資源群組列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroupCollection"
 
   # ============================================
   # 事件管理 (Event Management)
@@ -490,10 +633,10 @@ paths:
             type: array
             items:
               type: string
-              enum: [CRITICAL, WARNING, INFO]
+              enum: [critical, warning, info]
           style: form
           explode: true
-          example: [CRITICAL, WARNING]
+          example: [critical, warning]
         - name: incident_id
           in: query
           description: 關聯事故ID篩選
@@ -513,6 +656,36 @@ paths:
         - name: source
           in: query
           description: 事件來源篩選
+          schema:
+            type: string
+        - name: business_impact[]
+          in: query
+          description: 商業衝擊等級多選篩選
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [critical, high, medium, low]
+          style: form
+          explode: true
+        - name: service
+          in: query
+          description: 受影響服務名稱篩選
+          schema:
+            type: string
+        - name: storm_group
+          in: query
+          description: 指定 Storm 分組識別碼
+          schema:
+            type: string
+        - name: automation_run_id
+          in: query
+          description: 關聯自動化執行紀錄 ID
+          schema:
+            type: string
+        - name: rule_id
+          in: query
+          description: 觸發規則 ID 篩選
           schema:
             type: string
         - name: started_from
@@ -634,6 +807,86 @@ paths:
         "404":
           description: 找不到對應的報告
   /incidents:
+    get:
+      tags: [事件管理 (Event Management)]
+      summary: 獲取事故列表
+      description: "提供事故清單，支援依狀態、嚴重度、商業衝擊、服務等條件進行篩選，對應事故列表頁面。"
+      operationId: listIncidents
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: status[]
+          in: query
+          description: 事故狀態多選篩選
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [investigating, identified, monitoring, resolved]
+          style: form
+          explode: true
+        - name: severity[]
+          in: query
+          description: 嚴重度多選篩選
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [critical, high, medium, low]
+          style: form
+          explode: true
+        - name: business_impact[]
+          in: query
+          description: 商業衝擊等級多選篩選
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [critical, high, medium, low]
+          style: form
+          explode: true
+        - name: service
+          in: query
+          description: 受影響服務名稱
+          schema: { type: string }
+        - name: resource_name
+          in: query
+          description: 主要資源名稱關鍵字
+          schema: { type: string }
+        - name: storm_group
+          in: query
+          description: Storm 分組識別碼
+          schema: { type: string }
+        - name: automation_script_id
+          in: query
+          description: 關聯自動化腳本 ID
+          schema: { type: string }
+        - name: automation_run_id
+          in: query
+          description: 關聯自動化執行紀錄 ID
+          schema: { type: string }
+        - name: search
+          in: query
+          description: 關鍵字搜尋 (支援摘要、標籤、註解)
+          schema: { type: string }
+        - name: created_from
+          in: query
+          description: 創建時間起始範圍 (ISO 8601)
+          schema: { type: string, format: date-time }
+        - name: created_to
+          in: query
+          description: 創建時間結束範圍 (ISO 8601)
+          schema: { type: string, format: date-time }
+      responses:
+        "200":
+          description: 事故列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IncidentCollection"
     post:
       tags: [事件管理 (Event Management)]
       summary: 合併多個事件為一個事故
@@ -649,6 +902,28 @@ paths:
       responses:
         "201":
           description: "事故創建成功"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Incident"
+  /incidents/{incidentId}:
+    get:
+      tags: [事件管理 (Event Management)]
+      summary: 取得事故詳情
+      operationId: getIncident
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: incidentId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: include_events
+          in: query
+          description: 是否包含關聯事件資料
+          schema: { type: boolean, default: true }
+      responses:
+        "200":
+          description: 事故詳情
           content:
             application/json:
               schema:
@@ -672,12 +947,22 @@ paths:
       summary: 更新事件規則
       operationId: updateEventRule
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema: { type: string }
       responses: { "200": { description: "更新成功" } }
     delete:
       tags: [事件管理 (Event Management)]
       summary: 刪除事件規則
       operationId: deleteEventRule
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema: { type: string }
       responses: { "204": { description: "刪除成功" } }
   /event-rule-templates:
     get:
@@ -1285,7 +1570,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [PENDING, SUCCESS, FAILED, DELIVERED]
+            enum: [pending, success, failed, delivered]
         - name: channel_id
           in: query
           schema: { type: string }
@@ -1419,7 +1704,9 @@ components:
       type: object
       required: [name, category]
       properties:
-        name: { type: string }
+        name:
+          type: string
+          description: "資源名稱"
         description: { type: string }
         category: { type: string, enum: [infrastructure, business, operations, automation, custom] }
         owner: { type: string }
@@ -1478,7 +1765,9 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
-        type: { type: string }
+        type:
+          type: string
+          description: "資源類型"
         usage: { type: number, description: '百分比 0-100' }
         status: { type: string, enum: [healthy, warning, critical] }
     ResourceUsageCollection:
@@ -1670,14 +1959,36 @@ components:
       description: "代表一個完整的事件，包含所有用於UI展示的豐富化資訊"
       properties:
         id: { type: string, example: "evt_2a7d3e9f" }
-        summary: { type: string, example: "CPU high on db-mysql-prod-02" }
-        severity: { type: string, enum: [CRITICAL, WARNING, INFO] }
+        summary:
+          type: string
+          example: "CPU high on db-mysql-prod-02"
+          description: "事件摘要"
+        severity:
+          type: string
+          enum: [critical, warning, info]
+          description: "事件嚴重度"
         status:
           type: string
           description: "事件狀態。Grafana Alertmanager 的 `firing` 狀態會轉換為 `new`，確保與 UI 與資料庫一致。"
           enum: [new, acknowledged, resolved, silenced]
           x-enum-varnames: [NEW, ACKNOWLEDGED, RESOLVED, SILENCED]
-        source: { type: string, example: "Prometheus" }
+        source:
+          type: string
+          example: "Prometheus"
+          description: "事件來源系統"
+        service_name:
+          type: string
+          nullable: true
+          description: "受影響服務名稱"
+        business_impact:
+          type: string
+          enum: [critical, high, medium, low]
+          nullable: true
+          description: "商業衝擊等級"
+        storm_group_id:
+          type: string
+          nullable: true
+          description: "Storm 協同處理分組識別"
         triggered_at: { type: string, format: "date-time" }
         acknowledged_at: { type: string, format: "date-time", nullable: true }
         resolved_at: { type: string, format: "date-time", nullable: true }
@@ -1700,10 +2011,27 @@ components:
         trigger_details:
           type: object
           properties:
-            threshold: { type: string, example: "CPU > 90%" }
-            value: { type: string, example: "92.5%" }
+            threshold:
+              type: string
+              example: "CPU > 90%"
+              description: "觸發閾值描述，對應資料庫欄位 trigger_threshold"
+            value:
+              type: string
+              example: "92.5%"
+              description: "當下量測值描述，對應資料庫欄位 detected_value"
+        resource_snapshot:
+          type: object
+          nullable: true
+          description: "事件發生當下的資源資訊快照"
+          additionalProperties: true
+        service_snapshot:
+          type: object
+          nullable: true
+          description: "事件發生當下的服務資訊快照"
+          additionalProperties: true
         tags:
           type: array
+          description: "事件標籤 (含顏色)"
           items:
             type: object
             properties:
@@ -1726,6 +2054,14 @@ components:
               label: { type: string }
               api_endpoint: { type: string }
               method: { type: string }
+        automation_run:
+          type: object
+          nullable: true
+          description: "針對事件已觸發的自動化執行狀態"
+          properties:
+            id: { type: string }
+            status: { type: string, enum: [pending, running, success, failed, cancelled, timeout], nullable: true }
+            triggered_at: { type: string, format: date-time, nullable: true }
         history_logs:
           type: array
           items:
@@ -1766,7 +2102,9 @@ components:
       type: object
       properties:
         id: { type: string }
-        summary: { type: string }
+        summary:
+          type: string
+          description: "事件摘要"
         severity: { type: string }
         status: { type: string }
         triggered_at: { type: string, format: "date-time" }
@@ -1782,7 +2120,10 @@ components:
         run_id: { type: string }
         script_id: { type: string }
         script_name: { type: string }
-        status: { type: string, enum: [SUCCESS, FAILED, RUNNING] }
+        status:
+          type: string
+          enum: [pending, running, success, failed, cancelled, timeout]
+          description: "自動化執行狀態"
         triggered_by: { type: string }
         started_at: { type: string, format: "date-time" }
         duration_ms: { type: integer }
@@ -1796,7 +2137,7 @@ components:
           description: "評論內容，支援 Markdown 和 @提及"
     AIAnalysisStatus:
       type: string
-      enum: [PENDING, RUNNING, SUCCESS, FAILED]
+      enum: [pending, running, success, failed]
     AIAnalysisRequest:
       type: object
       properties:
@@ -1895,8 +2236,14 @@ components:
           items:
             $ref: "#/components/schemas/AIAnalysisEvidence"
         error_message: { type: string, nullable: true }
-        created_at: { type: string, format: date-time }
-        updated_at: { type: string, format: date-time }
+        created_at:
+          type: string
+          format: date-time
+          description: "報告建立時間"
+        updated_at:
+          type: string
+          format: date-time
+          description: "報告最近更新時間"
         completed_at: { type: string, format: date-time, nullable: true }
         raw_llm_response:
           type: object
@@ -1904,11 +2251,34 @@ components:
           additionalProperties: true
     IncidentCreateRequest:
       type: object
-      required: [title, severity, event_ids]
+      required: [summary, severity, event_ids]
       properties:
-        title: { type: string, description: "新事故的標題" }
-        severity: { type: string, enum: [CRITICAL, HIGH, MEDIUM, LOW] }
-        assignee_id: { type: string, description: "指派處理事故的使用者或團隊ID" }
+        summary: { type: string, description: "事故摘要，對應事故列表顯示" }
+        title: { type: string, description: "可選標題，保留相容性" }
+        severity: { type: string, enum: [critical, high, medium, low] }
+        business_impact: { type: string, enum: [critical, high, medium, low], default: medium }
+        service_name:
+          type: string
+          nullable: true
+          description: "受影響的服務名稱"
+        storm_group_id:
+          type: string
+          nullable: true
+          description: "Storm 協同處理分組識別"
+        assignee_id: { type: string, description: "指派處理事故的使用者或團隊ID", nullable: true }
+        automation_script_id: { type: string, nullable: true }
+        automation_run_id: { type: string, nullable: true }
+        trigger_threshold: { type: string, nullable: true }
+        labels:
+          type: object
+          nullable: true
+          description: "事故的標籤快照"
+          additionalProperties: true
+        annotations:
+          type: object
+          nullable: true
+          description: "事故的註解快照"
+          additionalProperties: true
         event_ids:
           type: array
           items:
@@ -1918,12 +2288,81 @@ components:
       type: object
       properties:
         id: { type: string }
-        title: { type: string }
+        summary: { type: string }
+        title: { type: string, nullable: true }
         status: { type: string, enum: [investigating, identified, monitoring, resolved] }
-        severity: { type: string, enum: [CRITICAL, HIGH, MEDIUM, LOW] }
-        assignee_id: { type: string, nullable: true }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
+        severity: { type: string, enum: [critical, high, medium, low] }
+        business_impact:
+          type: string
+          enum: [critical, high, medium, low]
+          description: "商業衝擊等級"
+        service_name: { type: string, nullable: true }
+        storm_group_id: { type: string, nullable: true }
+        primary_resource:
+          type: object
+          nullable: true
+          description: "事故聚焦的主要資源"
+          properties:
+            id: { type: string }
+            name: { type: string }
+        rule:
+          type: object
+          nullable: true
+          description: "觸發此事故的規則資訊"
+          properties:
+            id: { type: string }
+            name: { type: string }
+            trigger_threshold: { type: string, nullable: true }
+        labels:
+          type: object
+          nullable: true
+          additionalProperties: true
+        annotations:
+          type: object
+          nullable: true
+          additionalProperties: true
+        automation:
+          type: object
+          nullable: true
+          description: "與事故相關的自動化腳本或執行紀錄"
+          properties:
+            script_id: { type: string, nullable: true }
+            run_id: { type: string, nullable: true }
+        assignee:
+          type: object
+          nullable: true
+          description: "目前負責事故的處理人"
+          properties:
+            id: { type: string }
+            name: { type: string }
+        detected_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: "首次偵測時間"
+        resolved_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: "事故結束時間"
+        created_at:
+          type: string
+          format: date-time
+          description: "事故建立時間"
+        updated_at:
+          type: string
+          format: date-time
+          description: "最後更新時間"
+    IncidentCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          description: "事故清單"
+          items:
+            $ref: "#/components/schemas/Incident"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     SilenceCreateRequest:
       type: object
       description: "建立一次性靜音規則的請求結構，欄位與前端靜音規則表單保持一致。"
@@ -2062,7 +2501,10 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
-        description: { type: string, nullable: true }
+        description:
+          type: string
+          nullable: true
+          description: "團隊描述"
         leader_id: { type: string, nullable: true }
         member_count: { type: integer }
         subscriber_count: { type: integer }
@@ -2071,25 +2513,233 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
-        description: { type: string, nullable: true }
+        description:
+          type: string
+          nullable: true
+          description: "角色描述"
         is_built_in: { type: boolean }
         user_count: { type: integer, description: "使用此角色的用戶數量" }
+    ResourceTag:
+      type: object
+      properties:
+        key:
+          type: string
+          description: "標籤鍵"
+        value:
+          type: string
+          description: "標籤值"
+        display_name:
+          type: string
+          nullable: true
+          description: "顯示名稱"
+        category:
+          type: string
+          nullable: true
+          description: "標籤分類"
+        color:
+          type: string
+          nullable: true
+          description: "UI 顏色代碼"
+    ResourceAlarm:
+      type: object
+      properties:
+        event_id:
+          type: string
+          description: "事件 ID"
+        severity:
+          type: string
+          enum: [critical, warning]
+          description: "事件嚴重度"
+        summary:
+          type: string
+          description: "事件摘要"
+        triggered_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: "事件觸發時間"
+    ResourceMetric:
+      type: object
+      properties:
+        cpu_usage: { type: number, format: float, minimum: 0, maximum: 100 }
+        memory_usage: { type: number, format: float, minimum: 0, maximum: 100 }
+        disk_usage: { type: number, format: float, minimum: 0, maximum: 100 }
+        network_in_bps: { type: integer, nullable: true }
+        network_out_bps: { type: integer, nullable: true }
+        captured_at: { type: string, format: date-time, nullable: true }
+        trend_window: { type: string, enum: [15m, 1h, 6h, 24h], nullable: true }
+        trend_values:
+          type: array
+          items: { type: number }
+    ResourceGroupRef:
+      type: object
+      properties:
+        id:
+          type: string
+          description: "資源群組 ID"
+        name:
+          type: string
+          description: "資源群組名稱"
     Resource:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
-        type: { type: string }
-        status: { type: string }
-        ip_address: { type: string, nullable: true }
-        team_id: { type: string, nullable: true }
+        type:
+          type: string
+          enum: [server, database, cache, gateway, service]
+          description: "資源類型"
+        status:
+          type: string
+          enum: [healthy, warning, critical, unknown]
+          description: "目前健康狀態"
+        description: { type: string, nullable: true }
+        environment:
+          type: string
+          example: "production"
+          description: "部署環境"
+        region:
+          type: string
+          example: "us-east-1"
+          description: "雲端區域或資料中心"
+        location:
+          type: string
+          nullable: true
+          description: "機房或可用區描述"
+        instance_type:
+          type: string
+          nullable: true
+          description: "實例規格 (如 m5.xlarge)"
+        os_version:
+          type: string
+          nullable: true
+          description: "作業系統版本"
+        ip_address:
+          type: string
+          nullable: true
+          description: "管理 IP 位址"
+        cpu_usage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: "CPU 使用率 (百分比)"
+        memory_usage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: "記憶體使用率 (百分比)"
+        disk_usage:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: "磁碟使用率 (百分比)"
+        trend:
+          type: array
+          nullable: true
+          description: "資源使用率趨勢資料點 (百分比)"
+          items: { type: number }
+        team:
+          type: object
+          nullable: true
+          description: "負責的團隊資訊"
+          properties:
+            id: { type: string }
+            name: { type: string }
+        groups:
+          type: array
+          description: "資源所屬的資源群組"
+          items: { $ref: "#/components/schemas/ResourceGroupRef" }
         tags:
           type: array
+          description: "標籤清單 (含顯示資訊)"
           items:
-            type: object
-            properties:
-              key: { type: string }
-              value: { type: string }
+            $ref: "#/components/schemas/ResourceTag"
+        metrics:
+          $ref: "#/components/schemas/ResourceMetric"
+          nullable: true
+          description: "最新即時度量快照"
+        alarms:
+          type: array
+          description: "活躍事件摘要"
+          items:
+            $ref: "#/components/schemas/ResourceAlarm"
+        last_check_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: "最後一次健康檢查時間"
+        created_at:
+          type: string
+          format: date-time
+          description: "資源建立時間"
+        updated_at:
+          type: string
+          format: date-time
+          description: "資源最近更新時間"
+    ResourceCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          description: "資源資料列表"
+          items:
+            $ref: "#/components/schemas/Resource"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    ResourceGroup:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        type: { type: string, enum: [static, dynamic] }
+        rules:
+          type: object
+          nullable: true
+          description: "動態群組規則 (以標籤條件描述)"
+          additionalProperties: true
+        health_summary:
+          type: object
+          nullable: true
+          description: "預先計算的健康狀態統計"
+          properties:
+            healthy: { type: integer }
+            warning: { type: integer }
+            critical: { type: integer }
+        responsible_team:
+          type: object
+          nullable: true
+          description: "負責維運該群組的團隊"
+          properties:
+            id: { type: string }
+            name: { type: string }
+        members:
+          type: array
+          nullable: true
+          description: 群組內資源 ID 清單 (僅於需要時返回)
+          items: { type: string }
+        members_count:
+          type: integer
+          nullable: true
+          description: "群組內資源數量"
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ResourceGroupCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          description: "資源群組清單"
+          items:
+            $ref: "#/components/schemas/ResourceGroup"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     SilenceMatcher:
       type: object
       description: "靜音規則的匹配條件項目，與 UI 單列設定相對應。"
@@ -2411,28 +3061,52 @@ components:
         field: { type: string }
         operator:
           type: string
-          enum: [equals, not_equals, in, not_in, contains, not_contains, regex]
-        value:
+          enum: [equals, not_equals, in, not_in, contains, not_contains, regex, greater_than, greater_than_equals, less_than, less_than_equals, between, starts_with, ends_with, exists, not_exists]
+        value_type:
           type: string
+          enum: [string, number, boolean, array, object]
+          default: string
+        value:
+          description: 條件值內容，依 value_type 決定型別
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+              items: {}
+            - type: object
           nullable: true
-        value_list:
-          type: array
-          items: { type: string }
+        metadata:
+          type: object
           nullable: true
+          description: "條件額外設定 (例如數值單位、比較模式)"
+          additionalProperties: true
     NotificationPolicyConditionInput:
       type: object
       properties:
         field: { type: string }
         operator:
           type: string
-          enum: [equals, not_equals, in, not_in, contains, not_contains, regex]
-        value:
+          enum: [equals, not_equals, in, not_in, contains, not_contains, regex, greater_than, greater_than_equals, less_than, less_than_equals, between, starts_with, ends_with, exists, not_exists]
+        value_type:
           type: string
+          enum: [string, number, boolean, array, object]
+          default: string
+        value:
+          description: 條件值內容，依 value_type 決定型別
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+            - type: array
+              items: {}
+            - type: object
           nullable: true
-        value_list:
-          type: array
-          items: { type: string }
+        metadata:
+          type: object
           nullable: true
+          description: "條件額外設定 (例如數值單位、比較模式)"
+          additionalProperties: true
     NotificationPolicy:
       type: object
       properties:
@@ -2548,6 +3222,73 @@ components:
         status: { type: string, enum: [success, failed, pending] }
         message: { type: string }
         tested_at: { type: string, format: "date-time" }
+    AuditActor:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+          description: "操作者 ID"
+        username:
+          type: string
+          nullable: true
+          description: "操作者帳號"
+        display_name:
+          type: string
+          nullable: true
+          description: "操作者顯示名稱"
+    AuditLog:
+      type: object
+      properties:
+        id: { type: string }
+        action_type:
+          type: string
+          enum: [create, update, delete, login, logout, access, export]
+          description: "操作類型"
+        resource_type:
+          type: string
+          description: "被操作的資源類型"
+        resource_id:
+          type: string
+          nullable: true
+          description: "被操作的資源 ID"
+        result:
+          type: string
+          enum: [success, failure, partial]
+          description: "操作結果"
+        risk_level:
+          type: string
+          enum: [low, medium, high, critical]
+          description: "風險等級"
+        user:
+          $ref: "#/components/schemas/AuditActor"
+        ip_address:
+          type: string
+          nullable: true
+          description: "來源 IP"
+        user_agent:
+          type: string
+          nullable: true
+          description: "User-Agent 字串"
+        details:
+          type: object
+          nullable: true
+          description: "包含變更 diff 或額外資訊"
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+          description: "操作時間"
+    AuditLogCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          description: "審計日誌清單"
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     NotificationHistory:
       type: object
       properties:
@@ -2559,7 +3300,7 @@ components:
         channel_name: { type: string }
         channel_type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams], nullable: true }
         recipient: { type: string }
-        status: { type: string, enum: [PENDING, SUCCESS, FAILED, DELIVERED] }
+        status: { type: string, enum: [pending, success, failed, delivered] }
         message: { type: string, nullable: true }
         error_message: { type: string, nullable: true }
         raw_payload: { type: object, nullable: true, description: "發送時的原始通知內容快照" }
