@@ -472,18 +472,28 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
-        - name: status
+        - name: status[]
           in: query
-          description: 事件狀態篩選。Grafana Alertmanager 原始狀態 `firing` 會在此映射為 `new`，以保持與前端 UI 與資料庫欄位的一致性。
+          description: "事件狀態多選篩選。對應 UI「狀態」多選篩選器，可同時勾選多個狀態標籤。Grafana Alertmanager 原始狀態 `firing` 會在此映射為 `new`，以保持與前端 UI 與資料庫欄位的一致性。"
           schema:
-            type: string
-            enum: [new, acknowledged, resolved, silenced]
-        - name: severity
+            type: array
+            items:
+              type: string
+              enum: [new, acknowledged, resolved, silenced]
+          style: form
+          explode: true
+          example: [new, acknowledged]
+        - name: severity[]
           in: query
-          description: 嚴重度篩選
+          description: "事件嚴重度多選篩選。對應 UI「嚴重度」多選篩選器，可同時勾選多個嚴重度。"
           schema:
-            type: string
-            enum: [CRITICAL, WARNING, INFO]
+            type: array
+            items:
+              type: string
+              enum: [CRITICAL, WARNING, INFO]
+          style: form
+          explode: true
+          example: [CRITICAL, WARNING]
         - name: incident_id
           in: query
           description: 關聯事故ID篩選
@@ -494,11 +504,37 @@ paths:
           description: 資源名稱關鍵字搜尋
           schema:
             type: string
+        - name: search
+          in: query
+          description: "全文搜尋關鍵字。對應 UI 上方的搜尋列，支援事件標題、描述與註記的快速查找。"
+          schema:
+            type: string
+          example: "database connection timeout"
         - name: source
           in: query
           description: 事件來源篩選
           schema:
             type: string
+        - name: started_from
+          in: query
+          description: "事件發生時間 (started_at) 起始範圍。對應 UI「時間快速篩選」的自訂起始時間，採 ISO 8601 格式。"
+          schema:
+            type: string
+            format: date-time
+          example: "2024-06-01T00:00:00Z"
+        - name: started_to
+          in: query
+          description: "事件發生時間 (started_at) 結束範圍。對應 UI「時間快速篩選」的自訂結束時間，採 ISO 8601 格式。"
+          schema:
+            type: string
+            format: date-time
+          example: "2024-06-30T23:59:59Z"
+        - name: started_range
+          in: query
+          description: "事件發生時間 (started_at) RFC3339 區間語法，例如 `開始/結束`。對應 UI 進階篩選中的時間條件，可與快速篩選互補。"
+          schema:
+            type: string
+          example: "2024-06-01T00:00:00Z/2024-06-30T23:59:59Z"
         - name: sort_by
           in: query
           description: 排序欄位
@@ -512,7 +548,7 @@ paths:
             enum: [asc, desc]
       responses:
         "200":
-          description: "事件列表"
+          description: "回傳套用篩選與排序後的事件列表，以及對應的分頁資訊。"
           content:
             application/json:
               schema:
