@@ -71,6 +71,8 @@ tags:
     description: "使用者個人資料與偏好設定。"
   - name: 通知管理 (Notification Management)
     description: "通知管道、策略與歷史記錄的管理。"
+  - name: Webhook 管理 (Webhook Management)
+    description: "Webhook 接收器配置與管理。"
 
 # ============================================
 # API 路徑與端點 (Paths & Endpoints)
@@ -272,11 +274,29 @@ paths:
     get:
       tags: [儀表板 (Dashboards)]
       summary: 獲取資源使用率排行
+      description: 依據 `resource_usage_metrics` 表提供指定快照的資源使用率資料，支援依指標類型與狀態篩選。
       operationId: listInfrastructureResourceUsage
       security: [{ bearerAuth: [] }]
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - name: snapshot_id
+          in: query
+          schema: { type: integer }
+          description: 對應 `infrastructure_snapshots.id` 的快照 ID
+        - name: metric
+          in: query
+          schema:
+            type: string
+            enum: [cpu, memory, disk, network]
+          description: 指定統計指標 (預設依使用率排序)
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [healthy, warning, critical]
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
       responses:
         "200":
           description: 資源使用率資料
@@ -284,6 +304,41 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ResourceUsageCollection"
+
+  /infrastructure/resource-usage/top:
+    get:
+      tags: [儀表板 (Dashboards)]
+      summary: 獲取 Top N 資源使用列表
+      description: 提供給儀表板 Top N 元件使用，依據最新或指定快照取得最高使用率的資源。
+      operationId: listTopResourceUsage
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: metric
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [cpu, memory, disk, network]
+          description: 指定要排行的使用率指標
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: 返回的資源筆數 (Top N)
+        - name: snapshot_id
+          in: query
+          schema: { type: integer }
+          description: 選擇特定快照，若未指定則使用最新快照
+      responses:
+        "200":
+          description: Top N 資源使用率資料
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceUsageTopResponse"
 
   /ai/risk-predictions:
     get:
@@ -411,36 +466,332 @@ paths:
     get:
       tags: [平台設定 (Platform Settings)]
       summary: 獲取標籤治理規則列表
+      description: 依據 `tag_keys` 表提供標籤治理規則清單，支援分頁與條件篩選。
       operationId: listTagGovernanceRules
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: search
+          in: query
+          schema: { type: string }
+          description: 依標籤鍵或描述進行關鍵字搜尋
+        - name: compliance_category
+          in: query
+          schema: { type: string }
+          description: 依合規分類篩選
+        - name: enforcement_level
+          in: query
+          schema:
+            type: string
+            enum: [advisory, warning, blocking]
+          description: 依強制等級篩選
+      responses:
+        "200":
+          description: 標籤治理規則列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagKeyCollection"
     post:
       tags: [平台設定 (Platform Settings)]
       summary: 創建新的標籤治理規則
+      description: 新增一筆 `tag_keys` 表中的記錄，並可同步建立允許值。
       operationId: createTagGovernanceRule
       security: [{ bearerAuth: [] }]
-      responses: { "201": { description: "創建成功" } }
-  /tags/{tagKeyId}/values:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagKeyCreateRequest"
+      responses:
+        "201":
+          description: 創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagKey"
+  /tags/{tag_key_id}:
+    get:
+      tags: [平台設定 (Platform Settings)]
+      summary: 獲取單一標籤治理規則
+      operationId: getTagGovernanceRule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tag_key_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 標籤治理規則詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagKey"
+    put:
+      tags: [平台設定 (Platform Settings)]
+      summary: 更新標籤治理規則
+      operationId: updateTagGovernanceRule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tag_key_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagKeyUpdateRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagKey"
+    delete:
+      tags: [平台設定 (Platform Settings)]
+      summary: 刪除標籤治理規則
+      description: 執行軟刪除並移除相關允許值。
+      operationId: deleteTagGovernanceRule
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tag_key_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
+  /tags/{tag_key_id}/values:
     get:
       tags: [平台設定 (Platform Settings)]
       summary: 獲取標籤的允許值列表
+      description: 根據 `tag_allowed_values` 表列出指定標籤鍵的允許值。
       operationId: listTagAllowedValues
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - name: tag_key_id
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+      responses:
+        "200":
+          description: 允許值列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagAllowedValueCollection"
+    post:
+      tags: [平台設定 (Platform Settings)]
+      summary: 新增標籤允許值
+      operationId: createTagAllowedValue
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tag_key_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagAllowedValueCreateRequest"
+      responses:
+        "201":
+          description: 創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagAllowedValue"
+  /tags/{tag_key_id}/values/{value_id}:
+    put:
+      tags: [平台設定 (Platform Settings)]
+      summary: 更新標籤允許值
+      operationId: updateTagAllowedValue
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tag_key_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: value_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagAllowedValueUpdateRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagAllowedValue"
+    delete:
+      tags: [平台設定 (Platform Settings)]
+      summary: 刪除標籤允許值
+      operationId: deleteTagAllowedValue
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: tag_key_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: value_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
   /tags/compliance-report:
     get:
       tags: [平台設定 (Platform Settings)]
       summary: 獲取標籤合規性報告
+      description: 依 `tag_compliance_violations` 資料產生的彙總報告，支援以團隊或嚴重度篩選。
       operationId: getTagComplianceReport
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - name: team_id
+          in: query
+          schema: { type: string }
+          description: 依資源負責團隊篩選
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high]
+          description: 依違規嚴重度篩選
+      responses:
+        "200":
+          description: 合規性報告
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagComplianceReport"
+  /tags/violations:
+    get:
+      tags: [平台設定 (Platform Settings)]
+      summary: 列出標籤合規性違規記錄
+      description: 直接對應 `tag_compliance_violations` 表，支援依違規類型與狀態查詢。
+      operationId: listTagComplianceViolations
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: violation_type
+          in: query
+          schema:
+            type: string
+            enum: [missing_required, invalid_value, unknown_key]
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high]
+        - name: resolved
+          in: query
+          schema: { type: boolean }
+          description: 過濾已解決或待處理的違規
+        - name: resource_id
+          in: query
+          schema: { type: string }
+        - name: tag_key
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 違規記錄列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagComplianceViolationCollection"
+  /tags/violations/{violation_id}:
+    patch:
+      tags: [平台設定 (Platform Settings)]
+      summary: 更新標籤違規處理狀態
+      description: 可設定違規的嚴重度或解決時間。
+      operationId: updateTagComplianceViolation
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: violation_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TagComplianceViolationUpdateRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TagComplianceViolation"
   /audit-logs:
     get:
       tags: [平台設定 (Platform Settings)]
       summary: 獲取審計日誌
+      description: 對應 `audit_logs` 表，支援依操作人、資源類型與時間區間查詢。
       operationId: getAuditLogs
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: user_id
+          in: query
+          schema: { type: string }
+        - name: action_type
+          in: query
+          schema:
+            type: string
+            enum: [create, update, delete, login, logout, access, export]
+        - name: resource_type
+          in: query
+          schema: { type: string }
+        - name: resource_id
+          in: query
+          schema: { type: string }
+        - name: result
+          in: query
+          schema:
+            type: string
+            enum: [success, failure, partial]
+        - name: risk_level
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: start_time
+          in: query
+          schema: { type: string, format: date-time }
+          description: 查詢起始時間 (ISO 8601)
+        - name: end_time
+          in: query
+          schema: { type: string, format: date-time }
+          description: 查詢結束時間 (ISO 8601)
+      responses:
+        "200":
+          description: 審計日誌列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuditLogCollection"
 
   # ============================================
   # 資源管理 (Resource Management)
@@ -449,16 +800,314 @@ paths:
     get:
       tags: [資源管理 (Resource Management)]
       summary: 獲取資源列表
+      description: 依據 `resources` 表回傳資源清單，支援依標籤與狀態篩選。
       operationId: listResources
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [server, database, cache, gateway, service]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [healthy, warning, critical, unknown]
+        - name: team_id
+          in: query
+          schema: { type: string }
+        - name: search
+          in: query
+          schema: { type: string }
+          description: 依資源名稱或描述搜尋
+        - name: tag_key
+          in: query
+          schema: { type: string }
+          description: 指定標籤鍵進行篩選
+        - name: tag_value
+          in: query
+          schema: { type: string }
+          description: 指定標籤值進行篩選
+      responses:
+        "200":
+          description: 資源列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceCollection"
+  /resources/{resource_id}:
+    get:
+      tags: [資源管理 (Resource Management)]
+      summary: 獲取資源詳情
+      operationId: getResource
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 資源詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+    put:
+      tags: [資源管理 (Resource Management)]
+      summary: 更新資源基本資訊
+      operationId: updateResource
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceUpdateRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+    delete:
+      tags: [資源管理 (Resource Management)]
+      summary: 刪除資源 (軟刪除)
+      operationId: deleteResource
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
+  /resources/{resource_id}/tags:
+    get:
+      tags: [資源管理 (Resource Management)]
+      summary: 取得資源的標籤列表
+      operationId: listResourceTags
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 標籤列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceTagCollection"
+    put:
+      tags: [資源管理 (Resource Management)]
+      summary: 替換資源標籤
+      description: 對應 `resource_tags` 表，將標籤集合整體替換。
+      operationId: upsertResourceTags
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceTagUpsertRequest"
+      responses:
+        "200":
+          description: 更新後的標籤集合
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceTagCollection"
+  /resources/{resource_id}/tags/{tag_key}:
+    delete:
+      tags: [資源管理 (Resource Management)]
+      summary: 移除資源的特定標籤
+      operationId: deleteResourceTag
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: resource_id
+          in: path
+          required: true
+          schema: { type: string }
+        - name: tag_key
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
   /resource-groups:
     get:
       tags: [資源管理 (Resource Management)]
       summary: 獲取資源群組列表
+      description: 依據 `resource_groups` 與 `resource_group_members` 表回傳群組清單，支援分頁、篩選與排序。
       operationId: listResourceGroups
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum: [name, created_at, updated_at, member_count]
+          description: 指定排序欄位，預設依建立時間遞減排列。
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [static, dynamic]
+          description: 依群組類型篩選（靜態/動態）。
+        - name: responsible_team_id
+          in: query
+          schema: { type: string }
+          description: 依負責團隊過濾資源群組。
+        - name: q
+          in: query
+          schema: { type: string }
+          description: 以名稱或描述進行關鍵字搜尋。
+      responses:
+        "200":
+          description: 資源群組列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroupCollection"
+    post:
+      tags: [資源管理 (Resource Management)]
+      summary: 建立資源群組
+      description: 新增 `resource_groups` 表的記錄，可選擇預先帶入成員。
+      operationId: createResourceGroup
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceGroupCreateRequest"
+      responses:
+        "201":
+          description: 群組建立成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroup"
+  /resource-groups/{group_id}:
+    get:
+      tags: [資源管理 (Resource Management)]
+      summary: 取得資源群組詳情
+      description: 回傳群組基本資訊與目前的成員清單。
+      operationId: getResourceGroup
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 群組詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroup"
+    put:
+      tags: [資源管理 (Resource Management)]
+      summary: 更新資源群組
+      description: 修改名稱、描述、類型或負責團隊等欄位。
+      operationId: updateResourceGroup
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceGroupUpdateRequest"
+      responses:
+        "200":
+          description: 更新後的資源群組
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroup"
+    delete:
+      tags: [資源管理 (Resource Management)]
+      summary: 刪除資源群組
+      description: 從 `resource_groups` 表移除指定群組，並連帶刪除成員關聯。
+      operationId: deleteResourceGroup
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
+  /resource-groups/{group_id}/members:
+    get:
+      tags: [資源管理 (Resource Management)]
+      summary: 查詢群組成員
+      description: 對應 `resource_group_members` 表，列出指定群組的資源成員。
+      operationId: listResourceGroupMembers
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 群組成員列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroupMemberCollection"
+    put:
+      tags: [資源管理 (Resource Management)]
+      summary: 更新群組成員
+      description: 以整批覆寫的方式更新 `resource_group_members` 關聯。
+      operationId: updateResourceGroupMembers
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: group_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResourceGroupMemberUpdateRequest"
+      responses:
+        "200":
+          description: 更新後的資源群組
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResourceGroup"
 
   # ============================================
   # 事件管理 (Event Management)
@@ -472,44 +1121,61 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
-        - name: status
+        - name: status[]
           in: query
-          description: 事件狀態篩選
+          description: 事件狀態篩選，支援多選對應 `events.status` 欄位。
           schema:
-            type: string
-            enum: [FIRING, RESOLVED, PENDING]
-        - name: severity
+            type: array
+            items:
+              type: string
+              enum: [firing, acknowledged, resolved, merged, silenced]
+          style: form
+          explode: true
+        - name: severity[]
           in: query
-          description: 嚴重度篩選
+          description: 嚴重度篩選，支援多選對應 `events.severity` 欄位。
           schema:
-            type: string
-            enum: [CRITICAL, WARNING, INFO]
+            type: array
+            items:
+              type: string
+              enum: [critical, warning, info]
+          style: form
+          explode: true
         - name: incident_id
           in: query
-          description: 關聯事故ID篩選
-          schema:
-            type: string
-        - name: resource_name
+          description: 關聯事故 ID 篩選。
+          schema: { type: string }
+        - name: resource_id
           in: query
-          description: 資源名稱關鍵字搜尋
-          schema:
-            type: string
-        - name: source
+          description: 指定單一資源的事件。
+          schema: { type: string }
+        - name: started_from
           in: query
-          description: 事件來源篩選
+          description: 事件開始時間（含）起點，ISO 8601。
+          schema: { type: string, format: date-time }
+        - name: started_to
+          in: query
+          description: 事件開始時間（含）終點，ISO 8601。
+          schema: { type: string, format: date-time }
+        - name: search
+          in: query
+          description: 關鍵字搜尋（事件摘要、資源名稱、標籤）。
+          schema: { type: string }
+        - name: source[]
+          in: query
+          description: 事件來源篩選，支援多值。
           schema:
-            type: string
+            type: array
+            items: { type: string }
+          style: form
+          explode: true
         - name: sort_by
           in: query
-          description: 排序欄位
+          description: 排序欄位。
           schema:
             type: string
-        - name: sort_order
-          in: query
-          description: 排序順序
-          schema:
-            type: string
-            enum: [asc, desc]
+            enum: [starts_at, severity, status, updated_at]
+        - $ref: "#/components/parameters/SortOrderParam"
       responses:
         "200":
           description: "事件列表"
@@ -523,7 +1189,18 @@ paths:
       summary: 獲取事件詳情
       operationId: getEvent
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 事件詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
   /events/{eventId}/comments:
     post:
       tags: [事件管理 (Event Management)]
@@ -849,6 +1526,31 @@ paths:
           in: query
           schema:
             type: string
+        - name: schedule_id
+          in: query
+          schema:
+            type: string
+        - name: event_id
+          in: query
+          schema:
+            type: string
+        - name: trigger_type
+          in: query
+          schema:
+            type: string
+            enum: [manual, scheduled, event, api]
+        - name: triggered_by_id
+          in: query
+          schema:
+            type: string
+        - name: start_time
+          in: query
+          schema: { type: string, format: date-time }
+          description: 篩選執行開始時間 (起)
+        - name: end_time
+          in: query
+          schema: { type: string, format: date-time }
+          description: 篩選執行開始時間 (迄)
       responses:
         "200":
           description: 執行紀錄列表
@@ -881,7 +1583,34 @@ paths:
       summary: 獲取靜音規則列表 (一次性)
       operationId: listSilenceRules
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: status[]
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [scheduled, active, expired]
+          style: form
+          explode: true
+          description: 依靜音狀態過濾。
+        - name: created_by
+          in: query
+          schema: { type: string }
+          description: 建立者 ID。
+        - name: source_event_id
+          in: query
+          schema: { type: string }
+          description: 來源事件 ID。
+      responses:
+        "200":
+          description: 靜音規則列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SilenceCollection"
     post:
       tags: [事件管理 (Event Management)]
       summary: 根據事件快速建立一次性靜音
@@ -906,31 +1635,96 @@ paths:
       summary: 獲取週期性靜音規則列表
       operationId: listRecurringSilenceRules
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: is_enabled
+          in: query
+          schema: { type: boolean }
+        - name: recurring_pattern
+          in: query
+          schema:
+            type: string
+            enum: [daily, weekly, monthly, cron]
+        - name: creator_id
+          in: query
+          schema: { type: string }
+      responses:
+        "200":
+          description: 週期性靜音規則列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRuleCollection"
     post:
       tags: [事件管理 (Event Management)]
       summary: 創建週期性靜音規則
       operationId: createRecurringSilenceRule
       security: [{ bearerAuth: [] }]
-      responses: { "201": { description: "創建成功" } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringSilenceRuleCreateRequest"
+      responses:
+        "201":
+          description: 創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRule"
   /recurring-silence-rules/{ruleId}:
     get:
       tags: [事件管理 (Event Management)]
       summary: 獲取單一週期性靜音規則
       operationId: getRecurringSilenceRule
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 規則詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRule"
     put:
       tags: [事件管理 (Event Management)]
       summary: 更新週期性靜音規則
       operationId: updateRecurringSilenceRule
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "更新成功" } }
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringSilenceRuleUpdateRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRule"
     delete:
       tags: [事件管理 (Event Management)]
       summary: 刪除週期性靜音規則
       operationId: deleteRecurringSilenceRule
       security: [{ bearerAuth: [] }]
+      parameters:
+        - name: ruleId
+          in: path
+          required: true
+          schema: { type: string }
       responses: { "204": { description: "刪除成功" } }
 
   # ============================================
@@ -1011,6 +1805,107 @@ paths:
         "202":
           description: "重送請求已接受"
 
+  # ============================================
+  # Webhook 管理 (Webhook Management)
+  # ============================================
+  /webhook-receivers:
+    get:
+      tags: [Webhook 管理 (Webhook Management)]
+      summary: 獲取 Webhook 接收器列表
+      description: 對應 `webhook_receivers` 表，列出平台已啟用的外部事件入口。
+      operationId: listWebhookReceivers
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: source_type
+          in: query
+          schema:
+            type: string
+            enum: [grafana, prometheus, external]
+        - name: is_enabled
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Webhook 接收器列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookReceiverCollection"
+    post:
+      tags: [Webhook 管理 (Webhook Management)]
+      summary: 新增 Webhook 接收器
+      operationId: createWebhookReceiver
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookReceiverCreateRequest"
+      responses:
+        "201":
+          description: 創建成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookReceiver"
+  /webhook-receivers/{webhook_id}:
+    get:
+      tags: [Webhook 管理 (Webhook Management)]
+      summary: 獲取單一 Webhook 接收器
+      operationId: getWebhookReceiver
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: webhook_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 接收器詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookReceiver"
+    put:
+      tags: [Webhook 管理 (Webhook Management)]
+      summary: 更新 Webhook 接收器
+      operationId: updateWebhookReceiver
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: webhook_id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WebhookReceiverUpdateRequest"
+      responses:
+        "200":
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookReceiver"
+    delete:
+      tags: [Webhook 管理 (Webhook Management)]
+      summary: 停用 Webhook 接收器
+      description: 將指定接收器標記為停用。
+      operationId: deleteWebhookReceiver
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: webhook_id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 停用成功 }
+
 # ============================================
 # 可重用元件 (Components)
 # ============================================
@@ -1040,6 +1935,13 @@ components:
   schemas:
     # 共用 Schema
     PaginationMeta:
+      type: object
+      properties:
+        page: { type: integer, example: 1 }
+        page_size: { type: integer, example: 20 }
+        total: { type: integer, example: 120 }
+        total_pages: { type: integer, example: 6 }
+    Pagination:
       type: object
       properties:
         page: { type: integer, example: 1 }
@@ -1136,37 +2038,66 @@ components:
         containerTrend: { type: number, example: 12 }
         serviceTrend: { type: number, example: 3 }
 
-    ResourceUsageEntry:
+    ResourceUsageMetric:
       type: object
+      description: "對應 `resource_usage_metrics` 表的單筆紀錄。"
       properties:
-        id: { type: string }
-        name: { type: string }
-        type: { type: string }
-        usage: { type: number, description: '百分比 0-100' }
+        id: { type: integer }
+        snapshot_id: { type: integer }
+        resource_id: { type: string, nullable: true }
+        resource_name: { type: string }
+        resource_type: { type: string }
+        usage_percent: { type: number, format: float, description: '百分比 0-100' }
         status: { type: string, enum: [healthy, warning, critical] }
+        captured_at: { type: string, format: date-time }
+        trend_points:
+          type: array
+          items: { type: number }
+          description: "可選的時間序列數值，供 Top N 元件顯示迷你趨勢線。"
     ResourceUsageCollection:
       type: object
       properties:
+        snapshot:
+          type: object
+          nullable: true
+          properties:
+            id: { type: integer }
+            captured_at: { type: string, format: date-time }
         items:
           type: array
           items:
-            $ref: "#/components/schemas/ResourceUsageEntry"
+            $ref: "#/components/schemas/ResourceUsageMetric"
         pagination:
           $ref: "#/components/schemas/PaginationMeta"
+    ResourceUsageTopResponse:
+      type: object
+      properties:
+        metric:
+          type: string
+          enum: [cpu, memory, disk, network]
+        snapshot_id: { type: integer, nullable: true }
+        captured_at: { type: string, format: date-time, nullable: true }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceUsageMetric"
 
     RiskPrediction:
       type: object
+      description: "對應 `ai_risk_predictions` 表的預測結果。"
       properties:
         id: { type: string }
-        resourceName: { type: string }
-        riskLevel: { type: string, enum: [low, medium, high] }
+        resource_id: { type: string, nullable: true }
+        resource_name: { type: string }
+        risk_level: { type: string, enum: [low, medium, high] }
         prediction: { type: string }
-        impact: { type: string }
-        recommendation: { type: string }
+        impact: { type: string, nullable: true }
+        recommendation: { type: string, nullable: true }
+        generated_at: { type: string, format: date-time }
     RiskPredictionCollection:
       type: object
       properties:
-        predictions:
+        items:
           type: array
           items:
             $ref: "#/components/schemas/RiskPrediction"
@@ -1176,74 +2107,62 @@ components:
     # ============================================
     AutomationScript:
       type: object
+      description: "對應 `automation_scripts` 表的腳本定義。"
       properties:
         id: { type: string }
         name: { type: string }
-        description: { type: string }
-        language: { type: string, example: "python" }
-        category: { type: string }
-        owner: { type: string }
-        repositoryUrl: { type: string, format: uri }
-        commitHash: { type: string }
+        type: { type: string, enum: [python, bash, powershell] }
+        description: { type: string, nullable: true }
+        creator_id: { type: string, nullable: true }
+        category: { type: string, enum: [deployment, maintenance, monitoring] }
+        parameters_definition: { type: object, additionalProperties: true }
+        git_repo_url: { type: string, format: uri }
+        commit_hash: { type: string }
         version: { type: string }
-        isEnabled: { type: boolean }
-        executionCount: { type: integer }
-        successRate: { type: integer, description: '0-100' }
-        lastExecutedAt: { type: string, format: date-time, nullable: true }
-        createdAt: { type: string, format: date-time, nullable: true }
-        updatedAt: { type: string, format: date-time, nullable: true }
-        parameters:
-          type: array
-          items:
-            type: object
-            properties:
-              name: { type: string }
-              type: { type: string }
-              label: { type: string }
-              required: { type: boolean }
-              description: { type: string }
-              defaultValue:
-                oneOf:
-                  - { type: string }
-                  - { type: number }
-                  - { type: boolean }
+        is_enabled: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        deleted_at: { type: string, format: date-time, nullable: true }
+        last_run_at: { type: string, format: date-time, nullable: true }
+        last_run_status:
+          type: string
+          enum: [pending, running, success, failed, cancelled, timeout]
+          nullable: true
     AutomationScriptCreateRequest:
       type: object
-      required: [name, language, repositoryUrl, commitHash]
+      required: [name, type, git_repo_url, commit_hash, version]
       properties:
         name: { type: string }
         description: { type: string }
-        language: { type: string, enum: [python, bash, powershell] }
-        category: { type: string }
-        repositoryUrl: { type: string, format: uri }
-        commitHash: { type: string }
+        type: { type: string, enum: [python, bash, powershell] }
+        category: { type: string, enum: [deployment, maintenance, monitoring], default: maintenance }
+        parameters_definition: { type: object, additionalProperties: true }
+        git_repo_url: { type: string, format: uri }
+        commit_hash: { type: string }
         version: { type: string }
-        parameters:
-          type: array
-          items:
-            type: object
-            properties:
-              name: { type: string }
-              type: { type: string }
-              label: { type: string }
-              required: { type: boolean }
-              defaultValue:
-                oneOf:
-                  - { type: string }
-                  - { type: number }
-                  - { type: boolean }
+        is_enabled: { type: boolean, default: true }
     AutomationScriptUpdateRequest:
-      allOf:
-        - $ref: "#/components/schemas/AutomationScriptCreateRequest"
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        type: { type: string, enum: [python, bash, powershell] }
+        category: { type: string, enum: [deployment, maintenance, monitoring] }
+        parameters_definition: { type: object, additionalProperties: true }
+        git_repo_url: { type: string, format: uri }
+        commit_hash: { type: string }
+        version: { type: string }
+        is_enabled: { type: boolean }
     AutomationScriptExecuteRequest:
       type: object
       properties:
+        trigger_type:
+          type: string
+          enum: [manual, api, event]
+          description: 呼叫方式，預設為 manual
         parameters:
           type: object
           additionalProperties: true
-        trigger:
-          type: string
-          enum: [manual, api, event]
         event_id:
           type: string
           description: 若由事件觸發，可帶入事件ID
@@ -1259,39 +2178,40 @@ components:
 
     AutomationSchedule:
       type: object
+      description: "對應 `schedules` 表的排程任務。"
       properties:
         id: { type: string }
         name: { type: string }
-        description: { type: string }
-        scriptId: { type: string }
-        cronExpression: { type: string }
+        description: { type: string, nullable: true }
+        script_id: { type: string }
+        cron_expression: { type: string }
         parameters: { type: object, additionalProperties: true }
-        mode: { type: string, enum: [simple, advanced] }
-        frequency: { type: string, nullable: true }
-        timezone: { type: string, nullable: true }
-        isEnabled: { type: boolean }
-        lastStatus: { type: string, enum: [success, failed, pending, running], nullable: true }
-        lastRunAt: { type: string, format: date-time, nullable: true }
-        nextRunAt: { type: string, format: date-time, nullable: true }
-        creator: { type: string, nullable: true }
-        createdAt: { type: string, format: date-time, nullable: true }
-        updatedAt: { type: string, format: date-time, nullable: true }
+        is_enabled: { type: boolean }
+        last_status: { type: string, enum: [success, failed, pending], nullable: true }
+        last_run_at: { type: string, format: date-time, nullable: true }
+        next_run_at: { type: string, format: date-time, nullable: true }
+        creator_id: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        deleted_at: { type: string, format: date-time, nullable: true }
     AutomationScheduleCreateRequest:
       type: object
-      required: [name, scriptId, cronExpression]
+      required: [name, script_id, cron_expression]
       properties:
         name: { type: string }
         description: { type: string }
-        scriptId: { type: string }
-        cronExpression: { type: string }
+        script_id: { type: string }
+        cron_expression: { type: string }
         parameters: { type: object, additionalProperties: true }
-        mode: { type: string, enum: [simple, advanced], default: simple }
-        frequency: { type: string }
-        timezone: { type: string }
-        isEnabled: { type: boolean }
+        is_enabled: { type: boolean, default: true }
     AutomationScheduleUpdateRequest:
-      allOf:
-        - $ref: "#/components/schemas/AutomationScheduleCreateRequest"
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        cron_expression: { type: string }
+        parameters: { type: object, additionalProperties: true }
+        is_enabled: { type: boolean }
     AutomationScheduleCollection:
       type: object
       properties:
@@ -1304,18 +2224,21 @@ components:
 
     AutomationRun:
       type: object
+      description: "對應 `execution_logs` 表的執行記錄摘要。"
       properties:
         id: { type: string }
-        scriptId: { type: string }
-        scheduleId: { type: string, nullable: true }
+        script_id: { type: string }
+        schedule_id: { type: string, nullable: true }
+        event_id: { type: string, nullable: true }
+        trigger_type: { type: string, enum: [manual, scheduled, event, api] }
+        triggered_by_id: { type: string, nullable: true }
         status: { type: string, enum: [pending, running, success, failed, cancelled, timeout] }
-        triggerType: { type: string, enum: [manual, scheduled, event, api] }
-        triggerMetadata: { type: object, additionalProperties: true }
-        startedAt: { type: string, format: date-time, nullable: true }
-        finishedAt: { type: string, format: date-time, nullable: true }
-        durationMs: { type: integer, nullable: true }
-        output: { type: string, nullable: true }
-        operator: { type: string, nullable: true }
+        start_time: { type: string, format: date-time, nullable: true }
+        end_time: { type: string, format: date-time, nullable: true }
+        duration_seconds: { type: integer, nullable: true }
+        exit_code: { type: integer, nullable: true }
+        input_parameters: { type: object, additionalProperties: true }
+        created_at: { type: string, format: date-time }
     AutomationRunCollection:
       type: object
       properties:
@@ -1330,61 +2253,79 @@ components:
     # ============================================
     Event:
       type: object
-      description: "代表一個完整的事件，包含所有用於UI展示的豐富化資訊"
+      description: "對應 `events` 表並整合 UI 需要的附加資訊。"
       properties:
-        id: { type: string, example: "evt_2a7d3e9f" }
-        summary: { type: string, example: "CPU high on db-mysql-prod-02" }
-        severity: { type: string, enum: [CRITICAL, WARNING, INFO] }
-        status: { type: string, enum: [FIRING, ACKNOWLEDGED, RESOLVED, MERGED] }
-        source: { type: string, example: "Prometheus" }
-        triggered_at: { type: string, format: "date-time" }
-        acknowledged_at: { type: string, format: "date-time", nullable: true }
-        resolved_at: { type: string, format: "date-time", nullable: true }
+        id: { type: string }
+        incident_id: { type: string, nullable: true }
+        summary: { type: string }
+        description: { type: string, nullable: true }
+        severity: { type: string, enum: [critical, warning, info] }
+        status: { type: string, enum: [firing, acknowledged, resolved, merged, silenced] }
+        source: { type: string, nullable: true }
+        rule_id: { type: string, nullable: true }
+        rule_name: { type: string, nullable: true }
         assignee:
           type: object
+          description: "事件目前的處理人或團隊 (由事件協作模組衍生)。"
           properties:
-            id: { type: string, example: "usr_1a2b3c" }
-            name: { type: string, example: "陳大文" }
+            id: { type: string, nullable: true }
+            name: { type: string, nullable: true }
+            type: { type: string, enum: [user, team], nullable: true }
         resource:
           type: object
+          description: "關聯的 `resources` 資訊。"
           properties:
-            id: { type: string, example: "res_b4c5d6" }
-            name: { type: string, example: "db-mysql-prod-02" }
-            type: { type: string, example: "DATABASE" }
-        rule:
+            id: { type: string }
+            name: { type: string }
+            type: { type: string, enum: [server, database, cache, gateway, service], nullable: true }
+            team_id: { type: string, nullable: true }
+        labels:
           type: object
-          properties:
-            id: { type: string, example: "rule_e7f8g9" }
-            name: { type: string, example: "高 CPU 使用率" }
+          additionalProperties: { type: string }
+          description: "原始告警標籤 (events.labels)。"
+        annotations:
+          type: object
+          additionalProperties: { type: string }
+          description: "原始告警註解 (events.annotations)。"
         trigger_details:
           type: object
+          nullable: true
+          description: "由 annotations 推導的觸發資訊。"
           properties:
-            threshold: { type: string, example: "CPU > 90%" }
-            value: { type: string, example: "92.5%" }
+            threshold: { type: string, nullable: true }
+            value: { type: string, nullable: true }
         tags:
           type: array
+          description: "整合資源標籤後的顯示用集合。"
           items:
             type: object
             properties:
               key: { type: string }
               value: { type: string }
-              color: { type: string }
+              color: { type: string, nullable: true }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        acknowledged_at: { type: string, format: date-time, nullable: true }
+        silenced_until: { type: string, format: date-time, nullable: true }
+        available_actions:
+          type: array
+          description: "UI 可執行的快速操作。"
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+              method: { type: string, enum: [get, post, put, patch, delete] }
+              api_endpoint: { type: string }
         quick_links:
           type: array
           items:
             type: object
             properties:
               name: { type: string }
-              url: { type: string, format: "uri" }
-        available_actions:
-          type: array
-          items:
-            type: object
-            properties:
-              key: { type: string }
-              label: { type: string }
-              api_endpoint: { type: string }
-              method: { type: string }
+              url: { type: string, format: uri }
         history_logs:
           type: array
           items:
@@ -1397,29 +2338,43 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AutomationRunSummary"
-    EventHistory:
+    EventCollection:
       type: object
       properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    EventHistory:
+      type: object
+      description: "對應 `event_histories` 表。"
+      properties:
         id: { type: string }
+        event_id: { type: string }
         type: { type: string, enum: [SYSTEM_STATE_CHANGE, USER_COMMENT, AUTOMATION_RUN, ASSIGNEE_CHANGE] }
-        actor:
+        actor: { type: string, description: "原始操作者識別字串 (event_histories.actor)。" }
+        actor_details:
           type: object
+          description: "為前端顯示而擴充的操作者資訊。"
           properties:
-            type: { type: string, enum: [system, user, rule] }
-            id: { type: string }
-            name: { type: string }
-            avatar_url: { type: string, format: "uri" }
+            type: { type: string, enum: [system, user, rule], nullable: true }
+            id: { type: string, nullable: true }
+            name: { type: string, nullable: true }
+            avatar_url: { type: string, format: uri, nullable: true }
         content: { type: string, description: "支援 Markdown" }
-        metadata: { type: object }
-        created_at: { type: string, format: "date-time" }
+        metadata: { type: object, additionalProperties: true }
+        created_at: { type: string, format: date-time }
     RelatedEvent:
       type: object
+      description: "對應 `event_correlations` 表的關聯事件摘要。"
       properties:
         id: { type: string }
         summary: { type: string }
-        severity: { type: string }
-        status: { type: string }
-        triggered_at: { type: string, format: "date-time" }
+        severity: { type: string, enum: [critical, warning, info] }
+        status: { type: string, enum: [firing, acknowledged, resolved, merged, silenced] }
+        starts_at: { type: string, format: date-time }
         correlation_reason:
           type: object
           properties:
@@ -1432,11 +2387,11 @@ components:
         run_id: { type: string }
         script_id: { type: string }
         script_name: { type: string }
-        status: { type: string, enum: [SUCCESS, FAILED, RUNNING] }
-        triggered_by: { type: string }
-        started_at: { type: string, format: "date-time" }
-        duration_ms: { type: integer }
-        summary_log: { type: string }
+        status: { type: string, enum: [pending, running, success, failed, cancelled, timeout] }
+        triggered_by: { type: string, nullable: true }
+        started_at: { type: string, format: date-time }
+        duration_seconds: { type: integer, nullable: true }
+        summary_log: { type: string, nullable: true }
     EventCommentRequest:
       type: object
       required: [content]
@@ -1449,7 +2404,7 @@ components:
       required: [title, severity, event_ids]
       properties:
         title: { type: string, description: "新事故的標題" }
-        severity: { type: string, enum: [CRITICAL, HIGH, MEDIUM, LOW] }
+        severity: { type: string, enum: [critical, high, medium, low] }
         assignee_id: { type: string, description: "指派處理事故的使用者或團隊ID" }
         event_ids:
           type: array
@@ -1462,23 +2417,87 @@ components:
         id: { type: string }
         title: { type: string }
         status: { type: string, enum: [investigating, identified, monitoring, resolved] }
-        severity: { type: string, enum: [CRITICAL, HIGH, MEDIUM, LOW] }
+        severity: { type: string, enum: [critical, high, medium, low] }
         assignee_id: { type: string, nullable: true }
         created_at: { type: string, format: "date-time" }
         updated_at: { type: string, format: "date-time" }
     SilenceCreateRequest:
       type: object
-      required: [event_id, duration, comment]
+      required: [name, matchers, starts_at, ends_at]
       properties:
-        event_id:
+        name: { type: string }
+        description: { type: string }
+        matchers:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        timezone: { type: string, default: UTC }
+        notify_on_start: { type: boolean, default: false }
+        notify_on_end: { type: boolean, default: false }
+        source_event_id:
           type: string
-          description: "用於提取標籤以建立靜音匹配條件的事件 ID"
-        duration:
+          description: "若由事件快速建立，可帶入事件 ID 以供追蹤。"
+    RecurringSilenceRuleCreateRequest:
+      type: object
+      required: [name, matchers, recurring_pattern, time_slot, duration_minutes]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        matchers:
+          type: array
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
+        recurring_pattern: { type: string, enum: [daily, weekly, monthly, cron] }
+        weekdays:
+          type: array
+          items: { type: integer, minimum: 0, maximum: 6 }
+        monthly_type: { type: string, enum: [date, weekday, lastday] }
+        time_slot:
+          type: array
+          items: { type: string, pattern: "^\\d{2}:\\d{2}$" }
+          minItems: 2
+          maxItems: 2
+        timezone: { type: string, default: UTC }
+        duration_minutes: { type: integer, minimum: 1 }
+        cron_expression:
           type: string
-          description: "靜音的持續時間 (例如 '1h', '30m', '2d')"
-        comment:
-          type: string
-          description: "建立此靜音規則的原因 (必須提供)"
+          description: "當 recurring_pattern=cron 時必填，直接指定排程。"
+        valid_from: { type: string, format: date-time }
+        valid_until: { type: string, format: date-time }
+        execution_limit: { type: integer }
+        notify_on_start: { type: boolean, default: false }
+        notify_on_end: { type: boolean, default: false }
+        is_enabled: { type: boolean, default: true }
+    RecurringSilenceRuleUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        matchers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
+        recurring_pattern: { type: string, enum: [daily, weekly, monthly, cron] }
+        weekdays:
+          type: array
+          items: { type: integer, minimum: 0, maximum: 6 }
+        monthly_type: { type: string, enum: [date, weekday, lastday] }
+        time_slot:
+          type: array
+          items: { type: string, pattern: "^\\d{2}:\\d{2}$" }
+        timezone: { type: string }
+        duration_minutes: { type: integer }
+        cron_expression: { type: string }
+        valid_from: { type: string, format: date-time }
+        valid_until: { type: string, format: date-time }
+        execution_limit: { type: integer }
+        notify_on_start: { type: boolean }
+        notify_on_end: { type: boolean }
+        is_enabled: { type: boolean }
     UserPlatformRolesUpdateRequest:
       type: object
       properties:
@@ -1557,15 +2576,93 @@ components:
         description: { type: string, nullable: true }
         is_built_in: { type: boolean }
         user_count: { type: integer, description: "使用此角色的用戶數量" }
+    ResourceGroup:
+      type: object
+      description: "對應 `resource_groups` 表的群組定義。"
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        type: { type: string, enum: [static, dynamic] }
+        rules: { type: object, additionalProperties: true, nullable: true }
+        responsible_team_id: { type: string, nullable: true }
+        responsible_team_name: { type: string, nullable: true }
+        member_count: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        deleted_at: { type: string, format: date-time, nullable: true }
+        members:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceGroupMember"
+    ResourceGroupCreateRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        type: { type: string, enum: [static, dynamic] }
+        rules: { type: object, additionalProperties: true }
+        responsible_team_id: { type: string }
+        member_ids:
+          type: array
+          items: { type: string }
+          description: "初始化靜態群組成員的資源 ID 列表。"
+    ResourceGroupUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        type: { type: string, enum: [static, dynamic] }
+        rules: { type: object, additionalProperties: true }
+        responsible_team_id: { type: string }
+    ResourceGroupCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceGroup"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    ResourceGroupMember:
+      type: object
+      description: "對應 `resource_group_members` 表的群組成員。"
+      properties:
+        resource_id: { type: string }
+        resource_name: { type: string, nullable: true }
+        resource_type: { type: string, enum: [server, database, cache, gateway, service], nullable: true }
+        joined_at: { type: string, format: date-time }
+    ResourceGroupMemberCollection:
+      type: object
+      properties:
+        group_id: { type: string }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceGroupMember"
+    ResourceGroupMemberUpdateRequest:
+      type: object
+      required: [resource_ids]
+      properties:
+        resource_ids:
+          type: array
+          items: { type: string }
+          description: "用於覆寫群組成員的資源 ID 陣列。"
     Resource:
       type: object
       properties:
         id: { type: string }
         name: { type: string }
-        type: { type: string }
-        status: { type: string }
+        type: { type: string, enum: [server, database, cache, gateway, service] }
+        status: { type: string, enum: [healthy, warning, critical, unknown] }
         ip_address: { type: string, nullable: true }
+        location: { type: string, nullable: true }
         team_id: { type: string, nullable: true }
+        description: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        deleted_at: { type: string, format: date-time, nullable: true }
         tags:
           type: array
           items:
@@ -1573,28 +2670,93 @@ components:
             properties:
               key: { type: string }
               value: { type: string }
-    Silence:
+    ResourceTag:
       type: object
-      description: "代表一個從 Grafana API 獲取的一次性靜音規則"
+      description: "對應 `resource_tags` 表的標籤紀錄。"
       properties:
-        id: { type: string }
-        matchers:
+        resource_id: { type: string }
+        tag_key: { type: string }
+        tag_value: { type: string }
+        tagged_at: { type: string, format: date-time }
+    ResourceTagCollection:
+      type: object
+      properties:
+        resource_id: { type: string }
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceTag"
+    ResourceTagUpsertRequest:
+      type: object
+      properties:
+        tags:
           type: array
           items:
             type: object
+            required: [tag_key, tag_value]
             properties:
-              name: { type: string }
-              value: { type: string }
-              isEqual: { type: boolean }
-              isRegex: { type: boolean }
-        startsAt: { type: string, format: "date-time" }
-        endsAt: { type: string, format: "date-time" }
-        createdBy: { type: string }
-        comment: { type: string }
-        status:
-          type: object
-          properties:
-            state: { type: string, enum: [expired, active, pending] }
+              tag_key: { type: string }
+              tag_value: { type: string }
+    ResourceUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        team_id: { type: string }
+        location: { type: string }
+        ip_address: { type: string }
+        status: { type: string, enum: [healthy, warning, critical, unknown] }
+    ResourceCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Resource"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    SilenceMatcher:
+      type: object
+      required: [key, op, value]
+      properties:
+        key: { type: string }
+        op:
+          type: string
+          enum: ['=', '!=', '=~']
+          description: "與 UI 選項一致的運算子，`=~` 代表正規表示式比對。"
+        value: { type: string }
+    Silence:
+      type: object
+      description: "一次性靜音規則，對應 Grafana 靜音 API 的擴充表示。"
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        type: { type: string, enum: [once], default: once }
+        matchers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
+        status: { type: string, enum: [scheduled, active, expired] }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        duration_minutes: { type: integer, nullable: true }
+        timezone: { type: string, default: UTC }
+        source_event_id: { type: string, nullable: true }
+        notify_on_start: { type: boolean, default: false }
+        notify_on_end: { type: boolean, default: false }
+        created_by: { type: string }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time, nullable: true }
+    SilenceCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Silence"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     RecurringSilenceRule:
       type: object
       description: "平台核心功能：週期性靜音規則"
@@ -1602,27 +2764,59 @@ components:
         id: { type: string }
         name: { type: string }
         description: { type: string, nullable: true }
+        type: { type: string, enum: [recurring], default: recurring }
         matchers:
           type: array
           items:
-            type: object
-            properties:
-              name: { type: string }
-              value: { type: string }
-              isRegex: { type: boolean }
-        cron_expression: { type: string }
+            $ref: "#/components/schemas/SilenceMatcher"
+        recurring_pattern:
+          type: string
+          enum: [daily, weekly, monthly, cron]
+          description: "對應 UI 的週期選項；`cron` 表示直接使用自訂排程。"
+        weekdays:
+          type: array
+          items: { type: integer, minimum: 0, maximum: 6 }
+          description: "當 recurring_pattern=weekly 時使用，0 表示星期日。"
+        monthly_type:
+          type: string
+          enum: [date, weekday, lastday]
+          nullable: true
+          description: "月週期的選擇方式（日期、星期、每月最後一天）。"
+        time_slot:
+          type: array
+          items: { type: string, pattern: "^\\d{2}:\\d{2}$" }
+          minItems: 2
+          maxItems: 2
+          description: "靜音生效的起訖時間（HH:mm）。"
+        timezone: { type: string, default: UTC }
+        cron_expression: { type: string, nullable: true }
         duration_minutes: { type: integer }
-        timezone: { type: string }
+        valid_from: { type: string, format: date-time, nullable: true }
+        valid_until: { type: string, format: date-time, nullable: true }
+        execution_limit: { type: integer, nullable: true }
+        executed_count: { type: integer, nullable: true }
+        notify_on_start: { type: boolean, default: false }
+        notify_on_end: { type: boolean, default: false }
         is_enabled: { type: boolean }
         creator_id: { type: string, nullable: true }
-        created_at: { type: string, format: "date-time" }
-        updated_at: { type: string, format: "date-time" }
+        creator_name: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    RecurringSilenceRuleCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/RecurringSilenceRule"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     # ============================================
     # 標籤治理 Schemas
     # ============================================
     TagKey:
       type: object
-      description: "標籤治理規則的定義"
+      description: "對應 `tag_keys` 表的標籤治理規則。"
       properties:
         id: { type: string }
         key_name: { type: string }
@@ -1632,18 +2826,74 @@ components:
         compliance_category: { type: string, nullable: true }
         usage_count: { type: integer }
         enforcement_level: { type: string, enum: [advisory, warning, blocking] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    TagKeyCreateRequest:
+      type: object
+      required: [key_name]
+      properties:
+        key_name: { type: string }
+        description: { type: string }
+        is_required: { type: boolean, default: false }
+        validation_regex: { type: string }
+        compliance_category: { type: string }
+        enforcement_level: { type: string, enum: [advisory, warning, blocking], default: advisory }
+        allowed_values:
+          type: array
+          items:
+            $ref: "#/components/schemas/TagAllowedValueCreateRequest"
+    TagKeyUpdateRequest:
+      type: object
+      properties:
+        description: { type: string }
+        is_required: { type: boolean }
+        validation_regex: { type: string }
+        compliance_category: { type: string }
+        enforcement_level: { type: string, enum: [advisory, warning, blocking] }
+    TagKeyCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TagKey"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+
     TagAllowedValue:
       type: object
-      description: "標籤鍵的預定義允許值"
+      description: "對應 `tag_allowed_values` 表的允許值。"
       properties:
         id: { type: string }
         tag_key_id: { type: string }
         value: { type: string }
         color: { type: string, nullable: true }
+    TagAllowedValueCreateRequest:
+      type: object
+      required: [value]
+      properties:
+        value: { type: string }
+        color: { type: string }
+    TagAllowedValueUpdateRequest:
+      type: object
+      properties:
+        value: { type: string }
+        color: { type: string }
+    TagAllowedValueCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TagAllowedValue"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+
     TagComplianceViolation:
       type: object
-      description: "單一的標籤不合規記錄"
+      description: "對應 `tag_compliance_violations` 表的違規紀錄。"
       properties:
+        id: { type: string }
         resource_id: { type: string }
         resource_name: { type: string }
         violation_type: { type: string, enum: [missing_required, invalid_value, unknown_key] }
@@ -1651,7 +2901,22 @@ components:
         expected_value: { type: string, nullable: true }
         actual_value: { type: string, nullable: true }
         severity: { type: string, enum: [low, medium, high] }
-        detected_at: { type: string, format: "date-time" }
+        detected_at: { type: string, format: date-time }
+        resolved_at: { type: string, format: date-time, nullable: true }
+    TagComplianceViolationUpdateRequest:
+      type: object
+      properties:
+        severity: { type: string, enum: [low, medium, high] }
+        resolved_at: { type: string, format: date-time, nullable: true }
+    TagComplianceViolationCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/TagComplianceViolation"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     TagComplianceReport:
       type: object
       description: "標籤合規性的總結報告"
@@ -1662,6 +2927,10 @@ components:
             compliance_score: { type: number, format: float }
             total_resources_scanned: { type: integer }
             violating_resources_count: { type: integer }
+        severity_breakdown:
+          type: object
+          additionalProperties: { type: integer }
+          description: "依嚴重度彙整的違規筆數"
         violations:
           type: array
           items:
@@ -1679,3 +2948,62 @@ components:
         raw_payload: { type: object, description: "從 Grafana Webhook 接收到的原始 JSON" }
         sent_at: { type: string, format: "date-time", nullable: true }
         created_at: { type: string, format: "date-time" }
+    AuditLog:
+      type: object
+      description: "對應 `audit_logs` 表的審計記錄。"
+      properties:
+        id: { type: string }
+        user_id: { type: string, nullable: true }
+        action_type: { type: string, enum: [create, update, delete, login, logout, access, export] }
+        resource_type: { type: string, nullable: true }
+        resource_id: { type: string, nullable: true }
+        details: { type: object, additionalProperties: true }
+        ip_address: { type: string, nullable: true }
+        user_agent: { type: string, nullable: true }
+        result: { type: string, enum: [success, failure, partial] }
+        risk_level: { type: string, enum: [low, medium, high, critical] }
+        created_at: { type: string, format: date-time }
+    AuditLogCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/AuditLog"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    WebhookReceiver:
+      type: object
+      description: "對應 `webhook_receivers` 表的接收器設定。"
+      properties:
+        id: { type: string }
+        name: { type: string }
+        endpoint_path: { type: string }
+        source_type: { type: string, enum: [grafana, prometheus, external] }
+        is_enabled: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    WebhookReceiverCreateRequest:
+      type: object
+      required: [name, endpoint_path, source_type]
+      properties:
+        name: { type: string }
+        endpoint_path: { type: string }
+        source_type: { type: string, enum: [grafana, prometheus, external] }
+        is_enabled: { type: boolean, default: true }
+    WebhookReceiverUpdateRequest:
+      type: object
+      properties:
+        name: { type: string }
+        endpoint_path: { type: string }
+        source_type: { type: string, enum: [grafana, prometheus, external] }
+        is_enabled: { type: boolean }
+    WebhookReceiverCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/WebhookReceiver"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
