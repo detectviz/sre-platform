@@ -107,9 +107,17 @@ CREATE TABLE `resources` (
     `type` ENUM('server', 'database', 'cache', 'gateway', 'service') NOT NULL COMMENT '資源類型',
     `status` ENUM('healthy', 'warning', 'critical', 'unknown') DEFAULT 'unknown' COMMENT '健康狀態',
     `ip_address` VARCHAR(45) COMMENT 'IP地址',
-    `location` VARCHAR(255) COMMENT '位置資訊',
+    `environment` VARCHAR(50) COMMENT '部署環境 (例如 production、staging)',
+    `region` VARCHAR(100) COMMENT '雲端區域或資料中心位置',
+    `location` VARCHAR(255) COMMENT '位置資訊 (機房或可用區)',
+    `instance_type` VARCHAR(100) COMMENT '實例規格 (如 m5.large)',
+    `os_version` VARCHAR(100) COMMENT '作業系統版本',
     `team_id` VARCHAR(36) COMMENT '負責團隊ID',
     `description` TEXT COMMENT '資源描述',
+    `cpu_usage` DECIMAL(5,2) COMMENT 'CPU 使用率百分比',
+    `memory_usage` DECIMAL(5,2) COMMENT '記憶體使用率百分比',
+    `disk_usage` DECIMAL(5,2) COMMENT '磁碟使用率百分比',
+    `last_check_at` TIMESTAMP NULL COMMENT '最後健康檢查時間',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     `deleted_at` TIMESTAMP NULL DEFAULT NULL COMMENT '軟刪除時間戳',
@@ -117,8 +125,11 @@ CREATE TABLE `resources` (
     INDEX `idx_name` (`name`),
     INDEX `idx_type` (`type`),
     INDEX `idx_status` (`status`),
+    INDEX `idx_environment` (`environment`),
+    INDEX `idx_region` (`region`),
     INDEX `idx_team` (`team_id`),
     INDEX `idx_ip` (`ip_address`),
+    INDEX `idx_last_check_at` (`last_check_at`),
     INDEX `idx_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='資源表 (CMDB核心)';
 
@@ -129,6 +140,7 @@ CREATE TABLE `resource_groups` (
     `description` TEXT COMMENT '群組描述',
     `type` ENUM('static', 'dynamic') NOT NULL DEFAULT 'static' COMMENT '群組類型 (靜態或動態)',
     `rules` JSON COMMENT '動態群組的標籤匹配規則',
+    `health_summary` JSON COMMENT '群組健康度統計快照 (healthy/warning/critical)',
     `responsible_team_id` VARCHAR(36) COMMENT '負責團隊ID',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -148,6 +160,22 @@ CREATE TABLE `resource_group_members` (
     FOREIGN KEY (`group_id`) REFERENCES `resource_groups`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`resource_id`) REFERENCES `resources`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='資源群組成員關聯表';
+
+-- 資源即時度量快照表 (對應資源清單中的使用率與趨勢資料)
+CREATE TABLE `resource_metric_snapshots` (
+    `id` BIGINT UNSIGNED PRIMARY KEY AUTO_INCREMENT COMMENT '快照唯一標識',
+    `resource_id` VARCHAR(36) NOT NULL COMMENT '資源ID',
+    `captured_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '快照採集時間',
+    `cpu_usage` DECIMAL(5,2) COMMENT 'CPU 使用率百分比',
+    `memory_usage` DECIMAL(5,2) COMMENT '記憶體使用率百分比',
+    `disk_usage` DECIMAL(5,2) COMMENT '磁碟使用率百分比',
+    `network_in_bps` BIGINT UNSIGNED COMMENT '網路輸入速率 (bps)',
+    `network_out_bps` BIGINT UNSIGNED COMMENT '網路輸出速率 (bps)',
+    `trend_window` ENUM('15m', '1h', '6h', '24h') DEFAULT '15m' COMMENT '趨勢時間視窗',
+    `trend_values` JSON COMMENT '對應 UI sparkline 的趨勢資料點 (數值陣列)',
+    FOREIGN KEY (`resource_id`) REFERENCES `resources`(`id`) ON DELETE CASCADE,
+    INDEX `idx_resource_metric_snapshots_resource_time` (`resource_id`, `captured_at` DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='資源即時度量快照表';
 
 -- ===========================================
 -- 標籤治理 (Tag Governance) - 平台核心功能
@@ -295,13 +323,35 @@ CREATE TABLE `ai_risk_predictions` (
 -- 事故表 (高層級，由多個事件組成)
 CREATE TABLE `incidents` (
     `id` VARCHAR(36) PRIMARY KEY COMMENT '事故唯一標識',
-    `title` VARCHAR(255) NOT NULL COMMENT '事故標題',
-    `status` ENUM('investigating', 'identified', 'monitoring', 'resolved') NOT NULL,
-    `severity` ENUM('critical', 'high', 'medium', 'low') NOT NULL,
+    `title` VARCHAR(255) COMMENT '事故標題 (保留相容性，優先使用 summary)',
+    `summary` VARCHAR(500) NOT NULL COMMENT '事故摘要 (對應 UI 列表顯示)',
+    `status` ENUM('investigating', 'identified', 'monitoring', 'resolved') NOT NULL COMMENT '事故狀態',
+    `severity` ENUM('critical', 'high', 'medium', 'low') NOT NULL COMMENT '事故嚴重度',
+    `service_name` VARCHAR(255) COMMENT '受影響服務名稱',
+    `business_impact` ENUM('critical', 'high', 'medium', 'low') DEFAULT 'medium' COMMENT '商業衝擊程度',
+    `storm_group_id` VARCHAR(64) COMMENT 'Storm 分組識別碼',
+    `primary_resource_id` VARCHAR(36) COMMENT '主要受影響資源ID',
+    `rule_id` VARCHAR(255) COMMENT '觸發規則ID',
+    `rule_name` VARCHAR(255) COMMENT '觸發規則名稱',
+    `trigger_threshold` VARCHAR(255) COMMENT '觸發閾值描述',
+    `labels` JSON COMMENT '事故標籤快照',
+    `annotations` JSON COMMENT '事故註解快照',
+    `automation_script_id` VARCHAR(36) COMMENT '關聯自動化腳本ID',
+    `automation_run_id` VARCHAR(36) COMMENT '關聯自動化執行紀錄ID',
+    `detected_at` TIMESTAMP NULL COMMENT '首次偵測時間',
+    `resolved_at` TIMESTAMP NULL COMMENT '結束時間',
     `assignee_id` VARCHAR(36) COMMENT '事故處理人ID',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (`assignee_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+    FOREIGN KEY (`assignee_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`primary_resource_id`) REFERENCES `resources`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`automation_script_id`) REFERENCES `automation_scripts`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`automation_run_id`) REFERENCES `execution_logs`(`id`) ON DELETE SET NULL,
+    INDEX `idx_incident_status` (`status`),
+    INDEX `idx_incident_severity` (`severity`),
+    INDEX `idx_incident_business_impact` (`business_impact`),
+    INDEX `idx_incident_service_name` (`service_name`),
+    INDEX `idx_incident_detected_at` (`detected_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='事故表';
 
 -- 事件表 (Events)
@@ -314,20 +364,33 @@ CREATE TABLE `events` (
     `status` ENUM('new', 'acknowledged', 'resolved', 'silenced') DEFAULT 'new' COMMENT '狀態 (Grafana firing 對應 new)',
     `source` VARCHAR(100) COMMENT '事件來源 (e.g. Prometheus)',
     `resource_id` VARCHAR(36) COMMENT '相關資源ID',
+    `service_name` VARCHAR(255) COMMENT '受影響服務名稱',
+    `business_impact` ENUM('critical', 'high', 'medium', 'low') DEFAULT 'medium' COMMENT '商業衝擊程度',
+    `storm_group_id` VARCHAR(64) COMMENT 'Storm 分組識別碼',
     `rule_id` VARCHAR(255) COMMENT '觸發規則的UID (來自Grafana)',
+    `rule_name` VARCHAR(255) COMMENT '觸發規則名稱',
+    `trigger_threshold` VARCHAR(255) COMMENT '觸發閾值描述',
+    `detected_value` VARCHAR(255) COMMENT '觸發時量測值描述',
     `labels` JSON COMMENT '告警標籤',
     `annotations` JSON COMMENT '告警註解',
+    `resource_snapshot` JSON COMMENT '資源資訊快照 (提供 UI 顯示)',
+    `service_snapshot` JSON COMMENT '服務資訊快照 (提供 UI 顯示)',
+    `automation_run_id` VARCHAR(36) COMMENT '關聯自動化執行紀錄ID',
     `starts_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '開始時間',
     `ends_at` TIMESTAMP NULL COMMENT '結束時間',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     FOREIGN KEY (`incident_id`) REFERENCES `incidents`(`id`) ON DELETE SET NULL,
     FOREIGN KEY (`resource_id`) REFERENCES `resources`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`automation_run_id`) REFERENCES `execution_logs`(`id`) ON DELETE SET NULL,
     INDEX `idx_incident_id` (`incident_id`),
     INDEX `idx_severity` (`severity`),
     INDEX `idx_status` (`status`),
     INDEX `idx_resource` (`resource_id`),
-    INDEX `idx_time_range` (`starts_at`, `ends_at`)
+    INDEX `idx_time_range` (`starts_at`, `ends_at`),
+    INDEX `idx_event_business_impact` (`business_impact`),
+    INDEX `idx_event_service_name` (`service_name`),
+    INDEX `idx_event_storm_group` (`storm_group_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='事件表';
 
 -- 事件歷史記錄表
@@ -520,9 +583,11 @@ CREATE TABLE `notification_policy_conditions` (
     `id` VARCHAR(36) PRIMARY KEY COMMENT '策略條件唯一標識',
     `policy_id` VARCHAR(36) NOT NULL COMMENT '通知策略ID',
     `field` VARCHAR(100) NOT NULL COMMENT '匹配欄位 (例如 severity、resource_type)',
-    `operator` ENUM('equals', 'not_equals', 'in', 'not_in', 'contains', 'not_contains', 'regex') NOT NULL COMMENT '匹配運算子',
-    `value_text` VARCHAR(255) COMMENT '條件值 (單值)',
-    `value_json` JSON COMMENT '條件值 (多值或結構化內容)',
+    `operator` ENUM('equals', 'not_equals', 'in', 'not_in', 'contains', 'not_contains', 'regex', 'greater_than', 'greater_than_equals', 'less_than', 'less_than_equals', 'between', 'starts_with', 'ends_with', 'exists', 'not_exists') NOT NULL COMMENT '匹配運算子',
+    `value_type` ENUM('string', 'number', 'boolean', 'array', 'object') NOT NULL DEFAULT 'string' COMMENT '條件值型別',
+    `value_text` VARCHAR(255) COMMENT '條件值 (字串或數值的文字表示)',
+    `value_json` JSON COMMENT '條件值 (多值、陣列或物件)',
+    `metadata` JSON COMMENT '條件額外設定 (例如數值單位、比較模式)',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`policy_id`) REFERENCES `notification_policies`(`id`) ON DELETE CASCADE,
     INDEX `idx_notification_condition_policy` (`policy_id`),
@@ -540,7 +605,7 @@ CREATE TABLE `notification_history` (
     `channel_name` VARCHAR(255) NOT NULL COMMENT '目標管道名稱',
     `channel_type` ENUM('email', 'slack', 'webhook', 'pagerduty', 'sms', 'line_notify', 'teams') COMMENT '通知管道類型',
     `recipient` VARCHAR(500) NOT NULL COMMENT '接收者地址或描述',
-    `status` ENUM('PENDING', 'SUCCESS', 'FAILED', 'DELIVERED') DEFAULT 'PENDING' COMMENT '發送狀態',
+    `status` ENUM('pending', 'success', 'failed', 'delivered') DEFAULT 'pending' COMMENT '發送狀態',
     `message` TEXT COMMENT '通知內容摘要',
     `error_message` TEXT COMMENT '失敗時的錯誤訊息',
     `raw_payload` JSON COMMENT '原始通知內容快照',
@@ -577,7 +642,8 @@ CREATE TABLE `audit_logs` (
     INDEX `idx_user_id` (`user_id`),
     INDEX `idx_action_type` (`action_type`),
     INDEX `idx_resource` (`resource_type`, `resource_id`),
-    INDEX `idx_created_at` (`created_at`)
+    INDEX `idx_created_at` (`created_at`),
+    INDEX `idx_risk_level` (`risk_level`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='審計日誌表';
 
 -- ===========================================
@@ -592,7 +658,7 @@ CREATE TABLE `event_analysis_results` (
     `confidence_score` DECIMAL(5,2) COMMENT '置信度評分 0-100',
     `analysis_result` JSON COMMENT '分析結果詳情',
     `analyst_type` ENUM('ai', 'human', 'hybrid') DEFAULT 'ai',
-    `status` ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+    `status` ENUM('pending', 'running', 'success', 'failed') DEFAULT 'pending',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`event_id`) REFERENCES `events`(`id`) ON DELETE CASCADE,
