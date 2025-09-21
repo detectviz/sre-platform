@@ -1397,6 +1397,15 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AutomationRunSummary"
+    EventCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     EventHistory:
       type: object
       properties:
