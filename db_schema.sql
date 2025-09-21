@@ -157,15 +157,18 @@ CREATE TABLE `resource_group_members` (
 CREATE TABLE `tag_keys` (
     `id` VARCHAR(36) PRIMARY KEY COMMENT '標籤鍵唯一標識',
     `key_name` VARCHAR(100) UNIQUE NOT NULL COMMENT '標籤鍵',
+    `display_name` VARCHAR(100) NOT NULL COMMENT '標籤顯示名稱',
     `description` TEXT COMMENT '標籤描述',
     `is_required` BOOLEAN DEFAULT FALSE COMMENT '是否必填',
     `validation_regex` VARCHAR(255) COMMENT '值的驗證正則表達式',
+    `category` VARCHAR(50) NOT NULL DEFAULT 'uncategorized' COMMENT '標籤分類 (對應標籤治理介面分類)',
     `compliance_category` VARCHAR(50) COMMENT '合規分類',
-    `usage_count` INT DEFAULT 0 COMMENT '使用次數統計',
+    `total_usage` INT DEFAULT 0 COMMENT '標籤被套用的總次數',
     `enforcement_level` ENUM('advisory', 'warning', 'blocking') DEFAULT 'advisory' COMMENT '強制等級',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX `idx_key_name` (`key_name`),
+    INDEX `idx_category` (`category`),
     INDEX `idx_is_required` (`is_required`),
     INDEX `idx_compliance_category` (`compliance_category`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='標籤治理 - 標籤鍵定義';
@@ -175,9 +178,14 @@ CREATE TABLE `tag_allowed_values` (
     `id` VARCHAR(36) PRIMARY KEY,
     `tag_key_id` VARCHAR(36) NOT NULL,
     `value` VARCHAR(255) NOT NULL,
+    `display_name` VARCHAR(255) NOT NULL COMMENT '標籤值顯示名稱',
     `color` VARCHAR(7) COMMENT 'UI 顯示顏色',
+    `usage_count` INT DEFAULT 0 COMMENT '標籤值使用次數',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
     FOREIGN KEY (`tag_key_id`) REFERENCES `tag_keys`(`id`) ON DELETE CASCADE,
-    UNIQUE KEY `unique_tag_value` (`tag_key_id`, `value`)
+    UNIQUE KEY `unique_tag_value` (`tag_key_id`, `value`),
+    INDEX `idx_usage_count` (`usage_count`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='標籤治理 - 標籤允許值';
 
 -- 資源與標籤的實際關聯表
@@ -382,11 +390,14 @@ CREATE TABLE `automation_scripts` (
     `commit_hash` VARCHAR(40) NOT NULL COMMENT '當前版本的 Commit Hash',
     `version` VARCHAR(20) NOT NULL COMMENT '當前版本號',
     `is_enabled` BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
+    `execution_count` INT NOT NULL DEFAULT 0 COMMENT '累積執行次數',
+    `last_executed_at` TIMESTAMP NULL COMMENT '最後執行時間',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `deleted_at` TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
-    INDEX `idx_deleted_at` (`deleted_at`)
+    INDEX `idx_deleted_at` (`deleted_at`),
+    INDEX `idx_last_executed_at` (`last_executed_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='自動化腳本元數據表';
 
 -- 排程任務表
@@ -396,9 +407,13 @@ CREATE TABLE `schedules` (
     `description` TEXT COMMENT '任務描述',
     `script_id` VARCHAR(36) NOT NULL COMMENT '執行的腳本ID',
     `cron_expression` VARCHAR(100) NOT NULL COMMENT 'CRON表達式',
+    `schedule_mode` ENUM('simple', 'advanced') DEFAULT 'simple' COMMENT '排程設定模式',
+    `frequency` ENUM('minute', 'hourly', 'daily', 'weekly', 'monthly', 'custom') DEFAULT 'daily' COMMENT '執行頻率',
+    `timezone` VARCHAR(100) DEFAULT 'UTC' COMMENT '排程時區',
     `parameters` JSON COMMENT '腳本執行時所需的參數',
+    `schedule_config` JSON COMMENT '排程附加設定 (例如選擇的星期、月週期等)',
     `is_enabled` BOOLEAN DEFAULT TRUE COMMENT '是否啟用',
-    `last_status` ENUM('success', 'failed', 'pending') DEFAULT 'pending' COMMENT '最後執行狀態',
+    `last_status` ENUM('success', 'failed', 'pending', 'running') DEFAULT 'pending' COMMENT '最後執行狀態',
     `last_run_at` TIMESTAMP NULL COMMENT '最後執行時間',
     `next_run_at` TIMESTAMP NULL COMMENT '下次執行時間',
     `creator_id` VARCHAR(36) COMMENT '創建者ID',
@@ -407,6 +422,9 @@ CREATE TABLE `schedules` (
     `deleted_at` TIMESTAMP NULL DEFAULT NULL,
     FOREIGN KEY (`script_id`) REFERENCES `automation_scripts`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    INDEX `idx_schedule_mode` (`schedule_mode`),
+    INDEX `idx_frequency` (`frequency`),
+    INDEX `idx_timezone` (`timezone`),
     INDEX `idx_next_run` (`next_run_at`),
     INDEX `idx_deleted_at` (`deleted_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='排程任務表';
@@ -439,19 +457,102 @@ CREATE TABLE `execution_logs` (
 -- 通知管理 (Notification Management)
 -- ===========================================
 
+-- 通知管道定義表
+CREATE TABLE `notification_channels` (
+    `id` VARCHAR(36) PRIMARY KEY COMMENT '通知管道唯一標識',
+    `name` VARCHAR(255) NOT NULL COMMENT '管道名稱',
+    `type` ENUM('email', 'slack', 'webhook', 'pagerduty', 'sms', 'line_notify', 'teams') NOT NULL COMMENT '管道類型',
+    `description` TEXT COMMENT '管道描述',
+    `template_key` VARCHAR(100) COMMENT '套用的訊息模板鍵值',
+    `config` JSON COMMENT '管道專屬設定 (如收件人、Webhook URL 等)',
+    `is_enabled` BOOLEAN NOT NULL DEFAULT TRUE COMMENT '是否啟用',
+    `last_test_status` ENUM('success', 'failed', 'pending') DEFAULT NULL COMMENT '最近測試結果',
+    `last_test_message` TEXT COMMENT '最近測試訊息',
+    `last_test_at` TIMESTAMP NULL COMMENT '最近測試時間',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+    UNIQUE KEY `uniq_notification_channel_name` (`name`),
+    INDEX `idx_notification_channel_type` (`type`),
+    INDEX `idx_notification_channel_enabled` (`is_enabled`),
+    INDEX `idx_notification_channel_deleted` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知管道定義表';
+
+-- 通知策略主表
+CREATE TABLE `notification_policies` (
+    `id` VARCHAR(36) PRIMARY KEY COMMENT '通知策略唯一標識',
+    `name` VARCHAR(255) NOT NULL COMMENT '策略名稱',
+    `description` TEXT COMMENT '策略描述',
+    `resource_group_id` VARCHAR(36) NOT NULL COMMENT '適用的資源群組ID',
+    `responsible_team_id` VARCHAR(36) NOT NULL COMMENT '負責團隊ID',
+    `priority` ENUM('low', 'medium', 'high', 'critical') DEFAULT 'medium' COMMENT '策略優先順序',
+    `match_type` ENUM('all', 'any') DEFAULT 'all' COMMENT '條件匹配邏輯',
+    `notes` TEXT COMMENT '補充說明或升級策略',
+    `is_enabled` BOOLEAN NOT NULL DEFAULT TRUE COMMENT '是否啟用',
+    `trigger_count` INT DEFAULT 0 COMMENT '觸發次數',
+    `last_triggered_at` TIMESTAMP NULL COMMENT '最近觸發時間',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `deleted_at` TIMESTAMP NULL DEFAULT NULL,
+    FOREIGN KEY (`resource_group_id`) REFERENCES `resource_groups`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`responsible_team_id`) REFERENCES `teams`(`id`) ON DELETE RESTRICT,
+    INDEX `idx_notification_policy_group` (`resource_group_id`),
+    INDEX `idx_notification_policy_team` (`responsible_team_id`),
+    INDEX `idx_notification_policy_enabled` (`is_enabled`),
+    INDEX `idx_notification_policy_priority` (`priority`),
+    INDEX `idx_notification_policy_deleted` (`deleted_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知策略主表';
+
+-- 通知策略與管道綁定表
+CREATE TABLE `notification_policy_channels` (
+    `policy_id` VARCHAR(36) NOT NULL COMMENT '通知策略ID',
+    `channel_id` VARCHAR(36) NOT NULL COMMENT '通知管道ID',
+    `channel_order` INT DEFAULT 0 COMMENT '通知發送順序 (0 代表同時送出)',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`policy_id`, `channel_id`),
+    FOREIGN KEY (`policy_id`) REFERENCES `notification_policies`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`channel_id`) REFERENCES `notification_channels`(`id`) ON DELETE CASCADE,
+    INDEX `idx_notification_policy_channel_order` (`channel_order`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知策略與管道綁定表';
+
+-- 通知策略條件表
+CREATE TABLE `notification_policy_conditions` (
+    `id` VARCHAR(36) PRIMARY KEY COMMENT '策略條件唯一標識',
+    `policy_id` VARCHAR(36) NOT NULL COMMENT '通知策略ID',
+    `field` VARCHAR(100) NOT NULL COMMENT '匹配欄位 (例如 severity、resource_type)',
+    `operator` ENUM('equals', 'not_equals', 'in', 'not_in', 'contains', 'not_contains', 'regex') NOT NULL COMMENT '匹配運算子',
+    `value_text` VARCHAR(255) COMMENT '條件值 (單值)',
+    `value_json` JSON COMMENT '條件值 (多值或結構化內容)',
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (`policy_id`) REFERENCES `notification_policies`(`id`) ON DELETE CASCADE,
+    INDEX `idx_notification_condition_policy` (`policy_id`),
+    INDEX `idx_notification_condition_field` (`field`),
+    INDEX `idx_notification_condition_operator` (`operator`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知策略條件定義表';
+
 -- 通知歷史記錄表 (平台核心功能)
 CREATE TABLE `notification_history` (
     `id` VARCHAR(36) PRIMARY KEY COMMENT '通知記錄唯一標識',
     `event_id` VARCHAR(36) COMMENT '關聯事件ID',
     `policy_id` VARCHAR(36) COMMENT '觸發的策略ID',
+    `policy_name` VARCHAR(255) COMMENT '策略名稱快照',
+    `channel_id` VARCHAR(36) COMMENT '通知管道ID',
     `channel_name` VARCHAR(255) NOT NULL COMMENT '目標管道名稱',
+    `channel_type` ENUM('email', 'slack', 'webhook', 'pagerduty', 'sms', 'line_notify', 'teams') COMMENT '通知管道類型',
     `recipient` VARCHAR(500) NOT NULL COMMENT '接收者地址或描述',
-    `status` ENUM('pending', 'sent', 'failed', 'delivered') DEFAULT 'pending' COMMENT '發送狀態',
+    `status` ENUM('PENDING', 'SUCCESS', 'FAILED', 'DELIVERED') DEFAULT 'PENDING' COMMENT '發送狀態',
+    `message` TEXT COMMENT '通知內容摘要',
     `error_message` TEXT COMMENT '失敗時的錯誤訊息',
-    `raw_payload` JSON COMMENT '從 Grafana Webhook 接收到的原始 JSON Payload',
+    `raw_payload` JSON COMMENT '原始通知內容快照',
+    `actor` VARCHAR(255) DEFAULT 'system' COMMENT '觸發通知的角色',
     `sent_at` TIMESTAMP NULL COMMENT '發送時間',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (`event_id`) REFERENCES `events`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`policy_id`) REFERENCES `notification_policies`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`channel_id`) REFERENCES `notification_channels`(`id`) ON DELETE SET NULL,
+    INDEX `idx_notification_history_event` (`event_id`),
+    INDEX `idx_notification_history_policy` (`policy_id`),
+    INDEX `idx_notification_history_channel` (`channel_id`),
     INDEX `idx_status` (`status`),
     INDEX `idx_created_at` (`created_at`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='通知歷史記錄表';

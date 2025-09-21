@@ -1050,14 +1050,226 @@ paths:
       summary: 獲取通知策略列表
       operationId: listNotificationPolicies
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: search
+          in: query
+          description: 依策略名稱或描述關鍵字搜尋
+          schema: { type: string }
+        - name: resource_group_id
+          in: query
+          schema: { type: string }
+        - name: responsible_team_id
+          in: query
+          schema: { type: string }
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: is_enabled
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: 通知策略列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPolicyCollection"
+    post:
+      tags: [通知管理 (Notification Management)]
+      summary: 建立通知策略
+      operationId: createNotificationPolicy
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationPolicyCreateRequest"
+      responses:
+        "201":
+          description: 建立成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPolicy"
+  /notification-policies/{policyId}:
+    get:
+      tags: [通知管理 (Notification Management)]
+      summary: 取得通知策略詳情
+      operationId: getNotificationPolicy
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 通知策略詳情
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPolicy"
+    put:
+      tags: [通知管理 (Notification Management)]
+      summary: 更新通知策略
+      operationId: updateNotificationPolicy
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationPolicyUpdateRequest"
+      responses:
+        "200":
+          description: 更新後的通知策略
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationPolicy"
+    delete:
+      tags: [通知管理 (Notification Management)]
+      summary: 刪除通知策略
+      operationId: deleteNotificationPolicy
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
   /notification-channels:
     get:
       tags: [通知管理 (Notification Management)]
       summary: 獲取通知管道列表
       operationId: listNotificationChannels
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [email, slack, webhook, pagerduty, sms, line_notify, teams]
+        - name: is_enabled
+          in: query
+          schema: { type: boolean }
+        - name: search
+          in: query
+          description: 依名稱或描述搜尋
+          schema: { type: string }
+      responses:
+        "200":
+          description: 通知管道列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelCollection"
+    post:
+      tags: [通知管理 (Notification Management)]
+      summary: 建立通知管道
+      operationId: createNotificationChannel
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationChannelCreateRequest"
+      responses:
+        "201":
+          description: 建立成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+  /notification-channels/{channelId}:
+    get:
+      tags: [通知管理 (Notification Management)]
+      summary: 取得通知管道詳情
+      operationId: getNotificationChannel
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: 通知管道資訊
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+    put:
+      tags: [通知管理 (Notification Management)]
+      summary: 更新通知管道
+      operationId: updateNotificationChannel
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationChannelUpdateRequest"
+      responses:
+        "200":
+          description: 更新後的通知管道
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannel"
+    delete:
+      tags: [通知管理 (Notification Management)]
+      summary: 刪除通知管道
+      operationId: deleteNotificationChannel
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: 刪除成功 }
+  /notification-channels/{channelId}/test:
+    post:
+      tags: [通知管理 (Notification Management)]
+      summary: 發送通知管道測試訊息
+      operationId: testNotificationChannel
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: channelId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "202":
+          description: 測試請求已接受
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelTestResponse"
   /notification-history:
     get:
       tags: [通知管理 (Notification Management)]
@@ -1067,25 +1279,38 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           schema:
             type: string
-            enum: [sent, failed, delivered, pending]
+            enum: [PENDING, SUCCESS, FAILED, DELIVERED]
+        - name: channel_id
+          in: query
+          schema: { type: string }
+        - name: policy_id
+          in: query
+          schema: { type: string }
+        - name: from
+          in: query
+          description: 起始時間 (ISO8601)
+          schema: { type: string, format: date-time }
+        - name: to
+          in: query
+          description: 結束時間 (ISO8601)
+          schema: { type: string, format: date-time }
+        - name: search
+          in: query
+          description: 依告警摘要或管道名稱搜尋
+          schema: { type: string }
       responses:
         "200":
           description: "成功獲取通知歷史列表"
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/NotificationHistory"
-                  pagination:
-                    $ref: "#/components/schemas/Pagination"
+                $ref: "#/components/schemas/NotificationHistoryCollection"
   /notification-history/{historyId}:
     get:
       tags: [通知管理 (Notification Management)]
@@ -1118,6 +1343,10 @@ paths:
       responses:
         "202":
           description: "重送請求已接受"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationResendResponse"
 
 # ============================================
 # 可重用元件 (Components)
@@ -2119,12 +2348,16 @@ components:
       properties:
         id: { type: string }
         key_name: { type: string }
+        display_name: { type: string }
         description: { type: string, nullable: true }
         is_required: { type: boolean }
         validation_regex: { type: string, nullable: true }
+        category: { type: string }
         compliance_category: { type: string, nullable: true }
-        usage_count: { type: integer }
+        total_usage: { type: integer }
         enforcement_level: { type: string, enum: [advisory, warning, blocking] }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
     TagAllowedValue:
       type: object
       description: "標籤鍵的預定義允許值"
@@ -2132,7 +2365,11 @@ components:
         id: { type: string }
         tag_key_id: { type: string }
         value: { type: string }
+        display_name: { type: string }
         color: { type: string, nullable: true }
+        usage_count: { type: integer }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
     TagComplianceViolation:
       type: object
       description: "單一的標籤不合規記錄"
@@ -2159,16 +2396,188 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TagComplianceViolation"
+    # 通知管理 Schemas
+    NotificationPolicyChannel:
+      type: object
+      properties:
+        channel_id: { type: string }
+        channel_name: { type: string }
+        channel_type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams] }
+        channel_order: { type: integer }
+    NotificationPolicyCondition:
+      type: object
+      properties:
+        id: { type: string }
+        field: { type: string }
+        operator:
+          type: string
+          enum: [equals, not_equals, in, not_in, contains, not_contains, regex]
+        value:
+          type: string
+          nullable: true
+        value_list:
+          type: array
+          items: { type: string }
+          nullable: true
+    NotificationPolicyConditionInput:
+      type: object
+      properties:
+        field: { type: string }
+        operator:
+          type: string
+          enum: [equals, not_equals, in, not_in, contains, not_contains, regex]
+        value:
+          type: string
+          nullable: true
+        value_list:
+          type: array
+          items: { type: string }
+          nullable: true
+    NotificationPolicy:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        priority: { type: string, enum: [low, medium, high, critical] }
+        match_type: { type: string, enum: [all, any] }
+        is_enabled: { type: boolean }
+        resource_group:
+          type: object
+          nullable: true
+          properties:
+            id: { type: string }
+            name: { type: string }
+        responsible_team:
+          type: object
+          nullable: true
+          properties:
+            id: { type: string }
+            name: { type: string }
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationPolicyChannel"
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationPolicyCondition"
+        trigger_count: { type: integer }
+        last_triggered_at: { type: string, format: "date-time", nullable: true }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    NotificationPolicyCreateRequest:
+      type: object
+      required: [name, resource_group_id, responsible_team_id, priority, channel_ids]
+      properties:
+        name: { type: string }
+        description: { type: string, nullable: true }
+        priority: { type: string, enum: [low, medium, high, critical] }
+        match_type: { type: string, enum: [all, any], default: all }
+        resource_group_id: { type: string }
+        responsible_team_id: { type: string }
+        channel_ids:
+          type: array
+          items: { type: string }
+          minItems: 1
+        conditions:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationPolicyConditionInput"
+        notes: { type: string, nullable: true }
+        is_enabled: { type: boolean, default: true }
+    NotificationPolicyUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/NotificationPolicyCreateRequest"
+    NotificationPolicyCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationPolicy"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    NotificationChannel:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams] }
+        description: { type: string, nullable: true }
+        template_key: { type: string, nullable: true }
+        config:
+          type: object
+          additionalProperties: true
+          nullable: true
+        is_enabled: { type: boolean }
+        last_test_status: { type: string, enum: [success, failed, pending], nullable: true }
+        last_test_message: { type: string, nullable: true }
+        last_test_at: { type: string, format: "date-time", nullable: true }
+        created_at: { type: string, format: "date-time" }
+        updated_at: { type: string, format: "date-time" }
+    NotificationChannelCreateRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string }
+        type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams] }
+        description: { type: string, nullable: true }
+        template_key: { type: string, nullable: true }
+        config:
+          type: object
+          additionalProperties: true
+          nullable: true
+        is_enabled: { type: boolean, default: true }
+    NotificationChannelUpdateRequest:
+      allOf:
+        - $ref: "#/components/schemas/NotificationChannelCreateRequest"
+    NotificationChannelCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationChannel"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    NotificationChannelTestResponse:
+      type: object
+      properties:
+        status: { type: string, enum: [success, failed, pending] }
+        message: { type: string }
+        tested_at: { type: string, format: "date-time" }
     NotificationHistory:
       type: object
       properties:
         id: { type: string }
         event_id: { type: string, nullable: true }
         policy_id: { type: string, nullable: true }
+        policy_name: { type: string, nullable: true }
+        channel_id: { type: string, nullable: true }
         channel_name: { type: string }
+        channel_type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams], nullable: true }
         recipient: { type: string }
-        status: { type: string, enum: [pending, sent, failed, delivered] }
+        status: { type: string, enum: [PENDING, SUCCESS, FAILED, DELIVERED] }
+        message: { type: string, nullable: true }
         error_message: { type: string, nullable: true }
-        raw_payload: { type: object, description: "從 Grafana Webhook 接收到的原始 JSON" }
+        raw_payload: { type: object, nullable: true, description: "發送時的原始通知內容快照" }
+        actor: { type: string }
         sent_at: { type: string, format: "date-time", nullable: true }
         created_at: { type: string, format: "date-time" }
+    NotificationHistoryCollection:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationHistory"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    NotificationResendResponse:
+      type: object
+      properties:
+        status: { type: string, enum: [queued, skipped] }
+        message: { type: string }
+        queued_at: { type: string, format: "date-time" }
