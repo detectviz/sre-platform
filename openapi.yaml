@@ -1,9 +1,9 @@
 # SRE 平台 API 規格書 (SSOT)
-# 版本: 3.0.0
+# 版本: 3.1.0
 # 更新日期: 2025-09-18
 # 描述: 此文件為 SRE 平台前端與後端之間的 API 契約唯一真實來源 (Single Source of Truth)，
 #      根據 pages.md 的全面分析進行了重構。
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: SRE 平台 - API 規格書
   description: |
@@ -21,7 +21,7 @@ info:
 
     它定義了所有資源、事件、自動化、管理等模組的介面，
     並遵循 RESTful 設計原則與專案開發規範。
-  version: "3.0.0"
+  version: "3.1.0"
   contact:
     name: SRE 平台開發團隊
     email: sre-platform-dev@detectviz.com
@@ -1698,8 +1698,15 @@ components:
         dataSources:
           type: array
           items: { type: string }
-        thumbnailUrl: { type: string, format: uri, nullable: true }
-        targetPageKey: { type: string, nullable: true }
+        thumbnailUrl:
+          oneOf:
+            - type: string
+              format: uri
+            - type: "null"
+        targetPageKey:
+          oneOf:
+            - type: string
+            - type: "null"
     DashboardCreateRequest:
       type: object
       required: [name, category]
@@ -1708,7 +1715,11 @@ components:
           type: string
           description: "資源名稱"
         description: { type: string }
-        category: { type: string, enum: [infrastructure, business, operations, automation, custom] }
+        category:
+          {
+            type: string,
+            enum: [infrastructure, business, operations, automation, custom],
+          }
         owner: { type: string }
         tags:
           type: array
@@ -1768,7 +1779,7 @@ components:
         type:
           type: string
           description: "資源類型"
-        usage: { type: number, description: '百分比 0-100' }
+        usage: { type: number, description: "百分比 0-100" }
         status: { type: string, enum: [healthy, warning, critical] }
     ResourceUsageCollection:
       type: object
@@ -1814,7 +1825,7 @@ components:
         version: { type: string }
         isEnabled: { type: boolean }
         executionCount: { type: integer }
-        successRate: { type: integer, description: '0-100' }
+        successRate: { type: integer, description: "0-100" }
         lastExecutedAt: { type: string, format: date-time, nullable: true }
         createdAt: { type: string, format: date-time, nullable: true }
         updatedAt: { type: string, format: date-time, nullable: true }
@@ -1896,7 +1907,12 @@ components:
         frequency: { type: string, nullable: true }
         timezone: { type: string, nullable: true }
         isEnabled: { type: boolean }
-        lastStatus: { type: string, enum: [success, failed, pending, running], nullable: true }
+        lastStatus:
+          {
+            type: string,
+            enum: [success, failed, pending, running],
+            nullable: true,
+          }
         lastRunAt: { type: string, format: date-time, nullable: true }
         nextRunAt: { type: string, format: date-time, nullable: true }
         creator: { type: string, nullable: true }
@@ -1934,7 +1950,11 @@ components:
         id: { type: string }
         scriptId: { type: string }
         scheduleId: { type: string, nullable: true }
-        status: { type: string, enum: [pending, running, success, failed, cancelled, timeout] }
+        status:
+          {
+            type: string,
+            enum: [pending, running, success, failed, cancelled, timeout],
+          }
         triggerType: { type: string, enum: [manual, scheduled, event, api] }
         triggerMetadata: { type: object, additionalProperties: true }
         startedAt: { type: string, format: date-time, nullable: true }
@@ -1977,21 +1997,32 @@ components:
           example: "Prometheus"
           description: "事件來源系統"
         service_name:
-          type: string
-          nullable: true
+          oneOf:
+            - type: string
+            - type: "null"
           description: "受影響服務名稱"
         business_impact:
-          type: string
-          enum: [critical, high, medium, low]
-          nullable: true
+          oneOf:
+            - type: string
+              enum: [critical, high, medium, low]
+            - type: "null"
           description: "商業衝擊等級"
         storm_group_id:
-          type: string
-          nullable: true
+          oneOf:
+            - type: string
+            - type: "null"
           description: "Storm 協同處理分組識別"
         triggered_at: { type: string, format: "date-time" }
-        acknowledged_at: { type: string, format: "date-time", nullable: true }
-        resolved_at: { type: string, format: "date-time", nullable: true }
+        acknowledged_at:
+          oneOf:
+            - type: string
+              format: "date-time"
+            - type: "null"
+        resolved_at:
+          oneOf:
+            - type: string
+              format: "date-time"
+            - type: "null"
         assignee:
           type: object
           properties:
@@ -2060,7 +2091,12 @@ components:
           description: "針對事件已觸發的自動化執行狀態"
           properties:
             id: { type: string }
-            status: { type: string, enum: [pending, running, success, failed, cancelled, timeout], nullable: true }
+            status:
+              {
+                type: string,
+                enum: [pending, running, success, failed, cancelled, timeout],
+                nullable: true,
+              }
             triggered_at: { type: string, format: date-time, nullable: true }
         history_logs:
           type: array
@@ -2087,7 +2123,17 @@ components:
       type: object
       properties:
         id: { type: string }
-        type: { type: string, enum: [SYSTEM_STATE_CHANGE, USER_COMMENT, AUTOMATION_RUN, ASSIGNEE_CHANGE] }
+        type:
+          {
+            type: string,
+            enum:
+              [
+                SYSTEM_STATE_CHANGE,
+                USER_COMMENT,
+                AUTOMATION_RUN,
+                ASSIGNEE_CHANGE,
+              ],
+          }
         actor:
           type: object
           properties:
@@ -2111,7 +2157,12 @@ components:
         correlation_reason:
           type: object
           properties:
-            type: { type: string, enum: [TOPOLOGY_DOWNSTREAM, TOPOLOGY_UPSTREAM, TIME, CONTENT, AI] }
+            type:
+              {
+                type: string,
+                enum:
+                  [TOPOLOGY_DOWNSTREAM, TOPOLOGY_UPSTREAM, TIME, CONTENT, AI],
+              }
             description: { type: string }
             confidence_score: { type: number, format: float }
     AutomationRunSummary:
@@ -2256,7 +2307,8 @@ components:
         summary: { type: string, description: "事故摘要，對應事故列表顯示" }
         title: { type: string, description: "可選標題，保留相容性" }
         severity: { type: string, enum: [critical, high, medium, low] }
-        business_impact: { type: string, enum: [critical, high, medium, low], default: medium }
+        business_impact:
+          { type: string, enum: [critical, high, medium, low], default: medium }
         service_name:
           type: string
           nullable: true
@@ -2265,7 +2317,12 @@ components:
           type: string
           nullable: true
           description: "Storm 協同處理分組識別"
-        assignee_id: { type: string, description: "指派處理事故的使用者或團隊ID", nullable: true }
+        assignee_id:
+          {
+            type: string,
+            description: "指派處理事故的使用者或團隊ID",
+            nullable: true,
+          }
         automation_script_id: { type: string, nullable: true }
         automation_run_id: { type: string, nullable: true }
         trigger_threshold: { type: string, nullable: true }
@@ -2290,7 +2347,11 @@ components:
         id: { type: string }
         summary: { type: string }
         title: { type: string, nullable: true }
-        status: { type: string, enum: [investigating, identified, monitoring, resolved] }
+        status:
+          {
+            type: string,
+            enum: [investigating, identified, monitoring, resolved],
+          }
         severity: { type: string, enum: [critical, high, medium, low] }
         business_impact:
           type: string
@@ -2751,7 +2812,7 @@ components:
         op:
           type: string
           description: "對應 UI 的「運算子」，支援 Alertmanager 的 =、!=、=~、!~。"
-          enum: ['=', '!=', '=~', '!~']
+          enum: ["=", "!=", "=~", "!~"]
         value:
           type: string
           description: "對應 UI 的「值」輸入框。"
@@ -3026,7 +3087,8 @@ components:
       properties:
         resource_id: { type: string }
         resource_name: { type: string }
-        violation_type: { type: string, enum: [missing_required, invalid_value, unknown_key] }
+        violation_type:
+          { type: string, enum: [missing_required, invalid_value, unknown_key] }
         tag_key: { type: string }
         expected_value: { type: string, nullable: true }
         actual_value: { type: string, nullable: true }
@@ -3052,7 +3114,11 @@ components:
       properties:
         channel_id: { type: string }
         channel_name: { type: string }
-        channel_type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams] }
+        channel_type:
+          {
+            type: string,
+            enum: [email, slack, webhook, pagerduty, sms, line_notify, teams],
+          }
         channel_order: { type: integer }
     NotificationPolicyCondition:
       type: object
@@ -3061,7 +3127,25 @@ components:
         field: { type: string }
         operator:
           type: string
-          enum: [equals, not_equals, in, not_in, contains, not_contains, regex, greater_than, greater_than_equals, less_than, less_than_equals, between, starts_with, ends_with, exists, not_exists]
+          enum:
+            [
+              equals,
+              not_equals,
+              in,
+              not_in,
+              contains,
+              not_contains,
+              regex,
+              greater_than,
+              greater_than_equals,
+              less_than,
+              less_than_equals,
+              between,
+              starts_with,
+              ends_with,
+              exists,
+              not_exists,
+            ]
         value_type:
           type: string
           enum: [string, number, boolean, array, object]
@@ -3087,7 +3171,25 @@ components:
         field: { type: string }
         operator:
           type: string
-          enum: [equals, not_equals, in, not_in, contains, not_contains, regex, greater_than, greater_than_equals, less_than, less_than_equals, between, starts_with, ends_with, exists, not_exists]
+          enum:
+            [
+              equals,
+              not_equals,
+              in,
+              not_in,
+              contains,
+              not_contains,
+              regex,
+              greater_than,
+              greater_than_equals,
+              less_than,
+              less_than_equals,
+              between,
+              starts_with,
+              ends_with,
+              exists,
+              not_exists,
+            ]
         value_type:
           type: string
           enum: [string, number, boolean, array, object]
@@ -3143,7 +3245,8 @@ components:
         updated_at: { type: string, format: "date-time" }
     NotificationPolicyCreateRequest:
       type: object
-      required: [name, resource_group_id, responsible_team_id, priority, channel_ids]
+      required:
+        [name, resource_group_id, responsible_team_id, priority, channel_ids]
       properties:
         name: { type: string }
         description: { type: string, nullable: true }
@@ -3178,7 +3281,11 @@ components:
       properties:
         id: { type: string }
         name: { type: string }
-        type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams] }
+        type:
+          {
+            type: string,
+            enum: [email, slack, webhook, pagerduty, sms, line_notify, teams],
+          }
         description: { type: string, nullable: true }
         template_key: { type: string, nullable: true }
         config:
@@ -3186,7 +3293,8 @@ components:
           additionalProperties: true
           nullable: true
         is_enabled: { type: boolean }
-        last_test_status: { type: string, enum: [success, failed, pending], nullable: true }
+        last_test_status:
+          { type: string, enum: [success, failed, pending], nullable: true }
         last_test_message: { type: string, nullable: true }
         last_test_at: { type: string, format: "date-time", nullable: true }
         created_at: { type: string, format: "date-time" }
@@ -3196,7 +3304,11 @@ components:
       required: [name, type]
       properties:
         name: { type: string }
-        type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams] }
+        type:
+          {
+            type: string,
+            enum: [email, slack, webhook, pagerduty, sms, line_notify, teams],
+          }
         description: { type: string, nullable: true }
         template_key: { type: string, nullable: true }
         config:
@@ -3298,12 +3410,22 @@ components:
         policy_name: { type: string, nullable: true }
         channel_id: { type: string, nullable: true }
         channel_name: { type: string }
-        channel_type: { type: string, enum: [email, slack, webhook, pagerduty, sms, line_notify, teams], nullable: true }
+        channel_type:
+          {
+            type: string,
+            enum: [email, slack, webhook, pagerduty, sms, line_notify, teams],
+            nullable: true,
+          }
         recipient: { type: string }
         status: { type: string, enum: [pending, success, failed, delivered] }
         message: { type: string, nullable: true }
         error_message: { type: string, nullable: true }
-        raw_payload: { type: object, nullable: true, description: "發送時的原始通知內容快照" }
+        raw_payload:
+          {
+            type: object,
+            nullable: true,
+            description: "發送時的原始通知內容快照",
+          }
         actor: { type: string }
         sent_at: { type: string, format: "date-time", nullable: true }
         created_at: { type: string, format: "date-time" }

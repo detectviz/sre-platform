@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SRE 平台 UI 元件與圖表規範 Demo</title>
+  <link rel="stylesheet" href="https://unpkg.com/antd@5.19.1/dist/reset.css" />
+  <style>
+    /* 🎨 統一設計系統 - Design System */
+    :root {
+      /* === 核心品牌色系統 === */
+      --brand-primary: #1890ff;
+      --brand-primary-hover: #40a9ff;
+      --brand-primary-active: #096dd9;
+      --brand-primary-bg: rgba(24, 144, 255, 0.1);
+
+      --brand-success: #52c41a;
+      --brand-success-hover: #73d13d;
+      --brand-success-bg: rgba(82, 196, 26, 0.1);
+
+      --brand-warning: #faad14;
+      --brand-warning-hover: #ffc53d;
+      --brand-warning-bg: rgba(250, 173, 20, 0.1);
+
+      --brand-danger: #ff4d4f;
+      --brand-danger-hover: #ff7875;
+      --brand-danger-bg: rgba(255, 77, 79, 0.1);
+
+      --brand-info: #722ed1;
+      --brand-info-hover: #9254de;
+      --brand-info-bg: rgba(114, 46, 209, 0.1);
+
+      /* === 文字層級系統 === */
+      --text-primary: rgba(255, 255, 255, 0.95);
+      --text-secondary: rgba(255, 255, 255, 0.85);
+      --text-tertiary: rgba(255, 255, 255, 0.65);
+      --text-quaternary: rgba(255, 255, 255, 0.45);
+      --text-disabled: rgba(255, 255, 255, 0.25);
+
+      /* === 背景層級系統 === */
+      --bg-page: #0A0B0E;
+      --bg-container: #141519;
+      --bg-elevated: #1A1D23;
+      --bg-overlay: #23262F;
+      --bg-hover: rgba(255, 255, 255, 0.08);
+      --bg-active: rgba(255, 255, 255, 0.12);
+      --bg-selected: rgba(24, 144, 255, 0.15);
+
+      /* === 邊框系統 === */
+      --border-base: rgba(255, 255, 255, 0.12);
+      --border-light: rgba(255, 255, 255, 0.08);
+      --border-focus: var(--brand-primary);
+      --border-hover: rgba(255, 255, 255, 0.2);
+
+      /* === 間距系統 (8px 基礎網格) === */
+      --spacing-xs: 4px;
+      --spacing-sm: 8px;
+      --spacing-md: 12px;
+      --spacing-lg: 16px;
+      --spacing-xl: 24px;
+      --spacing-2xl: 32px;
+      --spacing-3xl: 48px;
+
+      /* === 圓角系統 === */
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+
+      /* === 陰影系統 === */
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.25);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.35);
+      --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.45);
+
+      /* === 玻璃效果系統 === */
+      --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.04) 100%);
+      --glass-border: 1px solid rgba(255, 255, 255, 0.12);
+      --glass-backdrop: blur(20px) saturate(180%);
+      --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* 頁面樣式 */
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: var(--spacing-xl);
+      background: var(--bg-page);
+      color: var(--text-primary);
+      transition: background 0.3s, color 0.3s;
+      min-height: 100vh;
+    }
+
+    h1 {
+      color: var(--brand-primary);
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: var(--spacing-lg);
+      background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    h2 {
+      border-left: 5px solid var(--brand-primary);
+      padding-left: var(--spacing-md);
+      margin-top: var(--spacing-3xl);
+      margin-bottom: var(--spacing-lg);
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .demo-block {
+      background: var(--bg-container);
+      border-radius: var(--radius-lg);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-xl);
+      box-shadow: var(--shadow-md);
+      transition: all 0.3s ease;
+      border: var(--glass-border);
+    }
+
+    .demo-container {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-lg);
+      border: 1px dashed var(--border-base);
+      border-radius: var(--radius-md);
+      background: var(--bg-elevated);
+      transition: all 0.3s ease;
+    }
+
+    .chart-container {
+      width: 100%;
+      height: 300px;
+    }
+
+    /* 暗色主題優化 */
+    body.dark-theme {
+      background: #000;
+      color: var(--text-primary);
+    }
+
+    body.dark-theme h1 {
+      color: var(--brand-primary);
+    }
+
+    body.dark-theme .demo-block {
+      background: var(--bg-elevated);
+      border-color: var(--border-light);
+    }
+
+    body.dark-theme .demo-container {
+      background: var(--bg-overlay);
+      border-color: var(--border-light);
+    }
+
+    /* ToolbarActions 樣式 */
+    .toolbar-actions {
+      padding: var(--spacing-lg);
+      background: var(--glass-bg);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      margin-bottom: var(--spacing-lg);
+      backdrop-filter: var(--glass-backdrop);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .toolbar-group--primary {
+      flex: 1;
+    }
+
+    .toolbar-group--secondary {
+      flex-shrink: 0;
+    }
+
+    body.dark-theme .toolbar-actions {
+      background: var(--glass-bg);
+      border-color: var(--border-base);
+    }
+
+    /* === 🔧 Ant Design 元件樣式優化 === */
+
+    /* 統一按鈕樣式 */
+    .ant-btn {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.5;
+      border-radius: var(--radius-sm);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .ant-btn-primary {
+      background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-hover) 100%);
+      border: none;
+      box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+    }
+
+    .ant-btn-primary:hover {
+      background: linear-gradient(135deg, var(--brand-primary-hover) 0%, var(--brand-primary) 100%);
+      box-shadow: 0 4px 12px rgba(24, 144, 255, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .ant-btn-default {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+    }
+
+    .ant-btn-default:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--border-hover);
+      color: var(--text-primary);
+    }
+
+    /* 統一輸入框樣式 */
+    .ant-input,
+    .ant-input-password,
+    .ant-select-selector {
+      background: var(--bg-container) !important;
+      border: 1px solid var(--border-light) !important;
+      border-radius: var(--radius-sm) !important;
+      color: var(--text-primary) !important;
+      transition: all 0.3s ease !important;
+    }
+
+    .ant-input::placeholder,
+    .ant-input-password .ant-input::placeholder {
+      color: var(--text-tertiary) !important;
+    }
+
+    .ant-input:hover,
+    .ant-input-password:hover,
+    .ant-select-selector:hover {
+      border-color: var(--border-hover) !important;
+    }
+
+    .ant-input:focus,
+    .ant-input-focused,
+    .ant-input-password:focus-within,
+    .ant-select-focused .ant-select-selector {
+      border-color: var(--brand-primary) !important;
+      box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1) !important;
+    }
+
+    /* 統一表單標籤樣式 */
+    .ant-form-item-label>label {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* 統一表單項間距 */
+    .ant-form-item {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .ant-form-item:last-child {
+      margin-bottom: 0;
+    }
+
+    /* 統一按鈕間距 */
+    .ant-btn+.ant-btn {
+      margin-left: var(--spacing-sm);
+    }
+
+    .ant-btn-group {
+      margin-right: var(--spacing-md);
+    }
+
+    /* 統一卡片樣式 */
+    .ant-card {
+      background: var(--bg-container);
+      border: var(--glass-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .ant-card-head-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* 統一模態框樣式 */
+    .ant-modal-content {
+      background: var(--bg-elevated);
+      border: var(--glass-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: var(--glass-backdrop);
+    }
+
+    .ant-modal-header {
+      background: transparent;
+      border-bottom: 1px solid var(--border-light);
+      padding: var(--spacing-xl) var(--spacing-xl) var(--spacing-lg);
+    }
+
+    .ant-modal-body {
+      padding: var(--spacing-xl);
+    }
+
+    /* 統一下拉選單樣式 */
+    .ant-select-dropdown {
+      background: var(--bg-elevated);
+      border: var(--glass-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .ant-select-dropdown .ant-select-item-option {
+      padding: 8px 12px !important;
+      color: var(--text-primary);
+    }
+
+    .ant-select-dropdown .ant-select-item-option:hover {
+      background: rgba(255, 255, 255, 0.05) !important;
+    }
+
+    .ant-select-dropdown .ant-select-item-option-selected {
+      background: rgba(24, 144, 255, 0.1) !important;
+      color: var(--brand-primary);
+    }
+
+    /* 統一分頁器樣式 */
+    .ant-pagination {
+      margin-top: var(--spacing-lg);
+      text-align: center;
+    }
+
+    .ant-pagination-item,
+    .ant-pagination-prev,
+    .ant-pagination-next {
+      border: 1px solid var(--border-light) !important;
+      background: var(--bg-container) !important;
+      color: var(--text-secondary) !important;
+      border-radius: var(--radius-sm) !important;
+    }
+
+    .ant-pagination-item:hover,
+    .ant-pagination-prev:hover,
+    .ant-pagination-next:hover {
+      border-color: var(--border-hover) !important;
+      color: var(--text-primary) !important;
+    }
+
+    .ant-pagination-item-active {
+      background: var(--brand-primary) !important;
+      border-color: var(--brand-primary) !important;
+      color: white !important;
+    }
+
+    /* 統一標籤樣式 */
+    .ant-tag {
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* 統一徽章樣式 */
+    .ant-badge {
+      font-size: 12px;
+    }
+
+    /* 暗色主題下的 Ant Design 元件優化 */
+    body.dark-theme .ant-btn-default {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    body.dark-theme .ant-btn-default:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.25);
+      color: white;
+    }
+
+    body.dark-theme .ant-input,
+    body.dark-theme .ant-input-password,
+    body.dark-theme .ant-select-selector {
+      background: var(--bg-elevated) !important;
+      border-color: rgba(255, 255, 255, 0.15) !important;
+    }
+
+    body.dark-theme .ant-card {
+      background: var(--bg-elevated);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    /* === 🔧 其他 Ant Design 元件樣式優化 === */
+
+    /* Tabs 樣式 */
+    .ant-tabs {
+      margin-top: var(--spacing-md);
+    }
+
+    .ant-tabs .ant-tabs-content-holder {
+      padding-top: var(--spacing-lg);
+    }
+
+    .ant-tabs-tab {
+      padding: var(--spacing-sm) var(--spacing-md);
+      margin-right: var(--spacing-sm);
+      border-radius: var(--radius-sm);
+      transition: all 0.2s ease;
+    }
+
+    .ant-tabs-tab.ant-tabs-tab-active {
+      background: var(--brand-primary);
+      color: white;
+    }
+
+    .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+      color: white;
+    }
+
+    .ant-tabs-tab:hover {
+      background: rgba(24, 144, 255, 0.1);
+    }
+
+    .ant-tabs-ink-bar {
+      background: var(--brand-primary);
+    }
+
+    /* Timeline 樣式 */
+    .ant-timeline-item-head {
+      background: var(--bg-container);
+      border: 2px solid var(--border-light);
+    }
+
+    .ant-timeline-item-head-blue {
+      background: var(--brand-primary);
+      border-color: var(--brand-primary);
+    }
+
+    .ant-timeline-item-head-red {
+      background: var(--brand-danger);
+      border-color: var(--brand-danger);
+    }
+
+    .ant-timeline-item-head-orange {
+      background: var(--brand-warning);
+      border-color: var(--brand-warning);
+    }
+
+    .ant-timeline-item-head-green {
+      background: var(--brand-success);
+      border-color: var(--brand-success);
+    }
+
+    .ant-timeline-item-content {
+      margin-left: var(--spacing-md);
+    }
+
+    /* Descriptions 樣式 */
+    .ant-descriptions {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .ant-descriptions-item {
+      padding: var(--spacing-sm) 0;
+    }
+
+    .ant-descriptions-item-label {
+      color: var(--text-tertiary);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    .ant-descriptions-item-content {
+      color: var(--text-primary);
+      font-size: 14px;
+    }
+
+    .ant-descriptions-bordered .ant-descriptions-item-label,
+    .ant-descriptions-bordered .ant-descriptions-item-content {
+      padding: var(--spacing-md) var(--spacing-lg);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .ant-descriptions-bordered .ant-descriptions-row {
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    /* Tag 樣式 */
+    .ant-tag {
+      margin: 2px 4px 2px 0;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+
+    .ant-tag-blue {
+      background: rgba(24, 144, 255, 0.1);
+      color: var(--brand-primary);
+      border-color: rgba(24, 144, 255, 0.2);
+    }
+
+    .ant-tag-green {
+      background: rgba(82, 196, 26, 0.1);
+      color: var(--brand-success);
+      border-color: rgba(82, 196, 26, 0.2);
+    }
+
+    .ant-tag-orange {
+      background: rgba(250, 173, 20, 0.1);
+      color: var(--brand-warning);
+      border-color: rgba(250, 173, 20, 0.2);
+    }
+
+    .ant-tag-red {
+      background: rgba(255, 77, 79, 0.1);
+      color: var(--brand-danger);
+      border-color: rgba(255, 77, 79, 0.2);
+    }
+
+    .ant-tag-purple {
+      background: rgba(114, 46, 209, 0.1);
+      color: var(--brand-info);
+      border-color: rgba(114, 46, 209, 0.2);
+    }
+
+    /* 表格樣式 */
+    .ant-table-wrapper {
+      margin-top: var(--spacing-lg);
+    }
+
+    .ant-table {
+      background: transparent;
+    }
+
+    .ant-table-thead>tr>th {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: var(--spacing-lg);
+      height: 48px;
+      line-height: 1.2;
+      border-bottom: 2px solid var(--border-base);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .ant-table-tbody>tr {
+      transition: all 0.2s ease;
+    }
+
+    .ant-table-tbody>tr:hover>td {
+      background: var(--bg-hover);
+    }
+
+    .ant-table-tbody>tr>td {
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-secondary);
+    }
+
+    .ant-table-column-sorter {
+      opacity: 0.6;
+      transition: opacity 0.2s ease;
+    }
+
+    .ant-table-thead>tr>th:hover .ant-table-column-sorter {
+      opacity: 1;
+    }
+
+    /* 表單樣式 */
+    .ant-form {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .ant-form-item {
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .ant-form-item:last-child {
+      margin-bottom: 0;
+    }
+
+    /* 間距統一 */
+    .ant-btn+.ant-btn {
+      margin-left: var(--spacing-sm);
+    }
+
+    .ant-btn-group {
+      margin-right: var(--spacing-md);
+    }
+
+    /* 暗色主題下的其他元件優化 */
+    body.dark-theme .ant-tabs-tab {
+      color: var(--text-secondary);
+    }
+
+    body.dark-theme .ant-tabs-tab.ant-tabs-tab-active {
+      background: var(--brand-primary);
+      color: white;
+    }
+
+    body.dark-theme .ant-tabs-tab:hover {
+      background: rgba(24, 144, 255, 0.1);
+      color: var(--text-primary);
+    }
+
+    body.dark-theme .ant-timeline-item-head {
+      background: var(--bg-elevated);
+      border-color: var(--border-light);
+    }
+
+    body.dark-theme .ant-descriptions-bordered .ant-descriptions-item-label,
+    body.dark-theme .ant-descriptions-bordered .ant-descriptions-item-content {
+      border-bottom-color: var(--border-light);
+    }
+
+    body.dark-theme .ant-table-thead>tr>th {
+      background: var(--bg-overlay);
+      border-bottom-color: var(--border-light);
+    }
+
+    body.dark-theme .ant-table-tbody>tr>td {
+      border-bottom-color: var(--border-light);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>SRE 平台 UI 元件與圖表規範 Demo v4</h1>
+
+  <div class="demo-block">
+    <h2>🎨 主題切換</h2>
+    <div id="demo-theme" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>按鈕 (Button)</h2>
+    <div id="demo-button" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>表單 (Form)</h2>
+    <div id="demo-form" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>表格 (Table)</h2>
+    <div id="demo-table" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>Modal / Drawer</h2>
+    <div id="demo-modal" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>訊息提示 (Message / Notification)</h2>
+    <div id="demo-message" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>Tabs</h2>
+    <div id="demo-tabs" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>Timeline</h2>
+    <div id="demo-timeline" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>Card</h2>
+    <div id="demo-card" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>Descriptions</h2>
+    <div id="demo-descriptions" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>Tag</h2>
+    <div id="demo-tag" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>ToolbarActions (平台標準工具列)</h2>
+    <div id="demo-toolbar" class="demo-container"></div>
+  </div>
+
+  <div class="demo-block">
+    <h2>ECharts 圖表</h2>
+    <h3>Bar Chart</h3>
+    <div id="demo-bar" class="chart-container"></div>
+    <h3>Pie Chart</h3>
+    <div id="demo-pie" class="chart-container"></div>
+    <h3>Line Chart</h3>
+    <div id="demo-line" class="chart-container"></div>
+    <h3>Heatmap</h3>
+    <div id="demo-heatmap" class="chart-container"></div>
+  </div>
+
+  <!-- React, Babel, Dayjs, AntD, ECharts -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+  <script src="https://unpkg.com/antd@5.19.1/dist/antd.min.js"></script>
+  <script src="https://unpkg.com/@ant-design/icons@5.3.7/dist/index.umd.min.js"></script>
+  <script src="https://unpkg.com/echarts/dist/echarts.min.js"></script>
+
+  <script type="text/babel">
+    const { Button, Form, Input, Table, Modal, Drawer, notification, message, Tabs, Timeline, Card, Descriptions, Tag, Switch, Space, Tooltip, Popover, Badge } = window.antd;
+
+    // Theme Toggle
+    const ThemeToggle = () => {
+      const [dark, setDark] = React.useState(false);
+      React.useEffect(() => {
+        document.body.className = dark ? "dark-theme" : "";
+      }, [dark]);
+      return <Switch checkedChildren="🌙 Dark" unCheckedChildren="☀️ Light" checked={dark} onChange={setDark} />;
+    };
+    const root1 = ReactDOM.createRoot(document.getElementById('demo-theme'));
+    root1.render(<ThemeToggle />);
+
+    // Button Demo
+    const ButtonDemo = () => (
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <Button type="primary">主要按鈕</Button>
+        <Button>次要按鈕</Button>
+        <Button type="dashed">虛線按鈕</Button>
+        <Button type="text">文字按鈕</Button>
+        <Button danger>刪除按鈕</Button>
+      </div>
+    );
+    const root2 = ReactDOM.createRoot(document.getElementById('demo-button'));
+    root2.render(<ButtonDemo />);
+
+    // Form Demo
+    const FormDemo = () => {
+      const [form] = Form.useForm();
+      const onFinish = values => message.success(JSON.stringify(values));
+      return (
+        <Form form={form} layout="vertical" onFinish={onFinish} style={{ maxWidth: 400 }}>
+          <Form.Item label="用戶名稱" name="username" rules={[{ required: true }]}>
+            <Input placeholder="請輸入用戶名稱" />
+          </Form.Item>
+          <Form.Item label="密碼" name="password" rules={[{ required: true }]}>
+            <Input.Password placeholder="請輸入密碼" />
+          </Form.Item>
+          <Button type="primary" htmlType="submit">提交</Button>
+        </Form>
+      );
+    };
+    const root3 = ReactDOM.createRoot(document.getElementById('demo-form'));
+    root3.render(<FormDemo />);
+
+    // Table Demo
+    const columns = [
+      { title: '名稱', dataIndex: 'name', key: 'name' },
+      { title: '狀態', dataIndex: 'status', key: 'status' },
+      { title: '更新時間', dataIndex: 'time', key: 'time' },
+    ];
+    const data = [
+      { key: 1, name: '服務 A', status: '健康', time: '10:30' },
+      { key: 2, name: '服務 B', status: '警告', time: '10:35' },
+      { key: 3, name: '服務 C', status: '嚴重', time: '10:40' },
+    ];
+    const root4 = ReactDOM.createRoot(document.getElementById('demo-table'));
+    root4.render(<Table columns={columns} dataSource={data} pagination={false} />);
+
+    // Modal / Drawer Demo
+    const ModalDemo = () => {
+      const [open, setOpen] = React.useState(false);
+      const [drawer, setDrawer] = React.useState(false);
+      return (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Button type="primary" onClick={() => setOpen(true)}>開啟 Modal</Button>
+          <Modal open={open} onCancel={() => setOpen(false)} onOk={() => setOpen(false)}>這是一個示範用的 Modal</Modal>
+          <Button type="dashed" onClick={() => setDrawer(true)}>開啟 Drawer</Button>
+          <Drawer open={drawer} onClose={() => setDrawer(false)} title="抽屜面板">這是一個示範用的 Drawer</Drawer>
+        </div>
+      );
+    };
+    const root5 = ReactDOM.createRoot(document.getElementById('demo-modal'));
+    root5.render(<ModalDemo />);
+
+    // Message / Notification Demo
+    const MessageDemo = () => (
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Button onClick={() => message.success('操作成功')}>成功訊息</Button>
+        <Button onClick={() => message.error('操作失敗')}>錯誤訊息</Button>
+        <Button onClick={() => notification.info({ message: '通知標題', description: '這是一則通知' })}>通知</Button>
+      </div>
+    );
+    const root6 = ReactDOM.createRoot(document.getElementById('demo-message'));
+    root6.render(<MessageDemo />);
+
+    // Tabs Demo
+    const TabsDemo = () => (
+      <Tabs
+        defaultActiveKey="1"
+        items={[
+          { key: '1', label: '事件管理', children: <p>事件內容</p> },
+          { key: '2', label: '資源列表', children: <p>資源內容</p> },
+          { key: '3', label: '自動化', children: <p>自動化內容</p> },
+        ]}
+      />
+    );
+    const root7 = ReactDOM.createRoot(document.getElementById('demo-tabs'));
+    root7.render(<TabsDemo />);
+
+    // Timeline Demo
+    const TimelineDemo = () => (
+      <Timeline
+        items={[
+          { children: '10:00 啟動系統' },
+          { children: '10:30 偵測到異常', color: 'red' },
+          { children: '10:45 觸發告警', color: 'orange' },
+          { children: '11:00 問題解決', color: 'green' },
+        ]}
+      />
+    );
+    const root8 = ReactDOM.createRoot(document.getElementById('demo-timeline'));
+    root8.render(<TimelineDemo />);
+
+    // Card Demo
+    const CardDemo = () => (
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+        <Card title="今日營收" style={{ width: 200 }}>
+          <p style={{ fontSize: 20, color: '#52c41a' }}>¥ 485,720</p>
+          <p>趨勢: +12%</p>
+        </Card>
+        <Card title="活躍用戶" style={{ width: 200 }}>
+          <p style={{ fontSize: 20, color: '#1677ff' }}>8,934</p>
+          <p>趨勢: +8%</p>
+        </Card>
+        <Card title="系統可用性" style={{ width: 200 }}>
+          <p style={{ fontSize: 20, color: '#faad14' }}>99.8%</p>
+          <p>趨勢: -0.2%</p>
+        </Card>
+      </div>
+    );
+    const root9 = ReactDOM.createRoot(document.getElementById('demo-card'));
+    root9.render(<CardDemo />);
+
+    // Descriptions Demo
+    const DescriptionsDemo = () => (
+      <Descriptions title="服務 A 詳細資訊" bordered>
+        <Descriptions.Item label="服務名稱">服務 A</Descriptions.Item>
+        <Descriptions.Item label="狀態"><Tag color="green">健康</Tag></Descriptions.Item>
+        <Descriptions.Item label="最後更新時間">2025-09-21 10:30</Descriptions.Item>
+      </Descriptions>
+    );
+    const root10 = ReactDOM.createRoot(document.getElementById('demo-descriptions'));
+    root10.render(<DescriptionsDemo />);
+
+    // Tag Demo
+    const TagDemo = () => (
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <Tag color="blue">Web</Tag>
+        <Tag color="geekblue">DB</Tag>
+        <Tag color="purple">Cache</Tag>
+        <Tag color="green">健康</Tag>
+        <Tag color="orange">警告</Tag>
+        <Tag color="red">嚴重</Tag>
+      </div>
+    );
+    const root11 = ReactDOM.createRoot(document.getElementById('demo-tag'));
+    root11.render(<TagDemo />);
+
+    // ToolbarActions Demo (平台標準工具列)
+    const ToolbarActions = React.memo(({
+      onRefresh,
+      onSearch,
+      onExport,
+      onAdd,
+      onFilter,
+      onBatchAction,
+      filterActive = false,
+      searchPlaceholder = "搜尋...",
+      showRefresh = true,
+      showSearch = true,
+      showExport = true,
+      showAdd = true,
+      showBatchAction = true,
+      showFilter = true,
+      customActions = []
+    }) => {
+      const [searchValue, setSearchValue] = React.useState('');
+      const icons = window['@ant-design/icons'] || {};
+      const {
+        ReloadOutlined,
+        SearchOutlined,
+        CloseOutlined,
+        FilterOutlined,
+        DownloadOutlined,
+        ControlOutlined,
+        PlusOutlined,
+        SettingOutlined,
+        InfoCircleOutlined,
+        BarChartOutlined
+      } = icons;
+
+      return (
+        <Space size="middle" className="toolbar-actions" style={{ width: '100%', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+          <Space size="small" className="toolbar-group toolbar-group--primary">
+            {showRefresh && onRefresh && ReloadOutlined && (
+              <Tooltip title="重新載入">
+                <Button
+                  type="text"
+                  icon={React.createElement(ReloadOutlined)}
+                  onClick={onRefresh}
+                  style={{ borderRadius: '6px' }}
+                />
+              </Tooltip>
+            )}
+            {showSearch && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Input
+                  placeholder={searchPlaceholder}
+                  value={searchValue}
+                  onChange={(e) => setSearchValue(e.target.value)}
+                  onPressEnter={() => onSearch && onSearch(searchValue)}
+                  style={{ width: '200px', borderRadius: '6px' }}
+                  prefix={SearchOutlined && React.createElement(SearchOutlined)}
+                  suffix={
+                    searchValue && (
+                      <Button
+                        type="text"
+                        size="small"
+                        icon={CloseOutlined && React.createElement(CloseOutlined)}
+                        onClick={() => setSearchValue('')}
+                        style={{ padding: '2px' }}
+                      />
+                    )
+                  }
+                />
+                {onSearch && (
+                  <Tooltip title="搜尋">
+                    <Button
+                      type="primary"
+                      icon={SearchOutlined && React.createElement(SearchOutlined)}
+                      onClick={() => onSearch(searchValue)}
+                      style={{ borderRadius: '6px' }}
+                    >
+                      搜尋
+                    </Button>
+                  </Tooltip>
+                )}
+                {showFilter && onFilter && (
+                  <Popover
+                    content={
+                      <div style={{ width: '200px', padding: '8px' }}>
+                        <div style={{ marginBottom: '12px', fontWeight: 600, color: 'rgba(0, 0, 0, 0.9)' }}>
+                          篩選條件
+                        </div>
+                        <Button
+                          type="primary"
+                          size="small"
+                          onClick={onFilter}
+                          style={{ width: '100%' }}
+                        >
+                          開啟篩選器
+                        </Button>
+                      </div>
+                    }
+                    trigger="hover"
+                    placement="bottom"
+                  >
+                    <Tooltip title="篩選">
+                      <Button
+                        type="text"
+                        icon={FilterOutlined && React.createElement(FilterOutlined)}
+                        style={{
+                          borderRadius: '6px',
+                          color: filterActive ? '#1890ff' : undefined
+                        }}
+                      />
+                    </Tooltip>
+                  </Popover>
+                )}
+              </div>
+            )}
+          </Space>
+
+          <Space size="small" className="toolbar-group toolbar-group--secondary">
+            {customActions.length > 0 && (
+              <Space size="small">
+                {customActions.map((action, index) => (
+                  <Tooltip title={action.tooltip} key={index}>
+                    <Button
+                      type={action.type || "text"}
+                      icon={action.icon}
+                      onClick={action.onClick}
+                      style={{ borderRadius: '6px' }}
+                    >
+                      {action.label}
+                    </Button>
+                  </Tooltip>
+                ))}
+              </Space>
+            )}
+            {showExport && onExport && (
+              <Tooltip title="匯出資料">
+                <Button
+                  type="text"
+                  icon={DownloadOutlined && React.createElement(DownloadOutlined)}
+                  onClick={onExport}
+                  style={{ borderRadius: '6px' }}
+                />
+              </Tooltip>
+            )}
+            {showBatchAction && onBatchAction && (
+              <Tooltip title="批次操作">
+                <Button
+                  type="text"
+                  icon={ControlOutlined && React.createElement(ControlOutlined)}
+                  onClick={onBatchAction}
+                  style={{ borderRadius: '6px' }}
+                />
+              </Tooltip>
+            )}
+            {showAdd && onAdd && (
+              <Button
+                type="primary"
+                icon={PlusOutlined && React.createElement(PlusOutlined)}
+                onClick={onAdd}
+                style={{ borderRadius: '6px' }}
+              >
+                新增
+              </Button>
+            )}
+          </Space>
+        </Space>
+      );
+    });
+
+    const ToolbarDemo = () => {
+      const icons = window['@ant-design/icons'] || {};
+      const {
+        SettingOutlined,
+        InfoCircleOutlined,
+        BarChartOutlined
+      } = icons;
+      const [filterActive, setFilterActive] = React.useState(false);
+
+      const handleRefresh = () => {
+        message.success('資料已重新載入');
+      };
+
+      const handleSearch = (value) => {
+        message.info(`搜尋: ${value || '全部'}`);
+      };
+
+      const handleExport = () => {
+        message.success('資料已匯出');
+      };
+
+      const handleAdd = () => {
+        message.success('新增項目');
+      };
+
+      const handleFilter = () => {
+        setFilterActive(!filterActive);
+        message.info(filterActive ? '篩選器已關閉' : '篩選器已開啟');
+      };
+
+      const handleBatchAction = () => {
+        message.success('批次操作完成');
+      };
+
+      const customActions = [
+        {
+          label: '設定',
+          icon: SettingOutlined && React.createElement(SettingOutlined),
+          tooltip: '設定選項',
+          onClick: () => message.info('開啟設定面板')
+        }
+      ];
+
+      return (
+        <div style={{ padding: '16px 0' }}>
+          <ToolbarActions
+            onRefresh={handleRefresh}
+            onSearch={handleSearch}
+            onExport={handleExport}
+            onAdd={handleAdd}
+            onFilter={handleFilter}
+            onBatchAction={handleBatchAction}
+            filterActive={filterActive}
+            searchPlaceholder="搜尋事件、資源或規則..."
+            customActions={customActions}
+          />
+
+          <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(24, 144, 255, 0.04)', borderRadius: '6px', border: '1px solid rgba(24, 144, 255, 0.2)' }}>
+            <p style={{ margin: 0, color: 'rgba(0, 0, 0, 0.65)', fontSize: '14px' }}>
+              {InfoCircleOutlined && React.createElement(InfoCircleOutlined, { style: { color: '#1890ff', marginRight: '8px' } })}
+              這是 SRE 平台的標準工具列組件，包含搜尋、篩選、匯出、新增等常用功能。
+              支援自訂按鈕、工具提示和回調函數。
+            </p>
+          </div>
+
+          <div style={{ marginTop: '24px', padding: '16px', background: 'rgba(0, 0, 0, 0.02)', borderRadius: '6px', border: '1px solid rgba(0, 0, 0, 0.06)' }}>
+            <h4 style={{ margin: '0 0 12px 0', fontSize: '14px', fontWeight: '600' }}>變體示例</h4>
+
+            <div style={{ marginBottom: '12px' }}>
+              <strong>簡潔版 (僅搜索和新增):</strong>
+            </div>
+            <ToolbarActions
+              showRefresh={false}
+              showFilter={false}
+              showExport={false}
+              showBatchAction={false}
+              searchPlaceholder="快速搜索..."
+              customActions={[]}
+            />
+
+            <div style={{ marginTop: '16px', marginBottom: '12px' }}>
+              <strong>管理版 (包含所有功能):</strong>
+            </div>
+            <ToolbarActions
+              customActions={[
+                {
+                  label: '統計',
+                  icon: BarChartOutlined && React.createElement(BarChartOutlined),
+                  tooltip: '查看統計資料',
+                  onClick: () => message.info('開啟統計面板')
+                },
+                {
+                  label: '設定',
+                  icon: SettingOutlined && React.createElement(SettingOutlined),
+                  tooltip: '系統設定',
+                  onClick: () => message.info('開啟設定面板')
+                }
+              ]}
+            />
+          </div>
+        </div>
+      );
+    };
+
+    const root12 = ReactDOM.createRoot(document.getElementById('demo-toolbar'));
+    root12.render(<ToolbarDemo />);
+
+    // ECharts Demo
+    const initBarChart = () => {
+      const chart = echarts.init(document.getElementById('demo-bar'));
+      chart.setOption({
+        xAxis: { type: 'category', data: ['CPU', '記憶體', '磁碟'] },
+        yAxis: { type: 'value' },
+        series: [{ type: 'bar', data: [70, 45, 85], itemStyle: { color: '#1677ff' } }]
+      });
+    };
+    const initPieChart = () => {
+      const chart = echarts.init(document.getElementById('demo-pie'));
+      chart.setOption({
+        series: [{
+          type: 'pie',
+          radius: '70%',
+          data: [
+            { value: 60, name: '健康' },
+            { value: 25, name: '警告' },
+            { value: 15, name: '嚴重' }
+          ]
+        }]
+      });
+    };
+    const initLineChart = () => {
+      const chart = echarts.init(document.getElementById('demo-line'));
+      chart.setOption({
+        xAxis: { type: 'category', data: ['00:00', '06:00', '12:00', '18:00'] },
+        yAxis: { type: 'value' },
+        series: [{ type: 'line', data: [20, 40, 35, 50], itemStyle: { color: '#52c41a' } }]
+      });
+    };
+    const initHeatmap = () => {
+      const chart = echarts.init(document.getElementById('demo-heatmap'));
+      const hours = ['00', '06', '12', '18'];
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      const data = [];
+      for (let i = 0; i < 5; i++) { for (let j = 0; j < 4; j++) { data.push([j, i, Math.round(Math.random() * 100)]) } }
+      chart.setOption({
+        tooltip: { position: 'top' },
+        xAxis: { type: 'category', data: hours },
+        yAxis: { type: 'category', data: days },
+        visualMap: { min: 0, max: 100, calculable: true, orient: 'horizontal', left: 'center', bottom: '5%' },
+        series: [{ type: 'heatmap', data }]
+      });
+    };
+    initBarChart();
+    initPieChart();
+    initLineChart();
+    initHeatmap();
+  </script>
+</body>
+
+</html>
