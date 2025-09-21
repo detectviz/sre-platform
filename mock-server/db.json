@@ -1883,6 +1883,66 @@
       "message": "響應正常",
       "checked_at": "2025-09-20T14:04:02.665Z",
       "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758433959446_d53j",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 170,
+      "attempts": 4,
+      "message": "響應正常",
+      "checked_at": "2025-09-21T05:52:39.446Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758433959447_vjpz",
+      "channel_id": "channel_slack_checkout",
+      "status": "critical",
+      "latency_ms": 229,
+      "attempts": 4,
+      "message": "多次嘗試後仍無響應",
+      "checked_at": "2025-09-21T05:52:39.446Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758434015328_66af",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "healthy",
+      "latency_ms": 219,
+      "attempts": 2,
+      "message": "響應正常",
+      "checked_at": "2025-09-21T05:53:35.328Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758434015328_wm5d",
+      "channel_id": "channel_slack_checkout",
+      "status": "warning",
+      "latency_ms": 179,
+      "attempts": 2,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-21T05:53:35.328Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758434112729_ka4x",
+      "channel_id": "channel_pagerduty_checkout",
+      "status": "warning",
+      "latency_ms": 277,
+      "attempts": 3,
+      "message": "延遲偏高，已通知值班人員",
+      "checked_at": "2025-09-21T05:55:12.729Z",
+      "source": "scheduled_probe"
+    },
+    {
+      "id": "channel_health_1758434112731_st6n",
+      "channel_id": "channel_slack_checkout",
+      "status": "healthy",
+      "latency_ms": 237,
+      "attempts": 3,
+      "message": "響應正常",
+      "checked_at": "2025-09-21T05:55:12.729Z",
+      "source": "scheduled_probe"
     }
   ]
 }

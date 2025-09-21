@@ -125,9 +125,9 @@ const RULE_WIZARD_FIELDS: Array<(keyof IncidentRuleFormValues)[]> = [
 ];
 
 const RULE_WIZARD_ITEMS: StepsProps['items'] = [
-  { key: 'basic', title: '基本資訊' },
-  { key: 'conditions', title: '觸發條件' },
-  { key: 'actions', title: '通知與預覽' },
+  { title: '基本資訊' },
+  { title: '觸發條件' },
+  { title: '通知與預覽' },
 ];
 
 type SilenceRuleFormValues = {
@@ -147,9 +147,9 @@ const SILENCE_WIZARD_FIELDS: Array<(keyof SilenceRuleFormValues)[]> = [
 ];
 
 const SILENCE_WIZARD_ITEMS: StepsProps['items'] = [
-  { key: 'basic', title: '基本資訊' },
-  { key: 'schedule', title: '設定排程' },
-  { key: 'scope', title: '設定範圍' },
+  { title: '基本資訊' },
+  { title: '設定排程' },
+  { title: '設定範圍' },
 ];
 
 const parseScopeToFilters = (scope?: string | null): TagFilter[] => {
@@ -310,6 +310,18 @@ const statusLabelMap: Record<string, string> = {
   closed: '已關閉',
   silenced: '已靜音',
   suppressed: '已抑制',
+};
+
+const incidentRuleStatusLabelMap: Record<string, string> = {
+  active: '啟用中',
+  paused: '已暫停',
+  draft: '草稿',
+};
+
+const silenceStatusLabelMap: Record<string, string> = {
+  active: '進行中',
+  scheduled: '已排程',
+  expired: '已結束',
 };
 
 
@@ -585,7 +597,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         const items = Array.isArray(payload)
           ? payload
           : Array.isArray(payload?.items)
-            ? payload
+            ? payload.items
             : [];
         const normalized = items.map((item: Record<string, unknown>) => ({
           id: String(item.id ?? `rule-${Date.now()}`),
@@ -626,7 +638,7 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
         const items = Array.isArray(payload)
           ? payload
           : Array.isArray(payload?.items)
-            ? payload
+            ? payload.items
             : [];
         const normalized = items.map((item: Record<string, unknown>) => mapSilenceRuleFromApi(item));
         setSilenceRules(normalized.length ? normalized : fallbackSilenceRules);
@@ -2236,7 +2248,11 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
               }]}
               extra="使用標籤條件與指標閾值，組合出進階的事件偵測規則。"
             >
-              <SmartFilterBuilder disabled={false} />
+              <SmartFilterBuilder
+                value={ruleForm.getFieldValue('conditionFilters')}
+                onApply={(filters) => ruleForm.setFieldsValue({ conditionFilters: filters })}
+                disabled={false}
+              />
             </Form.Item>
           </div>
 
@@ -2450,8 +2466,12 @@ const IncidentsPage = ({ onNavigate, pageKey }: IncidentsPageProps) => {
           </div>
 
           <div style={{ display: silenceWizardStep === 2 ? 'block' : 'none' }}>
-            <Form.Item name="filters" label="作用範圍" valuePropName="value" trigger="onApply" rules={[{ validator: (_rule, value: TagFilter[] | undefined) => value && value.length > 0 ? Promise.resolve() : Promise.reject('請設定至少一個作用範圍條件'),}]} extra="使用標籤條件鎖定需靜音的服務或資源">
-              <SmartFilterBuilder disabled={false} />
+            <Form.Item name="filters" label="作用範圍" valuePropName="value" trigger="onApply" rules={[{ validator: (_rule, value: TagFilter[] | undefined) => value && value.length > 0 ? Promise.resolve() : Promise.reject('請設定至少一個作用範圍條件'), }]} extra="使用標籤條件鎖定需靜音的服務或資源">
+              <SmartFilterBuilder
+                value={silenceRuleForm.getFieldValue('filters')}
+                onApply={(filters) => silenceRuleForm.setFieldsValue({ filters })}
+                disabled={false}
+              />
             </Form.Item>
           </div>
         </Form>
