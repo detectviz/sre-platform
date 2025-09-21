@@ -5,9 +5,6 @@ import {
   ThunderboltOutlined,
   PlusOutlined,
   ReloadOutlined,
-  EyeOutlined,
-  EditOutlined,
-  MoreOutlined,
 } from '@ant-design/icons';
 import {
   App as AntdApp,
@@ -19,7 +16,6 @@ import {
   Empty,
   Form,
   Input,
-  Modal,
   Progress,
   Select,
   Space,
@@ -32,10 +28,10 @@ import type { MenuProps } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
   DataTable,
-  StatusBadge,
+  GlassModal,
   SmartFilterBuilder,
+  StatusBadge,
 } from '../../components';
-import type { StatusTone } from '../../components';
 import { getStatusTone } from '../../constants/statusMaps';
 import { getChartTheme } from '../../utils/chartTheme';
 import type {
@@ -296,6 +292,24 @@ export const ResourceOverviewTab = ({
   const tagOptions = useMemo(() => buildTagOptions(resources), [resources]);
   const groupOptions = useMemo(() => buildGroupOptions(resourceGroups), [resourceGroups]);
 
+  const handleScanClose = useCallback(() => {
+    setScanOpen(false);
+    setScanValue('');
+  }, []);
+
+  const handleStartScan = useCallback(() => {
+    const trimmed = scanValue.trim();
+
+    if (!trimmed) {
+      message.warning('請先輸入要掃描的網段');
+      return;
+    }
+
+    message.success(`已開始掃描 ${trimmed} (模擬)`);
+    setScanOpen(false);
+    setScanValue('');
+  }, [message, scanValue]);
+
   const tablePagination = useMemo(() => ({
     current: pagination.page,
     pageSize: pagination.page_size,
@@ -523,7 +537,11 @@ export const ResourceOverviewTab = ({
 
         const overflowMenu: MenuProps | undefined = overflowActions.length
           ? {
-              items: overflowActions.map((action) => ({ key: action.key, label: action.label })),
+              items: overflowActions.map((action) => ({
+                key: action.key,
+                label: action.label,
+                icon: action.type === 'automation' ? <ThunderboltOutlined /> : undefined,
+              })),
               onClick: ({ key }) => {
                 const target = overflowActions.find((action) => action.key === key);
                 if (target) {
@@ -547,31 +565,29 @@ export const ResourceOverviewTab = ({
             >
               編輯
             </Button>
-            {actionList.length > 0 ? (
-              <Dropdown
-                menu={{
-                  items: actionList.map((action) => ({
-                    key: action.key,
-                    label: action.label,
-                    icon: action.type === 'automation' ? <ThunderboltOutlined /> : undefined,
-                    onClick: () => runResourceAction(action, resource),
-                  })),
-                }}
-                trigger={['click']}
-              >
+            {inlineActions.length > 0
+              ? inlineActions.map((action) => (
+                <Button
+                  key={`${resource.id}-${action.key}`}
+                  type="link"
+                  icon={action.type === 'automation' ? <ThunderboltOutlined /> : undefined}
+                  onClick={() => runResourceAction(action, resource)}
+                >
+                  {action.label}
+                </Button>
+              ))
+              : (
                 <Button
                   type="link"
+                  onClick={() => message.success(`已觸發 ${resource.name} 的修復腳本 (模擬)`)}
                 >
-                  操作
+                  自動化
                 </Button>
+              )}
+            {overflowMenu && (
+              <Dropdown menu={overflowMenu} trigger={['click']}>
+                <Button type="link">更多操作</Button>
               </Dropdown>
-            ) : (
-              <Button
-                type="link"
-                onClick={() => message.success(`已觸發 ${resource.name} 的修復腳本 (模擬)`)}
-              >
-                自動化
-              </Button>
             )}
           </Space>
         );
@@ -733,14 +749,14 @@ export const ResourceOverviewTab = ({
         titleContent={<span style={{ fontWeight: 600 }}>資源列表</span>}
       />
 
-      <Modal
+      <GlassModal
         open={detailOpen}
-        title={detailResource?.name ?? '資源詳情'}
-        width={720}
+        title={detailResource ? `資源詳情：${detailResource.name}` : '資源詳情'}
+        width={840}
         footer={null}
         onCancel={() => setDetailOpen(false)}
       >
-        {detailResource && (() => {
+        {detailResource ? (() => {
           const statusDescription = detailResource.healthReasons?.length
             ? (
                 <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
@@ -759,11 +775,18 @@ export const ResourceOverviewTab = ({
           );
 
           return (
-            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+            <Space direction="vertical" size="large" style={{ width: '100%' }}>
               <Alert
                 type={detailResource.status === 'CRITICAL' ? 'error' : detailResource.status === 'WARNING' ? 'warning' : 'info'}
                 showIcon
-                message={`目前狀態：${statusLabelMap[detailResource.status] ?? detailResource.status}`}
+                message={(
+                  <Space align="center" size={8}>
+                    <StatusBadge tone={getStatusTone(detailResource.status)}>
+                      {statusLabelMap[detailResource.status] ?? detailResource.status}
+                    </StatusBadge>
+                    <span>目前狀態</span>
+                  </Space>
+                )}
                 description={statusDescription}
               />
               <Descriptions bordered column={2} size="small">
@@ -774,6 +797,7 @@ export const ResourceOverviewTab = ({
                 <Descriptions.Item label="供應商">{detailResource.provider ?? '未指定'}</Descriptions.Item>
                 <Descriptions.Item label="最近更新">{detailResource.updatedAt ?? '未知'}</Descriptions.Item>
               </Descriptions>
+
               <Divider orientation="left">健康指標</Divider>
               <Space direction="vertical" size={12} style={{ width: '100%' }}>
                 <Tooltip title={`CPU 使用率 ${formatPercent(detailResource.metrics.cpuUsage)}`}>
@@ -798,6 +822,7 @@ export const ResourceOverviewTab = ({
                   />
                 )}
               </Space>
+
               <Divider orientation="left">標籤 / 群組</Divider>
               <Space direction="vertical" size={8}>
                 <Space size={4} wrap>
@@ -826,6 +851,7 @@ export const ResourceOverviewTab = ({
                   ))}
                 </Space>
               </Space>
+
               <Divider orientation="left">建議操作</Divider>
               {detailResource.actions?.length ? (
                 <Space size={8} wrap>
@@ -843,6 +869,7 @@ export const ResourceOverviewTab = ({
               ) : (
                 <Text type="secondary">暫無推薦操作</Text>
               )}
+
               <Divider orientation="left">觀察工具</Divider>
               {hasObservability ? (
                 <Space size={8} wrap>
@@ -865,6 +892,7 @@ export const ResourceOverviewTab = ({
               ) : (
                 <Text type="secondary">尚未設定觀察工具連結</Text>
               )}
+
               <Divider orientation="left">關聯事件</Divider>
               {detailResource.relatedEvents?.length ? (
                 <Space direction="vertical" size={8} style={{ width: '100%' }}>
@@ -891,123 +919,164 @@ export const ResourceOverviewTab = ({
               )}
             </Space>
           );
-        })()}
-      </Modal>
+        })() : (
+          <Text type="secondary">尚未選擇資源。</Text>
+        )}
+      </GlassModal>
 
-      <Modal
+      <GlassModal
         open={editOpen}
         title={editResource ? '編輯資源' : '新增資源'}
+        width={840}
         onCancel={() => {
           setEditOpen(false);
           form.resetFields();
           setEditResource(null);
         }}
         onOk={() => form.submit()}
+        okText={editResource ? '儲存變更' : '建立資源'}
+        cancelText="取消"
       >
-        <Form<ResourceFormValues>
-          form={form}
-          layout="vertical"
-          onFinish={handleFormSubmit}
-        >
-          <Form.Item name="name" label="資源名稱" rules={[{ required: true, message: '請輸入資源名稱' }]}>
-            <Input placeholder="例如：db-prod-01" />
-          </Form.Item>
-          <Form.Item name="type" label="資源類型" rules={[{ required: true }] }>
-            <Select options={RESOURCE_TYPE_OPTIONS.map((value) => ({ value, label: value }))} />
-          </Form.Item>
-          <Form.Item name="status" label="狀態" rules={[{ required: true }] }>
-            <Select options={STATUS_OPTIONS.filter((option) => option.value !== 'ALL') as Array<{ label: string; value: ResourceStatus }>} />
-          </Form.Item>
-          <Form.Item name="ipAddress" label="IP 位址">
-            <Input placeholder="10.0.0.1" />
-          </Form.Item>
-          <Form.Item name="location" label="位置">
-            <Input placeholder="資料中心 / 區域" />
-          </Form.Item>
-          <Form.Item name="environment" label="環境">
-            <Select
-              allowClear
-              options={ENVIRONMENT_OPTIONS.map((value) => ({ value, label: value }))}
-            />
-          </Form.Item>
-          <Form.Item name="groups" label="隸屬群組">
-            <Select
-              allowClear
-              mode="multiple"
-              options={groupOptions}
-              placeholder="選擇資源群組"
-            />
-          </Form.Item>
-          <Form.Item
-            name="tagFilters"
-            label="標籤條件"
-            valuePropName="value"
-            trigger="onApply"
-            extra="使用標籤條件來定義資源的屬性組合，請按下「套用」後再儲存"
-          >
-            <SmartFilterBuilder
-              disabled={false}
-            />
-          </Form.Item>
-          <Form.Item label="標籤預覽" colon={false}>
-            {derivedPreviewTags.length > 0 ? (
-              <Space direction="vertical" size={6} style={{ width: '100%' }}>
-                <Space size={[8, 8]} wrap>
-                  {derivedPreviewTags.map((tag) => (
-                    <Tag color="blue" key={`${tag.key}:${tag.value}`}>
-                      {`${tag.key}=${tag.value}`}
-                    </Tag>
-                  ))}
-                </Space>
-                {previewHasUnsupportedOperators && (
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    部分條件使用進階運算子，將僅儲存為條件不會轉換為標籤
-                  </Text>
-                )}
-              </Space>
-            ) : sanitizedPreviewFilters.length > 0 ? (
-              <Text type="secondary">
-                {previewHasUnsupportedOperators
-                  ? '目前條件包含進階運算子，將僅儲存為條件不會轉換為標籤'
-                  : '尚未偵測到可轉換的標籤，請確認條件值'}
-              </Text>
-            ) : editResource?.tags?.length ? (
-              <Space direction="vertical" size={6} style={{ width: '100%' }}>
-                <Text type="secondary">未套用有效條件時將沿用既有標籤設定：</Text>
-                <Space size={[8, 8]} wrap>
-                  {editResource.tags.map((tag) => (
-                    <Tag key={`${tag.key}:${tag.value}`}>{`${tag.key}=${tag.value}`}</Tag>
-                  ))}
-                </Space>
-              </Space>
-            ) : (
-              <Text type="secondary">儲存後將根據條件自動產生標籤</Text>
-            )}
-          </Form.Item>
-        </Form>
-      </Modal>
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Alert
+            showIcon
+            type="info"
+            message="維護 CMDB 資料品質"
+            description="標籤與群組會驅動通知策略、資源篩選與自動化流程，請確保欄位填寫完整且符合標準化命名規範。"
+          />
 
-      <Modal
+          <Form<ResourceFormValues>
+            form={form}
+            layout="vertical"
+            onFinish={handleFormSubmit}
+            requiredMark={false}
+          >
+            <Form.Item name="name" label="資源名稱" rules={[{ required: true, message: '請輸入資源名稱' }]}> 
+              <Input placeholder="例如：db-prod-01" />
+            </Form.Item>
+            <Form.Item name="type" label="資源類型" rules={[{ required: true }] }>
+              <Select options={RESOURCE_TYPE_OPTIONS.map((value) => ({ value, label: value }))} />
+            </Form.Item>
+            <Form.Item name="status" label="狀態" rules={[{ required: true }] }>
+              <Select options={STATUS_OPTIONS.filter((option) => option.value !== 'ALL') as Array<{ label: string; value: ResourceStatus }>} />
+            </Form.Item>
+            <Form.Item name="ipAddress" label="IP 位址">
+              <Input placeholder="10.0.0.1" />
+            </Form.Item>
+            <Form.Item name="location" label="位置">
+              <Input placeholder="資料中心 / 區域" />
+            </Form.Item>
+            <Form.Item name="environment" label="環境">
+              <Select
+                allowClear
+                options={ENVIRONMENT_OPTIONS.map((value) => ({ value, label: value }))}
+              />
+            </Form.Item>
+            <Form.Item name="groups" label="隸屬群組">
+              <Select
+                allowClear
+                mode="multiple"
+                options={groupOptions}
+                placeholder="選擇資源群組"
+              />
+            </Form.Item>
+            <Form.Item
+              name="tagFilters"
+              label="標籤條件"
+              valuePropName="value"
+              trigger="onApply"
+              extra="使用標籤條件來定義資源的屬性組合，請按下「套用」後再儲存"
+            >
+              <SmartFilterBuilder
+                disabled={false}
+              />
+            </Form.Item>
+            <Form.Item label="標籤預覽" colon={false}>
+              {derivedPreviewTags.length > 0 ? (
+                <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                  <Space size={[8, 8]} wrap>
+                    {derivedPreviewTags.map((tag) => (
+                      <Tag color="blue" key={`${tag.key}:${tag.value}`}>
+                        {`${tag.key}=${tag.value}`}
+                      </Tag>
+                    ))}
+                  </Space>
+                  {previewHasUnsupportedOperators && (
+                    <Text type="secondary" style={{ fontSize: 12 }}>
+                      部分條件使用進階運算子，將僅儲存為條件不會轉換為標籤
+                    </Text>
+                  )}
+                </Space>
+              ) : sanitizedPreviewFilters.length > 0 ? (
+                <Text type="secondary">
+                  {previewHasUnsupportedOperators
+                    ? '目前條件包含進階運算子，將僅儲存為條件不會轉換為標籤'
+                    : '尚未偵測到可轉換的標籤，請確認條件值'}
+                </Text>
+              ) : editResource?.tags?.length ? (
+                <Space direction="vertical" size={6} style={{ width: '100%' }}>
+                  <Text type="secondary">未套用有效條件時將沿用既有標籤設定：</Text>
+                  <Space size={[8, 8]} wrap>
+                    {editResource.tags.map((tag) => (
+                      <Tag key={`${tag.key}:${tag.value}`}>{`${tag.key}=${tag.value}`}</Tag>
+                    ))}
+                  </Space>
+                </Space>
+              ) : (
+                <Text type="secondary">儲存後將根據條件自動產生標籤</Text>
+              )}
+            </Form.Item>
+          </Form>
+
+          <Alert
+            type="warning"
+            showIcon
+            message="小提示"
+            description="若欄位由自動化探索工具同步，請謹慎覆寫並確保已於審計日誌中註記原因。"
+          />
+        </Space>
+      </GlassModal>
+
+      <GlassModal
         open={scanOpen}
         title="掃描網段以探索新資源"
-        onCancel={() => setScanOpen(false)}
-        onOk={() => {
-          message.success(`已開始掃描 ${scanValue || '指定網段'} (模擬)`);
-          setScanOpen(false);
-          setScanValue('');
-        }}
+        width={640}
+        onCancel={handleScanClose}
+        onOk={handleStartScan}
         okText="開始掃描"
         cancelText="取消"
       >
-        <Space direction="vertical" size="middle" style={{ width: '100%' }}>
-          <Text>請輸入要掃描的 IP 網段（例如：192.168.1.0/24）。系統將模擬探索新資源並於完成時通知您。</Text>
-          <Input
-            placeholder="192.168.1.0/24"
-            value={scanValue}
-            onChange={(event) => setScanValue(event.target.value)}
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Alert
+            type="info"
+            showIcon
+            message="使用探索代理執行網段掃描"
+            description="系統會派遣探索代理比對既有 CMDB 記錄，將新發現的主機標註為候選資源。此操作目前為模擬流程。"
           />
+          <Form layout="vertical">
+            <Form.Item
+              label="目標網段"
+              required
+              extra="支援 IPv4 / IPv6 CIDR 格式，例如 192.168.1.0/24"
+            >
+              <Input
+                placeholder="192.168.1.0/24"
+                value={scanValue}
+                onChange={(event) => setScanValue(event.target.value)}
+                onPressEnter={(event) => {
+                  event.preventDefault();
+                  handleStartScan();
+                }}
+              />
+            </Form.Item>
+            <Form.Item label="提醒" colon={false}>
+              <Text type="secondary">
+                掃描完成後將於資源列表新增「待確認資源」區塊，並透過通知中心提醒您審核匯入。
+              </Text>
+            </Form.Item>
+          </Form>
         </Space>
-      </Modal>
+      </GlassModal>
     </Space>
   );
 };

@@ -2,6 +2,7 @@ export * from './PageHeader';
 export * from './ContextualKPICard';
 export * from './StatusBadge';
 export * from './GlassModal';
+export * from './GlassDrawer';
 export * from './DataTable';
 export * from './CreateSilenceModal';
 export * from './NotificationCenter';
