@@ -917,7 +917,13 @@ paths:
       summary: 獲取靜音規則列表 (一次性)
       operationId: listSilenceRules
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      responses:
+        "200":
+          description: 靜音規則列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SilenceCollection"
     post:
       tags: [事件管理 (Event Management)]
       summary: 根據事件快速建立一次性靜音
@@ -942,13 +948,31 @@ paths:
       summary: 獲取週期性靜音規則列表
       operationId: listRecurringSilenceRules
       security: [{ bearerAuth: [] }]
-      responses: { "200": { description: "成功" } }
+      responses:
+        "200":
+          description: 週期性靜音規則列表
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRuleCollection"
     post:
       tags: [事件管理 (Event Management)]
       summary: 創建週期性靜音規則
       operationId: createRecurringSilenceRule
       security: [{ bearerAuth: [] }]
-      responses: { "201": { description: "創建成功" } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecurringSilenceRuleCreateRequest"
+      responses:
+        "201":
+          description: 週期性靜音規則建立成功
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecurringSilenceRule"
   /recurring-silence-rules/{ruleId}:
     get:
       tags: [事件管理 (Event Management)]
@@ -1517,17 +1541,76 @@ components:
         updated_at: { type: string, format: "date-time" }
     SilenceCreateRequest:
       type: object
-      required: [event_id, duration, comment]
+      description: "建立一次性靜音規則的請求結構，欄位與前端靜音規則表單保持一致。"
+      required: [comment]
       properties:
+        type:
+          type: string
+          enum: [once, recurring]
+          default: once
+          description: "對應 UI 的「靜音類型」切換，預設為一次性 (once)。"
         event_id:
           type: string
-          description: "用於提取標籤以建立靜音匹配條件的事件 ID"
+          description: "對應 UI 的「從事件建立」選擇器，填入事件 ID 後系統會自動帶入匹配條件。"
+        matchers:
+          type: array
+          description: "對應 UI 的「匹配條件」清單，每一列皆為 key/op/value 組合。"
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
+          minItems: 1
+        starts_at:
+          type: string
+          format: date-time
+          description: "對應 UI 的「開始時間」，type 為 once 時必填。"
+        ends_at:
+          type: string
+          format: date-time
+          description: "對應 UI 的「結束時間」，type 為 once 時必填。"
         duration:
           type: string
-          description: "靜音的持續時間 (例如 '1h', '30m', '2d')"
+          description: "對應 UI 快捷操作的「靜音時長」，例如 '1h'、'30m'。"
+        recurring_pattern:
+          type: string
+          nullable: true
+          enum: [daily, weekly, monthly, custom]
+          description: "對應 UI 的「重複頻率」，一次性靜音可為 null。"
+        weekdays:
+          type: array
+          nullable: true
+          description: "對應 UI 的「選擇星期」，以 0 (週日) 至 6 (週六) 表示。"
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        time_slot:
+          type: array
+          nullable: true
+          description: "對應 UI 的「靜音時段」，格式為 [開始時間, 結束時間] (HH:mm)。"
+          items:
+            type: string
+            pattern: "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+          minItems: 2
+          maxItems: 2
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+          description: "對應 UI 的「有效期限」，留空代表永久有效。"
+        enabled:
+          type: boolean
+          default: true
+          description: "對應 UI 的「立即啟用此靜音規則」開關。"
         comment:
           type: string
-          description: "建立此靜音規則的原因 (必須提供)"
+          description: "對應 UI 的「原因」，說明為何需要靜音。"
+        creator:
+          type: object
+          nullable: true
+          description: "對應 UI 的「建立者」，預設為目前登入的使用者，可由管理員覆寫。"
+          properties:
+            id:
+              type: string
+              description: "建立者的使用者 ID。"
     UserPlatformRolesUpdateRequest:
       type: object
       properties:
@@ -1622,28 +1705,176 @@ components:
             properties:
               key: { type: string }
               value: { type: string }
+    SilenceMatcher:
+      type: object
+      description: "靜音規則的匹配條件項目，與 UI 單列設定相對應。"
+      required: [key, op, value]
+      properties:
+        key:
+          type: string
+          description: "對應 UI 的「條件欄位」。"
+        op:
+          type: string
+          description: "對應 UI 的「運算子」，支援 Alertmanager 的 =、!=、=~、!~。"
+          enum: ['=', '!=', '=~', '!~']
+        value:
+          type: string
+          description: "對應 UI 的「值」輸入框。"
     Silence:
       type: object
       description: "代表一個從 Grafana API 獲取的一次性靜音規則"
       properties:
         id: { type: string }
+        type:
+          type: string
+          enum: [once, recurring]
+          description: "一次性靜音固定為 once，用於與 UI 的「靜音類型」欄位對應。"
         matchers:
           type: array
+          description: "靜音套用條件，每列皆採用 key/op/value 格式對應 UI。"
+          minItems: 1
           items:
-            type: object
-            properties:
-              name: { type: string }
-              value: { type: string }
-              isEqual: { type: boolean }
-              isRegex: { type: boolean }
-        startsAt: { type: string, format: "date-time" }
-        endsAt: { type: string, format: "date-time" }
-        createdBy: { type: string }
-        comment: { type: string }
+            $ref: "#/components/schemas/SilenceMatcher"
+        recurring_pattern:
+          type: string
+          nullable: true
+          enum: [daily, weekly, monthly, custom]
+          description: "若由週期性範本產生則保留原重複頻率，否則為 null。"
+        weekdays:
+          type: array
+          nullable: true
+          description: "用於顯示 UI 的「選擇星期」，0 代表週日、6 代表週六。"
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        time_slot:
+          type: array
+          nullable: true
+          description: "靜音時段，對應 UI 的 [開始時間, 結束時間] (HH:mm)。"
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+            pattern: "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+        valid_until:
+          type: string
+          format: "date-time"
+          nullable: true
+          description: "對應 UI 的「有效期限」，對於一次性靜音通常等同於 endsAt。"
+        enabled:
+          type: boolean
+          description: "對應 UI 的「狀態」切換，過期靜音會回傳 false。"
+        creator:
+          type: object
+          nullable: true
+          description: "建立此靜音規則的使用者資訊，用於 UI 顯示「建立者」。"
+          properties:
+            id: { type: string }
+            name: { type: string }
+            email: { type: string, format: email, nullable: true }
+            avatar_url: { type: string, format: uri, nullable: true }
+        startsAt:
+          type: string
+          format: "date-time"
+          description: "Grafana 原生欄位，對應 UI 的「開始時間」。"
+        endsAt:
+          type: string
+          format: "date-time"
+          description: "Grafana 原生欄位，對應 UI 的「結束時間」。"
+        createdBy:
+          type: string
+          description: "Grafana 原生欄位，建議改用 creator.id。"
+          deprecated: true
+        comment:
+          type: string
+          description: "建立靜音時填寫的原因。"
         status:
           type: object
+          description: "靜音狀態資訊。"
           properties:
-            state: { type: string, enum: [expired, active, pending] }
+            state:
+              type: string
+              enum: [expired, active, pending]
+              description: "對應 UI 的狀態標籤。"
+    SilenceCollection:
+      type: object
+      description: "靜音規則列表回應結構。"
+      properties:
+        items:
+          type: array
+          description: "靜音規則資料列。"
+          items:
+            $ref: "#/components/schemas/Silence"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
+    RecurringSilenceRuleCreateRequest:
+      type: object
+      description: "建立週期性靜音規則的請求結構，欄位與 UI 表單保持一致。"
+      required: [name, recurring_pattern, matchers, time_slot]
+      properties:
+        name:
+          type: string
+          description: "對應 UI 的「名稱」。"
+        description:
+          type: string
+          nullable: true
+          description: "對應 UI 的「描述」。"
+        type:
+          type: string
+          enum: [recurring]
+          default: recurring
+          description: "對應 UI 的「靜音類型」，週期性規則固定為 recurring。"
+        recurring_pattern:
+          type: string
+          enum: [daily, weekly, monthly, custom]
+          description: "對應 UI 的「重複頻率」。"
+        weekdays:
+          type: array
+          nullable: true
+          description: "對應 UI 的「選擇星期」，在 weekly 模式時必填。"
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        time_slot:
+          type: array
+          description: "對應 UI 的「靜音時段」，格式為 [開始時間, 結束時間] (HH:mm)。"
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+            pattern: "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+        timezone:
+          type: string
+          description: "對應 UI 的「時區」選擇。"
+        valid_until:
+          type: string
+          format: "date-time"
+          nullable: true
+          description: "對應 UI 的「有效期限」，留空代表永久。"
+        cron_expression:
+          type: string
+          nullable: true
+          description: "對應 UI 的「自訂 Cron 表達式」，當 recurring_pattern 為 custom 時使用。"
+        matchers:
+          type: array
+          description: "對應 UI 的「匹配條件」清單，每列為 key/op/value 組合。"
+          minItems: 1
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
+        enabled:
+          type: boolean
+          default: true
+          description: "對應 UI 的「啟用」開關。"
+        creator:
+          type: object
+          nullable: true
+          description: "對應 UI 的「建立者」，預設為目前登入的使用者，可由管理員覆寫。"
+          properties:
+            id:
+              type: string
+              description: "建立者的使用者 ID。"
     RecurringSilenceRule:
       type: object
       description: "平台核心功能：週期性靜音規則"
@@ -1651,21 +1882,78 @@ components:
         id: { type: string }
         name: { type: string }
         description: { type: string, nullable: true }
+        type:
+          type: string
+          enum: [recurring]
+          description: "用於與 UI 的「靜音類型」欄位對齊，固定為 recurring。"
+        recurring_pattern:
+          type: string
+          enum: [daily, weekly, monthly, custom]
+          description: "對應 UI 的「重複頻率」。"
+        weekdays:
+          type: array
+          nullable: true
+          description: "當 recurring_pattern 為 weekly 時，列出 0 (週日) 至 6 (週六)。"
+          items:
+            type: integer
+            minimum: 0
+            maximum: 6
+        time_slot:
+          type: array
+          description: "對應 UI 的「靜音時段」，格式為 [開始時間, 結束時間] (HH:mm)。"
+          minItems: 2
+          maxItems: 2
+          items:
+            type: string
+            pattern: "^(?:[01][0-9]|2[0-3]):[0-5][0-9]$"
+        timezone:
+          type: string
+          description: "靜音適用的時區，對應 UI 的「時區」。"
+        valid_until:
+          type: string
+          format: "date-time"
+          nullable: true
+          description: "對應 UI 的「有效期限」。"
+        cron_expression:
+          type: string
+          nullable: true
+          description: "當 recurring_pattern 為 custom 時使用的 Cron 表達式。"
         matchers:
           type: array
+          description: "靜音套用條件，與 UI 的 key/op/value 列表一致。"
+          minItems: 1
           items:
-            type: object
-            properties:
-              name: { type: string }
-              value: { type: string }
-              isRegex: { type: boolean }
-        cron_expression: { type: string }
-        duration_minutes: { type: integer }
-        timezone: { type: string }
-        is_enabled: { type: boolean }
-        creator_id: { type: string, nullable: true }
+            $ref: "#/components/schemas/SilenceMatcher"
+        enabled:
+          type: boolean
+          description: "對應 UI 的「狀態」切換。"
+        creator:
+          type: object
+          nullable: true
+          description: "建立此規則的使用者資訊，用於顯示「建立者」。"
+          properties:
+            id: { type: string }
+            name: { type: string }
+            email: { type: string, format: email, nullable: true }
+            avatar_url: { type: string, format: uri, nullable: true }
+        duration_minutes:
+          type: integer
+          nullable: true
+          readOnly: true
+          description: "系統根據 time_slot 自動計算的靜音持續分鐘數。"
         created_at: { type: string, format: "date-time" }
         updated_at: { type: string, format: "date-time" }
+    RecurringSilenceRuleCollection:
+      type: object
+      description: "週期性靜音規則列表回應結構。"
+      properties:
+        items:
+          type: array
+          description: "週期性靜音規則資料列。"
+          items:
+            $ref: "#/components/schemas/RecurringSilenceRule"
+        pagination:
+          $ref: "#/components/schemas/PaginationMeta"
     # ============================================
     # 標籤治理 Schemas
     # ============================================
