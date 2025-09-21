@@ -652,7 +652,7 @@
 
 **相關 API 端點**：
 - `POST /api/v1/events/{id}/ai-analysis` - 觸發AI分析
-- `GET /api/v1/events/{id}/analysis-report` - 獲取分析報告
+- `GET /api/v1/ai/analysis-reports/{report_id}` - 獲取分析報告
 
 **UX 改善建議**：
 1. **置信度可視化**：使用進度條或色彩編碼顯示分析結果的置信度

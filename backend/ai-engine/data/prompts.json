@@ -1,0 +1,184 @@
+{
+  "analysis_templates": [
+    {
+      "event_summary": "API 延遲在 5 分鐘內連續高於 500ms，影響登入與下游服務串接。",
+      "root_cause_analysis": {
+        "text": "初步研判為 user-authentication 服務部署的版本更新後產生記憶體洩漏，導致 GC 週期拉長並阻塞請求佇列。",
+        "confidence_score": 0.86,
+        "probable_causes": [
+          "部署後新版本釋出未進行壓力測試",
+          "容器記憶體配置不足以支撐峰值流量"
+        ],
+        "evidence": [
+          {
+            "type": "METRIC",
+            "description": "Prometheus 指標 user_authentication_memory_usage 在 10:05 開始呈現持續上升。",
+            "link": {
+              "name": "查看 Grafana 圖表",
+              "url": "/dashboards/d/auth-latency?var-service=user-authentication"
+            },
+            "metadata": {
+              "metric": "user_authentication_memory_usage",
+              "value": "92%"
+            }
+          },
+          {
+            "type": "LOG",
+            "description": "Kubernetes pod 日誌顯示 OutOfMemory 相關警告訊息。",
+            "metadata": {
+              "cluster": "prod-k8s-01",
+              "namespace": "auth"
+            }
+          }
+        ]
+      },
+      "impact_assessment": {
+        "text": "登入流程與 SSO 整合皆遭遇間歇性逾時，客戶回報成功率下降 35%。",
+        "affected_resources": [
+          { "id": "svc-auth-01", "name": "user-authentication", "type": "SERVICE" },
+          { "id": "gw-login-01", "name": "login-gateway", "type": "GATEWAY" }
+        ],
+        "user_impact": "使用者登入失敗率上升，客服通報量增加。",
+        "duration_minutes": 27,
+        "severity": "HIGH"
+      },
+      "recommended_actions": [
+        {
+          "title": "觸發自動化腳本重新部署前一版穩定版本",
+          "action_type": "AUTOMATION",
+          "risk": "HIGH",
+          "summary": "先回滾到上一個穩定版本以恢復服務，再進一步分析記憶體洩漏來源。",
+          "action_data": {
+            "script_id": "scr_rollback_auth_service",
+            "parameters": {
+              "service_name": "user-authentication",
+              "target_revision": "2025-09-14.3"
+            }
+          }
+        },
+        {
+          "title": "鎖定 A/B 測試流量並通知當班 SRE",
+          "action_type": "WORKFLOW",
+          "risk": "MEDIUM",
+          "summary": "暫停新的 A/B 流量導入並通知當班 SRE 進行後續調查。",
+          "action_data": {
+            "channels": ["slack://sre-war-room", "pagerduty://primary"]
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "type": "RUNBOOK",
+          "description": "參考事件 RCA #421 的解決方案以比對行為。",
+          "link": {
+            "name": "檢視歷史事件報告",
+            "url": "/events/evt_421/ai-report"
+          }
+        }
+      ],
+      "raw_llm_response": {
+        "id": "mock-analysis-1",
+        "model": "detectviz-mock-001",
+        "content": [
+          {
+            "role": "assistant",
+            "parts": [
+              {
+                "type": "text",
+                "text": "Observing sustained memory growth in user-authentication pods with concurrent latency spikes across login gateway."
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 2108,
+          "output_tokens": 438
+        }
+      }
+    },
+    {
+      "event_summary": "資料庫寫入延遲與錯誤率提升，導致訂單建立流程卡住。",
+      "root_cause_analysis": {
+        "text": "資料庫叢集在備援節點上進行長時間備份，與主節點同步通道發生阻塞。",
+        "confidence_score": 0.78,
+        "probable_causes": [
+          "備援節點網路頻寬不足",
+          "備份排程與尖峰交易時間重疊"
+        ],
+        "evidence": [
+          {
+            "type": "METRIC",
+            "description": "VictoriaMetrics 指標 pg_wal_lag_bytes 突然增加，持續超過 25 分鐘。",
+            "metadata": {
+              "metric": "pg_wal_lag_bytes",
+              "value": "1.2GB"
+            }
+          },
+          {
+            "type": "TRACE",
+            "description": "OpenTelemetry trace 顯示寫入交易在 DB Commit 階段停滯。"
+          }
+        ]
+      },
+      "impact_assessment": {
+        "text": "訂單建立 API 平均延遲增加 3 倍，部分交易在 2 分鐘後逾時。",
+        "affected_resources": [
+          { "id": "db-order-primary", "name": "orders-postgresql", "type": "DATABASE" },
+          { "id": "svc-orders", "name": "orders-service", "type": "SERVICE" }
+        ],
+        "user_impact": "線上訂單建立功能受阻，客服中心收到大量申訴。",
+        "duration_minutes": 41,
+        "severity": "CRITICAL"
+      },
+      "recommended_actions": [
+        {
+          "title": "暫停備援節點備份並重新協調同步",
+          "action_type": "AUTOMATION",
+          "risk": "MEDIUM",
+          "summary": "先停用備援節點備份作業，再人工確認同步狀態後重新排程。",
+          "action_data": {
+            "script_id": "scr_pause_backup",
+            "parameters": {
+              "cluster": "orders-cluster",
+              "node": "replica-2"
+            }
+          }
+        },
+        {
+          "title": "加大資料庫連線池觀察指標",
+          "action_type": "LINK",
+          "risk": "LOW",
+          "summary": "引導 SRE 觀察目前連線池與鎖等待情況。",
+          "action_data": {
+            "url": "/dashboards/d/db-performance?var-db=orders-postgresql"
+          }
+        }
+      ],
+      "evidence": [
+        {
+          "type": "DOCUMENT",
+          "description": "資料庫團隊提供的備援節點網路頻寬容量報告。"
+        }
+      ],
+      "raw_llm_response": {
+        "id": "mock-analysis-2",
+        "model": "detectviz-mock-001",
+        "content": [
+          {
+            "role": "assistant",
+            "parts": [
+              {
+                "type": "text",
+                "text": "Replica backup coincides with peak write throughput, stalling WAL shipping to primary."
+              }
+            ]
+          }
+        ],
+        "usage": {
+          "input_tokens": 1892,
+          "output_tokens": 502
+        }
+      }
+    }
+  ]
+}
