@@ -7,8 +7,8 @@
 本規格書已整合至以下最新契約文件：
 - **[../openapi.yaml](../openapi.yaml)** - API 規格唯一真實來源 (v3.0.0)
 - **[../db_schema.sql](../db_schema.sql)** - 數據庫架構唯一真實來源 (v3.0)
-- **[../pages.md](../pages.md)** - 完整功能分析和 UI 原型規格
-- **[../TODO.md](../TODO.md)** - 當前開發狀態和前端實作計劃
+- **[../prototype.md](../prototype.md)** - 產品需求和功能規格
+- **[../prototype.html](../prototype.html)** - 完整設計系統和視覺規範
 
 ⚠️ **重要**: 此文件為歷史規格記錄，最新開發應優先參考上述 SSOT 文件。
 

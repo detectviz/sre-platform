@@ -4841,8 +4841,8 @@
 
   <script type="text/babel">
     const { useState, useEffect, useRef, useMemo, useCallback } = React;
-    const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert, AutoComplete } = antd;
-    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, HomeOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, ArrowUpOutlined, ArrowDownOutlined, AlignCenterOutlined, CompressOutlined, ExpandOutlined, MinusOutlined, UnorderedListOutlined, WarningOutlined, GlobalOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined } = icons;
+    const { Layout, Menu, ConfigProvider, theme, Typography, Input, Avatar, Button, Row, Col, Card, Statistic, Table, Tag, Modal, Form, Select, Breadcrumb, message, Tabs, DatePicker, List, Divider, Dropdown, Badge, Drawer, Tree, Collapse, InputNumber, Transfer, Spin, Empty, Switch, Space, Radio, Progress, Popover, Tooltip, Descriptions, Timeline, Checkbox, Steps, TimePicker, Alert, AutoComplete, Segmented } = antd;
+    const { UserOutlined, SearchOutlined, LogoutOutlined, DashboardOutlined, HddOutlined, TeamOutlined, ProfileOutlined, CodeOutlined, BarChartOutlined, HistoryOutlined, HomeOutlined, PlusOutlined, SettingOutlined, SafetyCertificateOutlined, BellOutlined, DownOutlined, ExclamationCircleOutlined, InfoCircleOutlined, EditOutlined, DeleteOutlined, ApartmentOutlined, BuildOutlined, ControlOutlined, AuditOutlined, MenuUnfoldOutlined, MenuFoldOutlined, PauseCircleOutlined, ScheduleOutlined, CarryOutOutlined, ThunderboltOutlined, MinusCircleOutlined, FireOutlined, ClockCircleOutlined, CheckCircleOutlined, CopyOutlined, PlayCircleOutlined, RobotOutlined, DeploymentUnitOutlined, EyeOutlined, FilterOutlined, ReloadOutlined, DownloadOutlined, DollarOutlined, LineChartOutlined, AlertOutlined, PieChartOutlined, FileDoneOutlined, FileTextOutlined, DatabaseOutlined, FieldTimeOutlined, RiseOutlined, FileProtectOutlined, BranchesOutlined, BookOutlined, AppstoreOutlined, ArrowUpOutlined, ArrowDownOutlined, AlignCenterOutlined, CompressOutlined, ExpandOutlined, MinusOutlined, UnorderedListOutlined, WarningOutlined, GlobalOutlined, SaveOutlined, QuestionCircleOutlined, BulbOutlined, LockOutlined, TagsOutlined, TagOutlined, LinkOutlined, MailOutlined, BarsOutlined, CloseOutlined, CheckOutlined, SafetyOutlined, MonitorOutlined, StarOutlined, ShareAltOutlined, CloudServerOutlined } = icons;
     const { Title, Text, Paragraph } = Typography;
     const { TextArea } = Input;
     const { RangePicker } = DatePicker;
@@ -7653,211 +7653,6 @@
       );
     };
 
-    // 業務儀表板頁面
-    const BusinessDashboardPage = ({ themeMode, onNavigate }) => {
-      // 業務核心指標
-      const businessMetrics = {
-        dailyRevenue: 485720,
-        dailyTransactions: 24751,
-        activeUsers: 8934,
-        avgTransactionValue: 196.3,
-        conversionRate: 3.2,
-        customerSatisfaction: 4.7,
-        systemUptime: 99.8,
-        avgResponseTime: 145,
-        errorRate: 0.02,
-        peakConcurrentUsers: 1247
-      };
-
-      return (
-        <React.Fragment>
-          <PageHeader
-            title="業務運營儀表板"
-            subtitle="即時監控業務核心指標，掌握營運狀態與服務品質"
-            icon={<DollarOutlined />}
-            actions={[
-              <Button key="export" icon={<DownloadOutlined />}>
-                匯出報告
-              </Button>,
-              <Button key="refresh" icon={<ReloadOutlined />}>
-                重新整理
-              </Button>
-            ]}
-          />
-
-          {/* 業務核心指標 */}
-          <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="今日營收"
-                  value={`¥${(businessMetrics.dailyRevenue / 1000).toFixed(0)}K`}
-                  trend="+15.2%"
-                  status="success"
-                  description="較昨日同期"
-                  icon={<DollarOutlined />}
-                />
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="交易總量"
-                  value={businessMetrics.dailyTransactions.toLocaleString()}
-                  unit="筆"
-                  trend="+12.3%"
-                  status="success"
-                  description="今日成功交易"
-                  icon={<FileDoneOutlined />}
-                />
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="活躍人員"
-                  value={businessMetrics.activeUsers.toLocaleString()}
-                  unit="人"
-                  trend="+8.7%"
-                  status="success"
-                  description="過去 24 小時"
-                  icon={<TeamOutlined />}
-                />
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="轉換率"
-                  value={businessMetrics.conversionRate}
-                  unit="%"
-                  trend="+0.3%"
-                  status="info"
-                  description="訪客至付費人員"
-                  icon={<RiseOutlined />}
-                />
-              </Col>
-            </Row>
-          </div>
-
-          {/* 服務品質指標 */}
-          <div style={{ marginBottom: 'var(--spacing-xl)' }}>
-            <Row gutter={[16, 16]}>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="系統可用性"
-                  value={businessMetrics.systemUptime}
-                  unit="%"
-                  status="success"
-                  description="過去 30 天平均"
-                  icon={<SafetyCertificateOutlined />}
-                />
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="平均回應時間"
-                  value={businessMetrics.avgResponseTime}
-                  unit="ms"
-                  status="success"
-                  description="API 回應時間"
-                  icon={<ClockCircleOutlined />}
-                />
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="錯誤率"
-                  value={businessMetrics.errorRate}
-                  unit="%"
-                  status="success"
-                  description="過去 24 小時"
-                  icon={<ExclamationCircleOutlined />}
-                />
-              </Col>
-              <Col xs={24} sm={12} lg={6}>
-                <ContextualKPICard
-                  title="客戶滿意度"
-                  value={businessMetrics.customerSatisfaction}
-                  unit="/5.0"
-                  status="success"
-                  description="本月平均評分"
-                  icon={<CheckCircleOutlined />}
-                />
-              </Col>
-            </Row>
-          </div>
-
-          {/* 業務趨勢與洞察 */}
-          <Row gutter={[24, 24]} style={{ marginBottom: 'var(--spacing-xl)' }}>
-            {/* 收入趨勢圖 */}
-            <Col xs={24} lg={16}>
-              <Card
-                className="dashboard-card"
-                title={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <LineChartOutlined style={{ color: '#1890ff' }} />
-                    <span>收入趨勢</span>
-                  </div>
-                }
-                extra={
-                  <Select defaultValue="7d" size="small">
-                    <Select.Option value="24h">24 小時</Select.Option>
-                    <Select.Option value="7d">7 天</Select.Option>
-                    <Select.Option value="30d">30 天</Select.Option>
-                  </Select>
-                }
-                bodyStyle={{ padding: '20px' }}
-              >
-                <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ textAlign: 'center', color: 'rgba(255, 255, 255, 0.6)' }}>
-                    <LineChartOutlined style={{ fontSize: '48px', marginBottom: '16px' }} />
-                    <div>收入趨勢圖表區域</div>
-                    <div style={{ fontSize: '14px', marginTop: '8px' }}>
-                      過去 7 天平均日收入: ¥{(businessMetrics.dailyRevenue * 0.85 / 1000).toFixed(0)}K
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </Col>
-
-            {/* 業務洞察與快速行動 */}
-            <Col xs={24} lg={8}>
-              <Card
-                className="dashboard-card"
-                title={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <BulbOutlined style={{ color: '#faad14' }} />
-                    <span>業務洞察</span>
-                  </div>
-                }
-                bodyStyle={{ padding: '16px' }}
-              >
-                <div style={{ marginBottom: '20px' }}>
-                  <Alert
-                    message="交易量創新高"
-                    description="今日交易量較昨日增長 12.3%，建議關注系統負載"
-                    type="success"
-                    showIcon
-                    style={{ marginBottom: '12px' }}
-                  />
-                  <Alert
-                    message="人員活躍度上升"
-                    description="活躍人員數較上週同期增長 8.7%"
-                    type="info"
-                    showIcon
-                  />
-                </div>
-
-                <Space direction="vertical" style={{ width: '100%' }} size="small">
-                  <Button block icon={<BarChartOutlined />} onClick={() => onNavigate('analytics')}>
-                    查看詳細分析
-                  </Button>
-                  <Button block icon={<AlertOutlined />} onClick={() => onNavigate('incident-list')}>
-                    系統健康檢查
-                  </Button>
-                  <Button block icon={<SettingOutlined />} onClick={() => onNavigate('automation-center')}>
-                    優化自動化流程
-                  </Button>
-                </Space>
-              </Card>
-            </Col>
-          </Row>
-        </React.Fragment>
-      );
-    };
 
 
 
@@ -18251,6 +18046,12 @@
         return localStorage.getItem('default-dashboard') || 'business-dashboard';
       });
 
+      // State for active tab
+      const [activeTab, setActiveTab] = useState('library');
+
+      // State for table category filter
+      const [tableCategoryFilter, setTableCategoryFilter] = useState('ALL');
+
       // Function to set a dashboard as default
       const setAsDefaultDashboard = (dashboardKey) => {
         setDefaultDashboard(dashboardKey);
@@ -18258,189 +18059,549 @@
         antd.message.success(`已將「${dashboardCards.find(d => d.key === dashboardKey)?.title || '未知儀表板'}」設為預設首頁`);
       };
 
-      // Define dashboard cards using the exact pattern from Settings
-      const dashboardCards = [
+      // Mock dashboard data based on frontend structure
+      const mockDashboards = [
         {
-          key: 'alerts-insights',
-          icon: <ExclamationCircleOutlined />,
-          title: '基礎設施洞察',
-          description: '整合事件監控與資源健康度分析。',
-          category: '資源監控',
-          features: ['即時告警', '資源健康度', '趨勢分析'],
-          enabled: true
+          id: 'infrastructure-overview',
+          name: '基礎設施洞察',
+          description: '整合多雲與資料中心資源健康狀態，掌握容量與異常趨勢。',
+          category: 'infrastructure',
+          owner: 'SRE 平台團隊',
+          tags: ['Infra', 'Capacity', 'Reliability'],
+          viewers: 48,
+          favoriteCount: 32,
+          panelCount: 18,
+          status: 'published',
+          updatedAt: '2025-09-18T08:30:00Z',
+          isDefault: true,
+          isFeatured: true,
+          dataSources: ['Prometheus', 'CloudWatch', 'ElasticSearch'],
+          targetPageKey: 'infrastructure-insights',
         },
         {
-          key: 'resource-overview',
-          icon: <HddOutlined />,
-          title: '資源總覽',
-          description: '資源使用情況與健康狀態總覽。',
-          category: '資源管理',
-          features: ['資源健康度', '使用率統計', '負載分佈'],
-          enabled: true
+          id: 'sre-war-room',
+          name: 'SRE 戰情室',
+          description: '跨團隊即時戰情看板，聚焦重大事件與 SLA 指標。',
+          category: 'business',
+          owner: '事件指揮中心',
+          tags: ['Incident', 'SLA', 'Business'],
+          viewers: 65,
+          favoriteCount: 54,
+          panelCount: 22,
+          status: 'published',
+          updatedAt: '2025-09-18T09:15:00Z',
+          isFeatured: true,
+          dataSources: ['PagerDuty', 'ServiceNow'],
+          targetPageKey: 'war-room',
         },
         {
-          key: 'business-dashboard',
-          icon: <BarChartOutlined />,
-          title: 'SRE 戰情室',
-          description: '業務指標與效能監控儀表板。',
-          category: '業務監控',
-          features: ['KPI追蹤', '效能指標', '業務健康度'],
-          enabled: true
+          id: 'capacity-planning',
+          name: '容量規劃儀表板',
+          description: '預測關鍵資源在 30/60/90 天的容量需求，支援自動化調度。',
+          category: 'operations',
+          owner: '平台架構組',
+          tags: ['Capacity', 'Forecast'],
+          viewers: 27,
+          favoriteCount: 12,
+          panelCount: 14,
+          status: 'draft',
+          updatedAt: '2025-09-16T16:05:00Z',
+          dataSources: ['BigQuery', 'DataLake'],
+          targetPageKey: 'capacity-planning',
         },
         {
-          key: 'integrated-resource-overview',
-          icon: <GlobalOutlined />,
-          title: '整合資源總覽',
-          description: '跨集群資源整合視圖。',
-          category: '資源管理',
-          features: ['多集群視圖', '統一監控', '資源調度'],
-          enabled: true
-        }
+          id: 'automation-observability',
+          name: '自動化效能總覽',
+          description: '追蹤自動化腳本成功率、執行耗時與節省人力時數。',
+          category: 'automation',
+          owner: '自動化中心',
+          tags: ['Automation', 'ROI'],
+          viewers: 34,
+          favoriteCount: 18,
+          panelCount: 11,
+          status: 'published',
+          updatedAt: '2025-09-17T11:40:00Z',
+          dataSources: ['Internal API'],
+          targetPageKey: 'automation-center',
+        },
+        {
+          id: 'team-insights',
+          name: '團隊自訂儀表板',
+          description: 'DevOps 小組自訂的專屬指標集合，支援多租戶管理。',
+          category: 'custom',
+          owner: 'DevOps 小組',
+          tags: ['Custom', 'Team'],
+          viewers: 19,
+          favoriteCount: 9,
+          panelCount: 9,
+          status: 'published',
+          updatedAt: '2025-09-12T13:20:00Z',
+          dataSources: ['Kibana', 'Dynatrace'],
+          targetPageKey: 'custom-dashboard-team',
+        },
       ];
 
-      // Reusable card content component
-      const CardContent = ({ item }) => (
-        <div
-          className={`nav-item ${!item.enabled ? 'disabled-card' : ''}`}
-          style={{ height: '90px', width: '100%', position: 'relative' }}
-        >
-          {/* Default dashboard indicator */}
-          {defaultDashboard === item.key && (
-            <div style={{
-              position: 'absolute',
-              top: '12px',
-              right: '12px',
-              background: '#52c41a',
-              color: 'white',
-              padding: '2px 6px',
-              borderRadius: '10px',
-              fontSize: '10px',
-              fontWeight: 600,
-              zIndex: 10,
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-              whiteSpace: 'nowrap'
-            }}>
-              <HomeOutlined style={{ marginRight: '2px', fontSize: '10px' }} />
-              預設首頁
-            </div>
-          )}
+      // Mock dashboard stats
+      const mockStats = {
+        totalDashboards: mockDashboards.length,
+        publishedDashboards: mockDashboards.filter(d => d.status === 'published').length,
+        customDashboards: mockDashboards.filter(d => d.category === 'custom').length,
+        averagePanelCount: Math.round(mockDashboards.reduce((acc, d) => acc + (d.panelCount || 0), 0) / mockDashboards.length),
+        automationCoverage: 64,
+        lastUpdatedAt: '2025-09-18T09:15:00Z',
+      };
 
-          {/* Main card content */}
-          <div
-            className="nav-item-content"
-            onClick={() => item.enabled && onNavigate(item.key)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              height: '100%',
-              cursor: item.enabled ? 'pointer' : 'not-allowed',
-              position: 'relative'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
-                <div className="nav-item-icon" style={{
-                  background: 'rgba(24, 144, 255, 0.1)',
-                  padding: '8px',
-                  borderRadius: '8px',
-                  fontSize: '24px',
-                  color: item.enabled ? '#1890ff' : 'rgba(255, 255, 255, 0.3)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0
-                }}>
-                  {item.icon}
+      // Category metadata
+      const categoryMeta = {
+        infrastructure: {
+          label: '基礎設施洞察',
+          description: '雲資源、系統健康與容量趨勢',
+          icon: <CloudServerOutlined />,
+          tone: 'info',
+          accent: '#1890ff',
+        },
+        business: {
+          label: '業務與 SLA 指標',
+          description: '跨團隊服務品質與使用者體驗',
+          icon: <BarChartOutlined />,
+          tone: 'success',
+          accent: '#52c41a',
+        },
+        operations: {
+          label: '營運與容量',
+          description: '容量規劃、成本與資源利用率',
+          icon: <BranchesOutlined />,
+          tone: 'warning',
+          accent: '#faad14',
+        },
+        automation: {
+          label: '自動化與效率',
+          description: '腳本成效、ROI 及節省工時',
+          icon: <ThunderboltOutlined />,
+          tone: 'info',
+          accent: '#9254de',
+        },
+        custom: {
+          label: '團隊自訂',
+          description: '部門或專案的客製儀表板',
+          icon: <AppstoreOutlined />,
+          tone: 'info',
+          accent: '#13c2c2',
+        },
+      };
+
+      // Filtered table data
+      const tableData = tableCategoryFilter === 'ALL'
+        ? mockDashboards
+        : mockDashboards.filter(d => d.category === tableCategoryFilter);
+
+      // Popular dashboards (top 5 by favorite count)
+      const popularDashboards = [...mockDashboards]
+        .sort((a, b) => (b.favoriteCount || 0) - (a.favoriteCount || 0))
+        .slice(0, 5);
+
+
+
+      // KPI Card component
+      const KPICard = ({ title, value, unit, status, description, icon }) => (
+        <Card className="nav-item" style={{ height: '100%' }}>
+          <Space direction="vertical" size={8} style={{ width: '100%' }}>
+            <Space align="center">
+              <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: status === 'success' ? '#52c41a20' :
+                  status === 'warning' ? '#faad1420' :
+                    status === 'error' ? '#ff4d4f20' : '#1890ff20',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: status === 'success' ? '#52c41a' :
+                  status === 'warning' ? '#faad14' :
+                    status === 'error' ? '#ff4d4f' : '#1890ff',
+                fontSize: 20,
+              }}>
+                {icon}
+              </div>
+              <div>
+                <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'rgba(255, 255, 255, 0.9)' }}>
+                  {value}{unit}
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div className="nav-item-title" style={{
-                    color: item.enabled ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.5)',
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    marginBottom: '4px',
-                    lineHeight: '1.2'
-                  }}>
-                    {item.title || '未命名項目'}
-                  </div>
-                  <div className="nav-item-description" style={{
-                    color: 'rgba(255, 255, 255, 0.6)',
-                    fontSize: '14px',
-                    lineHeight: '1.4'
-                  }}>
-                    {item.description}
-                  </div>
+                <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                  {title}
                 </div>
               </div>
+            </Space>
+            {description && (
+              <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                {description}
+              </div>
+            )}
+          </Space>
+        </Card>
+      );
 
-              {/* Set as default button */}
-              {item.enabled && (
-                <Tooltip title={defaultDashboard === item.key ? "已是預設首頁" : "設為預設首頁"}>
-                  <Button
-                    type="text"
-                    size="small"
-                    icon={<HomeOutlined />}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (defaultDashboard !== item.key) {
-                        setAsDefaultDashboard(item.key);
-                      }
-                    }}
-                    style={{
-                      color: defaultDashboard === item.key ? '#52c41a' : 'rgba(255, 255, 255, 0.6)',
-                      padding: '4px',
-                      borderRadius: '4px',
-                      transition: 'all 0.2s',
-                      alignSelf: 'flex-end',
-                      marginBottom: '-2px'
-                    }}
-                    className="set-default-btn"
-                  />
-                </Tooltip>
+      // Dashboard table columns
+      const tableColumns = [
+        {
+          title: '名稱',
+          dataIndex: 'name',
+          key: 'name',
+          render: (_, record) => (
+            <Space direction="vertical" size={6} style={{ width: '100%' }}>
+              <Space size={8} wrap>
+                <Text strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{record.name}</Text>
+                {record.id === defaultDashboard && <Tag color="gold">預設</Tag>}
+                {record.status === 'draft' && <Tag color="cyan">草稿</Tag>}
+                {record.isFeatured && <Tag color="purple">精選</Tag>}
+              </Space>
+              {record.description && (
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {record.description}
+                </Text>
               )}
-            </div>
-          </div>
+              {record.tags && record.tags.length > 0 && (
+                <Space size={[4, 4]} wrap>
+                  {record.tags.slice(0, 3).map((tag) => (
+                    <Tag key={tag}>{tag}</Tag>
+                  ))}
+                  {record.tags.length > 3 && <Tag>+{record.tags.length - 3}</Tag>}
+                </Space>
+              )}
+            </Space>
+          ),
+        },
+        {
+          title: '類別',
+          dataIndex: 'category',
+          key: 'category',
+          render: (value) => (
+            <Tag color={categoryMeta[value]?.accent}>{categoryMeta[value]?.label ?? value}</Tag>
+          ),
+        },
+        {
+          title: '擁有者',
+          dataIndex: 'owner',
+          key: 'owner',
+          render: (owner) => owner ?? '—',
+        },
+        {
+          title: '瀏覽 / 收藏',
+          key: 'engagement',
+          render: (_, record) => (
+            <Text type="secondary">{record.viewers ?? 0} / {record.favoriteCount ?? 0}</Text>
+          ),
+        },
+        {
+          title: '更新時間',
+          dataIndex: 'updatedAt',
+          key: 'updatedAt',
+          render: (value) => (value ? dayjs(value).format('YYYY/MM/DD HH:mm') : '—'),
+        },
+        {
+          title: '操作',
+          key: 'actions',
+          width: 240,
+          render: (_, record) => (
+            <Space size={4} wrap>
+              <Button type="link" onClick={() => onNavigate && onNavigate(record.targetPageKey || record.id)}>
+                開啟
+              </Button>
+              <Button
+                type="link"
+                onClick={() => setAsDefaultDashboard(record.id)}
+                disabled={record.id === defaultDashboard}
+              >
+                設為預設
+              </Button>
+              <Dropdown
+                trigger={['click']}
+                menu={{
+                  items: [
+                    { key: 'duplicate', label: '複製儀表板' },
+                    { key: 'share', label: '分享設定' },
+                  ],
+                  onClick: (info) => {
+                    if (info.key === 'duplicate') {
+                      antd.message.info(`已複製「${record.name}」的儀表板設定 (模擬)`);
+                    }
+                    if (info.key === 'share') {
+                      antd.message.success(`已產生「${record.name}」的分享連結 (模擬)`);
+                    }
+                  },
+                }}
+              >
+                <Button type="link">更多</Button>
+              </Dropdown>
+            </Space>
+          ),
+        },
+      ];
+
+      // Overview content with category cards
+      const overviewContent = (
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Row gutter={[16, 16]}>
+            {Object.keys(categoryMeta).map((key) => {
+              const categoryKey = key;
+              const items = mockDashboards.filter(d => d.category === categoryKey);
+              const meta = categoryMeta[categoryKey];
+              return (
+                <Col key={categoryKey} xs={24} md={12} xl={8}>
+                  <Card
+                    className="nav-item"
+                    title={
+                      <Space size={12} align="start">
+                        <div
+                          style={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            background: `${meta.accent}33`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: meta.accent,
+                            fontSize: 20,
+                          }}
+                        >
+                          {meta.icon}
+                        </div>
+                        <Space direction="vertical" size={0}>
+                          <Text strong>{meta.label}</Text>
+                          <Text type="secondary" style={{ fontSize: 12 }}>
+                            {meta.description}
+                          </Text>
+                        </Space>
+                      </Space>
+                    }
+                    extra={<Badge count={items.length} style={{ backgroundColor: meta.accent }} />}
+                    styles={{ body: { paddingTop: 16 } }}
+                  >
+                    {items.length === 0 ? (
+                      <Empty description="尚無儀表板" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                    ) : (
+                      <List
+                        dataSource={items.slice(0, 3)}
+                        split={false}
+                        renderItem={(item) => (
+                          <List.Item
+                            style={{ padding: '12px 0' }}
+                            actions={[
+                              <Button
+                                key="open"
+                                type="link"
+                                size="small"
+                                onClick={() => onNavigate && onNavigate(item.targetPageKey || item.id)}
+                              >
+                                開啟
+                              </Button>,
+                            ]}
+                          >
+                            <List.Item.Meta
+                              title={
+                                <Space size={8} wrap>
+                                  <Text strong>{item.name}</Text>
+                                  {item.id === defaultDashboard && <Tag color="gold">預設</Tag>}
+                                </Space>
+                              }
+                              description={
+                                <Space direction="vertical" size={4}>
+                                  <Text type="secondary" style={{ fontSize: 12 }}>
+                                    擁有者：{item.owner ?? '未指定'}
+                                  </Text>
+                                  <Text type="secondary" style={{ fontSize: 12 }}>
+                                    更新於：{item.updatedAt ? dayjs(item.updatedAt).fromNow() : '未知'}
+                                  </Text>
+                                </Space>
+                              }
+                            />
+                          </List.Item>
+                        )}
+                      />
+                    )}
+
+                    <Button
+                      block
+                      type="text"
+                      onClick={() => {
+                        setTableCategoryFilter(categoryKey);
+                        setActiveTab('library');
+                      }}
+                    >
+                      查看此分類的所有儀表板
+                    </Button>
+                  </Card>
+                </Col>
+              );
+            })}
+          </Row>
+
+          <Card className="nav-item" title="熱門儀表板">
+            {popularDashboards.length === 0 ? (
+              <Empty description="暫無統計資料" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+            ) : (
+              <List
+                dataSource={popularDashboards}
+                renderItem={(item) => (
+                  <List.Item
+                    actions={[
+                      <Tooltip key="favorite" title="收藏數">
+                        <Space size={4}>
+                          <StarOutlined style={{ color: '#faad14' }} />
+                          <span>{item.favoriteCount ?? 0}</span>
+                        </Space>
+                      </Tooltip>,
+                      <Tooltip key="viewer" title="瀏覽次數">
+                        <Space size={4}>
+                          <LineChartOutlined style={{ color: '#1890ff' }} />
+                          <span>{item.viewers ?? 0}</span>
+                        </Space>
+                      </Tooltip>,
+                      <Button key="open" type="link" onClick={() => onNavigate && onNavigate(item.targetPageKey || item.id)}>
+                        開啟
+                      </Button>,
+                    ]}
+                  >
+                    <List.Item.Meta
+                      title={
+                        <Space size={8}>
+                          <Text strong>{item.name}</Text>
+                          <Tag color={categoryMeta[item.category]?.accent}>
+                            {categoryMeta[item.category]?.label ?? item.category}
+                          </Tag>
+                        </Space>
+                      }
+                      description={item.description}
+                    />
+                  </List.Item>
+                )}
+              />
+            )}
+          </Card>
+        </Space>
+      );
+
+      // Library content with table
+      const libraryContent = (
+        <div>
+          <Space wrap style={{ marginBottom: '16px' }}>
+            <Segmented
+              value={tableCategoryFilter}
+              onChange={(value) => setTableCategoryFilter(value)}
+              options={[
+                { label: '全部', value: 'ALL' },
+                { label: categoryMeta.infrastructure.label, value: 'infrastructure' },
+                { label: categoryMeta.business.label, value: 'business' },
+                { label: categoryMeta.operations.label, value: 'operations' },
+                { label: categoryMeta.automation.label, value: 'automation' },
+                { label: categoryMeta.custom.label, value: 'custom' },
+              ]}
+            />
+            <Tooltip title="重新整理">
+              <Button icon={<ReloadOutlined />} onClick={() => antd.message.info('重新整理儀表板資料 (模擬)')} />
+            </Tooltip>
+          </Space>
+          <Table
+            dataSource={tableData}
+            columns={tableColumns}
+            rowKey="id"
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} 個儀表板`,
+            }}
+            style={{ background: 'transparent' }}
+          />
         </div>
       );
 
-      // Helper to render a category section
-      const renderCategory = (categoryName) => (
-        <div style={{ marginBottom: '24px' }}>
-          <Title level={5} style={{
-            color: 'var(--text-secondary)',
-            fontWeight: '500',
-            marginBottom: '8px',
-            fontSize: '16px'
-          }}>
-            {categoryName}
-          </Title>
-          <Row gutter={[16, 16]}>
-            {dashboardCards.filter(item => item.category === categoryName).map(item => (
-              <Col key={item.key} xs={24} md={12} lg={8} style={{ display: 'flex' }}>
-                {item.enabled ? (
-                  <CardContent item={item} />
-                ) : (
-                  <Badge.Ribbon text="即將推出">
-                    <CardContent item={item} />
-                  </Badge.Ribbon>
-                )}
-              </Col>
-            ))}
-          </Row>
-        </div>
-      );
+      // Tab items
+      const tabItems = [
+        {
+          key: 'overview',
+          label: '概覽',
+          children: overviewContent,
+        },
+        {
+          key: 'library',
+          label: '儀表板列表',
+          children: libraryContent,
+        },
+      ];
 
       return (
-        <React.Fragment>
-          <Title level={2} className="page-title" style={{ marginBottom: '2px' }}>儀表板</Title>
-          <Paragraph className="page-subtitle" type="secondary" style={{ marginBottom: '4px' }}>
-            統一的系統監控與業務洞察儀表板入口。
-          </Paragraph>
-          {/* 分組顯示儀表板功能 */}
-          <div style={{ marginTop: '16px' }}>
-            {renderCategory('資源監控')}
-            {renderCategory('業務監控')}
+        <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <div>
+            <Title level={2} className="page-title" style={{ marginBottom: '2px' }}>儀表板管理</Title>
+            <Paragraph className="page-subtitle" type="secondary" style={{ marginBottom: '4px' }}>
+              統一管理基礎設施與業務儀表板
+            </Paragraph>
+            <Text type="secondary" style={{ fontSize: '14px' }}>
+              建立、分享與治理所有 SRE 儀表板，確保視覺一致性與數據可靠性。
+            </Text>
           </div>
-        </React.Fragment>
+
+          <Alert
+            showIcon
+            type="info"
+            message="目前顯示為內建模擬資料"
+            description="尚未連接到 /dashboards API，以下內容為範例數據。"
+          />
+
+          {/* KPI Cards */}
+          <Row gutter={[16, 16]}>
+            <Col xs={24} sm={12} xl={6}>
+              <KPICard
+                title="儀表板總數"
+                value={mockStats.totalDashboards}
+                unit="個"
+                status="info"
+                description={mockStats.lastUpdatedAt ? `最後更新：${dayjs(mockStats.lastUpdatedAt).fromNow()}` : undefined}
+                icon={<AppstoreOutlined style={{ fontSize: 28, color: '#1890ff' }} />}
+              />
+            </Col>
+            <Col xs={24} sm={12} xl={6}>
+              <KPICard
+                title="已發布"
+                value={mockStats.publishedDashboards}
+                unit="個"
+                status="success"
+                description="可供所有角色使用"
+                icon={<ShareAltOutlined style={{ fontSize: 28, color: '#52c41a' }} />}
+              />
+            </Col>
+            <Col xs={24} sm={12} xl={6}>
+              <KPICard
+                title="自訂儀表板"
+                value={mockStats.customDashboards}
+                unit="個"
+                status="warning"
+                description="由團隊自行建立"
+                icon={<UserOutlined style={{ fontSize: 28, color: '#faad14' }} />}
+              />
+            </Col>
+            <Col xs={24} sm={12} xl={6}>
+              <KPICard
+                title="自動化覆蓋率"
+                value={mockStats.automationCoverage}
+                unit="%"
+                status={mockStats.automationCoverage >= 60 ? 'success' : 'warning'}
+                description="有自動更新資料的儀表板"
+                icon={<ThunderboltOutlined style={{ fontSize: 28, color: '#9254de' }} />}
+              />
+            </Col>
+          </Row>
+
+          {/* Tabs */}
+          <Tabs
+            activeKey={activeTab}
+            onChange={setActiveTab}
+            items={tabItems}
+            style={{ background: 'transparent' }}
+          />
+        </Space>
       );
     };
 
@@ -18560,48 +18721,6 @@
         </div>
       );
 
-      // Helper to render a category section
-      const renderCategory = (categoryName) => (
-        <div style={{ marginBottom: '24px' }}>
-          <Title level={5} style={{
-            color: 'var(--text-secondary)',
-            fontWeight: '500',
-            marginBottom: '8px',
-            fontSize: '16px'
-          }}>
-            {categoryName}
-          </Title>
-          <Row gutter={[16, 16]}>
-            {settingsCards.filter(item => item.category === categoryName).map(item => (
-              <Col key={item.key} xs={24} md={12} lg={8} style={{ display: 'flex' }}>
-                {item.enabled ? (
-                  <CardContent item={item} />
-                ) : (
-                  <Badge.Ribbon text="即將推出">
-                    <CardContent item={item} />
-                  </Badge.Ribbon>
-                )}
-              </Col>
-            ))}
-          </Row>
-        </div>
-      );
-
-
-      return (
-        <React.Fragment>
-          <Title level={2} className="page-title" style={{ marginBottom: '2px' }}>設定</Title>
-          <Paragraph className="page-subtitle" type="secondary" style={{ marginBottom: '4px' }}>
-            配置平台的人員、權限與系統功能設定。
-          </Paragraph>
-          {/* 分組顯示設定功能 */}
-          <div style={{ marginTop: '16px' }}>
-            {renderCategory('身份與存取管理')}
-            {renderCategory('通知管理')}
-            {renderCategory('平台設定')}
-          </div>
-        </React.Fragment>
-      );
     };
 
     // === 🏷️ 優化後的標籤管理頁面 ===
@@ -21694,6 +21813,22 @@
         // Dashboard administration page with card navigation
         if (pageKey === 'dashboard') {
           return <DashboardAdministrationPage onNavigate={navigateToPage} />;
+        }
+        // Dashboard navigation from dashboard list
+        if (pageKey === 'infrastructure-insights') {
+          return <ResourcesPage onNavigate={navigateToPage} pageKey="resources" themeMode={themeMode} />;
+        }
+        if (pageKey === 'war-room') {
+          return <AnalyzingPage onNavigate={navigateToPage} pageKey="analyzing" themeMode={themeMode} />;
+        }
+        if (pageKey === 'capacity-planning') {
+          return <AnalyzingPage onNavigate={navigateToPage} pageKey="capacity-planning" themeMode={themeMode} />;
+        }
+        if (pageKey === 'automation-center') {
+          return <AutomationCenterPage onNavigate={navigateToPage} pageKey="automation" scripts={scripts} setScripts={setScripts} addExecution={addExecution} executions={executions} setExecutions={setExecutions} schedules={schedules} setSchedules={setSchedules} pageParams={pageParams} />;
+        }
+        if (pageKey === 'custom-dashboard-team') {
+          return <AnalyzingPage onNavigate={navigateToPage} pageKey="analyzing" themeMode={themeMode} />;
         }
         if (['analyzing', 'capacity-planning', 'performance-insights', 'cost-analysis', 'incident-trends', 'mttr-analysis', 'sla-reports'].includes(pageKey)) {
           return <AnalyzingPage onNavigate={navigateToPage} pageKey={pageKey} themeMode={themeMode} />;

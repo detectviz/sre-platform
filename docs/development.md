@@ -10,9 +10,8 @@
 所有開發工作必須基於以下唯一真實來源：
 - **[../openapi.yaml](../openapi.yaml)** - API 開發契約和服務規範
 - **[../db_schema.sql](../db_schema.sql)** - 數據模型和資料庫設計
-- **[../pages.md](../pages.md)** - 產品需求和功能規格
-- **[../TODO.md](../TODO.md)** - 當前開發狀態和任務分工
-- **[../AI_PROMPTS.md](../AI_PROMPTS.md)** - AI 協作開發指引
+- **[../prototype.html](../prototype.html)** - 完整設計系統和視覺規範
+- **[../prototype.md](../prototype.md)** - 產品需求和功能規格
 
 ## 🎯 專案總覽
 
