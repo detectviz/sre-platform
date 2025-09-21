@@ -18,7 +18,6 @@ import {
   Spin
 } from 'antd';
 import {
-  PartitionOutlined,
   FullscreenOutlined,
   ZoomInOutlined,
   ZoomOutOutlined,
@@ -26,8 +25,7 @@ import {
   FilterOutlined
 } from '@ant-design/icons';
 import { PageHeader } from '../components/PageHeader';
-import useResources from '../hooks/useResources';
-import useResourceGroups from '../hooks/useResourceGroups';
+// Removed unused imports
 import type { ECharts } from 'echarts';
 import * as echarts from 'echarts';
 
@@ -747,7 +745,7 @@ export const TopologyViewPage: React.FC<TopologyViewPageProps> = ({
             <Alert
               message={`狀態: ${selectedNode.status}`}
               type={selectedNode.status === 'healthy' ? 'success' :
-                    selectedNode.status === 'warning' ? 'warning' : 'error'}
+                selectedNode.status === 'warning' ? 'warning' : 'error'}
               style={{ marginBottom: 16 }}
             />
 

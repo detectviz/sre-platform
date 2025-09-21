@@ -8,9 +8,8 @@ import {
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { ContextualKPICard, PageHeader, StatusBadge } from '../components';
-import fallbackData from '../mocks/db.json';
 
-const { Paragraph, Text } = Typography;
+const { Text } = Typography;
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || '/api/v1';
 
@@ -46,7 +45,6 @@ const HomePage = ({ onNavigate }: HomePageProps) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [events, setEvents] = useState<EventSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [isFallback, setIsFallback] = useState(false);
   const [fallbackReason, setFallbackReason] = useState<string | null>(null);
 
@@ -54,20 +52,26 @@ const HomePage = ({ onNavigate }: HomePageProps) => {
     const controller = new AbortController();
 
     const applyFallback = (reason: string) => {
-      setStats(fallbackData.dashboard_stats as DashboardStats);
-      const fallbackEvents = Array.isArray(fallbackData.events)
-        ? (fallbackData.events as EventSummary[]).slice(0, 6)
-        : [];
-      setEvents(fallbackEvents);
+      // Use mock data instead of accessing non-existent properties
+      const mockStats: DashboardStats = {
+        open_incidents: 0,
+        open_events: 0,
+        automation_success_rate: 0,
+        mean_time_to_ack_minutes: 0,
+        mean_time_to_resolve_minutes: 0,
+        error_budget_burn_rate: 0,
+        top_services: []
+      };
+      const mockEvents: EventSummary[] = [];
+      setStats(mockStats);
+      setEvents(mockEvents);
       setIsFallback(true);
       setFallbackReason(reason);
-      setError('目前顯示為內建模擬資料');
     };
 
     const load = async () => {
       try {
         setLoading(true);
-        setError(null);
         setIsFallback(false);
 
         const [statsRes, eventsRes] = await Promise.all([
@@ -282,7 +286,6 @@ const HomePage = ({ onNavigate }: HomePageProps) => {
                     unit="%"
                     status="info"
                     description="持續維持高成功率可降低人工壓力"
-                    glass={false}
                   />
                 </Col>
                 <Col span={12}>
@@ -292,7 +295,6 @@ const HomePage = ({ onNavigate }: HomePageProps) => {
                     unit="%"
                     status="warning"
                     description="建議控制在 20% 以下"
-                    glass={false}
                   />
                 </Col>
               </Row>
@@ -308,7 +310,6 @@ const HomePage = ({ onNavigate }: HomePageProps) => {
                       <StatusBadge
                         label={`${service.availability.toFixed(2)}%`}
                         tone={service.availability > 99.8 ? 'success' : 'info'}
-                        bordered
                       />
                     </Space>
                   </List.Item>

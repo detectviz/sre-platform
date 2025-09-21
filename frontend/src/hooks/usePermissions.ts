@@ -4,7 +4,7 @@ import api from '../services/api';
 const usePermissions = () => {
     const [permissions, setPermissions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState('');
 
     const fetchPermissions = useCallback(async () => {
         setLoading(true);
@@ -12,9 +12,9 @@ const usePermissions = () => {
             // @ts-ignore
             const data = await api.getPermissions();
             setPermissions(data);
-            setError(null);
+            setError('');
         } catch (err) {
-            setError(err);
+            setError(err instanceof Error ? err.message : String(err));
         } finally {
             setLoading(false);
         }

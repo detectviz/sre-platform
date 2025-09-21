@@ -1,4 +1,5 @@
-import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import {
   App as AntdApp,
   Alert,
@@ -90,9 +91,9 @@ const POLICY_WIZARD_FIELDS: Array<(keyof NotificationPolicyFormValues)[]> = [
 ];
 
 const POLICY_WIZARD_ITEMS: StepsProps['items'] = [
-  { key: 'basic', title: '基本資訊' },
-  { key: 'channels', title: '通知設定' },
-  { key: 'review', title: '確認與預覽' },
+  { title: '基本資訊' },
+  { title: '通知設定' },
+  { title: '確認與預覽' },
 ];
 
 const POLICY_WIZARD_GUIDE: Array<{ title: string; description: string }> = [
@@ -147,11 +148,11 @@ const NotificationStrategiesSection = ({ refreshSignal }: { refreshSignal: numbe
     setWizardStep(0);
     form.setFieldsValue(record
       ? {
-          name: record.name,
-          description: record.description ?? '',
-          channels: record.channels ?? [],
-          severity: record.severity ?? [],
-        }
+        name: record.name,
+        description: record.description ?? '',
+        channels: record.channels ?? [],
+        severity: record.severity ?? [],
+      }
       : { name: '', description: '', channels: [], severity: [] });
     setOpen(true);
   }, [form]);
@@ -545,21 +546,21 @@ const NotificationChannelsSection = ({ refreshSignal }: { refreshSignal: number 
     form.setFieldsValue(
       record
         ? {
-            name: record.name ?? '',
-            type: record.type ?? 'email',
-            description: record.description ?? '',
-            endpoint: record.endpoint ?? '',
-            defaultRecipients: record.defaultRecipients ?? [],
-            enabled: record.enabled !== false,
-          }
+          name: record.name ?? '',
+          type: record.type ?? 'email',
+          description: record.description ?? '',
+          endpoint: record.endpoint ?? '',
+          defaultRecipients: record.defaultRecipients ?? [],
+          enabled: record.enabled !== false,
+        }
         : {
-            name: '',
-            type: 'email',
-            description: '',
-            endpoint: '',
-            defaultRecipients: [],
-            enabled: true,
-          },
+          name: '',
+          type: 'email',
+          description: '',
+          endpoint: '',
+          defaultRecipients: [],
+          enabled: true,
+        },
     );
     setOpen(true);
   }, [form]);
@@ -620,12 +621,12 @@ const NotificationChannelsSection = ({ refreshSignal }: { refreshSignal: number 
     const trimmedName = values.name?.trim();
     const sanitizedRecipients = Array.isArray(values.defaultRecipients)
       ? Array.from(
-          new Set(
-            values.defaultRecipients
-              .map((recipient) => recipient.trim())
-              .filter((recipient) => recipient.length > 0),
-          ),
-        )
+        new Set(
+          values.defaultRecipients
+            .map((recipient) => recipient.trim())
+            .filter((recipient) => recipient.length > 0),
+        ),
+      )
       : [];
     if (!trimmedName) {
       message.error('請輸入管道名稱');

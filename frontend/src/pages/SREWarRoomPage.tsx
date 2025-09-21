@@ -495,7 +495,7 @@ const SREWarRoomPage = ({ onNavigate }: SREWarRoomPageProps) => {
           <Row gutter={[16, 16]}>
             {kpiCards.map(({ key, ...card }) => (
               <Col key={key} xs={24} sm={12} md={8}>
-                <ContextualKPICard {...card} glass={false} />
+                <ContextualKPICard {...card} />
               </Col>
             ))}
           </Row>

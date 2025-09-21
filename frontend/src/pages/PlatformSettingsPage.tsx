@@ -12,6 +12,7 @@ import {
   Alert,
   App as AntdApp,
   Button,
+  Card,
   Col,
   Form,
   Input,
@@ -33,7 +34,7 @@ import type { Tag } from '../hooks/useTags';
 import useTagMetadata from '../hooks/useTagMetadata';
 import type { TagValueOption } from '../types/tags';
 
-const { Paragraph } = Typography;
+const { Paragraph, Text } = Typography;
 
 export type PlatformSettingsPageProps = {
   onNavigate: (key: string) => void;
@@ -96,36 +97,36 @@ const TagManagementTab = ({ refreshSignal }: TagManagementTabProps) => {
 
   const handleDelete = useCallback((record: Tag) => {
     Modal.confirm({
-        title: `確定要刪除標籤規則 "${record.key_name}"?`,
-        content: '此操作無法復原。',
-        okText: '確定刪除',
-        okType: 'danger',
-        cancelText: '取消',
-        onOk: () => {
-            // TODO: API call to delete tag
-            console.log('Deleting tag', record);
-            message.success(`標籤規則 "${record.key_name}" 已刪除 (模擬)`);
-            refresh();
-        }
+      title: `確定要刪除標籤規則 "${record.key_name}"?`,
+      content: '此操作無法復原。',
+      okText: '確定刪除',
+      okType: 'danger',
+      cancelText: '取消',
+      onOk: () => {
+        // TODO: API call to delete tag
+        console.log('Deleting tag', record);
+        message.success(`標籤規則 "${record.key_name}" 已刪除 (模擬)`);
+        refresh();
+      }
     });
   }, [message, refresh]);
 
   const columns = useMemo(() => [
     { title: '標籤鍵', dataIndex: 'key_name', key: 'key_name' },
     { title: '描述', dataIndex: 'description', key: 'description' },
-    { title: '使用計數', dataIndex: 'usage_count', key: 'usage_count', align: 'right' },
+    { title: '使用計數', dataIndex: 'usage_count', key: 'usage_count' },
     {
-        title: '強制等級',
-        dataIndex: 'enforcement_level',
-        key: 'enforcement_level',
-        render: (level: string) => {
-            const color = {
-                blocking: 'red',
-                warning: 'orange',
-                advisory: 'blue',
-            }[level];
-            return <AntdTag color={color}>{level}</AntdTag>;
-        }
+      title: '強制等級',
+      dataIndex: 'enforcement_level',
+      key: 'enforcement_level',
+      render: (level: string) => {
+        const color = {
+          blocking: 'red',
+          warning: 'orange',
+          advisory: 'blue',
+        }[level];
+        return <AntdTag color={color}>{level}</AntdTag>;
+      }
     },
     {
       title: '操作',
@@ -173,12 +174,12 @@ const TagManagementTab = ({ refreshSignal }: TagManagementTabProps) => {
     <Spin spinning={loading}>
       <Space direction="vertical" size="large" style={{ width: '100%' }}>
         <Space>
-            <Button type="primary" onClick={() => handleEdit()}>
-              新增標籤規則
-            </Button>
-            <Button icon={<ReloadOutlined />} onClick={refresh}>
-                刷新
-            </Button>
+          <Button type="primary" onClick={() => handleEdit()}>
+            新增標籤規則
+          </Button>
+          <Button icon={<ReloadOutlined />} onClick={refresh}>
+            刷新
+          </Button>
         </Space>
 
         <DataTable<Tag>
@@ -554,186 +555,186 @@ const TagValueManagementTab = ({ refreshSignal }: TagValueManagementTabProps) =>
 };
 
 const EmailSettingsTab = () => {
-    const { message } = AntdApp.useApp();
-    const [form] = Form.useForm();
-    const [loading, setLoading] = useState(false);
+  const { message } = AntdApp.useApp();
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
-    const handleSave = (values: any) => {
-        setLoading(true);
-        // TODO: API call to save SMTP settings
-        console.log('Saving SMTP settings:', values);
-        setTimeout(() => {
-            setLoading(false);
-            message.success('郵件設定已儲存 (模擬)');
-        }, 1000);
-    };
+  const handleSave = (values: any) => {
+    setLoading(true);
+    // TODO: API call to save SMTP settings
+    console.log('Saving SMTP settings:', values);
+    setTimeout(() => {
+      setLoading(false);
+      message.success('郵件設定已儲存 (模擬)');
+    }, 1000);
+  };
 
-    const handleTest = () => {
-        form.validateFields().then(values => {
-            Modal.info({
-                title: '傳送測試郵件',
-                content: (
-                    <Form layout="vertical">
-                        <Form.Item label="收件人" name="recipient" initialValue="test@example.com">
-                            <Input placeholder="輸入測試收件人信箱" />
-                        </Form.Item>
-                    </Form>
-                ),
-                onOk: () => {
-                    // TODO: API call to send test email
-                    console.log('Sending test email with settings:', values);
-                    message.success('測試郵件已發送 (模擬)');
-                },
-                okText: '傳送'
-            });
-        });
-    };
+  const handleTest = () => {
+    form.validateFields().then(values => {
+      Modal.info({
+        title: '傳送測試郵件',
+        content: (
+          <Form layout="vertical">
+            <Form.Item label="收件人" name="recipient" initialValue="test@example.com">
+              <Input placeholder="輸入測試收件人信箱" />
+            </Form.Item>
+          </Form>
+        ),
+        onOk: () => {
+          // TODO: API call to send test email
+          console.log('Sending test email with settings:', values);
+          message.success('測試郵件已發送 (模擬)');
+        },
+        okText: '傳送'
+      });
+    });
+  };
 
-    return (
-        <Spin spinning={loading}>
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSave}
-                style={{ maxWidth: 600 }}
-                initialValues={{ port: 587, encryption: 'tls' }}
+  return (
+    <Spin spinning={loading}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSave}
+        style={{ maxWidth: 600 }}
+        initialValues={{ port: 587, encryption: 'tls' }}
+      >
+        <Form.Item
+          name="host"
+          label="SMTP 伺服器"
+          rules={[{ required: true, message: '請輸入 SMTP 伺服器地址' }]}
+        >
+          <Input placeholder="例如: smtp.your-provider.com" />
+        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="port"
+              label="SMTP 連接埠"
+              rules={[{ required: true, message: '請輸入 SMTP 連接埠' }]}
             >
-                <Form.Item
-                    name="host"
-                    label="SMTP 伺服器"
-                    rules={[{ required: true, message: '請輸入 SMTP 伺服器地址' }]}
-                >
-                    <Input placeholder="例如: smtp.your-provider.com" />
-                </Form.Item>
-                <Row gutter={16}>
-                    <Col span={12}>
-                        <Form.Item
-                            name="port"
-                            label="SMTP 連接埠"
-                            rules={[{ required: true, message: '請輸入 SMTP 連接埠' }]}
-                        >
-                            <InputNumber style={{ width: '100%' }} />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item name="encryption" label="加密方式">
-                            <Select>
-                                <Select.Option value="none">無</Select.Option>
-                                <Select.Option value="ssl">SSL/TLS</Select.Option>
-                                <Select.Option value="tls">STARTTLS</Select.Option>
-                            </Select>
-                        </Form.Item>
-                    </Col>
-                </Row>
-                <Form.Item name="username" label="使用者名稱">
-                    <Input placeholder="SMTP 登入使用者名稱" />
-                </Form.Item>
-                <Form.Item name="password" label="密碼">
-                    <Input.Password placeholder="SMTP 登入密碼" />
-                </Form.Item>
-                <Row gutter={16}>
-                    <Col span={12}>
-                        <Form.Item
-                            name="from_address"
-                            label="寄件人信箱"
-                            rules={[{ required: true, type: 'email', message: '請輸入有效的信箱地址' }]}
-                        >
-                            <Input placeholder="例如: no-reply@sre-platform.com" />
-                        </Form.Item>
-                    </Col>
-                    <Col span={12}>
-                        <Form.Item name="from_name" label="寄件人名稱">
-                            <Input placeholder="例如: SRE Platform" />
-                        </Form.Item>
-                    </Col>
-                </Row>
-                <Form.Item>
-                    <Space>
-                        <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
-                            儲存設定
-                        </Button>
-                        <Button onClick={handleTest} icon={<SendOutlined />}>
-                            傳送測試郵件
-                        </Button>
-                    </Space>
-                </Form.Item>
-            </Form>
-        </Spin>
-    );
+              <InputNumber style={{ width: '100%' }} />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="encryption" label="加密方式">
+              <Select>
+                <Select.Option value="none">無</Select.Option>
+                <Select.Option value="ssl">SSL/TLS</Select.Option>
+                <Select.Option value="tls">STARTTLS</Select.Option>
+              </Select>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item name="username" label="使用者名稱">
+          <Input placeholder="SMTP 登入使用者名稱" />
+        </Form.Item>
+        <Form.Item name="password" label="密碼">
+          <Input.Password placeholder="SMTP 登入密碼" />
+        </Form.Item>
+        <Row gutter={16}>
+          <Col span={12}>
+            <Form.Item
+              name="from_address"
+              label="寄件人信箱"
+              rules={[{ required: true, type: 'email', message: '請輸入有效的信箱地址' }]}
+            >
+              <Input placeholder="例如: no-reply@sre-platform.com" />
+            </Form.Item>
+          </Col>
+          <Col span={12}>
+            <Form.Item name="from_name" label="寄件人名稱">
+              <Input placeholder="例如: SRE Platform" />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.Item>
+          <Space>
+            <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
+              儲存設定
+            </Button>
+            <Button onClick={handleTest} icon={<SendOutlined />}>
+              傳送測試郵件
+            </Button>
+          </Space>
+        </Form.Item>
+      </Form>
+    </Spin>
+  );
 };
 
 const AuthSettingsTab = () => {
-    const { message } = AntdApp.useApp();
-    const [form] = Form.useForm();
-    const [loading, setLoading] = useState(false);
+  const { message } = AntdApp.useApp();
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
-    const handleSave = (values: any) => {
-        setLoading(true);
-        // TODO: API call to save OIDC settings
-        console.log('Saving OIDC settings:', values);
-        setTimeout(() => {
-            setLoading(false);
-            message.success('身份驗證設定已儲存 (模擬)');
-        }, 1000);
-    };
+  const handleSave = (values: any) => {
+    setLoading(true);
+    // TODO: API call to save OIDC settings
+    console.log('Saving OIDC settings:', values);
+    setTimeout(() => {
+      setLoading(false);
+      message.success('身份驗證設定已儲存 (模擬)');
+    }, 1000);
+  };
 
-    return (
-        <Spin spinning={loading}>
-            <Form
-                form={form}
-                layout="vertical"
-                onFinish={handleSave}
-                style={{ maxWidth: 600 }}
-                initialValues={{ provider_type: 'keycloak' }}
-            >
-                <Alert
-                    type="info"
-                    showIcon
-                    message="身份驗證設定"
-                    description="此處設定將用於整合 OIDC 單一登入 (SSO)。建議在生產環境中使用環境變數覆寫這些設定以策安全。"
-                    style={{ marginBottom: 24 }}
-                />
-                <Form.Item name="provider_type" label="供應商類型" rules={[{ required: true }]}>
-                    <Select>
-                        <Select.Option value="keycloak">Keycloak</Select.Option>
-                        <Select.Option value="auth0">Auth0</Select.Option>
-                        <Select.Option value="okta">Okta</Select.Option>
-                        <Select.Option value="generic">通用 OIDC</Select.Option>
-                    </Select>
-                </Form.Item>
-                <Form.Item name="provider_name" label="顯示名稱" rules={[{ required: true, message: '請輸入顯示名稱' }]}>
-                    <Input placeholder="例如: 公司 SSO" />
-                </Form.Item>
-                <Form.Item name="client_id" label="客戶端 ID (Client ID)" rules={[{ required: true, message: '請輸入 Client ID' }]}>
-                    <Input placeholder="從您的 OIDC 供應商獲取" />
-                </Form.Item>
-                <Form.Item name="client_secret" label="客戶端密鑰 (Client Secret)" rules={[{ required: true, message: '請輸入 Client Secret' }]}>
-                    <Input.Password placeholder="從您的 OIDC 供應商獲取" />
-                </Form.Item>
-                <Form.Item name="issuer_url" label="發行者 URL (Issuer URL)" rules={[{ required: true, type: 'url' }]}>
-                    <Input placeholder="例如: https://keycloak.example.com/realms/my-realm" />
-                </Form.Item>
-                <Paragraph type="secondary">
-                    當使用通用 OIDC 供應商時，您可能需要手動填寫以下端點。對於 Keycloak 等常見供應商，系統會自動探索。
-                </Paragraph>
-                <Form.Item name="authorization_url" label="授權端點 URL (Authorization URL)">
-                    <Input placeholder="OIDC 授權端點" />
-                </Form.Item>
-                <Form.Item name="token_url" label="權杖端點 URL (Token URL)">
-                    <Input placeholder="OIDC 權杖端點" />
-                </Form.Item>
-                <Form.Item name="userinfo_url" label="使用者資訊端點 URL (User Info URL)">
-                    <Input placeholder="OIDC 使用者資訊端點" />
-                </Form.Item>
+  return (
+    <Spin spinning={loading}>
+      <Form
+        form={form}
+        layout="vertical"
+        onFinish={handleSave}
+        style={{ maxWidth: 600 }}
+        initialValues={{ provider_type: 'keycloak' }}
+      >
+        <Alert
+          type="info"
+          showIcon
+          message="身份驗證設定"
+          description="此處設定將用於整合 OIDC 單一登入 (SSO)。建議在生產環境中使用環境變數覆寫這些設定以策安全。"
+          style={{ marginBottom: 24 }}
+        />
+        <Form.Item name="provider_type" label="供應商類型" rules={[{ required: true }]}>
+          <Select>
+            <Select.Option value="keycloak">Keycloak</Select.Option>
+            <Select.Option value="auth0">Auth0</Select.Option>
+            <Select.Option value="okta">Okta</Select.Option>
+            <Select.Option value="generic">通用 OIDC</Select.Option>
+          </Select>
+        </Form.Item>
+        <Form.Item name="provider_name" label="顯示名稱" rules={[{ required: true, message: '請輸入顯示名稱' }]}>
+          <Input placeholder="例如: 公司 SSO" />
+        </Form.Item>
+        <Form.Item name="client_id" label="客戶端 ID (Client ID)" rules={[{ required: true, message: '請輸入 Client ID' }]}>
+          <Input placeholder="從您的 OIDC 供應商獲取" />
+        </Form.Item>
+        <Form.Item name="client_secret" label="客戶端密鑰 (Client Secret)" rules={[{ required: true, message: '請輸入 Client Secret' }]}>
+          <Input.Password placeholder="從您的 OIDC 供應商獲取" />
+        </Form.Item>
+        <Form.Item name="issuer_url" label="發行者 URL (Issuer URL)" rules={[{ required: true, type: 'url' }]}>
+          <Input placeholder="例如: https://keycloak.example.com/realms/my-realm" />
+        </Form.Item>
+        <Paragraph type="secondary">
+          當使用通用 OIDC 供應商時，您可能需要手動填寫以下端點。對於 Keycloak 等常見供應商，系統會自動探索。
+        </Paragraph>
+        <Form.Item name="authorization_url" label="授權端點 URL (Authorization URL)">
+          <Input placeholder="OIDC 授權端點" />
+        </Form.Item>
+        <Form.Item name="token_url" label="權杖端點 URL (Token URL)">
+          <Input placeholder="OIDC 權杖端點" />
+        </Form.Item>
+        <Form.Item name="userinfo_url" label="使用者資訊端點 URL (User Info URL)">
+          <Input placeholder="OIDC 使用者資訊端點" />
+        </Form.Item>
 
-                <Form.Item>
-                    <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
-                        儲存設定
-                    </Button>
-                </Form.Item>
-            </Form>
-        </Spin>
-    );
+        <Form.Item>
+          <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
+            儲存設定
+          </Button>
+        </Form.Item>
+      </Form>
+    </Spin>
+  );
 };
 
 

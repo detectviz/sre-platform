@@ -1,11 +1,11 @@
 import { useCallback, useMemo, useState } from 'react';
-import { App as AntdApp, Button, Space, Tooltip, Typography, Alert, Modal, Descriptions, Divider, Tag, Form, Input, Select, Row, Col, Transfer } from 'antd';
+import { App as AntdApp, Button, Space, Tooltip, Typography, Alert, Modal, Descriptions, Divider, Tag, Form, Input, Select, Row, Col, Transfer, Progress } from 'antd';
 import { PlusOutlined, ReloadOutlined, FilterOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { DataTable } from '../../components';
 import type { Resource, ResourceGroupWithInsights } from '../../types/resources';
 import { buildStackedSegments, getChartTheme, getStatusColor } from '../../utils/chartTheme';
-import { useResources } from '../../hooks/useResources';
+import useResources from '../../hooks/useResources';
 
 const { Title, Text } = Typography;
 
@@ -58,7 +58,7 @@ export const ResourceGroupsTab = ({ resourceGroups, loading, error, onRefresh }:
           name: group.name,
           description: group.description ?? '',
           tags: group.tags.map((t) => `${t.key}:${t.value}`),
-          members: group.members?.map(m => m.id) ?? [],
+          members: group.memberIds ?? [],
         }
         : { name: '', description: '', tags: [], members: [] },
     );
@@ -379,16 +379,16 @@ export const ResourceGroupsTab = ({ resourceGroups, loading, error, onRefresh }:
           </Form.Item>
           <Form.Item name="members" label="群組資源">
             <Transfer
-                dataSource={allResources.map((r: Resource) => ({ key: r.id, title: r.name, description: r.type }))}
-                showSearch
-                filterOption={(inputValue, option) =>
-                    option.title.toLowerCase().indexOf(inputValue.toLowerCase()) > -1 ||
-                    option.description.toLowerCase().indexOf(inputValue.toLowerCase()) > -1
-                }
-                targetKeys={form.getFieldValue('members')}
-                onChange={(newTargetKeys) => form.setFieldsValue({ members: newTargetKeys })}
-                render={item => item.title}
-                listStyle={{width: '100%', height: 300}}
+              dataSource={allResources.map((r: Resource) => ({ key: r.id, title: r.name, description: r.type }))}
+              showSearch
+              filterOption={(inputValue, option) =>
+                (option.title?.toLowerCase().indexOf(inputValue.toLowerCase()) ?? -1) > -1 ||
+                (option.description?.toLowerCase().indexOf(inputValue.toLowerCase()) ?? -1) > -1
+              }
+              targetKeys={form.getFieldValue('members')}
+              onChange={(targetKeys) => form.setFieldsValue({ members: targetKeys as string[] })}
+              render={(item) => <span>{item.title}</span>}
+              listStyle={{ width: '100%', height: 300 }}
             />
           </Form.Item>
         </Form>

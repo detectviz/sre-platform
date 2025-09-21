@@ -17,6 +17,9 @@ import {
 } from 'antd';
 import { EyeOutlined, SearchOutlined, DownloadOutlined, FilterOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import isBetween from 'dayjs/plugin/isBetween';
+
+dayjs.extend(isBetween);
 import { GlassDrawer, PageHeader } from '../components';
 import useAuditLogs from '../hooks/useAuditLogs';
 
@@ -286,7 +289,7 @@ const AuditLogPage: React.FC = () => {
               <RangePicker
                 style={{ width: '100%' }}
                 value={dateRange}
-                onChange={setDateRange}
+                onChange={(dates) => setDateRange(dates as [dayjs.Dayjs, dayjs.Dayjs] | null)}
                 placeholder={['開始日期', '結束日期']}
               />
             </Col>

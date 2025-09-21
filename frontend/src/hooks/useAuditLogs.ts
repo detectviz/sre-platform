@@ -4,7 +4,7 @@ import api from '../services/api';
 const useAuditLogs = () => {
     const [logs, setLogs] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState('');
 
     const fetchLogs = useCallback(async () => {
         setLoading(true);
@@ -12,9 +12,9 @@ const useAuditLogs = () => {
             // @ts-ignore
             const data = await api.getAuditLogs();
             setLogs(data);
-            setError(null);
+            setError('');
         } catch (err) {
-            setError(err);
+            setError(err instanceof Error ? err.message : String(err));
         } finally {
             setLoading(false);
         }

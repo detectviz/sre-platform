@@ -423,31 +423,31 @@ export const ResourceOverviewTab = ({
       title: '資源',
       key: 'name',
       render: (_: unknown, resource: Resource) => (
-          <Space direction="vertical" size={4} style={{ minWidth: 200 }}>
-            <Button type="link" onClick={() => handleOpenDetail(resource)} style={{ padding: 0 }}>
-              {resource.name}
-            </Button>
-            <Space size={4} wrap>
-              <Tag color="blue">{resource.type}</Tag>
-              {resource.tags.slice(0, 3).map((tag) => {
-                const value = `${tag.key}:${tag.value}`;
-                return (
-                  <Tooltip title={`套用標籤篩選：${value}`} key={`${resource.id}-${value}`}>
-                    <Tag
-                      color="geekblue"
-                      onClick={() => handleApplyTag(value)}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {value}
-                    </Tag>
-                  </Tooltip>
-                );
-              })}
-              {resource.tags.length > 3 && (
-                <Tag color="geekblue">+{resource.tags.length - 3}</Tag>
-              )}
-            </Space>
+        <Space direction="vertical" size={4} style={{ minWidth: 200 }}>
+          <Button type="link" onClick={() => handleOpenDetail(resource)} style={{ padding: 0 }}>
+            {resource.name}
+          </Button>
+          <Space size={4} wrap>
+            <Tag color="blue">{resource.type}</Tag>
+            {resource.tags.slice(0, 3).map((tag) => {
+              const value = `${tag.key}:${tag.value}`;
+              return (
+                <Tooltip title={`套用標籤篩選：${value}`} key={`${resource.id}-${value}`}>
+                  <Tag
+                    color="geekblue"
+                    onClick={() => handleApplyTag(value)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {value}
+                  </Tag>
+                </Tooltip>
+              );
+            })}
+            {resource.tags.length > 3 && (
+              <Tag color="geekblue">+{resource.tags.length - 3}</Tag>
+            )}
           </Space>
+        </Space>
       ),
     },
     {
@@ -474,11 +474,11 @@ export const ResourceOverviewTab = ({
           </Tooltip>
           {((resource.metricsHistory?.cpuSeries?.length ?? 0) > 1
             || (resource.metricsHistory?.memorySeries?.length ?? 0) > 1) && (
-            <MiniTrendChart
-              cpuSeries={resource.metricsHistory?.cpuSeries}
-              memorySeries={resource.metricsHistory?.memorySeries}
-            />
-          )}
+              <MiniTrendChart
+                cpuSeries={resource.metricsHistory?.cpuSeries}
+                memorySeries={resource.metricsHistory?.memorySeries}
+              />
+            )}
         </Space>
       ),
     },
@@ -537,18 +537,18 @@ export const ResourceOverviewTab = ({
 
         const overflowMenu: MenuProps | undefined = overflowActions.length
           ? {
-              items: overflowActions.map((action) => ({
-                key: action.key,
-                label: action.label,
-                icon: action.type === 'automation' ? <ThunderboltOutlined /> : undefined,
-              })),
-              onClick: ({ key }) => {
-                const target = overflowActions.find((action) => action.key === key);
-                if (target) {
-                  runResourceAction(target, resource);
-                }
-              },
-            }
+            items: overflowActions.map((action) => ({
+              key: action.key,
+              label: action.label,
+              icon: action.type === 'automation' ? <ThunderboltOutlined /> : undefined,
+            })),
+            onClick: ({ key }) => {
+              const target = overflowActions.find((action) => action.key === key);
+              if (target) {
+                runResourceAction(target, resource);
+              }
+            },
+          }
           : undefined;
 
         return (
@@ -759,12 +759,12 @@ export const ResourceOverviewTab = ({
         {detailResource ? (() => {
           const statusDescription = detailResource.healthReasons?.length
             ? (
-                <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
-                  {detailResource.healthReasons.map((reason, index) => (
-                    <li key={`${detailResource.id}-health-${index}`}>{reason}</li>
-                  ))}
-                </ul>
-              )
+              <ul style={{ paddingLeft: 18, marginBottom: 0 }}>
+                {detailResource.healthReasons.map((reason, index) => (
+                  <li key={`${detailResource.id}-health-${index}`}>{reason}</li>
+                ))}
+              </ul>
+            )
             : detailResource.healthSummary ?? undefined;
 
           const observabilityLinks = detailResource.observability;
@@ -781,9 +781,10 @@ export const ResourceOverviewTab = ({
                 showIcon
                 message={(
                   <Space align="center" size={8}>
-                    <StatusBadge tone={getStatusTone(detailResource.status)}>
-                      {statusLabelMap[detailResource.status] ?? detailResource.status}
-                    </StatusBadge>
+                    <StatusBadge
+                      label={statusLabelMap[detailResource.status] ?? detailResource.status}
+                      tone={getStatusTone(detailResource.status)}
+                    />
                     <span>目前狀態</span>
                   </Space>
                 )}
@@ -816,11 +817,11 @@ export const ResourceOverviewTab = ({
                 </Tooltip>
                 {((detailResource.metricsHistory?.cpuSeries?.length ?? 0) > 1
                   || (detailResource.metricsHistory?.memorySeries?.length ?? 0) > 1) && (
-                  <MiniTrendChart
-                    cpuSeries={detailResource.metricsHistory?.cpuSeries}
-                    memorySeries={detailResource.metricsHistory?.memorySeries}
-                  />
-                )}
+                    <MiniTrendChart
+                      cpuSeries={detailResource.metricsHistory?.cpuSeries}
+                      memorySeries={detailResource.metricsHistory?.memorySeries}
+                    />
+                  )}
               </Space>
 
               <Divider orientation="left">標籤 / 群組</Divider>
@@ -951,13 +952,13 @@ export const ResourceOverviewTab = ({
             onFinish={handleFormSubmit}
             requiredMark={false}
           >
-            <Form.Item name="name" label="資源名稱" rules={[{ required: true, message: '請輸入資源名稱' }]}> 
+            <Form.Item name="name" label="資源名稱" rules={[{ required: true, message: '請輸入資源名稱' }]}>
               <Input placeholder="例如：db-prod-01" />
             </Form.Item>
-            <Form.Item name="type" label="資源類型" rules={[{ required: true }] }>
+            <Form.Item name="type" label="資源類型" rules={[{ required: true }]}>
               <Select options={RESOURCE_TYPE_OPTIONS.map((value) => ({ value, label: value }))} />
             </Form.Item>
-            <Form.Item name="status" label="狀態" rules={[{ required: true }] }>
+            <Form.Item name="status" label="狀態" rules={[{ required: true }]}>
               <Select options={STATUS_OPTIONS.filter((option) => option.value !== 'ALL') as Array<{ label: string; value: ResourceStatus }>} />
             </Form.Item>
             <Form.Item name="ipAddress" label="IP 位址">
@@ -988,6 +989,8 @@ export const ResourceOverviewTab = ({
               extra="使用標籤條件來定義資源的屬性組合，請按下「套用」後再儲存"
             >
               <SmartFilterBuilder
+                value={[]}
+                onApply={() => { }}
                 disabled={false}
               />
             </Form.Item>

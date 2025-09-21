@@ -12,7 +12,7 @@ const { Title, Text } = Typography;
 type Role = { id: string; name: string; is_built_in: boolean; permissions: string[] };
 
 const RoleManagementPage: React.FC = () => {
-  const { roles, loading: rolesLoading, refetch: refetchRoles } = useRoles();
+  const { roles, loading: rolesLoading } = useRoles();
   const { permissions, loading: permissionsLoading } = usePermissions();
   const [selectedRole, setSelectedRole] = useState<Role | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,7 +61,6 @@ const RoleManagementPage: React.FC = () => {
           // @ts-ignore
           await api.deleteRole(role.id);
           message.success('角色已刪除');
-          refetchRoles();
         } catch {
           message.error('刪除失敗');
         }
@@ -78,7 +77,7 @@ const RoleManagementPage: React.FC = () => {
       <PageHeader
         title="角色管理"
         subtitle="定義系統中的角色及其對應的操作權限"
-        actions={
+        extra={
           <Button type="primary" icon={<PlusOutlined />} onClick={handleAddRole}>
             新增角色
           </Button>
@@ -94,7 +93,7 @@ const RoleManagementPage: React.FC = () => {
                   onClick={() => handleSelectRole(role)}
                   actions={!role.is_built_in ? [
                     <Button type="link" icon={<EditOutlined />} onClick={(e) => { e.stopPropagation(); handleEditRole(role); }} />,
-                    <Button type="link" icon={<DeleteOutlined />} danger onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }}/>
+                    <Button type="link" icon={<DeleteOutlined />} danger onClick={(e) => { e.stopPropagation(); handleDeleteRole(role); }} />
                   ] : []}
                   style={{
                     cursor: 'pointer',
@@ -118,7 +117,7 @@ const RoleManagementPage: React.FC = () => {
             <Space direction="vertical" style={{ width: '100%' }}>
               <Title level={4}>{selectedRole.name}</Title>
               <Text type="secondary">{selectedRole.is_built_in ? '內建角色，權限不可修改。' : '自訂角色，可編輯權限。'}</Text>
-              <Card title="權限列表" style={{marginTop: 16}}>
+              <Card title="權限列表" style={{ marginTop: 16 }}>
                 {permissionsLoading ? <Spin /> : (
                   <Tree
                     checkable
@@ -141,7 +140,6 @@ const RoleManagementPage: React.FC = () => {
         onCancel={() => setIsModalOpen(false)}
         onSuccess={() => {
           setIsModalOpen(false);
-          refetchRoles();
         }}
       />
     </Space>

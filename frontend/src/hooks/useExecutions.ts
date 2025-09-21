@@ -4,7 +4,7 @@ import api from '../services/api';
 const useExecutions = () => {
     const [executions, setExecutions] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchExecutions = async () => {
@@ -12,7 +12,7 @@ const useExecutions = () => {
                 const data = await api.getExecutions();
                 setExecutions(data);
             } catch (err) {
-                setError(err);
+                setError(err instanceof Error ? err.message : String(err));
             } finally {
                 setLoading(false);
             }
