@@ -679,18 +679,59 @@ const notificationStrategies = [
 const notificationHistory = [
   {
     record_id: 'hist-001',
-    sent_time: toISO(new Date(now.getTime() - 3600000)),
+    sent_at: toISO(new Date(now.getTime() - 3600000)),
+    strategy_id: 'str-001',
     strategy_name: 'Critical 事件通知',
-    channel_type: 'slack',
+    channel_type: 'Slack',
+    channel_label: '#sre-alert',
+    channel_id: 'chn-001',
     recipients: ['#sre-alert'],
-    status: 'success',
+    status: 'SUCCESS',
     duration_ms: 1200,
-    payload: { event_id: 'evt-001' },
+    alert_title: 'API 延遲飆高',
+    message: '事件 evt-001 已通知核心團隊',
+    raw_payload: { event_id: 'evt-001', rule: 'API 延遲監控' },
+    metadata: { provider: 'slack', request_id: 'req-123' },
     attempts: [
-      { sent_at: toISO(new Date(now.getTime() - 3600000)), status: 'success', response: '200 OK' }
+      { sent_at: toISO(new Date(now.getTime() - 3600000)), status: 'SUCCESS', response: '200 OK' }
     ],
     error_message: null,
-    related_event_id: 'evt-001'
+    related_event_id: 'evt-001',
+    resend_count: 1,
+    resend_available: true,
+    last_resend_at: toISO(new Date(now.getTime() - 1800000)),
+    actor: '林佳瑜'
+  }
+];
+
+const notificationResendJobs = [
+  {
+    job_id: 'job-001',
+    notification_history_id: 'hist-001',
+    status: 'completed',
+    requested_at: toISO(new Date(now.getTime() - 1800000)),
+    requested_by: '林佳瑜',
+    channel_id: 'chn-001',
+    recipients: ['#sre-alert'],
+    dry_run: false,
+    started_at: toISO(new Date(now.getTime() - 1750000)),
+    completed_at: toISO(new Date(now.getTime() - 1700000)),
+    result_message: '重新發送成功',
+    error_message: null
+  }
+];
+
+const emailTestHistory = [
+  {
+    id: 'email-test-001',
+    status: 'success',
+    recipient: 'ops@example.com',
+    template_key: 'default',
+    duration_ms: 420,
+    response_message: '250 OK',
+    error_message: null,
+    metadata: { smtp_host: 'smtp.example.com' },
+    executed_at: toISO(new Date(now.getTime() - 5400000))
   }
 ];
 
@@ -702,11 +743,137 @@ const tagDefinitions = [
     required: true,
     usage_count: 124,
     values: [
-      { value_id: 'tag-001-v1', value: 'production', description: '正式環境', is_default: true },
-      { value_id: 'tag-001-v2', value: 'staging', description: '預備環境', is_default: false }
+      {
+        value_id: 'tag-001-v1',
+        value: 'production',
+        description: '正式環境',
+        is_default: true,
+        usage_count: 82,
+        last_synced_at: toISO(new Date(now.getTime() - 3600000))
+      },
+      {
+        value_id: 'tag-001-v2',
+        value: 'staging',
+        description: '預備環境',
+        is_default: false,
+        usage_count: 34,
+        last_synced_at: toISO(new Date(now.getTime() - 7200000))
+      }
     ]
   }
 ];
+
+const tagSummary = {
+  updated_at: toISO(now),
+  totals: {
+    total_keys: tagDefinitions.length,
+    required_keys: tagDefinitions.filter((tag) => tag.required).length,
+    optional_keys: tagDefinitions.filter((tag) => !tag.required).length,
+    total_values: tagDefinitions.reduce((acc, tag) => acc + (tag.values?.length || 0), 0)
+  },
+  categories: [
+    {
+      category: '基礎設施',
+      total_keys: 1,
+      required_keys: 1,
+      optional_keys: 0,
+      total_values: tagDefinitions[0].values.length,
+      last_updated_at: toISO(new Date(now.getTime() - 1800000)),
+      top_keys: [
+        { tag_key: 'env', description: '部署環境', usage_count: 124, required: true },
+        { tag_key: 'cluster', description: '叢集名稱', usage_count: 48, required: false }
+      ]
+    }
+  ]
+};
+
+const tagKeyOptions = [
+  {
+    tag_key: 'env',
+    display_name: '環境',
+    description: '服務部署環境',
+    categories: ['基礎設施'],
+    usage_count: 124,
+    required: true,
+    last_updated_at: toISO(new Date(now.getTime() - 3600000))
+  },
+  {
+    tag_key: 'app',
+    display_name: '應用',
+    description: '應用系統名稱',
+    categories: ['應用程序'],
+    usage_count: 96,
+    required: false,
+    last_updated_at: toISO(new Date(now.getTime() - 5400000))
+  },
+  {
+    tag_key: 'team',
+    display_name: '團隊',
+    description: '負責團隊識別',
+    categories: ['組織結構'],
+    usage_count: 54,
+    required: false,
+    last_updated_at: toISO(new Date(now.getTime() - 7200000))
+  }
+];
+
+const tagValueCatalog = {
+  env: [
+    {
+      value: 'production',
+      description: '正式環境',
+      usage_count: 82,
+      is_default: true,
+      last_seen_at: toISO(new Date(now.getTime() - 1200000))
+    },
+    {
+      value: 'staging',
+      description: '預備環境',
+      usage_count: 34,
+      is_default: false,
+      last_seen_at: toISO(new Date(now.getTime() - 5400000))
+    },
+    {
+      value: 'development',
+      description: '開發環境',
+      usage_count: 18,
+      is_default: false,
+      last_seen_at: toISO(new Date(now.getTime() - 86400000))
+    }
+  ],
+  app: [
+    {
+      value: 'payment-api',
+      description: '支付 API 服務',
+      usage_count: 40,
+      is_default: true,
+      last_seen_at: toISO(new Date(now.getTime() - 1800000))
+    },
+    {
+      value: 'checkout-web',
+      description: '結帳前端',
+      usage_count: 28,
+      is_default: false,
+      last_seen_at: toISO(new Date(now.getTime() - 2700000))
+    }
+  ],
+  team: [
+    {
+      value: 'sre-core',
+      description: 'SRE 核心團隊',
+      usage_count: 21,
+      is_default: true,
+      last_seen_at: toISO(new Date(now.getTime() - 3600000))
+    },
+    {
+      value: 'db-team',
+      description: '資料庫團隊',
+      usage_count: 17,
+      is_default: false,
+      last_seen_at: toISO(new Date(now.getTime() - 7200000))
+    }
+  ]
+};
 
 const emailSettings = {
   smtp_host: 'smtp.example.com',
@@ -775,6 +942,40 @@ const toEventDetail = (event) => ({
   related_events: event.related || [],
   automation_actions: event.analysis ? ['scale-out'] : [],
   analysis: event.analysis
+});
+
+const mapNotificationHistorySummary = (record) => ({
+  record_id: record.record_id,
+  sent_at: record.sent_at,
+  status: record.status,
+  channel_type: record.channel_type,
+  channel_label: record.channel_label,
+  strategy_name: record.strategy_name,
+  strategy_id: record.strategy_id,
+  alert_title: record.alert_title,
+  message: record.message,
+  error_message: record.error_message,
+  recipients: record.recipients,
+  retry_count: record.retry_count ?? Math.max((record.attempts?.length || 1) - 1, 0),
+  duration_ms: record.duration_ms,
+  resend_available: record.resend_available ?? false,
+  resend_count: record.resend_count ?? 0,
+  last_resend_at: record.last_resend_at ?? null,
+  actor: record.actor ?? null
+});
+
+const mapNotificationResendJob = (job) => ({
+  job_id: job.job_id,
+  status: job.status,
+  requested_at: job.requested_at,
+  requested_by: job.requested_by,
+  channel_id: job.channel_id,
+  recipients: job.recipients,
+  dry_run: job.dry_run,
+  started_at: job.started_at || null,
+  completed_at: job.completed_at || null,
+  result_message: job.result_message || null,
+  error_message: job.error_message || null
 });
 
 const getEventById = (id) => eventData.find((evt) => evt.event_id === id);
@@ -1837,13 +2038,91 @@ app.delete('/notification/channels/:channel_id', (req, res) => {
 });
 
 app.get('/notification/history', (req, res) => {
-  res.json(paginate(notificationHistory, req));
+  const items = notificationHistory.map(mapNotificationHistorySummary);
+  res.json(paginate(items, req));
 });
 
 app.get('/notification/history/:record_id', (req, res) => {
   const record = getHistoryById(req.params.record_id);
   if (!record) return notFound(res, '找不到通知紀錄');
-  res.json(record);
+  const resendJobs = notificationResendJobs
+    .filter((job) => job.notification_history_id === record.record_id)
+    .map(mapNotificationResendJob);
+  res.json({ ...record, resend_jobs: resendJobs });
+});
+
+app.post('/notification/history/:record_id/resend', (req, res) => {
+  const record = getHistoryById(req.params.record_id);
+  if (!record) return notFound(res, '找不到通知紀錄');
+  const jobId = `job-${Date.now()}`;
+  const enqueuedAt = toISO(new Date());
+  const job = {
+    job_id: jobId,
+    notification_history_id: record.record_id,
+    status: 'queued',
+    requested_at: enqueuedAt,
+    requested_by: currentUser.display_name,
+    channel_id: req.body?.channel_id || record.channel_id || null,
+    recipients: req.body?.recipients || record.recipients,
+    dry_run: Boolean(req.body?.dry_run),
+    note: req.body?.note || null,
+    result_message: null,
+    error_message: null
+  };
+  notificationResendJobs.push(job);
+  record.resend_count = (record.resend_count || 0) + 1;
+  record.last_resend_at = enqueuedAt;
+  record.resend_available = true;
+  res.status(202).json({
+    record_id: record.record_id,
+    status: 'queued',
+    enqueued_at: enqueuedAt,
+    job_id: jobId,
+    message: '重新發送已排入佇列'
+  });
+});
+
+app.post('/notification/history/resend', (req, res) => {
+  const recordIds = Array.isArray(req.body?.record_ids) ? req.body.record_ids : [];
+  if (!recordIds.length) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'record_ids 至少需要一筆資料' });
+  }
+  let accepted = 0;
+  const rejected = [];
+  const enqueuedAt = toISO(new Date());
+  recordIds.forEach((id) => {
+    const record = getHistoryById(id);
+    if (!record) {
+      rejected.push({ record_id: id, reason: 'NOT_FOUND' });
+      return;
+    }
+    const jobId = `job-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
+    notificationResendJobs.push({
+      job_id: jobId,
+      notification_history_id: record.record_id,
+      status: 'queued',
+      requested_at: enqueuedAt,
+      requested_by: currentUser.display_name,
+      channel_id: req.body?.channel_id || record.channel_id || null,
+      recipients: record.recipients,
+      dry_run: Boolean(req.body?.dry_run),
+      note: req.body?.note || null,
+      result_message: null,
+      error_message: null
+    });
+    record.resend_count = (record.resend_count || 0) + 1;
+    record.last_resend_at = enqueuedAt;
+    record.resend_available = true;
+    accepted += 1;
+  });
+
+  res.status(202).json({
+    requested_count: recordIds.length,
+    accepted_count: accepted,
+    rejected_count: rejected.length,
+    rejected_records: rejected,
+    batch_id: `batch-${Date.now()}`
+  });
 });
 
 app.get('/settings/tags', (req, res) => {
@@ -1854,6 +2133,10 @@ app.get('/settings/tags', (req, res) => {
     required: tag.required,
     usage_count: tag.usage_count
   })));
+});
+
+app.get('/settings/tags/summary', (req, res) => {
+  res.json(tagSummary);
 });
 
 app.post('/settings/tags', (req, res) => {
@@ -1924,11 +2207,69 @@ app.delete('/settings/tags/:tag_id/values/:value_id', (req, res) => {
   res.status(204).end();
 });
 
+app.get('/tags/keys', (req, res) => {
+  const keyword = (req.query.keyword || '').toLowerCase();
+  const category = req.query.category;
+  let items = tagKeyOptions;
+  if (category) {
+    items = items.filter((item) => item.categories.includes(category));
+  }
+  if (keyword) {
+    items = items.filter(
+      (item) =>
+        item.tag_key.toLowerCase().includes(keyword) ||
+        (item.display_name || '').toLowerCase().includes(keyword) ||
+        (item.description || '').toLowerCase().includes(keyword)
+    );
+  }
+  res.json({ total: items.length, items });
+});
+
+app.get('/tags/:tag_key/values', (req, res) => {
+  const tagKey = req.params.tag_key;
+  const values = tagValueCatalog[tagKey];
+  if (!values) {
+    return notFound(res, '找不到標籤鍵');
+  }
+  const limit = Math.min(
+    Math.max(parseInt(req.query.limit, 10) || values.length, 1),
+    values.length
+  );
+  res.json({ tag_key: tagKey, total: values.length, items: values.slice(0, limit) });
+});
+
 app.get('/settings/email', (req, res) => res.json(emailSettings));
 
 app.put('/settings/email', (req, res) => {
   Object.assign(emailSettings, req.body || {}, { updated_at: toISO(new Date()) });
   res.json(emailSettings);
+});
+
+app.post('/settings/email/test', (req, res) => {
+  const recipient = req.body?.recipient || emailSettings.test_recipient || emailSettings.sender_email;
+  const executedAt = toISO(new Date());
+  const result = {
+    status: 'success',
+    executed_at: executedAt,
+    duration_ms: 380,
+    recipient,
+    message: '測試郵件已送出',
+    error: null,
+    logs: ['已成功連線 SMTP 伺服器', '測試郵件已送出'],
+    preview_url: null
+  };
+  emailTestHistory.unshift({
+    id: `email-test-${Date.now()}`,
+    status: result.status,
+    recipient,
+    template_key: req.body?.template_key || 'default',
+    duration_ms: result.duration_ms,
+    response_message: result.message,
+    error_message: result.error,
+    metadata: { variables: req.body?.variables || {} },
+    executed_at: executedAt
+  });
+  res.json(result);
 });
 
 app.get('/settings/auth', (req, res) => res.json(authSettings));

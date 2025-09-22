@@ -54,6 +54,8 @@ tags:
     description: 標籤、郵件與身份驗證設定。
   - name: 個人偏好
     description: 個人偏好與安全設定。
+  - name: 標籤服務
+    description: 提供全平台標籤鍵與標籤值查詢服務。
 paths:
   /auth/login:
     post:
@@ -2707,6 +2709,51 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+    post:
+      tags:
+        - 通知管理
+      summary: 重新發送指定通知記錄
+      operationId: resendNotificationHistory
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationResendRequest'
+      responses:
+        '202':
+          description: 已接受重新發送請求。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationResendResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /notification/history/resend:
+    post:
+      tags:
+        - 通知管理
+      summary: 批量重新發送通知記錄
+      operationId: bulkResendNotificationHistory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationBulkResendRequest'
+      responses:
+        '202':
+          description: 已排入批次重新發送工作。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationBulkResendResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /settings/tags:
     get:
       tags:
@@ -2893,6 +2940,21 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/NotFound'
+  /settings/tags/summary:
+    get:
+      tags:
+        - 平台設定
+      summary: 取得標籤治理摘要
+      operationId: getTagSummary
+      responses:
+        '200':
+          description: 回傳標籤分類與使用統計摘要。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagSummaryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /settings/email:
     get:
       tags:
@@ -2926,6 +2988,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmailSettings'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /settings/email/test:
+    post:
+      tags:
+        - 平台設定
+      summary: 測試郵件設定連線
+      operationId: testEmailSettings
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailTestRequest'
+      responses:
+        '200':
+          description: 測試結果。可同步回傳詳細測試資訊。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTestResult'
+        '202':
+          description: 測試請求已排入佇列。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmailTestResult'
         '400':
           $ref: '#/components/responses/BadRequest'
         '401':
@@ -2967,6 +3058,66 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+  /tags/keys:
+    get:
+      tags:
+        - 標籤服務
+      summary: 取得可用的標籤鍵清單
+      operationId: listTagKeys
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 依分類過濾標籤鍵。
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+          description: 關鍵字搜尋標籤鍵或描述。
+      responses:
+        '200':
+          description: 標籤鍵列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagKeyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /tags/{tag_key}/values:
+    parameters:
+      - name: tag_key
+        in: path
+        required: true
+        description: 標籤鍵名稱。
+        schema:
+          type: string
+    get:
+      tags:
+        - 標籤服務
+      summary: 取得指定標籤鍵的常用值
+      operationId: listTagValuesByKey
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 200
+          description: 限制返回的標籤值數量，預設為 50。
+      responses:
+        '200':
+          description: 標籤值列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TagValueListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   parameters:
     PageParam:
@@ -4873,24 +5024,28 @@ components:
           additionalProperties: true
     NotificationHistoryRecord:
       type: object
-      required: [record_id, timestamp, status, channel, alert, actor, message]
+      required: [record_id, sent_at, status, channel_type, channel_label, strategy_name]
       properties:
         record_id:
           type: string
-        timestamp:
+        sent_at:
           type: string
           format: date-time
         status:
           type: string
-          enum: [SUCCESS, FAILED, RETRYING]
-        channel:
-          type: string
+          enum: [SUCCESS, FAILED, RETRYING, QUEUED]
         channel_type:
           type: string
           enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
-        alert:
+        channel_label:
           type: string
-        actor:
+        channel_id:
+          type: string
+        strategy_name:
+          type: string
+        strategy_id:
+          type: string
+        alert_title:
           type: string
         message:
           type: string
@@ -4904,15 +5059,24 @@ components:
           type: integer
         duration_ms:
           type: integer
-        strategy_name:
+        resend_available:
+          type: boolean
+        resend_count:
+          type: integer
+        last_resend_at:
+          type: string
+          format: date-time
+          nullable: true
+        actor:
           type: string
     NotificationHistoryDetail:
       allOf:
         - $ref: '#/components/schemas/NotificationHistoryRecord'
         - type: object
           properties:
-            payload:
-              type: string
+            raw_payload:
+              type: object
+              additionalProperties: true
             attempts:
               type: array
               items:
@@ -4929,6 +5093,116 @@ components:
               type: string
             related_event_id:
               type: string
+            metadata:
+              type: object
+              additionalProperties: true
+            resend_jobs:
+              type: array
+              items:
+                $ref: '#/components/schemas/NotificationResendJob'
+    NotificationResendRequest:
+      type: object
+      properties:
+        channel_id:
+          type: string
+          description: 指定重新發送時要使用的通知管道，若省略則使用原始管道。
+        recipients:
+          type: array
+          items:
+            type: string
+          description: 覆寫原始通知的收件者清單。
+        dry_run:
+          type: boolean
+          description: 若為 true，僅驗證設定不實際送出通知。
+        note:
+          type: string
+          description: 重新發送原因或備註。
+    NotificationResendResponse:
+      type: object
+      required: [record_id, status, enqueued_at]
+      properties:
+        record_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, completed]
+        enqueued_at:
+          type: string
+          format: date-time
+        job_id:
+          type: string
+        message:
+          type: string
+    NotificationBulkResendRequest:
+      type: object
+      required: [record_ids]
+      properties:
+        record_ids:
+          type: array
+          items:
+            type: string
+          minItems: 1
+        channel_id:
+          type: string
+        dry_run:
+          type: boolean
+        note:
+          type: string
+    NotificationBulkResendResponse:
+      type: object
+      required: [requested_count, accepted_count, rejected_count]
+      properties:
+        requested_count:
+          type: integer
+        accepted_count:
+          type: integer
+        rejected_count:
+          type: integer
+        rejected_records:
+          type: array
+          items:
+            type: object
+            properties:
+              record_id:
+                type: string
+              reason:
+                type: string
+        batch_id:
+          type: string
+    NotificationResendJob:
+      type: object
+      required: [job_id, status, requested_at]
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, completed, failed]
+        requested_at:
+          type: string
+          format: date-time
+        requested_by:
+          type: string
+        channel_id:
+          type: string
+        recipients:
+          type: array
+          items:
+            type: string
+        dry_run:
+          type: boolean
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        result_message:
+          type: string
+        error_message:
+          type: string
     TagDefinition:
       type: object
       required: [tag_id, name, category]
@@ -4972,6 +5246,12 @@ components:
           type: string
         is_default:
           type: boolean
+        usage_count:
+          type: integer
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
     CreateTagValueRequest:
       type: object
       required: [value]
@@ -4985,6 +5265,123 @@ components:
     UpdateTagValueRequest:
       allOf:
         - $ref: '#/components/schemas/CreateTagValueRequest'
+    TagSummaryResponse:
+      type: object
+      required: [updated_at, totals, categories]
+      properties:
+        updated_at:
+          type: string
+          format: date-time
+        totals:
+          type: object
+          required: [total_keys, required_keys, optional_keys, total_values]
+          properties:
+            total_keys:
+              type: integer
+            required_keys:
+              type: integer
+            optional_keys:
+              type: integer
+            total_values:
+              type: integer
+        categories:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagKeySummary'
+    TagKeySummary:
+      type: object
+      required: [category, total_keys, required_keys, optional_keys]
+      properties:
+        category:
+          type: string
+        total_keys:
+          type: integer
+        required_keys:
+          type: integer
+        optional_keys:
+          type: integer
+        total_values:
+          type: integer
+        last_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+        top_keys:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagKeyHighlight'
+    TagKeyHighlight:
+      type: object
+      required: [tag_key, usage_count]
+      properties:
+        tag_key:
+          type: string
+        description:
+          type: string
+        usage_count:
+          type: integer
+        required:
+          type: boolean
+    TagKeyListResponse:
+      type: object
+      required: [items, total]
+      properties:
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagKeyOption'
+    TagKeyOption:
+      type: object
+      required: [tag_key]
+      properties:
+        tag_key:
+          type: string
+        display_name:
+          type: string
+        description:
+          type: string
+        categories:
+          type: array
+          items:
+            type: string
+        usage_count:
+          type: integer
+        required:
+          type: boolean
+        last_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+    TagValueListResponse:
+      type: object
+      required: [tag_key, items]
+      properties:
+        tag_key:
+          type: string
+        total:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TagValueOption'
+    TagValueOption:
+      type: object
+      required: [value]
+      properties:
+        value:
+          type: string
+        description:
+          type: string
+        usage_count:
+          type: integer
+        is_default:
+          type: boolean
+        last_seen_at:
+          type: string
+          format: date-time
+          nullable: true
     EmailSettings:
       type: object
       required: [smtp_host, smtp_port, sender_email, encryption]
@@ -5013,6 +5410,49 @@ components:
     EmailSettingsRequest:
       allOf:
         - $ref: '#/components/schemas/EmailSettings'
+    EmailTestRequest:
+      type: object
+      properties:
+        recipient:
+          type: string
+          format: email
+          description: 覆寫預設測試收件人。
+        template_key:
+          type: string
+          description: 指定要使用的郵件模板代碼。
+        variables:
+          type: object
+          additionalProperties: true
+          description: 套用至郵件模板的變數資料。
+        subject_override:
+          type: string
+        body_override:
+          type: string
+    EmailTestResult:
+      type: object
+      required: [status, executed_at]
+      properties:
+        status:
+          type: string
+          enum: [success, failed, queued]
+        executed_at:
+          type: string
+          format: date-time
+        duration_ms:
+          type: integer
+        recipient:
+          type: string
+          format: email
+        message:
+          type: string
+        error:
+          type: string
+        logs:
+          type: array
+          items:
+            type: string
+        preview_url:
+          type: string
     AuthSettings:
       type: object
       required: [provider, oidc_enabled, client_id, auth_url, token_url]
