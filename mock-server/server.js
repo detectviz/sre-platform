@@ -2278,6 +2278,26 @@ app.put('/settings/auth', (req, res) => {
   Object.assign(authSettings, req.body || {}, { updated_at: toISO(new Date()) });
   res.json(authSettings);
 });
+
+app.post('/settings/auth/test', (req, res) => {
+  const executedAt = toISO(new Date());
+  const asyncMode = Boolean(req.body?.async);
+  const warnings = [];
+  if (!req.body?.test_username) {
+    warnings.push('未提供測試帳號，僅驗證 OIDC 端點可用性。');
+  }
+  const payload = {
+    status: asyncMode ? 'queued' : 'success',
+    executed_at: executedAt,
+    latency_ms: 128,
+    message: asyncMode
+      ? '已排入背景測試工作，完成後將以通知告知結果。'
+      : '身份驗證設定測試成功，能夠取得 access token。',
+    warnings,
+    trace_id: `oidc-test-${Date.now()}`
+  };
+  res.status(asyncMode ? 202 : 200).json(payload);
+});
 app.listen(PORT, () => {
   console.log(`Mock server listening on http://localhost:${PORT}`);
 });
