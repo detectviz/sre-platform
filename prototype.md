@@ -574,23 +574,55 @@
 **界面元素**
 
 - **頁面標題**: "拓撲視圖"
-- **視圖控制**:
-  - 縮放控制
-  - 布局切換
-  - 過濾器
-- **拓撲圖**:
-  - 資源節點 (伺服器、資料庫、服務)
-  - 連接線 (依賴關係)
-  - 狀態指示器 (顏色標示健康狀態)
 
-#### **拓撲視圖頁**
-- 顯示資源拓撲關係圖，支援縮放與拖曳。
-- 節點顯示：資源名稱與圖示。
-- 顏色區分：資源類型 (資料庫、伺服器、快取、網關)。
-- 關聯線顯示依賴關係與流量。
-- 操作：
-  - 篩選顯示資源類型
-  - 更新拓撲
+**工具列** (ToolbarActions):
+- 刷新按鈕 (ReloadOutlined, 重新載入拓撲數據)
+- 縮放控制按鈕 (ZoomInOutlined/ZoomOutOutlined, 放大/縮小拓撲圖)
+- 布局切換按鈕 (LayoutOutlined, 切換布局模式)
+- 匯出按鈕 (DownloadOutlined, 匯出拓撲圖)
+- 設定按鈕 (SettingOutlined, 拓撲圖設定)
+
+**視圖控制面板**:
+- **縮放控制** (Slider, 縮放級別控制)
+- **布局切換** (Select, 選擇布局算法)
+  - 力導向布局 (Force-directed)
+  - 環形布局 (Circular)
+  - 層次布局 (Hierarchical)
+  - 網格布局 (Grid)
+- **過濾器** (TreeSelect, 多層次資源篩選)
+  - 資源類型篩選 (伺服器、資料庫、容器等)
+  - 資源群組篩選 (支援多選)
+  - 標籤篩選 (支援多標籤篩選)
+  - 狀態篩選 (正常/警告/異常)
+
+**拓撲圖** (ECharts Graph):
+- **資源節點** (Node):
+  - 伺服器節點 (dataIndex: 'server', 伺服器圖示)
+  - 資料庫節點 (dataIndex: 'database', 資料庫圖示)
+  - 服務節點 (dataIndex: 'service', 服務圖示)
+  - 快取節點 (dataIndex: 'cache', 快取圖示)
+  - 網關節點 (dataIndex: 'gateway', 網關圖示)
+- **連接線** (Edge):
+  - 依賴關係線 (dataIndex: 'dependency', 顯示依賴方向)
+  - 流量線 (dataIndex: 'traffic', 粗細表示流量大小)
+  - 狀態線 (dataIndex: 'status', 顏色表示連接狀態)
+- **狀態指示器** (Node Label):
+  - 顏色標示健康狀態 (綠色=正常, 黃色=警告, 紅色=異常)
+  - 資源名稱顯示 (dataIndex: 'name')
+  - 資源類型圖示 (dataIndex: 'icon')
+
+**互動操作**:
+- 節點點擊：查看資源詳細資訊
+- 節點拖曳：重新排列拓撲結構
+- 滑鼠懸停：顯示資源詳細狀態
+- 連接線點擊：查看連接詳情
+- 右鍵選單：資源操作選單
+
+**操作按鈕**:
+- **篩選顯示資源類型** (Button, 快速篩選按鈕)
+- **更新拓撲** (Button, 重新載入拓撲數據)
+- **全屏檢視** (Button, 進入全屏模式)
+- **重置布局** (Button, 恢復預設布局)
 
 ---
 
@@ -722,27 +754,40 @@
 **界面元素**
 - **頁面標題**: "基礎設施洞察儀表板"
 
+**工具列** (ToolbarActions):
+- 刷新按鈕 (ReloadOutlined, 重新整理儀表板數據)
+- 時間範圍選擇器 (DateRangePicker, 選擇監控時間範圍)
+- 匯出按鈕 (DownloadOutlined, 匯出儀表板報告)
+- 全屏按鈕 (ExpandOutlined, 進入全屏模式)
+- 設定按鈕 (SettingOutlined, 自訂儀表板配置)
+
 **主要元件**
 - **資源統計卡片** (ContextualKPICard):
-  - 總資源數 (120個)
-  - 運行中 (115個, 95.8%)
-  - 異常 (5個, 4.2%)
-  - 離線 (0個, 0%)
+  - 總資源數 (dataIndex: 'total_resources', 120個)
+  - 運行中 (dataIndex: 'healthy', 115個, 95.8%)
+  - 異常 (dataIndex: 'anomaly', 5個, 4.2%)
+  - 離線 (dataIndex: 'offline', 0個, 0%)
+- **資源健康地圖** (ECharts Heatmap):
+  - 資源健康狀態熱力圖
+  - 顏色區分健康/警告/異常狀態
+  - 實時更新資源狀態
 - **資源列表總覽** (Table):
-  - 資源名稱 (dataIndex: 'name')
+  - 資源名稱 (dataIndex: 'name', 支援排序和搜索)
   - 類型 (dataIndex: 'type', 伺服器、容器、資料庫等)
-  - 狀態 (dataIndex: 'status', 正常、警告、異常、離線)
-  - CPU 使用率 (dataIndex: 'cpu_usage')
-  - 記憶體使用率 (dataIndex: 'memory_usage')
-  - 網路流量 (dataIndex: 'network_traffic')
-  - 最後檢查時間 (dataIndex: 'last_check_time')
+  - 狀態 (dataIndex: 'status', 正常/警告/異常/離線, 顏色標籤)
+  - CPU 使用率 (dataIndex: 'cpu_usage', 進度條顯示)
+  - 記憶體使用率 (dataIndex: 'memory_usage', 進度條顯示)
+  - 網路流量 (dataIndex: 'network_traffic', 輸入/輸出流量)
+  - 最後檢查時間 (dataIndex: 'last_check_time', 支援排序)
+  - 操作按鈕 (查看詳情/編輯/重啟)
 - **AI 風險預測** (ECharts):
-  - 預測未來 24 小時可能出現的問題
-  - 風險等級 (低、中、高)
-  - 影響範圍估計
+  - 預測未來 24 小時可能出現的問題 (Line Chart)
+  - 風險等級分佈 (Pie Chart, 低/中/高風險)
+  - 影響範圍估計 (Bar Chart)
 - **關注資源** (List):
-  - 快速訪問常用資源
-  - 自訂關注清單
+  - 快速訪問常用資源 (Card, 點擊快速跳轉)
+  - 自訂關注清單 (Button, 管理關注資源)
+  - 資源健康趨勢 (Mini Chart, 小型趨勢圖)
 
 **主要功能**
 1. **資源監控**: 即時監控資源健康狀態
@@ -768,23 +813,48 @@ SRE 戰情室儀表板作為預設首頁，提供跨團隊即時戰情看板，�
 **界面元素**
 - **頁面標題**: "SRE 戰情室儀表板"
 
+**工具列** (ToolbarActions):
+- 刷新按鈕 (ReloadOutlined, 重新整理戰情室數據)
+- 時間範圍選擇器 (DateRangePicker, 選擇監控時間範圍)
+- 匯出按鈕 (DownloadOutlined, 匯出戰情報告)
+- 全屏按鈕 (ExpandOutlined, 進入全屏模式)
+- 設定按鈕 (SettingOutlined, 自訂戰情室配置)
+- 警報模式切換 (BellOutlined, 切換警報模式)
+
 **主要元件**
 - **頂部狀態卡片** (ContextualKPICard):
-  - 業務系統健康度 (95%, 12/13 系統正常)
-  - 關鍵事件監控 (3個待處理事件)
-  - SLA 指標追蹤 (99.9% 可用度)
-  - 資源使用概覽 (78% 平均使用率)
+  - 業務系統健康度 (dataIndex: 'system_health', 95%, 12/13 系統正常)
+  - 關鍵事件監控 (dataIndex: 'critical_events', 3個待處理事件)
+  - SLA 指標追蹤 (dataIndex: 'sla_metrics', 99.9% 可用度)
+  - 資源使用概覽 (dataIndex: 'resource_usage', 78% 平均使用率)
 - **即時監控面板**
   - **系統狀態總覽** (ECharts Heatmap):
-  - 指標：延遲 / 流量 / 錯誤 / 可用度
-  - 色彩區分健康 / 警告 / 嚴重
+    - 指標：延遲 / 流量 / 錯誤 / 可用度 (多維度熱力圖)
+    - 色彩區分健康 / 警告 / 嚴重 (紅/黃/綠顏色編碼)
+    - 實時數據更新 (每 30 秒自動刷新)
   - **活躍事件列表** (List):
-    - 事件標題、嚴重程度、狀態、時間
+    - 事件標題 (dataIndex: 'title', 事件標題, 支援點擊查看詳情)
+    - 嚴重程度 (dataIndex: 'severity', Critical/Warning/Info, 顏色標籤)
+    - 狀態 (dataIndex: 'status', New/Acknowledged/Resolved, 狀態標籤)
+    - 時間 (dataIndex: 'timestamp', 事件發生時間)
+    - 操作按鈕 (查看詳情/編輯/靜音)
   - **資源健康地圖** (ECharts Bar Chart):
   - 群組：Web 集群 / 資料庫 / 開發環境 / 災備系統
-  - 狀態：Healthy / Warning / Critical
+    - 狀態：Healthy / Warning / Critical (柱狀圖顯示)
+    - 實時更新 (每 60 秒刷新)
   - **效能指標趨勢** (ECharts Line Chart):
-    - 追蹤延遲、錯誤率、CPU 使用率趨勢
+    - 延遲趨勢 (dataIndex: 'latency', 平均延遲線圖)
+    - 錯誤率趨勢 (dataIndex: 'error_rate', 錯誤率線圖)
+    - CPU 使用率趨勢 (dataIndex: 'cpu_usage', CPU 使用率線圖)
+    - 記憶體使用率趨勢 (dataIndex: 'memory_usage', 記憶體使用率線圖)
+- **AI 分析面板** (Alert):
+  - 異常檢測結果 (TextArea, 智能分析結果)
+  - 建議操作 (List, 具體建議操作項目)
+  - 預測風險 (Card, 未來風險預測)
+- **快速操作區**:
+  - 事件處理快捷鍵 (Button Group, 常用事件處理按鈕)
+  - 資源重啟按鈕 (Button, 快速重啟異常資源)
+  - 通知靜音按鈕 (Button, 暫時靜音所有通知)
 
 **主要功能**
 1. **即時監控**: 系統狀態與事件總覽
@@ -854,16 +924,33 @@ option = {
 **界面元素**
 - **頁面標題**: "容量規劃"
 
+**工具列** (ToolbarActions):
+- 刷新按鈕 (ReloadOutlined, 重新分析容量數據)
+- 時間範圍選擇器 (DateRangePicker, 選擇分析時間範圍)
+- 匯出按鈕 (DownloadOutlined, 匯出容量報告)
+- 預測模型選擇器 (Select, 選擇預測算法)
+- AI 分析按鈕 (RobotOutlined, 觸發智能分析)
+
 **主要元件**
 - **資源使用趨勢** (ECharts Line Chart):
-  - CPU、記憶體、儲存使用率趨勢
-  - 預測未來 30 天容量需求
+  - CPU 使用率趨勢 (dataIndex: 'cpu_usage', 歷史和預測數據)
+  - 記憶體使用率趨勢 (dataIndex: 'memory_usage', 歷史和預測數據)
+  - 儲存使用率趨勢 (dataIndex: 'storage_usage', 歷史和預測數據)
+  - 預測未來 30 天容量需求 (虛線顯示預測數據)
 - **容量預測模型** (ECharts Area Chart):
-  - 不同場景下的容量預測
-  - 信心區間顯示
-- **優化建議** (List):
-  - 基於 AI 分析的容量優化建議
-  - 成本效益分析
+  - 不同場景下的容量預測 (最佳/平均/最壞情況)
+  - 信心區間顯示 (陰影區域顯示置信度)
+  - 預測準確度指標 (dataIndex: 'accuracy', 模型準確度)
+- **優化建議面板** (Alert):
+  - 基於 AI 分析的容量優化建議 (List, 具體建議項目)
+  - 成本效益分析 (Table, 優化前後成本對比)
+  - 資源分配建議 (Card, 資源重新分配建議)
+- **詳細分析表格** (Table):
+  - 資源名稱 (dataIndex: 'resource_name')
+  - 當前使用率 (dataIndex: 'current_usage', 百分比)
+  - 預測使用率 (dataIndex: 'predicted_usage', 百分比)
+  - 建議容量 (dataIndex: 'recommended_capacity', 建議擴容數量)
+  - 成本估算 (dataIndex: 'cost_estimate', 擴容成本估算)
 
 **主要功能**
 1. **趨勢分析**: 資源使用歷史趨勢
@@ -890,15 +977,36 @@ option = {
 **界面元素**
 - **頁面標題**: "資源負載分析"
 
+**工具列** (ToolbarActions):
+- 刷新按鈕 (ReloadOutlined, 重新整理效能數據)
+- 搜索篩選按鈕 (SearchOutlined, 統一的搜索和篩選入口)
+- 匯出按鈕 (DownloadOutlined, 匯出效能報告)
+- 批量操作按鈕 (Batch操作)
+- 時間範圍選擇器 (DateRangePicker, 選擇分析時間範圍)
+
 **主要元件**
 - **效能指標圖表** (ECharts Line Chart):
-  - CPU 使用率 / 記憶體使用率趨勢
-  - 磁碟讀寫 / 網路流量統計
+  - CPU 使用率趨勢圖 (dataIndex: 'cpu_usage')
+  - 記憶體使用率趨勢圖 (dataIndex: 'memory_usage')
+  - 磁碟讀寫 IOPS 統計 (dataIndex: 'disk_io')
+  - 網路流量統計 (dataIndex: 'network_traffic')
 - **資源篩選器** (Select, TreeSelect):
-  - 支援群組與標籤篩選
-- **異常檢測** (Alert):
-  - 自動識別異常峰值
-  - 預警通知
+  - 資源類型篩選 (伺服器、資料庫、容器等)
+  - 資源群組篩選 (支援多選)
+  - 標籤篩選 (支援多標籤篩選)
+- **異常檢測面板** (Alert):
+  - 異常閾值設定 (Input, 設定異常判定標準)
+  - 預警通知設定 (Switch, 啟用異常預警)
+  - 異常歷史記錄 (Table, 顯示歷史異常事件)
+- **詳細分析表格** (Table):
+  - 資源名稱 (dataIndex: 'resource_name')
+  - 平均 CPU 使用率 (dataIndex: 'avg_cpu', 百分比)
+  - 平均記憶體使用率 (dataIndex: 'avg_memory', 百分比)
+  - 磁碟讀取速度 (dataIndex: 'disk_read', MB/s)
+  - 磁碟寫入速度 (dataIndex: 'disk_write', MB/s)
+  - 網路輸入流量 (dataIndex: 'net_in', Mbps)
+  - 網路輸出流量 (dataIndex: 'net_out', Mbps)
+  - 異常次數 (dataIndex: 'anomaly_count', 統計週期內異常次數)
 
 **主要功能**
 1. **效能監控**: 即時資源效能指標
@@ -923,16 +1031,38 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 **界面元素**
 - **頁面標題**: "AI 洞察"
 
+**工具列** (ToolbarActions):
+- 刷新按鈕 (ReloadOutlined, 重新分析數據)
+- 搜索篩選按鈕 (SearchOutlined, 統一的搜索和篩選入口)
+- 匯出按鈕 (DownloadOutlined, 匯出分析報告)
+- 批量操作按鈕 (Batch操作)
+- 時間範圍選擇器 (DateRangePicker, 選擇分析時間範圍)
+- AI 分析按鈕 (RobotOutlined, 觸發智能分析)
+
 **主要元件**
 - **AI 分析報告** (Card):
-  - 預測事件數量與影響範圍
-  - 智能分析結果與建議操作
+  - 預測事件數量 (dataIndex: 'predicted_events', 預測事件數量)
+  - 影響範圍評估 (dataIndex: 'impact_range', 影響範圍描述)
+  - 智能分析結果 (TextArea, 詳細分析結果)
+  - 建議操作 (List, 具體建議操作項目)
+  - 置信度 (Progress, 分析置信度百分比)
 - **風險預測圖表** (ECharts Pie Chart):
-  - 預測風險等級分佈
-  - 不同風險類型的占比
+  - 預測風險等級分佈 (高風險/中風險/低風險)
+  - 不同風險類型的占比 (性能風險/可用性風險/安全風險)
+  - 風險趨勢分析 (Line Chart, 風險變化趨勢)
 - **事件趨勢預測** (ECharts Line Chart):
-  - 未來事件發生趨勢預測
-  - 基於歷史數據的預測模型
+  - 未來事件發生趨勢預測 (7天/30天/90天預測)
+  - 基於歷史數據的預測模型 (線性回歸/神經網絡)
+  - 預測準確度 (dataIndex: 'accuracy', 模型準確度)
+- **優化建議面板** (Alert):
+  - 自動化建議 (List, 自動化改進建議)
+  - 資源優化 (Card, 資源配置優化建議)
+  - 成本效益分析 (Table, 優化前後對比)
+- **分析歷史記錄** (Table):
+  - 分析時間 (dataIndex: 'analysis_time')
+  - 分析類型 (dataIndex: 'analysis_type', 風險預測/異常檢測/容量規劃)
+  - 分析結果 (dataIndex: 'result_summary', 分析結果摘要)
+  - 建議採納 (dataIndex: 'adopted_suggestions', 已採納建議數量)
 
 **主要功能**
 1. **風險預測**: AI 預測系統風險
@@ -1169,7 +1299,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 3. 團隊數量 (12個, 0%)
 4. 待處理邀請 (5個, +25%)
 
-### 6.1 人員管理頁面
+### 7.1.1 人員管理頁面
 
 **頁面概述**
 人員管理頁面提供組織內所有人員的集中管理功能，包括人員資訊、角色分配和權限控制。
@@ -1197,7 +1327,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 3. **批量操作**: 批量更新人員狀態和角色
 4. **登入記錄**: 查看人員登入歷史
 
-### 6.2 團隊管理頁面
+### 7.1.2 團隊管理頁面
 
 **頁面概述**
 團隊管理頁面提供團隊組織結構的管理功能，便於權限分配和協作管理。
@@ -1219,7 +1349,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
   - 創建時間 (dataIndex: 'created_at', 支援排序)
   - 操作按鈕 (編輯/刪除/查看詳情/新增成員)
 
-### 6.3 角色管理頁面
+### 7.1.3 角色管理頁面
 
 **頁面概述**
 角色管理頁面定義系統角色和對應的權限配置。
@@ -1232,15 +1362,17 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
   - 匯出按鈕 (DownloadOutlined, 匯出角色列表)
   - 批量操作按鈕 (Batch操作)
   - 新增角色按鈕 (PlusOutlined, 新增角色)
-- **角色列表**:
-  - 角色名稱
-  - 角色描述
-  - 權限範圍
-  - 人員數量
-  - 創建時間
-  - 操作按鈕
+- **角色表格** (Table):
+  - 角色名稱 (dataIndex: 'name', 支援排序和搜索)
+  - 角色描述 (dataIndex: 'description', 角色功能說明)
+  - 權限範圍 (dataIndex: 'permissions', 權限範圍描述)
+  - 人員數量 (dataIndex: 'user_count', 分配給該角色的用戶數)
+  - 創建時間 (dataIndex: 'created_at', 支援排序)
+  - 最後更新 (dataIndex: 'updated_at', 最後更新時間)
+  - 狀態 (dataIndex: 'status', 啟用/停用狀態)
+  - 操作按鈕 (編輯/刪除/複製/權限配置)
 
-### 6.4 審計日誌頁面
+### 7.1.4 審計日誌頁面
 
 **頁面概述**
 審計日誌頁面記錄系統中所有重要的操作行為，用於安全審計和問題排查。
@@ -1283,7 +1415,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 ---
 
-### 7.1 通知策略頁面
+### 7.2.1 通知策略頁面
 
 **頁面概述**
 通知策略頁面提供事件觸發通知的規則配置，支援多管道和接收者管理。
@@ -1348,7 +1480,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 ---
 
-### 7.2 通知管道頁面
+### 7.2.2 通知管道頁面
 
 **頁面概述**
 通知管道頁面提供多種通知管道的配置和管理，支援 Email、Slack、Webhook、LINE、SMS 等。
@@ -1413,7 +1545,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 ---
 
-### 7.3 通知歷史頁面
+### 7.2.3 通知歷史頁面
 
 **頁面概述**
 通知歷史頁面提供所有通知發送記錄的查詢和詳情檢視功能。
@@ -1478,23 +1610,21 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 ## 7.3 平台設定
 
 **頁面概述**
-提供系統全域配置管理，包含身份與存取管理、通知管理、平台設定等功能模組。
+提供系統全域配置管理，包含標籤管理、郵件設定、身份驗證等功能。
 
-**子模組**
-1. 身份與存取管理 (人員管理、團隊管理、角色管理、審計日誌)
-2. 通知管理 (通知策略、通知管道、通知歷史)
-3. 平台設定 (標籤管理、郵件設定、身份驗證)
+**頁籤子頁面**
+1. 標籤管理 (TagManagementPage)
+2. 郵件設定 (EmailSettingsPage)
+3. 身份驗證 (AuthSettingsPage)
 
 **指標概覽卡片**
 1. 標籤總數 (12個, 涵蓋各類資源標籤)
 2. 活躍會話 (23個, 當前活躍用戶會話)
 3. 配置異動 (5次, 本月配置變更次數)
-4. 通知管道 (5個, 包含 Email、Slack、Webhook 等)
-5. 總人員數 (156人, 142 個啟用中)
 
 ---
 
-### 9.1 標籤管理頁面
+### 7.3.1 標籤管理頁面
 
 **頁面概述**
 標籤管理頁面提供全平台標籤類型和標籤值的統一管理功能，支援標籤分類、搜索和批量操作。
@@ -1546,7 +1676,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 ---
 
-### 9.2 郵件設定頁面
+### 7.3.2 郵件設定頁面
 
 **頁面概述**
 郵件設定頁面提供系統郵件服務的配置功能，包含 SMTP 伺服器設定和認證資訊。
@@ -1585,7 +1715,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 ---
 
-### 9.3 身份驗證設定頁面
+### 7.3.3 身份驗證設定頁面
 
 **頁面概述**
 身份驗證頁面提供系統 OIDC (OpenID Connect) 認證配置功能。
@@ -1776,23 +1906,55 @@ SRE 平台總共包含 **8 個核心功能模組**，每個模組都有明確的
 
 ### 9.2 原型實現頁面
 
-根據 `sitemap.md` 和 `prototype.html` 的對應分析，SRE 平台共實現了 **37 個功能頁面**：
+根據 `sitemap.md` 和 `prototype.html` 的對應分析，SRE 平台共實現了 **32 個功能頁面**：
 
 **核心功能模組對應**
-1. 登入與導航 (3個頁面)
-2. 事件管理 (6個頁面)
-3. 資源管理 (5個頁面)
+1. 登入與導航 (4個頁面)
+   - 登入頁面 (LoginPage)
+   - 使用者選單 (UserMenu)
+   - 全局搜索欄 (GlobalSearch)
+   - 通知中心 (NotificationCenter)
+2. 事件管理 (3個頁面)
+   - 事件列表 (EventListPage)
+   - 事件規則 (EventRulePage)
+   - 靜音規則 (SilenceRulePage)
+3. 資源管理 (3個頁面)
+   - 資源列表 (ResourceListPage)
+   - 資源群組 (ResourceGroupPage)
+   - 拓撲視圖 (TopologyViewPage)
 4. 儀表板管理 (3個頁面)
+   - 儀表板列表 (DashboardListPage)
+   - 基礎設施洞察儀表板 (SREInfrastructureInsightPage)
+   - SRE 戰情室儀表板 (SREWarRoomPage)
 5. 分析中心 (3個頁面)
+   - 容量規劃 (CapacityPlanningPage)
+   - 資源負載分析 (ResourceLoadAnalysisPage)
+   - AI 洞察 (AICapabilityPage)
 6. 自動化中心 (3個頁面)
+   - 腳本庫 (ScriptLibraryPage)
+   - 排程管理 (ScheduleManagementPage)
+   - 執行日誌 (ExecutionLogsPage)
 7. 設定 (13個頁面)
    - 身份與存取管理 (4個頁面)
+     - 人員管理 (UserManagementPage)
+     - 團隊管理 (TeamManagementPage)
+     - 角色管理 (RoleManagementPage)
+     - 審計日誌 (AuditLogsPage)
    - 通知管理 (3個頁面)
+     - 通知策略 (NotificationStrategyPage)
+     - 通知管道 (NotificationChannelPage)
+     - 通知歷史 (NotificationHistoryPage)
    - 平台設定 (3個頁面)
+     - 標籤管理 (TagManagementPage)
+     - 郵件設定 (EmailSettingsPage)
+     - 身份驗證 (AuthSettingsPage)
 8. 個人資料與偏好設定 (3個頁面)
+   - 個人資訊 (PersonalInformationPage)
+   - 密碼安全 (PasswordSecurityPage)
+   - 偏好設定 (PreferenceSettingsPage)
 
 **頁面實現狀態**
-- ✅ **已完整實現**: 37個頁面全部完成詳細規格記錄
+- ✅ **已完整實現**: 32個頁面全部完成詳細規格記錄
 - ✅ **設計對齊**: 所有頁面規格與 `sitemap.md` 完全一致
 - ✅ **功能完整**: 每個頁面都包含 KPI 卡片、工具列、表格和操作邏輯
 
@@ -2027,7 +2189,7 @@ CREATE TABLE event_history (
 - **索引策略**: 組合索引 + 全文搜索索引
 - **約束檢查**: 枚舉約束 + 自訂檢查約束
 
-### 10.7 完整頁面架構與 KPI 對應
+### 9.7 完整頁面架構與 KPI 對應
 
 **登入與導航**
 - 登入頁面 (LoginPage)
@@ -2090,12 +2252,29 @@ CREATE TABLE event_history (
   - 指標概覽卡片: 今日通知量、成功率、平均耗時、接收者數量
 
 **設定**
-- 標籤管理頁面 (TagManagementPage)
-  - 指標概覽卡片: 標籤總數、活躍會話、配置異動
-- 郵件設定頁面 (EmailSettingsPage)
-  - 指標概覽卡片: 郵件伺服器狀態、測試成功率、今日發送量、錯誤率
-- 身份驗證頁面 (AuthSettingsPage)
-  - 指標概覽卡片: 認證提供商狀態、活躍會話數、登入成功率、失敗次數
+- 身份與存取管理
+  - 人員管理頁面 (UserManagementPage)
+    - 指標概覽卡片: 總人員數、在線人員、團隊數量、待處理邀請
+  - 團隊管理頁面 (TeamManagementPage)
+    - 指標概覽卡片: 團隊數量、總成員數、活躍團隊、跨團隊成員
+  - 角色管理頁面 (RoleManagementPage)
+    - 指標概覽卡片: 角色總數、內建角色、自訂角色、權限覆蓋
+  - 審計日誌頁面 (AuditLogsPage)
+    - 指標概覽卡片: 今日操作數、成功率、高風險操作、異常IP
+- 通知管理
+  - 通知策略頁面 (NotificationStrategyPage)
+    - 指標概覽卡片: 策略總數、啟用策略、今日觸發、成功率
+  - 通知管道頁面 (NotificationChannelPage)
+    - 指標概覽卡片: 管道總數、正常管道、測試成功率、今日發送量
+  - 通知歷史頁面 (NotificationHistoryPage)
+    - 指標概覽卡片: 今日通知量、成功率、平均耗時、接收者數量
+- 平台設定
+  - 標籤管理頁面 (TagManagementPage)
+    - 指標概覽卡片: 標籤總數、活躍會話、配置異動
+  - 郵件設定頁面 (EmailSettingsPage)
+    - 指標概覽卡片: 郵件伺服器狀態、測試成功率、今日發送量、錯誤率
+  - 身份驗證頁面 (AuthSettingsPage)
+    - 指標概覽卡片: 認證提供商狀態、活躍會話數、登入成功率、失敗次數
 
 **個人資料與偏好設定**
 - 個人資訊頁面 (PersonalInformationPage)

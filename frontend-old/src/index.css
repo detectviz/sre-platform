@@ -1,9 +1,0 @@
-:root {
-  font-family: var(--font-sans);
-  line-height: 1.5;
-  font-weight: 400;
-}
-
-button {
-  font-family: inherit;
-}
