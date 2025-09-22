@@ -1,3 +1,3 @@
-export { ResourceListPage } from './ResourceListPage';
-export { ResourceGroupPage } from './ResourceGroupPage';
-export { TopologyPage } from './TopologyPage';
+export * from './ResourceGroupsTab';
+export * from './ResourceOverviewTab';
+export * from './ResourceTopologyTab';

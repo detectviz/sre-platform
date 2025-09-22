@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: SRE 平台 API 規範
   version: 1.0.0
@@ -44,10 +44,10 @@ paths:
       description: 依條件查詢事件列表，支援狀態、嚴重性、資源與時間範圍等過濾條件。
       operationId: listEvents
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           description: 依事件狀態篩選。
@@ -93,20 +93,20 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 成功取得事件列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -121,24 +121,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventCreateRequest'
+              $ref: "#/components/schemas/EventCreateRequest"
       responses:
-        '201':
+        "201":
           description: 事件建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Event'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Event"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -157,20 +157,20 @@ paths:
       description: 回傳事件基本資訊、處理歷史、關聯事件與自動化執行情況。
       operationId: getEvent
       responses:
-        '200':
+        "200":
           description: 成功取得事件詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -185,26 +185,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventUpdateRequest'
+              $ref: "#/components/schemas/EventUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 事件更新成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -219,24 +219,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventPatchRequest'
+              $ref: "#/components/schemas/EventPatchRequest"
       responses:
-        '200':
+        "200":
           description: 事件部分欄位更新成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -247,16 +247,16 @@ paths:
       description: 移除指定事件，僅限測試或資料清理使用。
       operationId: deleteEvent
       responses:
-        '204':
+        "204":
           description: 事件刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /event-rules:
@@ -267,10 +267,10 @@ paths:
       description: 查詢事件規則，支援依啟用狀態與嚴重性篩選。
       operationId: listEventRules
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: enabled
           in: query
           description: 是否僅顯示啟用規則。
@@ -283,20 +283,20 @@ paths:
             type: string
             enum: [critical, warning, info]
       responses:
-        '200':
+        "200":
           description: 成功取得事件規則列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRuleListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventRuleListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -311,24 +311,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventRuleCreateRequest'
+              $ref: "#/components/schemas/EventRuleCreateRequest"
       responses:
-        '201':
+        "201":
           description: 成功建立事件規則。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRule'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventRule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -347,20 +347,20 @@ paths:
       description: 回傳指定規則的觸發條件、自動化設定與標籤篩選條件。
       operationId: getEventRule
       responses:
-        '200':
+        "200":
           description: 成功取得事件規則詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRule'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventRule"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -375,26 +375,26 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventRuleUpdateRequest'
+              $ref: "#/components/schemas/EventRuleUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新事件規則。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRule'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventRule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -409,24 +409,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventRulePatchRequest'
+              $ref: "#/components/schemas/EventRulePatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新事件規則。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRule'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/EventRule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -437,16 +437,16 @@ paths:
       description: 移除不再使用的事件規則。
       operationId: deleteEventRule
       responses:
-        '204':
+        "204":
           description: 事件規則刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /silences:
@@ -457,10 +457,10 @@ paths:
       description: 查詢靜音規則，支援依靜音類型與啟用狀態篩選。
       operationId: listSilences
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: silence_type
           in: query
           schema:
@@ -473,20 +473,20 @@ paths:
             type: boolean
           description: 是否僅顯示啟用規則。
       responses:
-        '200':
+        "200":
           description: 成功取得靜音規則列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SilenceListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/SilenceListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -501,24 +501,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SilenceCreateRequest'
+              $ref: "#/components/schemas/SilenceCreateRequest"
       responses:
-        '201':
+        "201":
           description: 靜音規則建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Silence'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Silence"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -537,20 +537,20 @@ paths:
       description: 回傳靜音規則排程、範圍與通知設定。
       operationId: getSilence
       responses:
-        '200':
+        "200":
           description: 成功取得靜音規則詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Silence'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Silence"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -565,24 +565,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SilenceUpdateRequest'
+              $ref: "#/components/schemas/SilenceUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 靜音規則更新成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Silence'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Silence"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -597,24 +597,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SilencePatchRequest'
+              $ref: "#/components/schemas/SilencePatchRequest"
       responses:
-        '200':
+        "200":
           description: 靜音規則部分欄位更新成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Silence'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Silence"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -625,16 +625,16 @@ paths:
       description: 移除靜音規則並恢復通知。
       operationId: deleteSilence
       responses:
-        '204':
+        "204":
           description: 靜音規則刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /resources:
@@ -645,10 +645,10 @@ paths:
       description: 查詢資源清單，支援依狀態、類型、標籤與群組篩選。
       operationId: listResources
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           schema:
@@ -672,20 +672,20 @@ paths:
             type: string
           description: 資源名稱或 IP 關鍵字。
       responses:
-        '200':
+        "200":
           description: 成功取得資源列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ResourceListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -700,24 +700,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResourceCreateRequest'
+              $ref: "#/components/schemas/ResourceCreateRequest"
       responses:
-        '201':
+        "201":
           description: 資源建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Resource'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Resource"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -736,20 +736,20 @@ paths:
       description: 回傳資源的健康狀態、效能指標與標籤設定。
       operationId: getResource
       responses:
-        '200':
+        "200":
           description: 成功取得資源詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Resource'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Resource"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -764,24 +764,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResourceUpdateRequest'
+              $ref: "#/components/schemas/ResourceUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新資源。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Resource'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Resource"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -796,24 +796,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResourcePatchRequest'
+              $ref: "#/components/schemas/ResourcePatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新資源。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Resource'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Resource"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -824,16 +824,16 @@ paths:
       description: 移除不再需要監控的資源。
       operationId: deleteResource
       responses:
-        '204':
+        "204":
           description: 資源刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /resource-groups:
@@ -844,30 +844,30 @@ paths:
       description: 查詢資源群組，包含成員統計與健康狀態摘要。
       operationId: listResourceGroups
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: keyword
           in: query
           schema:
             type: string
           description: 群組名稱或描述關鍵字。
       responses:
-        '200':
+        "200":
           description: 成功取得資源群組列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceGroupListResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ResourceGroupListResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -882,24 +882,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResourceGroupCreateRequest'
+              $ref: "#/components/schemas/ResourceGroupCreateRequest"
       responses:
-        '201':
+        "201":
           description: 資源群組建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceGroup'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ResourceGroup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -918,20 +918,20 @@ paths:
       description: 回傳資源群組成員、健康統計與訂閱者資訊。
       operationId: getResourceGroup
       responses:
-        '200':
+        "200":
           description: 成功取得資源群組詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceGroup'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ResourceGroup"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -946,24 +946,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResourceGroupUpdateRequest'
+              $ref: "#/components/schemas/ResourceGroupUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新資源群組。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceGroup'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ResourceGroup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -978,24 +978,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ResourceGroupPatchRequest'
+              $ref: "#/components/schemas/ResourceGroupPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新資源群組。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceGroup'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ResourceGroup"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -1006,16 +1006,16 @@ paths:
       description: 移除資源群組並釋放成員。
       operationId: deleteResourceGroup
       responses:
-        '204':
+        "204":
           description: 資源群組刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /topology:
@@ -1026,21 +1026,21 @@ paths:
       description: 回傳可用的拓撲視圖設定與節點資料。
       operationId: listTopologies
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
-        '200':
+        "200":
           description: 成功取得拓撲視圖列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TopologyListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/TopologyListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -1055,24 +1055,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TopologyCreateRequest'
+              $ref: "#/components/schemas/TopologyCreateRequest"
       responses:
-        '201':
+        "201":
           description: 拓撲視圖建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TopologyView'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/TopologyView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -1091,20 +1091,20 @@ paths:
       description: 回傳拓撲節點、連線與最後同步時間。
       operationId: getTopology
       responses:
-        '200':
+        "200":
           description: 成功取得拓撲視圖。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TopologyView'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/TopologyView"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -1119,24 +1119,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TopologyUpdateRequest'
+              $ref: "#/components/schemas/TopologyUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新拓撲視圖。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TopologyView'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/TopologyView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -1151,24 +1151,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TopologyPatchRequest'
+              $ref: "#/components/schemas/TopologyPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新拓撲視圖。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TopologyView'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/TopologyView"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-operator
@@ -1179,16 +1179,16 @@ paths:
       description: 移除不再使用的拓撲配置。
       operationId: deleteTopology
       responses:
-        '204':
+        "204":
           description: 拓撲視圖刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /dashboards:
@@ -1199,10 +1199,10 @@ paths:
       description: 查詢儀表板資訊，支援依分類與是否發布篩選。
       operationId: listDashboards
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: category
           in: query
           schema:
@@ -1215,18 +1215,18 @@ paths:
             type: boolean
           description: 是否僅顯示已發布儀表板。
       responses:
-        '200':
+        "200":
           description: 成功取得儀表板列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/DashboardListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - analyst
@@ -1241,24 +1241,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardCreateRequest'
+              $ref: "#/components/schemas/DashboardCreateRequest"
       responses:
-        '201':
+        "201":
           description: 儀表板建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dashboard'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Dashboard"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -1277,20 +1277,20 @@ paths:
       description: 回傳儀表板卡片配置、KPI 與權限設定。
       operationId: getDashboard
       responses:
-        '200':
+        "200":
           description: 成功取得儀表板詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dashboard'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Dashboard"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - analyst
@@ -1305,24 +1305,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardUpdateRequest'
+              $ref: "#/components/schemas/DashboardUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新儀表板。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dashboard'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Dashboard"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -1337,24 +1337,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/DashboardPatchRequest'
+              $ref: "#/components/schemas/DashboardPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新儀表板。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Dashboard'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Dashboard"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - analyst
@@ -1365,16 +1365,16 @@ paths:
       description: 移除不再使用的儀表板。
       operationId: deleteDashboard
       responses:
-        '204':
+        "204":
           description: 儀表板刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /insights:
@@ -1385,8 +1385,8 @@ paths:
       description: 查詢 AI 洞察與容量規劃報告。
       operationId: listInsights
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: category
           in: query
           schema:
@@ -1394,18 +1394,18 @@ paths:
             enum: [capacity, performance, risk, ai_insight]
           description: 洞察報告類別。
       responses:
-        '200':
+        "200":
           description: 成功取得分析洞察列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/InsightListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/InsightListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - analyst
@@ -1420,22 +1420,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InsightCreateRequest'
+              $ref: "#/components/schemas/InsightCreateRequest"
       responses:
-        '201':
+        "201":
           description: 分析洞察建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Insight'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Insight"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - analyst
         - platform-admin
@@ -1454,20 +1454,20 @@ paths:
       description: 回傳洞察內容、圖表資料與建議。
       operationId: getInsight
       responses:
-        '200':
+        "200":
           description: 成功取得分析洞察詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Insight'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Insight"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - analyst
@@ -1482,24 +1482,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InsightUpdateRequest'
+              $ref: "#/components/schemas/InsightUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新分析洞察。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Insight'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Insight"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - analyst
         - platform-admin
@@ -1514,24 +1514,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/InsightPatchRequest'
+              $ref: "#/components/schemas/InsightPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新分析洞察。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Insight'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Insight"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - analyst
     delete:
@@ -1541,16 +1541,16 @@ paths:
       description: 移除已過期或不需要的洞察報告。
       operationId: deleteInsight
       responses:
-        '204':
+        "204":
           description: 分析洞察刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /war-room:
@@ -1561,8 +1561,8 @@ paths:
       description: 查詢 SRE 戰情室儀表板與進行中的會議資訊。
       operationId: listWarRooms
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: status
           in: query
           schema:
@@ -1570,18 +1570,18 @@ paths:
             enum: [active, monitoring, resolved]
           description: 依戰情室狀態篩選。
       responses:
-        '200':
+        "200":
           description: 成功取得戰情室列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WarRoomListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/WarRoomListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -1596,22 +1596,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WarRoomCreateRequest'
+              $ref: "#/components/schemas/WarRoomCreateRequest"
       responses:
-        '201':
+        "201":
           description: 戰情室建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WarRoom'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/WarRoom"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - incident-commander
         - platform-admin
@@ -1630,20 +1630,20 @@ paths:
       description: 回傳戰情室時間軸、關聯事件與參與者。
       operationId: getWarRoom
       responses:
-        '200':
+        "200":
           description: 成功取得戰情室詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WarRoom'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/WarRoom"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - incident-commander
@@ -1658,24 +1658,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WarRoomUpdateRequest'
+              $ref: "#/components/schemas/WarRoomUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新戰情室。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WarRoom'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/WarRoom"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - incident-commander
         - platform-admin
@@ -1690,24 +1690,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/WarRoomPatchRequest'
+              $ref: "#/components/schemas/WarRoomPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新戰情室。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WarRoom'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/WarRoom"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - incident-commander
     delete:
@@ -1717,16 +1717,16 @@ paths:
       description: 結束戰情室並歸檔紀錄。
       operationId: deleteWarRoom
       responses:
-        '204':
+        "204":
           description: 戰情室結束成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /scripts:
@@ -1737,10 +1737,10 @@ paths:
       description: 查詢自動化腳本清單與最後執行狀態。
       operationId: listScripts
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: type
           in: query
           schema:
@@ -1748,18 +1748,18 @@ paths:
             enum: [shell, python, ansible, terraform]
           description: 依腳本類型篩選。
       responses:
-        '200':
+        "200":
           description: 成功取得腳本列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScriptListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ScriptListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - automation-engineer
@@ -1774,24 +1774,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ScriptCreateRequest'
+              $ref: "#/components/schemas/ScriptCreateRequest"
       responses:
-        '201':
+        "201":
           description: 腳本建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Script'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Script"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
         - platform-admin
@@ -1810,20 +1810,20 @@ paths:
       description: 回傳腳本內容、版本資訊與標籤。
       operationId: getScript
       responses:
-        '200':
+        "200":
           description: 成功取得腳本詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Script'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Script"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - automation-engineer
@@ -1838,24 +1838,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ScriptUpdateRequest'
+              $ref: "#/components/schemas/ScriptUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新腳本。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Script'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Script"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
         - platform-admin
@@ -1870,24 +1870,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ScriptPatchRequest'
+              $ref: "#/components/schemas/ScriptPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新腳本。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Script'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Script"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
     delete:
@@ -1897,16 +1897,16 @@ paths:
       description: 移除不再使用的腳本。
       operationId: deleteScript
       responses:
-        '204':
+        "204":
           description: 腳本刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /schedules:
@@ -1917,28 +1917,28 @@ paths:
       description: 查詢自動化排程設定與下一次執行時間。
       operationId: listSchedules
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           schema:
             type: string
             enum: [enabled, disabled, running]
       responses:
-        '200':
+        "200":
           description: 成功取得排程列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ScheduleListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ScheduleListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - automation-engineer
@@ -1953,24 +1953,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ScheduleCreateRequest'
+              $ref: "#/components/schemas/ScheduleCreateRequest"
       responses:
-        '201':
+        "201":
           description: 排程建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Schedule'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Schedule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
         - platform-admin
@@ -1989,20 +1989,20 @@ paths:
       description: 回傳排程時間設定、並發與重試策略。
       operationId: getSchedule
       responses:
-        '200':
+        "200":
           description: 成功取得排程詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Schedule'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Schedule"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - automation-engineer
@@ -2017,24 +2017,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ScheduleUpdateRequest'
+              $ref: "#/components/schemas/ScheduleUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新排程。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Schedule'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Schedule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
         - platform-admin
@@ -2049,24 +2049,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SchedulePatchRequest'
+              $ref: "#/components/schemas/SchedulePatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新排程。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Schedule'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Schedule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
     delete:
@@ -2076,16 +2076,16 @@ paths:
       description: 移除排程並停止執行。
       operationId: deleteSchedule
       responses:
-        '204':
+        "204":
           description: 排程刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /executions:
@@ -2096,10 +2096,10 @@ paths:
       description: 查詢腳本執行歷史與狀態。
       operationId: listExecutions
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           schema:
@@ -2110,18 +2110,18 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 成功取得執行日誌列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExecutionListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/ExecutionListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - automation-engineer
@@ -2136,22 +2136,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ExecutionCreateRequest'
+              $ref: "#/components/schemas/ExecutionCreateRequest"
       responses:
-        '201':
+        "201":
           description: 執行記錄建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Execution'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Execution"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
         - platform-admin
@@ -2170,20 +2170,20 @@ paths:
       description: 回傳執行輸出、錯誤資訊與關聯事件。
       operationId: getExecution
       responses:
-        '200':
+        "200":
           description: 成功取得執行記錄詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Execution'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Execution"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - automation-engineer
@@ -2198,24 +2198,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ExecutionUpdateRequest'
+              $ref: "#/components/schemas/ExecutionUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新執行記錄。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Execution'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Execution"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
     patch:
@@ -2229,24 +2229,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ExecutionPatchRequest'
+              $ref: "#/components/schemas/ExecutionPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新執行記錄。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Execution'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Execution"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - automation-engineer
     delete:
@@ -2256,16 +2256,16 @@ paths:
       description: 移除舊的執行記錄。
       operationId: deleteExecution
       responses:
-        '204':
+        "204":
           description: 執行記錄刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /notification-policies:
@@ -2276,10 +2276,10 @@ paths:
       description: 查詢通知策略與關聯管道。
       operationId: listNotificationPolicies
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: enabled
           in: query
           schema:
@@ -2290,18 +2290,18 @@ paths:
             type: string
             enum: [critical, warning, info]
       responses:
-        '200':
+        "200":
           description: 成功取得通知策略列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationPolicyListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationPolicyListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -2316,24 +2316,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationPolicyCreateRequest'
+              $ref: "#/components/schemas/NotificationPolicyCreateRequest"
       responses:
-        '201':
+        "201":
           description: 通知策略建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationPolicy'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationPolicy"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /notification-policies/{policy_id}:
@@ -2351,20 +2351,20 @@ paths:
       description: 回傳策略條件、管道與接收者設定。
       operationId: getNotificationPolicy
       responses:
-        '200':
+        "200":
           description: 成功取得通知策略詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationPolicy'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationPolicy"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -2379,24 +2379,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationPolicyUpdateRequest'
+              $ref: "#/components/schemas/NotificationPolicyUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新通知策略。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationPolicy'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationPolicy"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     patch:
@@ -2410,24 +2410,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationPolicyPatchRequest'
+              $ref: "#/components/schemas/NotificationPolicyPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新通知策略。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationPolicy'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationPolicy"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     delete:
@@ -2437,16 +2437,16 @@ paths:
       description: 移除不再使用的通知策略。
       operationId: deleteNotificationPolicy
       responses:
-        '204':
+        "204":
           description: 通知策略刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /channels:
@@ -2457,28 +2457,28 @@ paths:
       description: 查詢通知管道狀態與設定。
       operationId: listNotificationChannels
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: type
           in: query
           schema:
             type: string
             enum: [email, slack, teams, webhook, line, sms]
       responses:
-        '200':
+        "200":
           description: 成功取得通知管道列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationChannelListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationChannelListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -2493,24 +2493,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationChannelCreateRequest'
+              $ref: "#/components/schemas/NotificationChannelCreateRequest"
       responses:
-        '201':
+        "201":
           description: 通知管道建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationChannel'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationChannel"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /channels/{channel_id}:
@@ -2528,20 +2528,20 @@ paths:
       description: 回傳通知管道設定與測試結果。
       operationId: getNotificationChannel
       responses:
-        '200':
+        "200":
           description: 成功取得通知管道詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationChannel'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationChannel"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -2556,24 +2556,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationChannelUpdateRequest'
+              $ref: "#/components/schemas/NotificationChannelUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新通知管道。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationChannel'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationChannel"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     patch:
@@ -2587,24 +2587,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationChannelPatchRequest'
+              $ref: "#/components/schemas/NotificationChannelPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新通知管道。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationChannel'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationChannel"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     delete:
@@ -2614,16 +2614,16 @@ paths:
       description: 移除通知管道並釋放相關策略。
       operationId: deleteNotificationChannel
       responses:
-        '204':
+        "204":
           description: 通知管道刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /notifications:
@@ -2634,10 +2634,10 @@ paths:
       description: 查詢通知發送記錄與狀態。
       operationId: listNotifications
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           schema:
@@ -2649,18 +2649,18 @@ paths:
             type: string
             enum: [email, slack, teams, webhook, line, sms]
       responses:
-        '200':
+        "200":
           description: 成功取得通知歷史列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationHistoryListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationHistoryListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -2675,22 +2675,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationCreateRequest'
+              $ref: "#/components/schemas/NotificationCreateRequest"
       responses:
-        '201':
+        "201":
           description: 通知記錄建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationRecord'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /notifications/{notification_id}:
@@ -2708,20 +2708,20 @@ paths:
       description: 回傳通知發送內容、嘗試紀錄與技術細節。
       operationId: getNotification
       responses:
-        '200':
+        "200":
           description: 成功取得通知記錄詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationRecord'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/NotificationRecord"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -2732,16 +2732,16 @@ paths:
       description: 清理歷史通知紀錄。
       operationId: deleteNotification
       responses:
-        '204':
+        "204":
           description: 通知記錄刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /labels:
@@ -2752,27 +2752,27 @@ paths:
       description: 查詢系統內建與自訂標籤。
       operationId: listLabels
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: category
           in: query
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 成功取得標籤列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LabelListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/LabelListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     post:
@@ -2786,24 +2786,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LabelCreateRequest'
+              $ref: "#/components/schemas/LabelCreateRequest"
       responses:
-        '201':
+        "201":
           description: 標籤建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Label'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Label"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /labels/{label_id}:
@@ -2821,20 +2821,20 @@ paths:
       description: 回傳標籤分類、描述與建立者資訊。
       operationId: getLabel
       responses:
-        '200':
+        "200":
           description: 成功取得標籤詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Label'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Label"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     put:
@@ -2848,24 +2848,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LabelUpdateRequest'
+              $ref: "#/components/schemas/LabelUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新標籤。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Label'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Label"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     patch:
@@ -2879,24 +2879,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LabelPatchRequest'
+              $ref: "#/components/schemas/LabelPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新標籤。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Label'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/Label"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     delete:
@@ -2906,16 +2906,16 @@ paths:
       description: 移除標籤定義。
       operationId: deleteLabel
       responses:
-        '204':
+        "204":
           description: 標籤刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /mail-settings:
@@ -2926,21 +2926,21 @@ paths:
       description: 查詢 SMTP 郵件設定與狀態。
       operationId: listMailSettings
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
-        '200':
+        "200":
           description: 成功取得郵件設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MailSettingListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/MailSettingListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     post:
@@ -2954,24 +2954,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MailSettingCreateRequest'
+              $ref: "#/components/schemas/MailSettingCreateRequest"
       responses:
-        '201':
+        "201":
           description: 郵件設定建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MailSetting'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/MailSetting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /mail-settings/{setting_id}:
@@ -2989,20 +2989,20 @@ paths:
       description: 回傳 SMTP 參數與測試狀態。
       operationId: getMailSetting
       responses:
-        '200':
+        "200":
           description: 成功取得郵件設定詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MailSetting'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/MailSetting"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     put:
@@ -3016,24 +3016,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MailSettingUpdateRequest'
+              $ref: "#/components/schemas/MailSettingUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新郵件設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MailSetting'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/MailSetting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     patch:
@@ -3047,24 +3047,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MailSettingPatchRequest'
+              $ref: "#/components/schemas/MailSettingPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新郵件設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MailSetting'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/MailSetting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     delete:
@@ -3074,16 +3074,16 @@ paths:
       description: 移除 SMTP 設定並停止寄送。
       operationId: deleteMailSetting
       responses:
-        '204':
+        "204":
           description: 郵件設定刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /auth-settings:
@@ -3094,21 +3094,21 @@ paths:
       description: 查詢 OIDC 身份驗證設定。
       operationId: listAuthSettings
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
-        '200':
+        "200":
           description: 成功取得身份驗證設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSettingListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/AuthSettingListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     post:
@@ -3122,24 +3122,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthSettingCreateRequest'
+              $ref: "#/components/schemas/AuthSettingCreateRequest"
       responses:
-        '201':
+        "201":
           description: 身份驗證設定建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSetting'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/AuthSetting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /auth-settings/{setting_id}:
@@ -3157,20 +3157,20 @@ paths:
       description: 回傳 OIDC 端點、用戶端憑證與測試狀態。
       operationId: getAuthSetting
       responses:
-        '200':
+        "200":
           description: 成功取得身份驗證設定詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSetting'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/AuthSetting"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     put:
@@ -3184,24 +3184,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthSettingUpdateRequest'
+              $ref: "#/components/schemas/AuthSettingUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新身份驗證設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSetting'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/AuthSetting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     patch:
@@ -3215,24 +3215,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthSettingPatchRequest'
+              $ref: "#/components/schemas/AuthSettingPatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新身份驗證設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSetting'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/AuthSetting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
     delete:
@@ -3242,16 +3242,16 @@ paths:
       description: 移除 OIDC 整合設定。
       operationId: deleteAuthSetting
       responses:
-        '204':
+        "204":
           description: 身份驗證設定刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /profile:
@@ -3262,26 +3262,26 @@ paths:
       description: 回傳可存取的使用者個人資料，預設僅包含目前登入者。
       operationId: listProfiles
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: keyword
           in: query
           schema:
             type: string
           description: 依使用者名稱或電子郵件搜尋。
       responses:
-        '200':
+        "200":
           description: 成功取得個人資料列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfileListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserProfileListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - viewer
@@ -3296,24 +3296,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserProfileCreateRequest'
+              $ref: "#/components/schemas/UserProfileCreateRequest"
       responses:
-        '201':
+        "201":
           description: 個人資料建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '409':
-          $ref: '#/components/responses/Conflict'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /profile/{user_id}:
@@ -3331,20 +3331,20 @@ paths:
       description: 回傳指定使用者的個人資訊與角色。
       operationId: getProfile
       responses:
-        '200':
+        "200":
           description: 成功取得使用者個人資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - viewer
@@ -3359,24 +3359,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserProfileUpdateRequest'
+              $ref: "#/components/schemas/UserProfileUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新個人資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -3391,24 +3391,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserProfilePatchRequest'
+              $ref: "#/components/schemas/UserProfilePatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新個人資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - platform-admin
@@ -3419,16 +3419,16 @@ paths:
       description: 移除使用者資料並停用帳號。
       operationId: deleteProfile
       responses:
-        '204':
+        "204":
           description: 個人資料刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /preferences:
@@ -3439,26 +3439,26 @@ paths:
       description: 查詢使用者偏好設定資料。
       operationId: listPreferences
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: user_id
           in: query
           schema:
             type: string
           description: 指定使用者 ID，預設為目前登入者。
       responses:
-        '200':
+        "200":
           description: 成功取得偏好設定列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserPreferenceListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserPreferenceListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - viewer
@@ -3473,22 +3473,22 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserPreferenceCreateRequest'
+              $ref: "#/components/schemas/UserPreferenceCreateRequest"
       responses:
-        '201':
+        "201":
           description: 偏好設定建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserPreference'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserPreference"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
   /preferences/{user_id}:
@@ -3506,20 +3506,20 @@ paths:
       description: 回傳使用者的主題、通知與顯示偏好。
       operationId: getPreference
       responses:
-        '200':
+        "200":
           description: 成功取得偏好設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserPreference'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserPreference"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - viewer
@@ -3534,24 +3534,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserPreferenceUpdateRequest'
+              $ref: "#/components/schemas/UserPreferenceUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 成功更新偏好設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserPreference'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserPreference"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - viewer
@@ -3566,24 +3566,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UserPreferencePatchRequest'
+              $ref: "#/components/schemas/UserPreferencePatchRequest"
       responses:
-        '200':
+        "200":
           description: 成功局部更新偏好設定。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserPreference'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/UserPreference"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - sre
         - viewer
@@ -3594,16 +3594,16 @@ paths:
       description: 移除偏好設定並還原為系統預設值。
       operationId: deletePreference
       responses:
-        '204':
+        "204":
           description: 偏好設定刪除成功。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '403':
-          $ref: '#/components/responses/Forbidden'
-        '404':
-          $ref: '#/components/responses/NotFound'
-        '500':
-          $ref: '#/components/responses/InternalError'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
       x-roles:
         - platform-admin
 components:
@@ -3645,37 +3645,37 @@ components:
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
       description: 驗證失敗或尚未登入。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Forbidden:
       description: 權限不足。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: 資料不存在或已被移除。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Conflict:
       description: 資料狀態衝突或重複。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     InternalError:
       description: 伺服器內部錯誤。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
     ErrorResponse:
       type: object
@@ -3754,7 +3754,7 @@ components:
         action:
           type: string
         actor:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         notes:
           type: string
         metadata:
@@ -3835,7 +3835,7 @@ components:
           type: string
           format: date-time
         assignee:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         acknowledged_at:
           type: string
           format: date-time
@@ -3855,7 +3855,7 @@ components:
       required: [id, summary, status, severity, trigger_time]
     EventDetail:
       allOf:
-        - $ref: '#/components/schemas/Event'
+        - $ref: "#/components/schemas/Event"
         - type: object
           properties:
             description:
@@ -3865,15 +3865,15 @@ components:
             timeline:
               type: array
               items:
-                $ref: '#/components/schemas/EventTimelineEntry'
+                $ref: "#/components/schemas/EventTimelineEntry"
             related_events:
               type: array
               items:
-                $ref: '#/components/schemas/EventRelatedItem'
+                $ref: "#/components/schemas/EventRelatedItem"
             automation_actions:
               type: array
               items:
-                $ref: '#/components/schemas/AutomationAction'
+                $ref: "#/components/schemas/AutomationAction"
             attachments:
               type: array
               items:
@@ -3916,7 +3916,7 @@ components:
             type: string
     EventUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/EventCreateRequest'
+        - $ref: "#/components/schemas/EventCreateRequest"
         - type: object
           properties:
             status:
@@ -3958,7 +3958,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Event'
+            $ref: "#/components/schemas/Event"
         page:
           type: integer
         page_size:
@@ -3986,7 +3986,7 @@ components:
           type: string
         comparison:
           type: string
-          enum: ['>', '>=', '<', '<=', '==']
+          enum: [">", ">=", "<", "<=", "=="]
         threshold:
           type: number
         unit:
@@ -4009,7 +4009,7 @@ components:
         conditions:
           type: array
           items:
-            $ref: '#/components/schemas/RuleCondition'
+            $ref: "#/components/schemas/RuleCondition"
       required: [conditions]
     EventRule:
       type: object
@@ -4032,11 +4032,11 @@ components:
         label_selectors:
           type: array
           items:
-            $ref: '#/components/schemas/LabelSelector'
+            $ref: "#/components/schemas/LabelSelector"
         condition_groups:
           type: array
           items:
-            $ref: '#/components/schemas/ConditionGroup'
+            $ref: "#/components/schemas/ConditionGroup"
         automation_enabled:
           type: boolean
         script_id:
@@ -4047,7 +4047,7 @@ components:
           type: object
           additionalProperties: true
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -4071,11 +4071,11 @@ components:
         label_selectors:
           type: array
           items:
-            $ref: '#/components/schemas/LabelSelector'
+            $ref: "#/components/schemas/LabelSelector"
         condition_groups:
           type: array
           items:
-            $ref: '#/components/schemas/ConditionGroup'
+            $ref: "#/components/schemas/ConditionGroup"
         automation_enabled:
           type: boolean
         script_id:
@@ -4085,7 +4085,7 @@ components:
           additionalProperties: true
     EventRuleUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/EventRuleCreateRequest'
+        - $ref: "#/components/schemas/EventRuleCreateRequest"
         - type: object
           properties:
             enabled:
@@ -4112,7 +4112,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/EventRule'
+            $ref: "#/components/schemas/EventRule"
         page:
           type: integer
         page_size:
@@ -4173,7 +4173,7 @@ components:
         matchers:
           type: array
           items:
-            $ref: '#/components/schemas/SilenceMatcher'
+            $ref: "#/components/schemas/SilenceMatcher"
         start_time:
           type: string
           format: date-time
@@ -4183,7 +4183,7 @@ components:
         timezone:
           type: string
         repeat_pattern:
-          $ref: '#/components/schemas/SilenceRepeatPattern'
+          $ref: "#/components/schemas/SilenceRepeatPattern"
         is_enabled:
           type: boolean
         notify_on_start:
@@ -4191,7 +4191,7 @@ components:
         notify_on_end:
           type: boolean
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -4216,7 +4216,7 @@ components:
         matchers:
           type: array
           items:
-            $ref: '#/components/schemas/SilenceMatcher'
+            $ref: "#/components/schemas/SilenceMatcher"
         start_time:
           type: string
           format: date-time
@@ -4226,14 +4226,14 @@ components:
         timezone:
           type: string
         repeat_pattern:
-          $ref: '#/components/schemas/SilenceRepeatPattern'
+          $ref: "#/components/schemas/SilenceRepeatPattern"
         notify_on_start:
           type: boolean
         notify_on_end:
           type: boolean
     SilenceUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/SilenceCreateRequest'
+        - $ref: "#/components/schemas/SilenceCreateRequest"
         - type: object
           properties:
             is_enabled:
@@ -4260,7 +4260,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Silence'
+            $ref: "#/components/schemas/Silence"
         page:
           type: integer
         page_size:
@@ -4310,7 +4310,7 @@ components:
         label_values:
           type: array
           items:
-            $ref: '#/components/schemas/Label'
+            $ref: "#/components/schemas/Label"
         group_ids:
           type: array
           items:
@@ -4356,7 +4356,7 @@ components:
             type: string
     ResourceUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/ResourceCreateRequest'
+        - $ref: "#/components/schemas/ResourceCreateRequest"
         - type: object
           properties:
             last_event_count:
@@ -4383,7 +4383,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Resource'
+            $ref: "#/components/schemas/Resource"
         page:
           type: integer
         page_size:
@@ -4403,7 +4403,7 @@ components:
         description:
           type: string
         owner:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         owner_team:
           type: string
         member_count:
@@ -4448,7 +4448,7 @@ components:
             type: string
     ResourceGroupUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/ResourceGroupCreateRequest'
+        - $ref: "#/components/schemas/ResourceGroupCreateRequest"
         - type: object
           properties:
             subscriber_ids:
@@ -4478,7 +4478,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/ResourceGroup'
+            $ref: "#/components/schemas/ResourceGroup"
         page:
           type: integer
         page_size:
@@ -4542,11 +4542,11 @@ components:
         nodes:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyNode'
+            $ref: "#/components/schemas/TopologyNode"
         edges:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyEdge'
+            $ref: "#/components/schemas/TopologyEdge"
         last_synced_at:
           type: string
           format: date-time
@@ -4570,14 +4570,14 @@ components:
         nodes:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyNode'
+            $ref: "#/components/schemas/TopologyNode"
         edges:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyEdge'
+            $ref: "#/components/schemas/TopologyEdge"
     TopologyUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/TopologyCreateRequest'
+        - $ref: "#/components/schemas/TopologyCreateRequest"
         - type: object
           properties:
             last_synced_at:
@@ -4593,18 +4593,18 @@ components:
         nodes:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyNode'
+            $ref: "#/components/schemas/TopologyNode"
         edges:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyEdge'
+            $ref: "#/components/schemas/TopologyEdge"
     TopologyListResponse:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyView'
+            $ref: "#/components/schemas/TopologyView"
         page:
           type: integer
         page_size:
@@ -4627,7 +4627,7 @@ components:
         description:
           type: string
         owner:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         tags:
           type: array
           items:
@@ -4680,7 +4680,7 @@ components:
           type: boolean
     DashboardUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/DashboardCreateRequest'
+        - $ref: "#/components/schemas/DashboardCreateRequest"
         - type: object
           properties:
             owner_id:
@@ -4710,7 +4710,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Dashboard'
+            $ref: "#/components/schemas/Dashboard"
         page:
           type: integer
         page_size:
@@ -4761,11 +4761,11 @@ components:
         metrics:
           type: array
           items:
-            $ref: '#/components/schemas/InsightMetric'
+            $ref: "#/components/schemas/InsightMetric"
         recommendations:
           type: array
           items:
-            $ref: '#/components/schemas/InsightRecommendation'
+            $ref: "#/components/schemas/InsightRecommendation"
         generated_at:
           type: string
           format: date-time
@@ -4790,14 +4790,14 @@ components:
         metrics:
           type: array
           items:
-            $ref: '#/components/schemas/InsightMetric'
+            $ref: "#/components/schemas/InsightMetric"
         recommendations:
           type: array
           items:
-            $ref: '#/components/schemas/InsightRecommendation'
+            $ref: "#/components/schemas/InsightRecommendation"
     InsightUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/InsightCreateRequest'
+        - $ref: "#/components/schemas/InsightCreateRequest"
         - type: object
           properties:
             status:
@@ -4816,14 +4816,14 @@ components:
         recommendations:
           type: array
           items:
-            $ref: '#/components/schemas/InsightRecommendation'
+            $ref: "#/components/schemas/InsightRecommendation"
     InsightListResponse:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Insight'
+            $ref: "#/components/schemas/Insight"
         page:
           type: integer
         page_size:
@@ -4841,7 +4841,7 @@ components:
         description:
           type: string
         actor:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         event_id:
           type: string
     WarRoom:
@@ -4859,11 +4859,11 @@ components:
           type: string
           enum: [critical, high, medium]
         facilitator:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         participants:
           type: array
           items:
-            $ref: '#/components/schemas/UserReference'
+            $ref: "#/components/schemas/UserReference"
         incident_ids:
           type: array
           items:
@@ -4871,7 +4871,7 @@ components:
         timeline:
           type: array
           items:
-            $ref: '#/components/schemas/WarRoomTimelineEntry'
+            $ref: "#/components/schemas/WarRoomTimelineEntry"
         notes:
           type: string
         started_at:
@@ -4908,7 +4908,7 @@ components:
             type: string
     WarRoomUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/WarRoomCreateRequest'
+        - $ref: "#/components/schemas/WarRoomCreateRequest"
         - type: object
           properties:
             status:
@@ -4917,7 +4917,7 @@ components:
             timeline:
               type: array
               items:
-                $ref: '#/components/schemas/WarRoomTimelineEntry'
+                $ref: "#/components/schemas/WarRoomTimelineEntry"
             notes:
               type: string
     WarRoomPatchRequest:
@@ -4937,7 +4937,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/WarRoom'
+            $ref: "#/components/schemas/WarRoom"
         page:
           type: integer
         page_size:
@@ -4974,9 +4974,9 @@ components:
           type: string
           format: date-time
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         updated_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -5003,7 +5003,7 @@ components:
             type: string
     ScriptUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/ScriptCreateRequest'
+        - $ref: "#/components/schemas/ScriptCreateRequest"
         - type: object
           properties:
             version:
@@ -5025,7 +5025,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Script'
+            $ref: "#/components/schemas/Script"
         page:
           type: integer
         page_size:
@@ -5073,15 +5073,15 @@ components:
           type: string
           enum: [allow, forbid]
         retry_policy:
-          $ref: '#/components/schemas/ScheduleRetryPolicy'
+          $ref: "#/components/schemas/ScheduleRetryPolicy"
         notify_on_success:
           type: boolean
         notify_on_failure:
           type: boolean
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         updated_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -5108,14 +5108,14 @@ components:
           type: string
           enum: [allow, forbid]
         retry_policy:
-          $ref: '#/components/schemas/ScheduleRetryPolicy'
+          $ref: "#/components/schemas/ScheduleRetryPolicy"
         notify_on_success:
           type: boolean
         notify_on_failure:
           type: boolean
     ScheduleUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/ScheduleCreateRequest'
+        - $ref: "#/components/schemas/ScheduleCreateRequest"
         - type: object
           properties:
             status:
@@ -5141,7 +5141,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Schedule'
+            $ref: "#/components/schemas/Schedule"
         page:
           type: integer
         page_size:
@@ -5177,7 +5177,7 @@ components:
           type: string
           enum: [success, failed, running, cancelled]
         triggered_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         parameters:
           type: object
           additionalProperties: true
@@ -5210,7 +5210,7 @@ components:
           additionalProperties: true
     ExecutionUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/ExecutionCreateRequest'
+        - $ref: "#/components/schemas/ExecutionCreateRequest"
         - type: object
           properties:
             status:
@@ -5242,7 +5242,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Execution'
+            $ref: "#/components/schemas/Execution"
         page:
           type: integer
         page_size:
@@ -5278,7 +5278,7 @@ components:
         recipients:
           type: array
           items:
-            $ref: '#/components/schemas/RecipientReference'
+            $ref: "#/components/schemas/RecipientReference"
         escalation_delay_minutes:
           type: integer
         repeat_frequency_minutes:
@@ -5294,9 +5294,9 @@ components:
           items:
             type: string
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         updated_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -5329,7 +5329,7 @@ components:
         recipients:
           type: array
           items:
-            $ref: '#/components/schemas/RecipientReference'
+            $ref: "#/components/schemas/RecipientReference"
         trigger_condition:
           type: object
           additionalProperties: true
@@ -5338,7 +5338,7 @@ components:
           additionalProperties: true
     NotificationPolicyUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/NotificationPolicyCreateRequest'
+        - $ref: "#/components/schemas/NotificationPolicyCreateRequest"
         - type: object
           properties:
             escalation_delay_minutes:
@@ -5368,14 +5368,14 @@ components:
         recipients:
           type: array
           items:
-            $ref: '#/components/schemas/RecipientReference'
+            $ref: "#/components/schemas/RecipientReference"
     NotificationPolicyListResponse:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/NotificationPolicy'
+            $ref: "#/components/schemas/NotificationPolicy"
         page:
           type: integer
         page_size:
@@ -5407,9 +5407,9 @@ components:
           type: string
           format: date-time
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         updated_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -5433,7 +5433,7 @@ components:
           additionalProperties: true
     NotificationChannelUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/NotificationChannelCreateRequest'
+        - $ref: "#/components/schemas/NotificationChannelCreateRequest"
         - type: object
           properties:
             status:
@@ -5456,7 +5456,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/NotificationChannel'
+            $ref: "#/components/schemas/NotificationChannel"
         page:
           type: integer
         page_size:
@@ -5486,7 +5486,7 @@ components:
         recipients:
           type: array
           items:
-            $ref: '#/components/schemas/RecipientReference'
+            $ref: "#/components/schemas/RecipientReference"
         sent_at:
           type: string
           format: date-time
@@ -5504,7 +5504,7 @@ components:
         attempts:
           type: array
           items:
-            $ref: '#/components/schemas/NotificationAttempt'
+            $ref: "#/components/schemas/NotificationAttempt"
         metadata:
           type: object
           additionalProperties: true
@@ -5525,7 +5525,7 @@ components:
         recipients:
           type: array
           items:
-            $ref: '#/components/schemas/RecipientReference'
+            $ref: "#/components/schemas/RecipientReference"
         payload:
           type: object
           additionalProperties: true
@@ -5535,7 +5535,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/NotificationRecord'
+            $ref: "#/components/schemas/NotificationRecord"
         page:
           type: integer
         page_size:
@@ -5565,9 +5565,9 @@ components:
         usage_count:
           type: integer
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         updated_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -5593,7 +5593,7 @@ components:
           type: boolean
     LabelUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/LabelCreateRequest'
+        - $ref: "#/components/schemas/LabelCreateRequest"
     LabelPatchRequest:
       type: object
       properties:
@@ -5611,7 +5611,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/Label'
+            $ref: "#/components/schemas/Label"
         page:
           type: integer
         page_size:
@@ -5652,9 +5652,9 @@ components:
           type: string
           format: date-time
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         updated_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -5693,7 +5693,7 @@ components:
           type: boolean
     MailSettingUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/MailSettingCreateRequest'
+        - $ref: "#/components/schemas/MailSettingCreateRequest"
     MailSettingPatchRequest:
       type: object
       properties:
@@ -5711,7 +5711,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/MailSetting'
+            $ref: "#/components/schemas/MailSetting"
         page:
           type: integer
         page_size:
@@ -5762,9 +5762,9 @@ components:
           type: string
           format: date-time
         created_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         updated_by:
-          $ref: '#/components/schemas/UserReference'
+          $ref: "#/components/schemas/UserReference"
         created_at:
           type: string
           format: date-time
@@ -5811,7 +5811,7 @@ components:
           type: boolean
     AuthSettingUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/AuthSettingCreateRequest'
+        - $ref: "#/components/schemas/AuthSettingCreateRequest"
       properties:
         client_secret_hint:
           type: string
@@ -5832,7 +5832,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/AuthSetting'
+            $ref: "#/components/schemas/AuthSetting"
         page:
           type: integer
         page_size:
@@ -5866,7 +5866,7 @@ components:
         teams:
           type: array
           items:
-            $ref: '#/components/schemas/TeamReference'
+            $ref: "#/components/schemas/TeamReference"
         last_login_at:
           type: string
           format: date-time
@@ -5896,7 +5896,7 @@ components:
           type: string
     UserProfileUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/UserProfileCreateRequest'
+        - $ref: "#/components/schemas/UserProfileCreateRequest"
         - type: object
           properties:
             status:
@@ -5920,7 +5920,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/UserProfile'
+            $ref: "#/components/schemas/UserProfile"
         page:
           type: integer
         page_size:
@@ -5966,9 +5966,9 @@ components:
         timezone:
           type: string
         notification_preferences:
-          $ref: '#/components/schemas/NotificationPreferences'
+          $ref: "#/components/schemas/NotificationPreferences"
         display_options:
-          $ref: '#/components/schemas/DisplayOptions'
+          $ref: "#/components/schemas/DisplayOptions"
         created_at:
           type: string
           format: date-time
@@ -5993,12 +5993,12 @@ components:
         timezone:
           type: string
         notification_preferences:
-          $ref: '#/components/schemas/NotificationPreferences'
+          $ref: "#/components/schemas/NotificationPreferences"
         display_options:
-          $ref: '#/components/schemas/DisplayOptions'
+          $ref: "#/components/schemas/DisplayOptions"
     UserPreferenceUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/UserPreferenceCreateRequest'
+        - $ref: "#/components/schemas/UserPreferenceCreateRequest"
     UserPreferencePatchRequest:
       type: object
       properties:
@@ -6009,16 +6009,16 @@ components:
           type: string
           enum: [war_room, events, resources, dashboards]
         notification_preferences:
-          $ref: '#/components/schemas/NotificationPreferences'
+          $ref: "#/components/schemas/NotificationPreferences"
         display_options:
-          $ref: '#/components/schemas/DisplayOptions'
+          $ref: "#/components/schemas/DisplayOptions"
     UserPreferenceListResponse:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/UserPreference'
+            $ref: "#/components/schemas/UserPreference"
         page:
           type: integer
         page_size:

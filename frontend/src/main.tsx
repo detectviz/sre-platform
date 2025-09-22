@@ -1,14 +1,13 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
+import { createRoot } from 'react-dom/client';
 import App from './App';
-import 'antd/dist/reset.css';
+import './styles/variables.css';
+import './styles/design-system.css';
+import './styles/components.css';
+import './styles/global.css';
+import './index.css';
 
-// 應用程式的主要進入點，負責掛載 React 元件樹
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>
-);
+const container = document.getElementById('root');
+if (container) {
+  const root = createRoot(container);
+  root.render(<App />);
+}

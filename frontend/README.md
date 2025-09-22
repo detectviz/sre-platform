@@ -6,8 +6,10 @@
 前端開發必須嚴格遵循以下唯一真實來源：
 - **[../openapi.yaml](../openapi.yaml)** - API 契約規範，所有 API 調用的標準
 - **[../db_schema.sql](../db_schema.sql)** - 數據模型結構，TypeScript 類型定義參考
-- **[../prototype.md](../prototype.md)** - 產品需求和功能規格
+- **[../pages.md](../pages.md)** - UI 原型和功能規格
 - **[../prototype.html](../prototype.html)** - 完整設計系統和視覺規範
+- **[../TODO.md](../TODO.md)** - 開發任務分工和進度追蹤
+- **[../AI_PROMPTS.md](../AI_PROMPTS.md)** - AI 協作開發指引
 
 ## 🚀 快速開始
 
@@ -42,10 +44,10 @@ npm run dev
 ```
 src/
 ├── components/
-│   ├── common/          # 共享組件
-│   ├── incident/        # 事件管理組件
-│   ├── resource/        # 資源管理組件
-│   └── charts/          # 圖表組件
+│   ├── common/          # 共享組件 (AI Agent A 負責)
+│   ├── incident/        # 事件管理組件 (AI Agent B 負責)
+│   ├── resource/        # 資源管理組件 (AI Agent C 負責)
+│   └── charts/          # 圖表組件 (AI Agent C 負責)
 ├── hooks/               # 自定義 hooks (與 openapi.yaml 對應)
 ├── pages/               # 頁面組件
 ├── styles/              # 設計系統 CSS (基於 prototype.html)
@@ -68,6 +70,15 @@ src/
 - 支持分頁和查詢參數
 - 實現正確的 HTTP 狀態碼
 - 與 Mock Server (localhost:8080) 完整對接
+
+## 👥 開發協作
+
+本項目採用 AI 協作開發模式：
+- **AI Agent A**: 設計系統與核心組件
+- **AI Agent B**: 事件管理模組
+- **AI Agent C**: 資源管理與儀表板
+
+詳細分工請參考 `../TODO.md` 和 `../AI_PROMPTS.md`。
 
 ## ✅ 開發檢查清單
 
