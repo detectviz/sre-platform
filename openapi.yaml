@@ -1,0 +1,6029 @@
+openapi: 3.0.3
+info:
+  title: SRE 平台 API 規範
+  version: 1.0.0
+  description: |
+    提供 SRE 平台前端所需的資料介面，涵蓋事件管理、資源監控、儀表板、自動化、通知、系統設定與個人偏好等模組。
+servers:
+  - url: http://localhost:8080
+    description: 本地開發用 Mock 伺服器
+x-error-codes:
+  - code: INVALID_REQUEST
+    message: 請求參數驗證失敗，請確認輸入資料是否正確。
+  - code: UNAUTHORIZED
+    message: 尚未登入或登入已失效，請重新驗證身份。
+  - code: FORBIDDEN
+    message: 權限不足，請聯絡系統管理員。
+  - code: NOT_FOUND
+    message: 查無符合條件的資料。
+  - code: CONFLICT
+    message: 資料狀態衝突或已存在相同紀錄。
+  - code: INTERNAL_ERROR
+    message: 系統處理發生未預期錯誤，請稍後再試。
+tags:
+  - name: 事件管理
+    description: 事件列表、事件規則與靜音規則相關操作。
+  - name: 資源管理
+    description: 資源列表、資源群組與拓撲視圖資料。
+  - name: 儀表板
+    description: 儀表板、洞察報告與戰情室設定。
+  - name: 自動化
+    description: 自動化腳本、排程與執行日誌。
+  - name: 通知
+    description: 通知策略、通知管道與通知歷史紀錄。
+  - name: 設定
+    description: 標籤、郵件與身份驗證設定。
+  - name: 個人偏好
+    description: 個人資料與偏好設定。
+paths:
+  /events:
+    get:
+      tags:
+        - 事件管理
+      summary: 取得事件列表
+      description: 依條件查詢事件列表，支援狀態、嚴重性、資源與時間範圍等過濾條件。
+      operationId: listEvents
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: status
+          in: query
+          description: 依事件狀態篩選。
+          schema:
+            type: string
+            enum: [new, acknowledged, in_progress, resolved, silenced]
+        - name: severity
+          in: query
+          description: 依事件嚴重性篩選。
+          schema:
+            type: string
+            enum: [critical, warning, info]
+        - name: resource_id
+          in: query
+          description: 指定資源 ID 篩選。
+          schema:
+            type: string
+        - name: rule_id
+          in: query
+          description: 指定觸發規則 ID。
+          schema:
+            type: string
+        - name: assignee_id
+          in: query
+          description: 指定處理人。
+          schema:
+            type: string
+        - name: start_time
+          in: query
+          description: 起始時間 (ISO 8601)。
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          description: 結束時間 (ISO 8601)。
+          schema:
+            type: string
+            format: date-time
+        - name: keyword
+          in: query
+          description: 摘要或描述關鍵字。
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功取得事件列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    post:
+      tags:
+        - 事件管理
+      summary: 建立事件
+      description: 手動建立事件記錄，常用於導入外部事件或測試用途。
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreateRequest'
+      responses:
+        '201':
+          description: 事件建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+  /events/{event_id}:
+    parameters:
+      - name: event_id
+        in: path
+        required: true
+        description: 事件唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 事件管理
+      summary: 取得事件詳情
+      description: 回傳事件基本資訊、處理歷史、關聯事件與自動化執行情況。
+      operationId: getEvent
+      responses:
+        '200':
+          description: 成功取得事件詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDetail'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    put:
+      tags:
+        - 事件管理
+      summary: 更新事件
+      description: 覆寫事件主要欄位與狀態，適用於同步外部資料。
+      operationId: updateEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventUpdateRequest'
+      responses:
+        '200':
+          description: 事件更新成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    patch:
+      tags:
+        - 事件管理
+      summary: 局部更新事件
+      description: 僅更新事件狀態、指派人員或標籤等欄位。
+      operationId: patchEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventPatchRequest'
+      responses:
+        '200':
+          description: 事件部分欄位更新成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDetail'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    delete:
+      tags:
+        - 事件管理
+      summary: 刪除事件
+      description: 移除指定事件，僅限測試或資料清理使用。
+      operationId: deleteEvent
+      responses:
+        '204':
+          description: 事件刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /event-rules:
+    get:
+      tags:
+        - 事件管理
+      summary: 取得事件規則列表
+      description: 查詢事件規則，支援依啟用狀態與嚴重性篩選。
+      operationId: listEventRules
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: enabled
+          in: query
+          description: 是否僅顯示啟用規則。
+          schema:
+            type: boolean
+        - name: severity
+          in: query
+          description: 指定規則嚴重性。
+          schema:
+            type: string
+            enum: [critical, warning, info]
+      responses:
+        '200':
+          description: 成功取得事件規則列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRuleListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    post:
+      tags:
+        - 事件管理
+      summary: 建立事件規則
+      description: 建立新的事件觸發規則並設定自動化動作。
+      operationId: createEventRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRuleCreateRequest'
+      responses:
+        '201':
+          description: 成功建立事件規則。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+  /event-rules/{rule_id}:
+    parameters:
+      - name: rule_id
+        in: path
+        required: true
+        description: 事件規則唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 事件管理
+      summary: 取得事件規則詳情
+      description: 回傳指定規則的觸發條件、自動化設定與標籤篩選條件。
+      operationId: getEventRule
+      responses:
+        '200':
+          description: 成功取得事件規則詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRule'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    put:
+      tags:
+        - 事件管理
+      summary: 更新事件規則
+      description: 覆寫規則設定，包含條件、標籤與自動化腳本。
+      operationId: updateEventRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRuleUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新事件規則。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    patch:
+      tags:
+        - 事件管理
+      summary: 局部更新事件規則
+      description: 更新規則啟用狀態、描述或自動化設定等部分欄位。
+      operationId: patchEventRule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventRulePatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新事件規則。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventRule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    delete:
+      tags:
+        - 事件管理
+      summary: 刪除事件規則
+      description: 移除不再使用的事件規則。
+      operationId: deleteEventRule
+      responses:
+        '204':
+          description: 事件規則刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /silences:
+    get:
+      tags:
+        - 事件管理
+      summary: 取得靜音規則列表
+      description: 查詢靜音規則，支援依靜音類型與啟用狀態篩選。
+      operationId: listSilences
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: silence_type
+          in: query
+          schema:
+            type: string
+            enum: [single, recurring, condition]
+          description: 指定靜音類型。
+        - name: enabled
+          in: query
+          schema:
+            type: boolean
+          description: 是否僅顯示啟用規則。
+      responses:
+        '200':
+          description: 成功取得靜音規則列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SilenceListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    post:
+      tags:
+        - 事件管理
+      summary: 建立靜音規則
+      description: 建立新的靜音規則並設定範圍與排程。
+      operationId: createSilence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SilenceCreateRequest'
+      responses:
+        '201':
+          description: 靜音規則建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Silence'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+  /silences/{silence_id}:
+    parameters:
+      - name: silence_id
+        in: path
+        required: true
+        description: 靜音規則唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 事件管理
+      summary: 取得靜音規則詳情
+      description: 回傳靜音規則排程、範圍與通知設定。
+      operationId: getSilence
+      responses:
+        '200':
+          description: 成功取得靜音規則詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Silence'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    put:
+      tags:
+        - 事件管理
+      summary: 更新靜音規則
+      description: 覆寫靜音排程與範圍設定。
+      operationId: updateSilence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SilenceUpdateRequest'
+      responses:
+        '200':
+          description: 靜音規則更新成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Silence'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    patch:
+      tags:
+        - 事件管理
+      summary: 局部更新靜音規則
+      description: 更新啟用狀態或通知選項等部分欄位。
+      operationId: patchSilence
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SilencePatchRequest'
+      responses:
+        '200':
+          description: 靜音規則部分欄位更新成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Silence'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    delete:
+      tags:
+        - 事件管理
+      summary: 刪除靜音規則
+      description: 移除靜音規則並恢復通知。
+      operationId: deleteSilence
+      responses:
+        '204':
+          description: 靜音規則刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /resources:
+    get:
+      tags:
+        - 資源管理
+      summary: 取得資源列表
+      description: 查詢資源清單，支援依狀態、類型、標籤與群組篩選。
+      operationId: listResources
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [healthy, warning, critical, maintenance]
+          description: 依資源狀態篩選。
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [server, database, cache, gateway, service]
+          description: 依資源類型篩選。
+        - name: group_id
+          in: query
+          schema:
+            type: string
+          description: 指定資源群組。
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 資源名稱或 IP 關鍵字。
+      responses:
+        '200':
+          description: 成功取得資源列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    post:
+      tags:
+        - 資源管理
+      summary: 建立資源
+      description: 新增受監控的資源並指派所屬群組與標籤。
+      operationId: createResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceCreateRequest'
+      responses:
+        '201':
+          description: 資源建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+  /resources/{resource_id}:
+    parameters:
+      - name: resource_id
+        in: path
+        required: true
+        description: 資源唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 資源管理
+      summary: 取得資源詳情
+      description: 回傳資源的健康狀態、效能指標與標籤設定。
+      operationId: getResource
+      responses:
+        '200':
+          description: 成功取得資源詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    put:
+      tags:
+        - 資源管理
+      summary: 更新資源
+      description: 覆寫資源基本資訊與健康狀態。
+      operationId: updateResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新資源。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    patch:
+      tags:
+        - 資源管理
+      summary: 局部更新資源
+      description: 更新資源狀態或標籤等部分欄位。
+      operationId: patchResource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourcePatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新資源。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Resource'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    delete:
+      tags:
+        - 資源管理
+      summary: 刪除資源
+      description: 移除不再需要監控的資源。
+      operationId: deleteResource
+      responses:
+        '204':
+          description: 資源刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /resource-groups:
+    get:
+      tags:
+        - 資源管理
+      summary: 取得資源群組列表
+      description: 查詢資源群組，包含成員統計與健康狀態摘要。
+      operationId: listResourceGroups
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 群組名稱或描述關鍵字。
+      responses:
+        '200':
+          description: 成功取得資源群組列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGroupListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    post:
+      tags:
+        - 資源管理
+      summary: 建立資源群組
+      description: 建立新的資源群組並配置負責團隊與成員。
+      operationId: createResourceGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceGroupCreateRequest'
+      responses:
+        '201':
+          description: 資源群組建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+  /resource-groups/{group_id}:
+    parameters:
+      - name: group_id
+        in: path
+        required: true
+        description: 資源群組唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 資源管理
+      summary: 取得資源群組詳情
+      description: 回傳資源群組成員、健康統計與訂閱者資訊。
+      operationId: getResourceGroup
+      responses:
+        '200':
+          description: 成功取得資源群組詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGroup'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    put:
+      tags:
+        - 資源管理
+      summary: 更新資源群組
+      description: 覆寫群組基本資訊與資源成員設定。
+      operationId: updateResourceGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceGroupUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新資源群組。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    patch:
+      tags:
+        - 資源管理
+      summary: 局部更新資源群組
+      description: 更新負責團隊或訂閱者等部分欄位。
+      operationId: patchResourceGroup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResourceGroupPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新資源群組。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourceGroup'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    delete:
+      tags:
+        - 資源管理
+      summary: 刪除資源群組
+      description: 移除資源群組並釋放成員。
+      operationId: deleteResourceGroup
+      responses:
+        '204':
+          description: 資源群組刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /topology:
+    get:
+      tags:
+        - 資源管理
+      summary: 取得拓撲視圖列表
+      description: 回傳可用的拓撲視圖設定與節點資料。
+      operationId: listTopologies
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: 成功取得拓撲視圖列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    post:
+      tags:
+        - 資源管理
+      summary: 建立拓撲視圖
+      description: 建立新的拓撲配置與節點關聯。
+      operationId: createTopology
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyCreateRequest'
+      responses:
+        '201':
+          description: 拓撲視圖建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyView'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+  /topology/{topology_id}:
+    parameters:
+      - name: topology_id
+        in: path
+        required: true
+        description: 拓撲視圖唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 資源管理
+      summary: 取得拓撲視圖詳情
+      description: 回傳拓撲節點、連線與最後同步時間。
+      operationId: getTopology
+      responses:
+        '200':
+          description: 成功取得拓撲視圖。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyView'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    put:
+      tags:
+        - 資源管理
+      summary: 更新拓撲視圖
+      description: 覆寫拓撲節點與連線設定。
+      operationId: updateTopology
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新拓撲視圖。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyView'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    patch:
+      tags:
+        - 資源管理
+      summary: 局部更新拓撲視圖
+      description: 更新拓撲說明或布局設定。
+      operationId: patchTopology
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopologyPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新拓撲視圖。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TopologyView'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-operator
+    delete:
+      tags:
+        - 資源管理
+      summary: 刪除拓撲視圖
+      description: 移除不再使用的拓撲配置。
+      operationId: deleteTopology
+      responses:
+        '204':
+          description: 拓撲視圖刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /dashboards:
+    get:
+      tags:
+        - 儀表板
+      summary: 取得儀表板列表
+      description: 查詢儀表板資訊，支援依分類與是否發布篩選。
+      operationId: listDashboards
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [war_room, infrastructure, custom]
+          description: 儀表板分類。
+        - name: is_published
+          in: query
+          schema:
+            type: boolean
+          description: 是否僅顯示已發布儀表板。
+      responses:
+        '200':
+          description: 成功取得儀表板列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - analyst
+    post:
+      tags:
+        - 儀表板
+      summary: 建立儀表板
+      description: 建立新儀表板與布局設定。
+      operationId: createDashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardCreateRequest'
+      responses:
+        '201':
+          description: 儀表板建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+  /dashboards/{dashboard_id}:
+    parameters:
+      - name: dashboard_id
+        in: path
+        required: true
+        description: 儀表板唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 儀表板
+      summary: 取得儀表板詳情
+      description: 回傳儀表板卡片配置、KPI 與權限設定。
+      operationId: getDashboard
+      responses:
+        '200':
+          description: 成功取得儀表板詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - analyst
+    put:
+      tags:
+        - 儀表板
+      summary: 更新儀表板
+      description: 覆寫儀表板卡片與權限設定。
+      operationId: updateDashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新儀表板。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    patch:
+      tags:
+        - 儀表板
+      summary: 局部更新儀表板
+      description: 更新儀表板發布狀態或標籤等部分欄位。
+      operationId: patchDashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DashboardPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新儀表板。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dashboard'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - analyst
+    delete:
+      tags:
+        - 儀表板
+      summary: 刪除儀表板
+      description: 移除不再使用的儀表板。
+      operationId: deleteDashboard
+      responses:
+        '204':
+          description: 儀表板刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /insights:
+    get:
+      tags:
+        - 儀表板
+      summary: 取得分析洞察列表
+      description: 查詢 AI 洞察與容量規劃報告。
+      operationId: listInsights
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [capacity, performance, risk, ai_insight]
+          description: 洞察報告類別。
+      responses:
+        '200':
+          description: 成功取得分析洞察列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InsightListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - analyst
+    post:
+      tags:
+        - 儀表板
+      summary: 建立分析洞察
+      description: 建立新的分析報告或預測結果。
+      operationId: createInsight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsightCreateRequest'
+      responses:
+        '201':
+          description: 分析洞察建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Insight'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - analyst
+        - platform-admin
+  /insights/{insight_id}:
+    parameters:
+      - name: insight_id
+        in: path
+        required: true
+        description: 洞察報告唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 儀表板
+      summary: 取得分析洞察詳情
+      description: 回傳洞察內容、圖表資料與建議。
+      operationId: getInsight
+      responses:
+        '200':
+          description: 成功取得分析洞察詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Insight'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - analyst
+    put:
+      tags:
+        - 儀表板
+      summary: 更新分析洞察
+      description: 覆寫洞察內容與建議。
+      operationId: updateInsight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsightUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新分析洞察。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Insight'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - analyst
+        - platform-admin
+    patch:
+      tags:
+        - 儀表板
+      summary: 局部更新分析洞察
+      description: 更新洞察狀態或標籤等部分欄位。
+      operationId: patchInsight
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InsightPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新分析洞察。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Insight'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - analyst
+    delete:
+      tags:
+        - 儀表板
+      summary: 刪除分析洞察
+      description: 移除已過期或不需要的洞察報告。
+      operationId: deleteInsight
+      responses:
+        '204':
+          description: 分析洞察刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /war-room:
+    get:
+      tags:
+        - 儀表板
+      summary: 取得戰情室列表
+      description: 查詢 SRE 戰情室儀表板與進行中的會議資訊。
+      operationId: listWarRooms
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, monitoring, resolved]
+          description: 依戰情室狀態篩選。
+      responses:
+        '200':
+          description: 成功取得戰情室列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarRoomListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    post:
+      tags:
+        - 儀表板
+      summary: 建立戰情室
+      description: 建立新的戰情室會議與儀表板設定。
+      operationId: createWarRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarRoomCreateRequest'
+      responses:
+        '201':
+          description: 戰情室建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - incident-commander
+        - platform-admin
+  /war-room/{session_id}:
+    parameters:
+      - name: session_id
+        in: path
+        required: true
+        description: 戰情室會議唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 儀表板
+      summary: 取得戰情室詳情
+      description: 回傳戰情室時間軸、關聯事件與參與者。
+      operationId: getWarRoom
+      responses:
+        '200':
+          description: 成功取得戰情室詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarRoom'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - incident-commander
+    put:
+      tags:
+        - 儀表板
+      summary: 更新戰情室
+      description: 覆寫戰情室時間軸與參與者設定。
+      operationId: updateWarRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarRoomUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新戰情室。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - incident-commander
+        - platform-admin
+    patch:
+      tags:
+        - 儀表板
+      summary: 局部更新戰情室
+      description: 更新戰情室狀態或筆記等部分欄位。
+      operationId: patchWarRoom
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WarRoomPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新戰情室。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WarRoom'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - incident-commander
+    delete:
+      tags:
+        - 儀表板
+      summary: 關閉戰情室
+      description: 結束戰情室並歸檔紀錄。
+      operationId: deleteWarRoom
+      responses:
+        '204':
+          description: 戰情室結束成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /scripts:
+    get:
+      tags:
+        - 自動化
+      summary: 取得腳本列表
+      description: 查詢自動化腳本清單與最後執行狀態。
+      operationId: listScripts
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [shell, python, ansible, terraform]
+          description: 依腳本類型篩選。
+      responses:
+        '200':
+          description: 成功取得腳本列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScriptListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - automation-engineer
+    post:
+      tags:
+        - 自動化
+      summary: 建立腳本
+      description: 建立新的自動化腳本並設定內容。
+      operationId: createScript
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptCreateRequest'
+      responses:
+        '201':
+          description: 腳本建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Script'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+        - platform-admin
+  /scripts/{script_id}:
+    parameters:
+      - name: script_id
+        in: path
+        required: true
+        description: 自動化腳本唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 自動化
+      summary: 取得腳本詳情
+      description: 回傳腳本內容、版本資訊與標籤。
+      operationId: getScript
+      responses:
+        '200':
+          description: 成功取得腳本詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Script'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - automation-engineer
+    put:
+      tags:
+        - 自動化
+      summary: 更新腳本
+      description: 覆寫腳本內容與描述。
+      operationId: updateScript
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新腳本。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Script'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+        - platform-admin
+    patch:
+      tags:
+        - 自動化
+      summary: 局部更新腳本
+      description: 更新腳本標籤或描述等部分欄位。
+      operationId: patchScript
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScriptPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新腳本。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Script'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+    delete:
+      tags:
+        - 自動化
+      summary: 刪除腳本
+      description: 移除不再使用的腳本。
+      operationId: deleteScript
+      responses:
+        '204':
+          description: 腳本刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /schedules:
+    get:
+      tags:
+        - 自動化
+      summary: 取得排程列表
+      description: 查詢自動化排程設定與下一次執行時間。
+      operationId: listSchedules
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [enabled, disabled, running]
+      responses:
+        '200':
+          description: 成功取得排程列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScheduleListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - automation-engineer
+    post:
+      tags:
+        - 自動化
+      summary: 建立排程
+      description: 建立腳本排程並設定 Cron 與通知策略。
+      operationId: createSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreateRequest'
+      responses:
+        '201':
+          description: 排程建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+        - platform-admin
+  /schedules/{schedule_id}:
+    parameters:
+      - name: schedule_id
+        in: path
+        required: true
+        description: 排程唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 自動化
+      summary: 取得排程詳情
+      description: 回傳排程時間設定、並發與重試策略。
+      operationId: getSchedule
+      responses:
+        '200':
+          description: 成功取得排程詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - automation-engineer
+    put:
+      tags:
+        - 自動化
+      summary: 更新排程
+      description: 覆寫排程設定與通知策略。
+      operationId: updateSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新排程。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+        - platform-admin
+    patch:
+      tags:
+        - 自動化
+      summary: 局部更新排程
+      description: 更新排程啟用狀態或通知設定。
+      operationId: patchSchedule
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchedulePatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新排程。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+    delete:
+      tags:
+        - 自動化
+      summary: 刪除排程
+      description: 移除排程並停止執行。
+      operationId: deleteSchedule
+      responses:
+        '204':
+          description: 排程刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /executions:
+    get:
+      tags:
+        - 自動化
+      summary: 取得執行日誌列表
+      description: 查詢腳本執行歷史與狀態。
+      operationId: listExecutions
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [success, failed, running, cancelled]
+        - name: script_id
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功取得執行日誌列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExecutionListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - automation-engineer
+    post:
+      tags:
+        - 自動化
+      summary: 建立執行記錄
+      description: 手動建立腳本執行記錄或觸發腳本。
+      operationId: createExecution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionCreateRequest'
+      responses:
+        '201':
+          description: 執行記錄建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+        - platform-admin
+  /executions/{execution_id}:
+    parameters:
+      - name: execution_id
+        in: path
+        required: true
+        description: 執行記錄唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 自動化
+      summary: 取得執行記錄詳情
+      description: 回傳執行輸出、錯誤資訊與關聯事件。
+      operationId: getExecution
+      responses:
+        '200':
+          description: 成功取得執行記錄詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - automation-engineer
+    put:
+      tags:
+        - 自動化
+      summary: 更新執行記錄
+      description: 覆寫執行紀錄內容或補充資訊。
+      operationId: updateExecution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新執行記錄。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+    patch:
+      tags:
+        - 自動化
+      summary: 局部更新執行記錄
+      description: 更新執行狀態或註解。
+      operationId: patchExecution
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecutionPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新執行記錄。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - automation-engineer
+    delete:
+      tags:
+        - 自動化
+      summary: 刪除執行記錄
+      description: 移除舊的執行記錄。
+      operationId: deleteExecution
+      responses:
+        '204':
+          description: 執行記錄刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /notification-policies:
+    get:
+      tags:
+        - 通知
+      summary: 取得通知策略列表
+      description: 查詢通知策略與關聯管道。
+      operationId: listNotificationPolicies
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: enabled
+          in: query
+          schema:
+            type: boolean
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, warning, info]
+      responses:
+        '200':
+          description: 成功取得通知策略列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPolicyListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    post:
+      tags:
+        - 通知
+      summary: 建立通知策略
+      description: 建立新的通知策略並設定接收者與管道。
+      operationId: createNotificationPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPolicyCreateRequest'
+      responses:
+        '201':
+          description: 通知策略建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /notification-policies/{policy_id}:
+    parameters:
+      - name: policy_id
+        in: path
+        required: true
+        description: 通知策略唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 通知
+      summary: 取得通知策略詳情
+      description: 回傳策略條件、管道與接收者設定。
+      operationId: getNotificationPolicy
+      responses:
+        '200':
+          description: 成功取得通知策略詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPolicy'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    put:
+      tags:
+        - 通知
+      summary: 更新通知策略
+      description: 覆寫通知策略條件、接收者與管道設定。
+      operationId: updateNotificationPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPolicyUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新通知策略。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    patch:
+      tags:
+        - 通知
+      summary: 局部更新通知策略
+      description: 更新通知策略狀態或優先級。
+      operationId: patchNotificationPolicy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPolicyPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新通知策略。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationPolicy'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    delete:
+      tags:
+        - 通知
+      summary: 刪除通知策略
+      description: 移除不再使用的通知策略。
+      operationId: deleteNotificationPolicy
+      responses:
+        '204':
+          description: 通知策略刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /channels:
+    get:
+      tags:
+        - 通知
+      summary: 取得通知管道列表
+      description: 查詢通知管道狀態與設定。
+      operationId: listNotificationChannels
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [email, slack, teams, webhook, line, sms]
+      responses:
+        '200':
+          description: 成功取得通知管道列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationChannelListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    post:
+      tags:
+        - 通知
+      summary: 建立通知管道
+      description: 建立新的通知管道並測試連線。
+      operationId: createNotificationChannel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationChannelCreateRequest'
+      responses:
+        '201':
+          description: 通知管道建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationChannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /channels/{channel_id}:
+    parameters:
+      - name: channel_id
+        in: path
+        required: true
+        description: 通知管道唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 通知
+      summary: 取得通知管道詳情
+      description: 回傳通知管道設定與測試結果。
+      operationId: getNotificationChannel
+      responses:
+        '200':
+          description: 成功取得通知管道詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationChannel'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    put:
+      tags:
+        - 通知
+      summary: 更新通知管道
+      description: 覆寫通知管道設定。
+      operationId: updateNotificationChannel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationChannelUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新通知管道。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationChannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    patch:
+      tags:
+        - 通知
+      summary: 局部更新通知管道
+      description: 更新通知管道狀態或描述。
+      operationId: patchNotificationChannel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationChannelPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新通知管道。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationChannel'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    delete:
+      tags:
+        - 通知
+      summary: 刪除通知管道
+      description: 移除通知管道並釋放相關策略。
+      operationId: deleteNotificationChannel
+      responses:
+        '204':
+          description: 通知管道刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /notifications:
+    get:
+      tags:
+        - 通知
+      summary: 取得通知歷史列表
+      description: 查詢通知發送記錄與狀態。
+      operationId: listNotifications
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [success, failed, retrying, cancelled]
+        - name: channel_type
+          in: query
+          schema:
+            type: string
+            enum: [email, slack, teams, webhook, line, sms]
+      responses:
+        '200':
+          description: 成功取得通知歷史列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationHistoryListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    post:
+      tags:
+        - 通知
+      summary: 建立通知記錄
+      description: 手動建立通知歷史，常用於測試。
+      operationId: createNotification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationCreateRequest'
+      responses:
+        '201':
+          description: 通知記錄建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRecord'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /notifications/{notification_id}:
+    parameters:
+      - name: notification_id
+        in: path
+        required: true
+        description: 通知記錄唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 通知
+      summary: 取得通知記錄詳情
+      description: 回傳通知發送內容、嘗試紀錄與技術細節。
+      operationId: getNotification
+      responses:
+        '200':
+          description: 成功取得通知記錄詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationRecord'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    delete:
+      tags:
+        - 通知
+      summary: 刪除通知記錄
+      description: 清理歷史通知紀錄。
+      operationId: deleteNotification
+      responses:
+        '204':
+          description: 通知記錄刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /labels:
+    get:
+      tags:
+        - 設定
+      summary: 取得標籤列表
+      description: 查詢系統內建與自訂標籤。
+      operationId: listLabels
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: '#/components/parameters/SortByParam'
+        - $ref: '#/components/parameters/SortOrderParam'
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 成功取得標籤列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LabelListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    post:
+      tags:
+        - 設定
+      summary: 建立標籤
+      description: 建立新的標籤鍵值組。
+      operationId: createLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelCreateRequest'
+      responses:
+        '201':
+          description: 標籤建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /labels/{label_id}:
+    parameters:
+      - name: label_id
+        in: path
+        required: true
+        description: 標籤唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 設定
+      summary: 取得標籤詳情
+      description: 回傳標籤分類、描述與建立者資訊。
+      operationId: getLabel
+      responses:
+        '200':
+          description: 成功取得標籤詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    put:
+      tags:
+        - 設定
+      summary: 更新標籤
+      description: 覆寫標籤資訊與描述。
+      operationId: updateLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新標籤。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    patch:
+      tags:
+        - 設定
+      summary: 局部更新標籤
+      description: 更新標籤描述或顏色。
+      operationId: patchLabel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LabelPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新標籤。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Label'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    delete:
+      tags:
+        - 設定
+      summary: 刪除標籤
+      description: 移除標籤定義。
+      operationId: deleteLabel
+      responses:
+        '204':
+          description: 標籤刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /mail-settings:
+    get:
+      tags:
+        - 設定
+      summary: 取得郵件設定列表
+      description: 查詢 SMTP 郵件設定與狀態。
+      operationId: listMailSettings
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: 成功取得郵件設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailSettingListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    post:
+      tags:
+        - 設定
+      summary: 建立郵件設定
+      description: 建立新的 SMTP 郵件設定。
+      operationId: createMailSetting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailSettingCreateRequest'
+      responses:
+        '201':
+          description: 郵件設定建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailSetting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /mail-settings/{setting_id}:
+    parameters:
+      - name: setting_id
+        in: path
+        required: true
+        description: 郵件設定唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 設定
+      summary: 取得郵件設定詳情
+      description: 回傳 SMTP 參數與測試狀態。
+      operationId: getMailSetting
+      responses:
+        '200':
+          description: 成功取得郵件設定詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailSetting'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    put:
+      tags:
+        - 設定
+      summary: 更新郵件設定
+      description: 覆寫 SMTP 連線資訊與寄件者設定。
+      operationId: updateMailSetting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailSettingUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新郵件設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailSetting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    patch:
+      tags:
+        - 設定
+      summary: 局部更新郵件設定
+      description: 更新啟用狀態或測試收件者。
+      operationId: patchMailSetting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MailSettingPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新郵件設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MailSetting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    delete:
+      tags:
+        - 設定
+      summary: 刪除郵件設定
+      description: 移除 SMTP 設定並停止寄送。
+      operationId: deleteMailSetting
+      responses:
+        '204':
+          description: 郵件設定刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /auth-settings:
+    get:
+      tags:
+        - 設定
+      summary: 取得身份驗證設定列表
+      description: 查詢 OIDC 身份驗證設定。
+      operationId: listAuthSettings
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: 成功取得身份驗證設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSettingListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    post:
+      tags:
+        - 設定
+      summary: 建立身份驗證設定
+      description: 建立新的 OIDC 認證設定。
+      operationId: createAuthSetting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthSettingCreateRequest'
+      responses:
+        '201':
+          description: 身份驗證設定建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSetting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /auth-settings/{setting_id}:
+    parameters:
+      - name: setting_id
+        in: path
+        required: true
+        description: 身份驗證設定唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 設定
+      summary: 取得身份驗證設定詳情
+      description: 回傳 OIDC 端點、用戶端憑證與測試狀態。
+      operationId: getAuthSetting
+      responses:
+        '200':
+          description: 成功取得身份驗證設定詳情。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSetting'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    put:
+      tags:
+        - 設定
+      summary: 更新身份驗證設定
+      description: 覆寫 OIDC 連線資訊與授權範圍。
+      operationId: updateAuthSetting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthSettingUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新身份驗證設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSetting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    patch:
+      tags:
+        - 設定
+      summary: 局部更新身份驗證設定
+      description: 更新啟用狀態或同步選項。
+      operationId: patchAuthSetting
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthSettingPatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新身份驗證設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSetting'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+    delete:
+      tags:
+        - 設定
+      summary: 刪除身份驗證設定
+      description: 移除 OIDC 整合設定。
+      operationId: deleteAuthSetting
+      responses:
+        '204':
+          description: 身份驗證設定刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /profile:
+    get:
+      tags:
+        - 個人偏好
+      summary: 取得使用者個人資料列表
+      description: 回傳可存取的使用者個人資料，預設僅包含目前登入者。
+      operationId: listProfiles
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: keyword
+          in: query
+          schema:
+            type: string
+          description: 依使用者名稱或電子郵件搜尋。
+      responses:
+        '200':
+          description: 成功取得個人資料列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfileListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - viewer
+    post:
+      tags:
+        - 個人偏好
+      summary: 建立使用者個人資料
+      description: 由管理員建立新使用者資料。
+      operationId: createProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileCreateRequest'
+      responses:
+        '201':
+          description: 個人資料建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /profile/{user_id}:
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: 使用者唯一識別碼，可使用 `me` 代表目前登入者。
+        schema:
+          type: string
+    get:
+      tags:
+        - 個人偏好
+      summary: 取得使用者個人資料
+      description: 回傳指定使用者的個人資訊與角色。
+      operationId: getProfile
+      responses:
+        '200':
+          description: 成功取得使用者個人資料。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - viewer
+    put:
+      tags:
+        - 個人偏好
+      summary: 更新使用者個人資料
+      description: 覆寫使用者顯示名稱、語言與時區。
+      operationId: updateProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新個人資料。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    patch:
+      tags:
+        - 個人偏好
+      summary: 局部更新個人資料
+      description: 更新語言、時區或狀態等欄位。
+      operationId: patchProfile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfilePatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新個人資料。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - platform-admin
+    delete:
+      tags:
+        - 個人偏好
+      summary: 刪除使用者個人資料
+      description: 移除使用者資料並停用帳號。
+      operationId: deleteProfile
+      responses:
+        '204':
+          description: 個人資料刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /preferences:
+    get:
+      tags:
+        - 個人偏好
+      summary: 取得偏好設定列表
+      description: 查詢使用者偏好設定資料。
+      operationId: listPreferences
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: user_id
+          in: query
+          schema:
+            type: string
+          description: 指定使用者 ID，預設為目前登入者。
+      responses:
+        '200':
+          description: 成功取得偏好設定列表。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreferenceListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - viewer
+    post:
+      tags:
+        - 個人偏好
+      summary: 建立偏好設定
+      description: 建立使用者偏好設定記錄。
+      operationId: createPreference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferenceCreateRequest'
+      responses:
+        '201':
+          description: 偏好設定建立成功。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreference'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+  /preferences/{user_id}:
+    parameters:
+      - name: user_id
+        in: path
+        required: true
+        description: 偏好設定對應的使用者 ID，可使用 `me` 代表目前登入者。
+        schema:
+          type: string
+    get:
+      tags:
+        - 個人偏好
+      summary: 取得指定使用者偏好設定
+      description: 回傳使用者的主題、通知與顯示偏好。
+      operationId: getPreference
+      responses:
+        '200':
+          description: 成功取得偏好設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreference'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - viewer
+    put:
+      tags:
+        - 個人偏好
+      summary: 更新偏好設定
+      description: 覆寫使用者偏好設定。
+      operationId: updatePreference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferenceUpdateRequest'
+      responses:
+        '200':
+          description: 成功更新偏好設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreference'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - viewer
+    patch:
+      tags:
+        - 個人偏好
+      summary: 局部更新偏好設定
+      description: 更新通知或顯示相關設定。
+      operationId: patchPreference
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPreferencePatchRequest'
+      responses:
+        '200':
+          description: 成功局部更新偏好設定。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPreference'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - sre
+        - viewer
+    delete:
+      tags:
+        - 個人偏好
+      summary: 刪除偏好設定
+      description: 移除偏好設定並還原為系統預設值。
+      operationId: deletePreference
+      responses:
+        '204':
+          description: 偏好設定刪除成功。
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+      x-roles:
+        - platform-admin
+components:
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: 目前頁碼，預設為 1。
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: page_size
+      in: query
+      description: 每頁筆數，預設為 20。
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    SortByParam:
+      name: sort_by
+      in: query
+      description: 排序欄位，依各資源支援欄位決定。
+      schema:
+        type: string
+    SortOrderParam:
+      name: sort_order
+      in: query
+      description: 排序方向，預設為遞減。
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+  responses:
+    BadRequest:
+      description: 請求參數錯誤或資料驗證失敗。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: 驗證失敗或尚未登入。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: 權限不足。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 資料不存在或已被移除。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: 資料狀態衝突或重複。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    InternalError:
+      description: 伺服器內部錯誤。
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+          description: 錯誤代碼，對應 x-error-codes。
+        message:
+          type: string
+          description: 錯誤訊息描述。
+        details:
+          type: array
+          description: 進一步的錯誤細節。
+          items:
+            type: string
+      required: [code, message]
+    UserReference:
+      type: object
+      description: 簡化的使用者參考資訊。
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+          format: email
+      required: [id, username]
+    TeamReference:
+      type: object
+      description: 使用者所屬團隊資訊。
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+      required: [id, name]
+    RecipientReference:
+      type: object
+      description: 通知接收者資訊。
+      properties:
+        id:
+          type: string
+        display_name:
+          type: string
+        type:
+          type: string
+          description: 接收者類型 (user/team/role)。
+      required: [id]
+    NotificationAttempt:
+      type: object
+      description: 單次通知嘗試紀錄。
+      properties:
+        attempt_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [success, failed, retrying]
+        response_code:
+          type: integer
+        response_body:
+          type: string
+        error_message:
+          type: string
+    EventTimelineEntry:
+      type: object
+      description: 事件處理歷史項目。
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        action:
+          type: string
+        actor:
+          $ref: '#/components/schemas/UserReference'
+        notes:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
+    EventRelatedItem:
+      type: object
+      description: 關聯事件資訊。
+      properties:
+        event_id:
+          type: string
+        summary:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        status:
+          type: string
+          enum: [new, acknowledged, in_progress, resolved, silenced]
+    AutomationAction:
+      type: object
+      description: 事件觸發的自動化動作。
+      properties:
+        script_id:
+          type: string
+        script_name:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, success, failed]
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        output_summary:
+          type: string
+    Event:
+      type: object
+      description: 事件列表所需欄位。
+      properties:
+        id:
+          type: string
+          format: uuid
+        event_key:
+          type: string
+          description: 外部事件識別碼。
+        summary:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [new, acknowledged, in_progress, resolved, silenced]
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        service_impact:
+          type: string
+        resource_id:
+          type: string
+        resource_name:
+          type: string
+        rule_id:
+          type: string
+        rule_name:
+          type: string
+        metric:
+          type: string
+        trigger_threshold:
+          type: string
+        trigger_value:
+          type: string
+        unit:
+          type: string
+        trigger_time:
+          type: string
+          format: date-time
+        assignee:
+          $ref: '#/components/schemas/UserReference'
+        acknowledged_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, summary, status, severity, trigger_time]
+    EventDetail:
+      allOf:
+        - $ref: '#/components/schemas/Event'
+        - type: object
+          properties:
+            description:
+              type: string
+            detection_source:
+              type: string
+            timeline:
+              type: array
+              items:
+                $ref: '#/components/schemas/EventTimelineEntry'
+            related_events:
+              type: array
+              items:
+                $ref: '#/components/schemas/EventRelatedItem'
+            automation_actions:
+              type: array
+              items:
+                $ref: '#/components/schemas/AutomationAction'
+            attachments:
+              type: array
+              items:
+                type: string
+                format: uri
+    EventCreateRequest:
+      type: object
+      required: [summary, status, severity, trigger_time]
+      properties:
+        summary:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [new, acknowledged, in_progress, resolved, silenced]
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        service_impact:
+          type: string
+        resource_id:
+          type: string
+        rule_id:
+          type: string
+        metric:
+          type: string
+        trigger_threshold:
+          type: string
+        trigger_value:
+          type: string
+        unit:
+          type: string
+        trigger_time:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+    EventUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/EventCreateRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [new, acknowledged, in_progress, resolved, silenced]
+            assignee_id:
+              type: string
+            acknowledged_at:
+              type: string
+              format: date-time
+            resolved_at:
+              type: string
+              format: date-time
+            detection_source:
+              type: string
+    EventPatchRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [new, acknowledged, in_progress, resolved, silenced]
+        assignee_id:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        acknowledged_at:
+          type: string
+          format: date-time
+        resolved_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
+    EventListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Event'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    LabelSelector:
+      type: object
+      properties:
+        key:
+          type: string
+        operator:
+          type: string
+          enum: [equals, not_equals, exists]
+          default: equals
+        value:
+          type: string
+      required: [key]
+    RuleCondition:
+      type: object
+      properties:
+        metric:
+          type: string
+        comparison:
+          type: string
+          enum: ['>', '>=', '<', '<=', '==']
+        threshold:
+          type: number
+        unit:
+          type: string
+        duration_minutes:
+          type: integer
+        severity:
+          type: string
+          enum: [critical, warning, info]
+      required: [metric, comparison, threshold]
+    ConditionGroup:
+      type: object
+      properties:
+        group_id:
+          type: string
+        logic:
+          type: string
+          enum: [all, any]
+          description: group_id 內條件的邏輯關係。
+        conditions:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleCondition'
+      required: [conditions]
+    EventRule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        target_type:
+          type: string
+          description: 監控對象類型 (resource/resource_group/tag)。
+        label_selectors:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelSelector'
+        condition_groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionGroup'
+        automation_enabled:
+          type: boolean
+        script_id:
+          type: string
+        script_name:
+          type: string
+        automation_parameters:
+          type: object
+          additionalProperties: true
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, enabled, severity]
+    EventRuleCreateRequest:
+      type: object
+      required: [name, severity, condition_groups]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        target_type:
+          type: string
+        label_selectors:
+          type: array
+          items:
+            $ref: '#/components/schemas/LabelSelector'
+        condition_groups:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConditionGroup'
+        automation_enabled:
+          type: boolean
+        script_id:
+          type: string
+        automation_parameters:
+          type: object
+          additionalProperties: true
+    EventRuleUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/EventRuleCreateRequest'
+        - type: object
+          properties:
+            enabled:
+              type: boolean
+    EventRulePatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        automation_enabled:
+          type: boolean
+        script_id:
+          type: string
+    EventRuleListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventRule'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    SilenceMatcher:
+      type: object
+      properties:
+        key:
+          type: string
+        operator:
+          type: string
+          enum: [equals, not_equals, regex]
+          default: equals
+        value:
+          type: string
+      required: [key, value]
+    SilenceRepeatPattern:
+      type: object
+      properties:
+        repeat_mode:
+          type: string
+          enum: [once, daily, weekly, monthly]
+        days_of_week:
+          type: array
+          items:
+            type: string
+        days_of_month:
+          type: array
+          items:
+            type: integer
+        duration_hours:
+          type: number
+        end_at:
+          type: string
+          format: date-time
+        max_repeats:
+          type: integer
+    Silence:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        silence_type:
+          type: string
+          enum: [single, recurring, condition]
+        scope:
+          type: string
+          enum: [global, resource, resource_group, team, labels]
+        matchers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SilenceMatcher'
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        repeat_pattern:
+          $ref: '#/components/schemas/SilenceRepeatPattern'
+        is_enabled:
+          type: boolean
+        notify_on_start:
+          type: boolean
+        notify_on_end:
+          type: boolean
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, silence_type, scope]
+    SilenceCreateRequest:
+      type: object
+      required: [name, silence_type, scope, start_time, end_time]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        silence_type:
+          type: string
+          enum: [single, recurring, condition]
+        scope:
+          type: string
+          enum: [global, resource, resource_group, team, labels]
+        matchers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SilenceMatcher'
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        timezone:
+          type: string
+        repeat_pattern:
+          $ref: '#/components/schemas/SilenceRepeatPattern'
+        notify_on_start:
+          type: boolean
+        notify_on_end:
+          type: boolean
+    SilenceUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/SilenceCreateRequest'
+        - type: object
+          properties:
+            is_enabled:
+              type: boolean
+    SilencePatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        is_enabled:
+          type: boolean
+        notify_on_start:
+          type: boolean
+        notify_on_end:
+          type: boolean
+        end_time:
+          type: string
+          format: date-time
+    SilenceListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Silence'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+          enum: [healthy, warning, critical, maintenance]
+        type:
+          type: string
+          enum: [server, database, cache, gateway, service]
+        ip_address:
+          type: string
+        location:
+          type: string
+        environment:
+          type: string
+        team:
+          type: string
+        os:
+          type: string
+        cpu_usage:
+          type: number
+        memory_usage:
+          type: number
+        disk_usage:
+          type: number
+        network_in_mbps:
+          type: number
+        network_out_mbps:
+          type: number
+        tags:
+          type: array
+          items:
+            type: string
+        label_values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        group_ids:
+          type: array
+          items:
+            type: string
+        last_event_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, status, type]
+    ResourceCreateRequest:
+      type: object
+      required: [name, status, type, ip_address]
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [healthy, warning, critical, maintenance]
+        type:
+          type: string
+          enum: [server, database, cache, gateway, service]
+        ip_address:
+          type: string
+        location:
+          type: string
+        environment:
+          type: string
+        team:
+          type: string
+        os:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        group_ids:
+          type: array
+          items:
+            type: string
+    ResourceUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ResourceCreateRequest'
+        - type: object
+          properties:
+            last_event_count:
+              type: integer
+    ResourcePatchRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [healthy, warning, critical, maintenance]
+        team:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        group_ids:
+          type: array
+          items:
+            type: string
+    ResourceListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Resource'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    ResourceGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        owner:
+          $ref: '#/components/schemas/UserReference'
+        owner_team:
+          type: string
+        member_count:
+          type: integer
+        subscriber_count:
+          type: integer
+        status_summary:
+          type: object
+          properties:
+            healthy:
+              type: integer
+            warning:
+              type: integer
+            critical:
+              type: integer
+        resource_ids:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name]
+    ResourceGroupCreateRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        owner_id:
+          type: string
+        owner_team:
+          type: string
+        resource_ids:
+          type: array
+          items:
+            type: string
+    ResourceGroupUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ResourceGroupCreateRequest'
+        - type: object
+          properties:
+            subscriber_ids:
+              type: array
+              items:
+                type: string
+    ResourceGroupPatchRequest:
+      type: object
+      properties:
+        description:
+          type: string
+        owner_id:
+          type: string
+        owner_team:
+          type: string
+        resource_ids:
+          type: array
+          items:
+            type: string
+        subscriber_ids:
+          type: array
+          items:
+            type: string
+    ResourceGroupListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ResourceGroup'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    TopologyNode:
+      type: object
+      properties:
+        id:
+          type: string
+        resource_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        environment:
+          type: string
+        team:
+          type: string
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+    TopologyEdge:
+      type: object
+      properties:
+        id:
+          type: string
+        source_id:
+          type: string
+        target_id:
+          type: string
+        connection_type:
+          type: string
+        latency_ms:
+          type: number
+        throughput_mbps:
+          type: number
+    TopologyView:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        layout:
+          type: string
+          enum: [force_directed, hierarchical, grid]
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyEdge'
+        last_synced_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, nodes, edges]
+    TopologyCreateRequest:
+      type: object
+      required: [name, nodes, edges]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        layout:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyEdge'
+    TopologyUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/TopologyCreateRequest'
+        - type: object
+          properties:
+            last_synced_at:
+              type: string
+              format: date-time
+    TopologyPatchRequest:
+      type: object
+      properties:
+        description:
+          type: string
+        layout:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyNode'
+        edges:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyEdge'
+    TopologyListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TopologyView'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    Dashboard:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        category:
+          type: string
+          enum: [war_room, infrastructure, custom]
+        description:
+          type: string
+        owner:
+          $ref: '#/components/schemas/UserReference'
+        tags:
+          type: array
+          items:
+            type: string
+        is_published:
+          type: boolean
+        is_default:
+          type: boolean
+        published_at:
+          type: string
+          format: date-time
+        kpi_summary:
+          type: object
+          additionalProperties:
+            type: number
+        widgets:
+          type: array
+          description: 儀表板小工具配置。
+          items:
+            type: object
+            additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, category]
+    DashboardCreateRequest:
+      type: object
+      required: [name, category]
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+          enum: [war_room, infrastructure, custom]
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        widgets:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        is_published:
+          type: boolean
+    DashboardUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/DashboardCreateRequest'
+        - type: object
+          properties:
+            owner_id:
+              type: string
+            kpi_summary:
+              type: object
+              additionalProperties:
+                type: number
+    DashboardPatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        is_published:
+          type: boolean
+        is_default:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+    DashboardListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Dashboard'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    InsightMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        current_value:
+          type: number
+        baseline_value:
+          type: number
+        trend:
+          type: string
+    InsightRecommendation:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        priority:
+          type: string
+          enum: [high, medium, low]
+    Insight:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        category:
+          type: string
+          enum: [capacity, performance, risk, ai_insight]
+        summary:
+          type: string
+        status:
+          type: string
+          enum: [draft, published, archived]
+        chart_type:
+          type: string
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsightMetric'
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsightRecommendation'
+        generated_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, title, category]
+    InsightCreateRequest:
+      type: object
+      required: [title, category]
+      properties:
+        title:
+          type: string
+        category:
+          type: string
+          enum: [capacity, performance, risk, ai_insight]
+        summary:
+          type: string
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsightMetric'
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsightRecommendation'
+    InsightUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/InsightCreateRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [draft, published, archived]
+    InsightPatchRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        summary:
+          type: string
+        status:
+          type: string
+          enum: [draft, published, archived]
+        recommendations:
+          type: array
+          items:
+            $ref: '#/components/schemas/InsightRecommendation'
+    InsightListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Insight'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    WarRoomTimelineEntry:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        description:
+          type: string
+        actor:
+          $ref: '#/components/schemas/UserReference'
+        event_id:
+          type: string
+    WarRoom:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        status:
+          type: string
+          enum: [active, monitoring, resolved]
+        severity_focus:
+          type: string
+          enum: [critical, high, medium]
+        facilitator:
+          $ref: '#/components/schemas/UserReference'
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserReference'
+        incident_ids:
+          type: array
+          items:
+            type: string
+        timeline:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarRoomTimelineEntry'
+        notes:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        ended_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, title, status]
+    WarRoomCreateRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        severity_focus:
+          type: string
+          enum: [critical, high, medium]
+        facilitator_id:
+          type: string
+        participants:
+          type: array
+          items:
+            type: string
+        incident_ids:
+          type: array
+          items:
+            type: string
+    WarRoomUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/WarRoomCreateRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [active, monitoring, resolved]
+            timeline:
+              type: array
+              items:
+                $ref: '#/components/schemas/WarRoomTimelineEntry'
+            notes:
+              type: string
+    WarRoomPatchRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [active, monitoring, resolved]
+        notes:
+          type: string
+        ended_at:
+          type: string
+          format: date-time
+    WarRoomListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WarRoom'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    Script:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [shell, python, ansible, terraform]
+        description:
+          type: string
+        version:
+          type: string
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        last_execution_status:
+          type: string
+          enum: [success, failed, running, never]
+        last_execution_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        updated_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, type]
+    ScriptCreateRequest:
+      type: object
+      required: [name, type, content]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [shell, python, ansible, terraform]
+        description:
+          type: string
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+    ScriptUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ScriptCreateRequest'
+        - type: object
+          properties:
+            version:
+              type: string
+    ScriptPatchRequest:
+      type: object
+      properties:
+        description:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        content:
+          type: string
+    ScriptListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Script'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    ScheduleRetryPolicy:
+      type: object
+      properties:
+        max_retries:
+          type: integer
+        interval_seconds:
+          type: integer
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        script_id:
+          type: string
+        script_name:
+          type: string
+        type:
+          type: string
+          enum: [one_time, recurring]
+        cron_expression:
+          type: string
+        timezone:
+          type: string
+        next_run_time:
+          type: string
+          format: date-time
+        last_run_time:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [enabled, disabled, running]
+        concurrency_policy:
+          type: string
+          enum: [allow, forbid]
+        retry_policy:
+          $ref: '#/components/schemas/ScheduleRetryPolicy'
+        notify_on_success:
+          type: boolean
+        notify_on_failure:
+          type: boolean
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        updated_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, script_id, type]
+    ScheduleCreateRequest:
+      type: object
+      required: [name, script_id, type]
+      properties:
+        name:
+          type: string
+        script_id:
+          type: string
+        type:
+          type: string
+          enum: [one_time, recurring]
+        cron_expression:
+          type: string
+        timezone:
+          type: string
+        concurrency_policy:
+          type: string
+          enum: [allow, forbid]
+        retry_policy:
+          $ref: '#/components/schemas/ScheduleRetryPolicy'
+        notify_on_success:
+          type: boolean
+        notify_on_failure:
+          type: boolean
+    ScheduleUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ScheduleCreateRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [enabled, disabled, running]
+    SchedulePatchRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [enabled, disabled, running]
+        cron_expression:
+          type: string
+        timezone:
+          type: string
+        notify_on_success:
+          type: boolean
+        notify_on_failure:
+          type: boolean
+    ScheduleListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Schedule'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    Execution:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        script_id:
+          type: string
+        script_name:
+          type: string
+        schedule_id:
+          type: string
+        trigger_source:
+          type: string
+          enum: [event, schedule, manual]
+        start_time:
+          type: string
+          format: date-time
+        end_time:
+          type: string
+          format: date-time
+        duration_ms:
+          type: integer
+        status:
+          type: string
+          enum: [success, failed, running, cancelled]
+        triggered_by:
+          $ref: '#/components/schemas/UserReference'
+        parameters:
+          type: object
+          additionalProperties: true
+        stdout:
+          type: string
+        stderr:
+          type: string
+        error_message:
+          type: string
+        related_event_ids:
+          type: array
+          items:
+            type: string
+        attempt_count:
+          type: integer
+      required: [id, script_id, trigger_source, status]
+    ExecutionCreateRequest:
+      type: object
+      required: [script_id]
+      properties:
+        script_id:
+          type: string
+        schedule_id:
+          type: string
+        trigger_source:
+          type: string
+          enum: [event, schedule, manual]
+        parameters:
+          type: object
+          additionalProperties: true
+    ExecutionUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/ExecutionCreateRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [success, failed, running, cancelled]
+            start_time:
+              type: string
+              format: date-time
+            end_time:
+              type: string
+              format: date-time
+            stdout:
+              type: string
+            stderr:
+              type: string
+            error_message:
+              type: string
+    ExecutionPatchRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [success, failed, running, cancelled]
+        notes:
+          type: string
+    ExecutionListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Execution'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    NotificationPolicy:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        priority:
+          type: string
+          enum: [high, medium, low]
+        severity_filters:
+          type: array
+          items:
+            type: string
+            enum: [critical, warning, info]
+        channel_ids:
+          type: array
+          items:
+            type: string
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipientReference'
+        escalation_delay_minutes:
+          type: integer
+        repeat_frequency_minutes:
+          type: integer
+        trigger_condition:
+          type: object
+          additionalProperties: true
+        resource_filters:
+          type: object
+          additionalProperties: true
+        silence_ids:
+          type: array
+          items:
+            type: string
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        updated_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, enabled]
+    NotificationPolicyCreateRequest:
+      type: object
+      required: [name, severity_filters]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        priority:
+          type: string
+          enum: [high, medium, low]
+        severity_filters:
+          type: array
+          items:
+            type: string
+            enum: [critical, warning, info]
+        channel_ids:
+          type: array
+          items:
+            type: string
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipientReference'
+        trigger_condition:
+          type: object
+          additionalProperties: true
+        resource_filters:
+          type: object
+          additionalProperties: true
+    NotificationPolicyUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/NotificationPolicyCreateRequest'
+        - type: object
+          properties:
+            escalation_delay_minutes:
+              type: integer
+            repeat_frequency_minutes:
+              type: integer
+            silence_ids:
+              type: array
+              items:
+                type: string
+    NotificationPolicyPatchRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        priority:
+          type: string
+          enum: [high, medium, low]
+        channel_ids:
+          type: array
+          items:
+            type: string
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipientReference'
+    NotificationPolicyListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationPolicy'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    NotificationChannel:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        type:
+          type: string
+          enum: [email, slack, teams, webhook, line, sms]
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, error]
+        config:
+          type: object
+          additionalProperties: true
+        last_tested_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        updated_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, name, type]
+    NotificationChannelCreateRequest:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [email, slack, teams, webhook, line, sms]
+        description:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+    NotificationChannelUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/NotificationChannelCreateRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [active, inactive, error]
+    NotificationChannelPatchRequest:
+      type: object
+      properties:
+        description:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, error]
+        config:
+          type: object
+          additionalProperties: true
+    NotificationChannelListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationChannel'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    NotificationRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        policy_id:
+          type: string
+        policy_name:
+          type: string
+        channel_id:
+          type: string
+        channel_type:
+          type: string
+          enum: [email, slack, teams, webhook, line, sms]
+        status:
+          type: string
+          enum: [success, failed, retrying, cancelled]
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipientReference'
+        sent_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+        retry_count:
+          type: integer
+        duration_ms:
+          type: integer
+        error_message:
+          type: string
+        payload_excerpt:
+          type: string
+        attempts:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationAttempt'
+        metadata:
+          type: object
+          additionalProperties: true
+        related_event_id:
+          type: string
+      required: [id, channel_type, status]
+    NotificationCreateRequest:
+      type: object
+      required: [policy_id, channel_id]
+      properties:
+        policy_id:
+          type: string
+        channel_id:
+          type: string
+        status:
+          type: string
+          enum: [success, failed, retrying, cancelled]
+        recipients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipientReference'
+        payload:
+          type: object
+          additionalProperties: true
+    NotificationHistoryListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/NotificationRecord'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    Label:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        value:
+          type: string
+        category:
+          type: string
+        color:
+          type: string
+        description:
+          type: string
+        is_system:
+          type: boolean
+        usage_count:
+          type: integer
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        updated_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, key, value]
+    LabelCreateRequest:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          type: string
+        value:
+          type: string
+        category:
+          type: string
+        color:
+          type: string
+        description:
+          type: string
+        is_system:
+          type: boolean
+    LabelUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/LabelCreateRequest'
+    LabelPatchRequest:
+      type: object
+      properties:
+        category:
+          type: string
+        color:
+          type: string
+        description:
+          type: string
+        is_system:
+          type: boolean
+    LabelListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Label'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    MailSetting:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        smtp_host:
+          type: string
+        smtp_port:
+          type: integer
+        username:
+          type: string
+        sender_name:
+          type: string
+        sender_email:
+          type: string
+          format: email
+        reply_to:
+          type: string
+          format: email
+        encryption:
+          type: string
+          enum: [none, tls, ssl]
+        test_recipient:
+          type: string
+          format: email
+        is_enabled:
+          type: boolean
+        last_tested_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        updated_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, smtp_host, smtp_port]
+    MailSettingCreateRequest:
+      type: object
+      required: [smtp_host, smtp_port, sender_email]
+      properties:
+        smtp_host:
+          type: string
+        smtp_port:
+          type: integer
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+        sender_name:
+          type: string
+        sender_email:
+          type: string
+          format: email
+        reply_to:
+          type: string
+          format: email
+        encryption:
+          type: string
+          enum: [none, tls, ssl]
+        test_recipient:
+          type: string
+          format: email
+        is_enabled:
+          type: boolean
+    MailSettingUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/MailSettingCreateRequest'
+    MailSettingPatchRequest:
+      type: object
+      properties:
+        encryption:
+          type: string
+          enum: [none, tls, ssl]
+        test_recipient:
+          type: string
+          format: email
+        is_enabled:
+          type: boolean
+    MailSettingListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MailSetting'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    AuthSetting:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider:
+          type: string
+          enum: [keycloak, auth0, google, microsoft, custom]
+        oidc_enabled:
+          type: boolean
+        realm:
+          type: string
+        client_id:
+          type: string
+        client_secret_hint:
+          type: string
+        auth_url:
+          type: string
+          format: uri
+        token_url:
+          type: string
+          format: uri
+        userinfo_url:
+          type: string
+          format: uri
+        redirect_uri:
+          type: string
+          format: uri
+        logout_url:
+          type: string
+          format: uri
+        scopes:
+          type: array
+          items:
+            type: string
+        user_sync:
+          type: boolean
+        last_tested_at:
+          type: string
+          format: date-time
+        created_by:
+          $ref: '#/components/schemas/UserReference'
+        updated_by:
+          $ref: '#/components/schemas/UserReference'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, provider]
+    AuthSettingCreateRequest:
+      type: object
+      required: [provider, client_id, auth_url, token_url]
+      properties:
+        provider:
+          type: string
+          enum: [keycloak, auth0, google, microsoft, custom]
+        oidc_enabled:
+          type: boolean
+        realm:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+          format: password
+        auth_url:
+          type: string
+          format: uri
+        token_url:
+          type: string
+          format: uri
+        userinfo_url:
+          type: string
+          format: uri
+        redirect_uri:
+          type: string
+          format: uri
+        logout_url:
+          type: string
+          format: uri
+        scopes:
+          type: array
+          items:
+            type: string
+        user_sync:
+          type: boolean
+    AuthSettingUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/AuthSettingCreateRequest'
+      properties:
+        client_secret_hint:
+          type: string
+    AuthSettingPatchRequest:
+      type: object
+      properties:
+        oidc_enabled:
+          type: boolean
+        user_sync:
+          type: boolean
+        scopes:
+          type: array
+          items:
+            type: string
+    AuthSettingListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthSetting'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+        language:
+          type: string
+        timezone:
+          type: string
+        teams:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamReference'
+        last_login_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, username]
+    UserProfileCreateRequest:
+      type: object
+      required: [username, email]
+      properties:
+        username:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+        language:
+          type: string
+        timezone:
+          type: string
+    UserProfileUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/UserProfileCreateRequest'
+        - type: object
+          properties:
+            status:
+              type: string
+              enum: [active, inactive, suspended]
+    UserProfilePatchRequest:
+      type: object
+      properties:
+        display_name:
+          type: string
+        language:
+          type: string
+        timezone:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+    UserProfileListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserProfile'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
+    NotificationPreferences:
+      type: object
+      properties:
+        email_notification:
+          type: boolean
+        slack_notification:
+          type: boolean
+        merge_notification:
+          type: boolean
+    DisplayOptions:
+      type: object
+      properties:
+        animation:
+          type: boolean
+        tooltips:
+          type: boolean
+        compact_mode:
+          type: boolean
+    UserPreference:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+        theme:
+          type: string
+          enum: [light, dark, auto]
+        default_page:
+          type: string
+          enum: [war_room, events, resources, dashboards]
+        language:
+          type: string
+        timezone:
+          type: string
+        notification_preferences:
+          $ref: '#/components/schemas/NotificationPreferences'
+        display_options:
+          $ref: '#/components/schemas/DisplayOptions'
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, user_id]
+    UserPreferenceCreateRequest:
+      type: object
+      required: [user_id]
+      properties:
+        user_id:
+          type: string
+        theme:
+          type: string
+          enum: [light, dark, auto]
+        default_page:
+          type: string
+          enum: [war_room, events, resources, dashboards]
+        language:
+          type: string
+        timezone:
+          type: string
+        notification_preferences:
+          $ref: '#/components/schemas/NotificationPreferences'
+        display_options:
+          $ref: '#/components/schemas/DisplayOptions'
+    UserPreferenceUpdateRequest:
+      allOf:
+        - $ref: '#/components/schemas/UserPreferenceCreateRequest'
+    UserPreferencePatchRequest:
+      type: object
+      properties:
+        theme:
+          type: string
+          enum: [light, dark, auto]
+        default_page:
+          type: string
+          enum: [war_room, events, resources, dashboards]
+        notification_preferences:
+          $ref: '#/components/schemas/NotificationPreferences'
+        display_options:
+          $ref: '#/components/schemas/DisplayOptions'
+    UserPreferenceListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserPreference'
+        page:
+          type: integer
+        page_size:
+          type: integer
+        total:
+          type: integer
+        has_more:
+          type: boolean
