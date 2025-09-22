@@ -15,7 +15,8 @@ CREATE TABLE users (
     timezone VARCHAR(64) DEFAULT 'Asia/Taipei',
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_users_status CHECK (status IN ('active','disabled'))
 );
 CREATE INDEX idx_users_status ON users (status);
 
@@ -37,13 +38,26 @@ CREATE TABLE team_members (
 );
 CREATE INDEX idx_team_members_user ON team_members (user_id);
 
+CREATE TABLE team_subscribers (
+    team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+    subscriber_id VARCHAR(128) NOT NULL,
+    subscriber_type VARCHAR(32) NOT NULL,
+    user_id UUID REFERENCES users(id),
+    subscribed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (team_id, subscriber_id),
+    CONSTRAINT chk_team_subscribers_type CHECK (subscriber_type IN ('USER','SLACK_CHANNEL','EMAIL_GROUP','ON_CALL_SCHEDULE'))
+);
+CREATE INDEX idx_team_subscribers_user ON team_subscribers (user_id);
+CREATE INDEX idx_team_subscribers_type ON team_subscribers (subscriber_type);
+
 CREATE TABLE roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(64) NOT NULL UNIQUE,
     description TEXT,
     status VARCHAR(32) NOT NULL DEFAULT 'active',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_roles_status CHECK (status IN ('active','inactive'))
 );
 CREATE INDEX idx_roles_status ON roles (status);
 
@@ -71,7 +85,8 @@ CREATE TABLE security_login_history (
     device_info VARCHAR(256),
     status VARCHAR(32) NOT NULL,
     location VARCHAR(128),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_security_login_status CHECK (status IN ('success','failed'))
 );
 CREATE INDEX idx_security_login_user ON security_login_history (user_id, login_time DESC);
 
@@ -83,7 +98,9 @@ CREATE TABLE user_preferences (
     timezone VARCHAR(64) DEFAULT 'Asia/Taipei',
     notification_preferences JSONB NOT NULL DEFAULT '{"email_notification":true,"slack_notification":false,"merge_notification":false}'::JSONB,
     display_options JSONB NOT NULL DEFAULT '{"animation":true,"tooltips":true,"compact_mode":false}'::JSONB,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_user_preferences_theme CHECK (theme IN ('light','dark','auto')),
+    CONSTRAINT chk_user_preferences_default_page CHECK (default_page IN ('war_room','incidents','resources','dashboards'))
 );
 
 CREATE TABLE user_notifications (
@@ -97,9 +114,43 @@ CREATE TABLE user_notifications (
     link_url TEXT,
     actions JSONB DEFAULT '[]'::JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    read_at TIMESTAMPTZ
+    read_at TIMESTAMPTZ,
+    CONSTRAINT chk_user_notifications_severity CHECK (severity IN ('critical','warning','info','success')),
+    CONSTRAINT chk_user_notifications_status CHECK (status IN ('unread','read'))
 );
 CREATE INDEX idx_user_notifications_user ON user_notifications (user_id, status, created_at DESC);
+
+-- =============================
+-- 自動化腳本 (供事件規則及排程引用)
+-- =============================
+CREATE TABLE automation_scripts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL UNIQUE,
+    type VARCHAR(32) NOT NULL,
+    description TEXT,
+    content TEXT NOT NULL,
+    version VARCHAR(32) DEFAULT 'v1',
+    tags JSONB DEFAULT '[]'::JSONB,
+    last_execution_status VARCHAR(32) DEFAULT 'never',
+    last_execution_at TIMESTAMPTZ,
+    created_by UUID REFERENCES users(id),
+    updated_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_automation_scripts_type CHECK (type IN ('shell','python','ansible','terraform')),
+    CONSTRAINT chk_automation_scripts_last_status CHECK (last_execution_status IN ('never','running','success','failed'))
+);
+
+CREATE TABLE automation_script_versions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    script_id UUID NOT NULL REFERENCES automation_scripts(id) ON DELETE CASCADE,
+    version VARCHAR(32) NOT NULL,
+    content TEXT NOT NULL,
+    changelog TEXT,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX idx_script_versions_unique ON automation_script_versions (script_id, version);
 
 -- =============================
 -- 事件資料模型
@@ -116,11 +167,12 @@ CREATE TABLE event_rules (
     title_template TEXT,
     content_template TEXT,
     automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    automation_script_id UUID,
+    automation_script_id UUID REFERENCES automation_scripts(id),
     automation_parameters JSONB DEFAULT '{}'::JSONB,
     creator_id UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_event_rules_severity CHECK (severity IN ('critical','warning','info'))
 );
 CREATE INDEX idx_event_rules_enabled ON event_rules (enabled);
 
@@ -142,7 +194,12 @@ CREATE TABLE silence_rules (
     notify_on_end BOOLEAN NOT NULL DEFAULT FALSE,
     created_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_silence_rules_type CHECK (silence_type IN ('single','repeat','condition')),
+    CONSTRAINT chk_silence_rules_scope CHECK (scope IN ('global','resource','team','tag')),
+    CONSTRAINT chk_silence_rules_repeat_freq CHECK (
+        repeat_frequency IS NULL OR repeat_frequency IN ('daily','weekly','monthly')
+    )
 );
 CREATE INDEX idx_silence_rules_active ON silence_rules (enabled, starts_at, ends_at);
 
@@ -151,7 +208,8 @@ CREATE TABLE silence_rule_matchers (
     silence_id UUID NOT NULL REFERENCES silence_rules(id) ON DELETE CASCADE,
     matcher_key VARCHAR(128) NOT NULL,
     operator VARCHAR(32) NOT NULL,
-    matcher_value VARCHAR(256) NOT NULL
+    matcher_value VARCHAR(256) NOT NULL,
+    CONSTRAINT chk_silence_matchers_operator CHECK (operator IN ('equals','regex'))
 );
 CREATE INDEX idx_silence_matchers_silence ON silence_rule_matchers (silence_id);
 
@@ -162,6 +220,7 @@ CREATE TABLE events (
     description TEXT,
     severity VARCHAR(32) NOT NULL,
     status VARCHAR(32) NOT NULL,
+    source VARCHAR(100),
     service_impact TEXT,
     resource_id UUID,
     rule_id UUID REFERENCES event_rules(id),
@@ -174,7 +233,9 @@ CREATE TABLE events (
     resolved_at TIMESTAMPTZ,
     metadata JSONB DEFAULT '{}'::JSONB,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_events_severity CHECK (severity IN ('critical','warning','info')),
+    CONSTRAINT chk_events_status CHECK (status IN ('new','acknowledged','in_progress','resolved','silenced'))
 );
 CREATE INDEX idx_events_status ON events (status);
 CREATE INDEX idx_events_severity ON events (severity);
@@ -193,7 +254,8 @@ CREATE TABLE event_timeline (
     message TEXT NOT NULL,
     metadata JSONB DEFAULT '{}'::JSONB,
     created_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_event_timeline_type CHECK (entry_type IN ('status_change','note','automation','notification'))
 );
 CREATE INDEX idx_event_timeline_event ON event_timeline (event_id, created_at);
 
@@ -233,9 +295,12 @@ CREATE TABLE resources (
     network_in_mbps NUMERIC(10,2) DEFAULT 0,
     network_out_mbps NUMERIC(10,2) DEFAULT 0,
     service_impact TEXT,
+    notes TEXT,
     last_event_count INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_resources_status CHECK (status IN ('healthy','warning','critical','offline')),
+    CONSTRAINT chk_resources_type CHECK (type IN ('server','database','cache','gateway','service'))
 );
 CREATE INDEX idx_resources_status ON resources (status);
 CREATE INDEX idx_resources_type ON resources (type);
@@ -247,6 +312,17 @@ CREATE TABLE resource_labels (
     label_value VARCHAR(128) NOT NULL,
     PRIMARY KEY (resource_id, label_key)
 );
+
+CREATE TABLE resource_metrics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    metric VARCHAR(64) NOT NULL,
+    unit VARCHAR(16),
+    collected_at TIMESTAMPTZ NOT NULL,
+    value NUMERIC(12,4) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_resource_metrics_resource ON resource_metrics (resource_id, metric, collected_at DESC);
 
 CREATE TABLE resource_groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -291,14 +367,19 @@ CREATE TABLE dashboards (
     category VARCHAR(64) NOT NULL,
     description TEXT,
     owner_id UUID REFERENCES users(id),
-    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
-    is_published BOOLEAN NOT NULL DEFAULT FALSE,
+    status VARCHAR(32) NOT NULL DEFAULT 'draft',
     is_default BOOLEAN NOT NULL DEFAULT FALSE,
-    views_count INTEGER NOT NULL DEFAULT 0,
-    favorites_count INTEGER NOT NULL DEFAULT 0,
+    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+    viewer_count INTEGER NOT NULL DEFAULT 0,
+    favorite_count INTEGER NOT NULL DEFAULT 0,
+    panel_count INTEGER NOT NULL DEFAULT 0,
+    tags TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
+    data_sources TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
+    target_page_key VARCHAR(64),
     published_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_dashboards_status CHECK (status IN ('draft','published'))
 );
 CREATE INDEX idx_dashboards_category ON dashboards (category);
 CREATE INDEX idx_dashboards_owner ON dashboards (owner_id);
@@ -384,39 +465,13 @@ CREATE TABLE ai_insight_suggestions (
     title VARCHAR(256) NOT NULL,
     priority VARCHAR(16) NOT NULL,
     description TEXT,
-    action_url TEXT
+    action_url TEXT,
+    CONSTRAINT chk_ai_insight_suggestions_priority CHECK (priority IN ('high','medium','low'))
 );
 
 -- =============================
--- 自動化腳本與排程
+-- 自動化排程與執行
 -- =============================
-CREATE TABLE automation_scripts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(128) NOT NULL UNIQUE,
-    type VARCHAR(32) NOT NULL,
-    description TEXT,
-    content TEXT NOT NULL,
-    version VARCHAR(32) DEFAULT 'v1',
-    tags JSONB DEFAULT '[]'::JSONB,
-    last_execution_status VARCHAR(32) DEFAULT 'never',
-    last_execution_at TIMESTAMPTZ,
-    created_by UUID REFERENCES users(id),
-    updated_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE automation_script_versions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    script_id UUID NOT NULL REFERENCES automation_scripts(id) ON DELETE CASCADE,
-    version VARCHAR(32) NOT NULL,
-    content TEXT NOT NULL,
-    changelog TEXT,
-    created_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE UNIQUE INDEX idx_script_versions_unique ON automation_script_versions (script_id, version);
-
 CREATE TABLE automation_schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL UNIQUE,
@@ -434,16 +489,13 @@ CREATE TABLE automation_schedules (
     created_by UUID REFERENCES users(id),
     updated_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_automation_schedules_type CHECK (type IN ('one_time','recurring')),
+    CONSTRAINT chk_automation_schedules_status CHECK (status IN ('enabled','disabled','running')),
+    CONSTRAINT chk_automation_schedules_concurrency CHECK (concurrency_policy IN ('allow','forbid'))
 );
 CREATE INDEX idx_automation_schedules_script ON automation_schedules (script_id);
 CREATE INDEX idx_automation_schedules_status ON automation_schedules (status);
-
-CREATE TABLE automation_schedule_channels (
-    schedule_id UUID NOT NULL REFERENCES automation_schedules(id) ON DELETE CASCADE,
-    channel_id UUID NOT NULL,
-    PRIMARY KEY (schedule_id, channel_id)
-);
 
 CREATE TABLE automation_executions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -461,7 +513,9 @@ CREATE TABLE automation_executions (
     error_message TEXT,
     related_event_ids UUID[] DEFAULT '{}'::UUID[],
     attempt_count INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_automation_executions_status CHECK (status IN ('pending','running','success','failed','cancelled')),
+    CONSTRAINT chk_automation_executions_source CHECK (trigger_source IN ('manual','event_rule','schedule'))
 );
 CREATE INDEX idx_automation_executions_status ON automation_executions (status);
 CREATE INDEX idx_automation_executions_script ON automation_executions (script_id);
@@ -474,16 +528,29 @@ CREATE TABLE notification_channels (
     name VARCHAR(128) NOT NULL UNIQUE,
     type VARCHAR(32) NOT NULL,
     description TEXT,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
     status VARCHAR(32) NOT NULL DEFAULT 'active',
     config JSONB NOT NULL DEFAULT '{}'::JSONB,
+    template_key VARCHAR(128),
+    last_test_result VARCHAR(16),
+    last_test_message TEXT,
     last_tested_at TIMESTAMPTZ,
     created_by UUID REFERENCES users(id),
     updated_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_notification_channels_type CHECK (type IN ('Email','Slack','PagerDuty','Webhook','Teams','LINE Notify','SMS')),
+    CONSTRAINT chk_notification_channels_status CHECK (status IN ('active','degraded','disabled')),
+    CONSTRAINT chk_notification_channels_test_result CHECK (last_test_result IS NULL OR last_test_result IN ('success','failed','pending'))
 );
 CREATE INDEX idx_notification_channels_type ON notification_channels (type);
 CREATE INDEX idx_notification_channels_status ON notification_channels (status);
+
+CREATE TABLE automation_schedule_channels (
+    schedule_id UUID NOT NULL REFERENCES automation_schedules(id) ON DELETE CASCADE,
+    channel_id UUID NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
+    PRIMARY KEY (schedule_id, channel_id)
+);
 
 CREATE TABLE notification_strategies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -497,7 +564,8 @@ CREATE TABLE notification_strategies (
     created_by UUID REFERENCES users(id),
     updated_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_notification_strategies_priority CHECK (priority IN ('high','medium','low'))
 );
 CREATE INDEX idx_notification_strategies_enabled ON notification_strategies (enabled);
 
@@ -505,7 +573,8 @@ CREATE TABLE notification_strategy_recipients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     strategy_id UUID NOT NULL REFERENCES notification_strategies(id) ON DELETE CASCADE,
     target_type VARCHAR(32) NOT NULL,
-    target_id UUID NOT NULL
+    target_id UUID NOT NULL,
+    CONSTRAINT chk_notification_recipients_type CHECK (target_type IN ('user','team','role'))
 );
 CREATE INDEX idx_notification_recipients_strategy ON notification_strategy_recipients (strategy_id);
 
@@ -523,18 +592,50 @@ CREATE TABLE notification_history (
     channel_id UUID REFERENCES notification_channels(id) ON DELETE SET NULL,
     channel_type VARCHAR(32) NOT NULL,
     status VARCHAR(32) NOT NULL,
-    recipients JSONB DEFAULT '[]'::JSONB,
+    channel_label TEXT,
+    alert_title TEXT,
+    actor VARCHAR(128),
+    message TEXT,
+    recipients JSONB NOT NULL DEFAULT '[]'::JSONB,
     sent_at TIMESTAMPTZ NOT NULL,
     completed_at TIMESTAMPTZ,
-    retry_count INTEGER DEFAULT 0,
+    retry_count INTEGER NOT NULL DEFAULT 0,
     duration_ms INTEGER,
     error_message TEXT,
-    payload JSONB DEFAULT '{}'::JSONB,
-    attempts JSONB DEFAULT '[]'::JSONB,
-    related_event_id UUID REFERENCES events(id)
+    raw_payload JSONB NOT NULL DEFAULT '{}'::JSONB,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    attempts JSONB NOT NULL DEFAULT '[]'::JSONB,
+    related_event_id UUID REFERENCES events(id),
+    resend_count INTEGER NOT NULL DEFAULT 0,
+    resend_available BOOLEAN NOT NULL DEFAULT FALSE,
+    last_resend_at TIMESTAMPTZ,
+    last_status_change_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_notification_history_status CHECK (status IN ('SUCCESS','FAILED','RETRYING','QUEUED')),
+    CONSTRAINT chk_notification_history_channel CHECK (channel_type IN ('Email','Slack','PagerDuty','Webhook','Teams','LINE Notify','SMS'))
 );
 CREATE INDEX idx_notification_history_sent_at ON notification_history (sent_at DESC);
 CREATE INDEX idx_notification_history_status ON notification_history (status);
+CREATE INDEX idx_notification_history_last_resend ON notification_history (last_resend_at DESC);
+
+CREATE TABLE notification_resend_jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    notification_history_id UUID NOT NULL REFERENCES notification_history(id) ON DELETE CASCADE,
+    requested_by UUID REFERENCES users(id),
+    status VARCHAR(32) NOT NULL,
+    channel_id UUID REFERENCES notification_channels(id) ON DELETE SET NULL,
+    recipients TEXT[] DEFAULT ARRAY[]::TEXT[],
+    dry_run BOOLEAN NOT NULL DEFAULT FALSE,
+    note TEXT,
+    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    result_message TEXT,
+    error_message TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    CONSTRAINT chk_notification_resend_status CHECK (status IN ('queued','running','completed','failed'))
+);
+CREATE INDEX idx_notification_resend_jobs_history ON notification_resend_jobs (notification_history_id);
+CREATE INDEX idx_notification_resend_jobs_requested_at ON notification_resend_jobs (requested_at DESC);
 
 -- =============================
 -- 平台設定與整合
@@ -558,9 +659,33 @@ CREATE TABLE tag_values (
     value VARCHAR(128) NOT NULL,
     description TEXT,
     is_default BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    usage_count INTEGER NOT NULL DEFAULT 0,
+    last_synced_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX idx_tag_values_unique ON tag_values (tag_id, value);
+
+CREATE TABLE tag_category_metrics (
+    category VARCHAR(64) PRIMARY KEY,
+    total_keys INTEGER NOT NULL DEFAULT 0,
+    required_keys INTEGER NOT NULL DEFAULT 0,
+    optional_keys INTEGER NOT NULL DEFAULT 0,
+    total_values INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE tag_key_statistics (
+    tag_id UUID PRIMARY KEY REFERENCES tag_definitions(id) ON DELETE CASCADE,
+    total_values INTEGER NOT NULL DEFAULT 0,
+    required_value_count INTEGER NOT NULL DEFAULT 0,
+    optional_value_count INTEGER NOT NULL DEFAULT 0,
+    usage_count INTEGER NOT NULL DEFAULT 0,
+    last_used_at TIMESTAMPTZ,
+    top_values JSONB NOT NULL DEFAULT '[]'::JSONB,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_tag_key_statistics_usage ON tag_key_statistics (usage_count DESC);
 
 CREATE TABLE email_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -573,8 +698,26 @@ CREATE TABLE email_settings (
     test_recipient VARCHAR(256),
     is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     updated_by UUID REFERENCES users(id),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_email_settings_encryption CHECK (encryption IN ('none','tls','ssl'))
 );
+
+CREATE TABLE email_test_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    triggered_by UUID REFERENCES users(id),
+    status VARCHAR(32) NOT NULL,
+    recipient VARCHAR(256) NOT NULL,
+    template_key VARCHAR(128),
+    subject_override TEXT,
+    body_override TEXT,
+    duration_ms INTEGER,
+    response_message TEXT,
+    error_message TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_email_test_history_status CHECK (status IN ('queued','success','failed'))
+);
+CREATE INDEX idx_email_test_history_executed_at ON email_test_history (executed_at DESC);
 
 CREATE TABLE auth_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -607,7 +750,8 @@ CREATE TABLE audit_logs (
     result VARCHAR(32) NOT NULL,
     ip_address VARCHAR(64),
     details JSONB DEFAULT '{}'::JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_audit_logs_result CHECK (result IN ('success','failure'))
 );
 CREATE INDEX idx_audit_logs_action ON audit_logs (action);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at DESC);
