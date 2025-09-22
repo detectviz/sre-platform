@@ -870,7 +870,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [single, recurring]
+            enum: [single, repeat, condition]
         - name: enabled
           in: query
           schema:
@@ -1828,7 +1828,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [enabled, disabled]
+            enum: [enabled, disabled, running]
       responses:
         '200':
           description: 回傳排程列表。
@@ -2666,7 +2666,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [success, failed, retrying]
+            enum: [SUCCESS, FAILED, RETRYING]
       responses:
         '200':
           description: 回傳通知歷史列表。
@@ -3633,7 +3633,7 @@ components:
       properties:
         silence_type:
           type: string
-          enum: [single, recurring]
+          enum: [single, repeat, condition]
         starts_at:
           type: string
           format: date-time
@@ -3669,7 +3669,7 @@ components:
           type: string
         silence_type:
           type: string
-          enum: [single, recurring]
+          enum: [single, repeat, condition]
         scope:
           type: string
           enum: [global, resource, team, tag]
@@ -3941,24 +3941,41 @@ components:
             $ref: '#/components/schemas/TopologyEdge'
     DashboardSummary:
       type: object
-      required: [dashboard_id, name, category, owner, updated_at]
+      required: [dashboard_id, name, category, owner, status, updated_at]
       properties:
         dashboard_id:
           type: string
         name:
           type: string
+        description:
+          type: string
         category:
           type: string
         owner:
           type: string
-        featured:
-          type: boolean
-        published:
-          type: boolean
-        views:
+        tags:
+          type: array
+          items:
+            type: string
+        data_sources:
+          type: array
+          items:
+            type: string
+        viewer_count:
           type: integer
-        favorites:
+        favorite_count:
           type: integer
+        panel_count:
+          type: integer
+        status:
+          type: string
+          enum: [draft, published]
+        is_default:
+          type: boolean
+        is_featured:
+          type: boolean
+        target_page_key:
+          type: string
         updated_at:
           type: string
           format: date-time
@@ -4009,6 +4026,16 @@ components:
           type: string
         owner_id:
           type: string
+        tags:
+          type: array
+          items:
+            type: string
+        data_sources:
+          type: array
+          items:
+            type: string
+        target_page_key:
+          type: string
         layout:
           type: array
           items:
@@ -4024,8 +4051,9 @@ components:
           properties:
             is_default:
               type: boolean
-            published:
-              type: boolean
+            status:
+              type: string
+              enum: [draft, published]
     DashboardDetail:
       allOf:
         - $ref: '#/components/schemas/DashboardSummary'
@@ -4288,7 +4316,7 @@ components:
           enum: [one_time, recurring]
         status:
           type: string
-          enum: [enabled, disabled]
+          enum: [enabled, disabled, running]
         cron_expression:
           type: string
         next_run_time:
@@ -4483,7 +4511,7 @@ components:
               format: date-time
     TeamSummary:
       type: object
-      required: [team_id, name, members]
+      required: [team_id, name]
       properties:
         team_id:
           type: string
@@ -4494,9 +4522,15 @@ components:
         owner:
           type: string
         members:
-          type: integer
+          type: array
+          description: 成員識別碼列表。
+          items:
+            type: string
         subscribers:
-          type: integer
+          type: array
+          description: 訂閱者識別碼列表 (可包含人員與外部管道)。
+          items:
+            type: string
         created_at:
           type: string
           format: date-time
@@ -4514,6 +4548,14 @@ components:
           type: array
           items:
             type: string
+        subscriber_ids:
+          type: array
+          items:
+            type: string
+        subscribers:
+          type: array
+          items:
+            $ref: '#/components/schemas/TeamSubscriberInput'
     UpdateTeamRequest:
       allOf:
         - $ref: '#/components/schemas/CreateTeamRequest'
@@ -4530,6 +4572,26 @@ components:
               type: array
               items:
                 type: string
+            subscribers:
+              type: array
+              items:
+                $ref: '#/components/schemas/TeamSubscriber'
+    TeamSubscriberInput:
+      type: object
+      required: [subscriber_id, subscriber_type]
+      properties:
+        subscriber_id:
+          type: string
+        subscriber_type:
+          type: string
+          enum: [USER, SLACK_CHANNEL, EMAIL_GROUP, ON_CALL_SCHEDULE]
+    TeamSubscriber:
+      allOf:
+        - $ref: '#/components/schemas/TeamSubscriberInput'
+        - type: object
+          properties:
+            display_name:
+              type: string
     RolePermission:
       type: object
       required: [module, actions]
@@ -4632,7 +4694,7 @@ components:
           type: string
         channel_type:
           type: string
-          enum: [email, slack, teams, webhook, line, sms]
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
         template:
           type: string
     NotificationStrategySummary:
@@ -4726,7 +4788,7 @@ components:
           additionalProperties: true
     NotificationChannelSummary:
       type: object
-      required: [channel_id, name, type, status]
+      required: [channel_id, name, type, enabled]
       properties:
         channel_id:
           type: string
@@ -4734,10 +4796,24 @@ components:
           type: string
         type:
           type: string
-          enum: [email, slack, teams, webhook, line, sms]
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
+        enabled:
+          type: boolean
         status:
           type: string
           enum: [active, degraded, disabled]
+          description: 若需要停用請改用 enabled 欄位設定為 false。
+        template_key:
+          type: string
+        last_test_result:
+          type: string
+          enum: [success, failed, pending]
+        last_test_message:
+          type: string
+        last_tested_at:
+          type: string
+          format: date-time
+          nullable: true
         updated_at:
           type: string
           format: date-time
@@ -4749,8 +4825,13 @@ components:
           type: string
         type:
           type: string
-          enum: [email, slack, teams, webhook, line, sms]
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
         description:
+          type: string
+        enabled:
+          type: boolean
+          default: true
+        template_key:
           type: string
         config:
           type: object
@@ -4763,6 +4844,15 @@ components:
             status:
               type: string
               enum: [active, degraded, disabled]
+            last_test_result:
+              type: string
+              enum: [success, failed, pending]
+            last_test_message:
+              type: string
+            last_tested_at:
+              type: string
+              format: date-time
+              nullable: true
     NotificationChannelDetail:
       allOf:
         - $ref: '#/components/schemas/NotificationChannelSummary'
@@ -4773,10 +4863,6 @@ components:
             config:
               type: object
               additionalProperties: true
-            last_tested_at:
-              type: string
-              format: date-time
-              nullable: true
     TestNotificationChannelRequest:
       type: object
       properties:
@@ -4787,35 +4873,46 @@ components:
           additionalProperties: true
     NotificationHistoryRecord:
       type: object
-      required: [record_id, sent_time, strategy_name, channel_type, status]
+      required: [record_id, timestamp, status, channel, alert, actor, message]
       properties:
         record_id:
           type: string
-        sent_time:
+        timestamp:
           type: string
           format: date-time
-        strategy_name:
+        status:
+          type: string
+          enum: [SUCCESS, FAILED, RETRYING]
+        channel:
           type: string
         channel_type:
           type: string
-          enum: [email, slack, teams, webhook, line, sms]
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
+        alert:
+          type: string
+        actor:
+          type: string
+        message:
+          type: string
+        error_message:
+          type: string
         recipients:
           type: array
           items:
             type: string
-        status:
-          type: string
-          enum: [success, failed, retrying]
+        retry_count:
+          type: integer
         duration_ms:
           type: integer
+        strategy_name:
+          type: string
     NotificationHistoryDetail:
       allOf:
         - $ref: '#/components/schemas/NotificationHistoryRecord'
         - type: object
           properties:
             payload:
-              type: object
-              additionalProperties: true
+              type: string
             attempts:
               type: array
               items:
