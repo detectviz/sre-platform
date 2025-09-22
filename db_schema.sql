@@ -2,28 +2,401 @@
 -- 需先啟用 pgcrypto extension 以便使用 gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
+-- =============================
+-- 核心使用者與權限管理
+-- =============================
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     username VARCHAR(128) NOT NULL UNIQUE,
-    display_name VARCHAR(128),
+    display_name VARCHAR(128) NOT NULL,
     email VARCHAR(256) NOT NULL,
-    role VARCHAR(64) NOT NULL DEFAULT 'viewer',
     status VARCHAR(32) NOT NULL DEFAULT 'active',
     language VARCHAR(32) DEFAULT 'zh-TW',
     timezone VARCHAR(64) DEFAULT 'Asia/Taipei',
-    teams JSONB DEFAULT '[]'::JSONB,
     last_login_at TIMESTAMPTZ,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_users_status ON users (status);
 
-CREATE TABLE scripts (
+CREATE TABLE teams (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL UNIQUE,
+    description TEXT,
+    owner_id UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE team_members (
+    team_id UUID NOT NULL REFERENCES teams(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    membership_role VARCHAR(64),
+    joined_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (team_id, user_id)
+);
+CREATE INDEX idx_team_members_user ON team_members (user_id);
+
+CREATE TABLE roles (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(64) NOT NULL UNIQUE,
+    description TEXT,
+    status VARCHAR(32) NOT NULL DEFAULT 'active',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_roles_status ON roles (status);
+
+CREATE TABLE user_roles (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, role_id)
+);
+
+CREATE TABLE role_permissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    role_id UUID NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    module VARCHAR(128) NOT NULL,
+    actions TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_role_permissions_role ON role_permissions (role_id);
+
+CREATE TABLE security_login_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    login_time TIMESTAMPTZ NOT NULL,
+    ip_address VARCHAR(64),
+    device_info VARCHAR(256),
+    status VARCHAR(32) NOT NULL,
+    location VARCHAR(128),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_security_login_user ON security_login_history (user_id, login_time DESC);
+
+CREATE TABLE user_preferences (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    theme VARCHAR(16) NOT NULL DEFAULT 'auto',
+    default_page VARCHAR(32) NOT NULL DEFAULT 'war_room',
+    language VARCHAR(32) DEFAULT 'zh-TW',
+    timezone VARCHAR(64) DEFAULT 'Asia/Taipei',
+    notification_preferences JSONB NOT NULL DEFAULT '{"email_notification":true,"slack_notification":false,"merge_notification":false}'::JSONB,
+    display_options JSONB NOT NULL DEFAULT '{"animation":true,"tooltips":true,"compact_mode":false}'::JSONB,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE user_notifications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    title VARCHAR(256) NOT NULL,
+    description TEXT,
+    severity VARCHAR(32) NOT NULL,
+    category VARCHAR(64),
+    status VARCHAR(16) NOT NULL DEFAULT 'unread',
+    link_url TEXT,
+    actions JSONB DEFAULT '[]'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    read_at TIMESTAMPTZ
+);
+CREATE INDEX idx_user_notifications_user ON user_notifications (user_id, status, created_at DESC);
+
+-- =============================
+-- 事件資料模型
+-- =============================
+CREATE TABLE event_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL UNIQUE,
+    description TEXT,
+    severity VARCHAR(32) NOT NULL,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    labels JSONB NOT NULL DEFAULT '[]'::JSONB,
+    environments JSONB NOT NULL DEFAULT '[]'::JSONB,
+    condition_groups JSONB NOT NULL,
+    title_template TEXT,
+    content_template TEXT,
+    automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    automation_script_id UUID,
+    automation_parameters JSONB DEFAULT '{}'::JSONB,
+    creator_id UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_event_rules_enabled ON event_rules (enabled);
+
+CREATE TABLE silence_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL,
+    description TEXT,
+    silence_type VARCHAR(32) NOT NULL,
+    scope VARCHAR(32) NOT NULL,
+    starts_at TIMESTAMPTZ NOT NULL,
+    ends_at TIMESTAMPTZ NOT NULL,
+    timezone VARCHAR(64) DEFAULT 'UTC',
+    repeat_frequency VARCHAR(32),
+    repeat_days TEXT[],
+    repeat_until TIMESTAMPTZ,
+    repeat_occurrences INTEGER,
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    notify_on_start BOOLEAN NOT NULL DEFAULT FALSE,
+    notify_on_end BOOLEAN NOT NULL DEFAULT FALSE,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_silence_rules_active ON silence_rules (enabled, starts_at, ends_at);
+
+CREATE TABLE silence_rule_matchers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    silence_id UUID NOT NULL REFERENCES silence_rules(id) ON DELETE CASCADE,
+    matcher_key VARCHAR(128) NOT NULL,
+    operator VARCHAR(32) NOT NULL,
+    matcher_value VARCHAR(256) NOT NULL
+);
+CREATE INDEX idx_silence_matchers_silence ON silence_rule_matchers (silence_id);
+
+CREATE TABLE events (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_key VARCHAR(128) UNIQUE,
+    summary VARCHAR(256) NOT NULL,
+    description TEXT,
+    severity VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    service_impact TEXT,
+    resource_id UUID,
+    rule_id UUID REFERENCES event_rules(id),
+    trigger_threshold VARCHAR(64),
+    trigger_value VARCHAR(64),
+    unit VARCHAR(32),
+    trigger_time TIMESTAMPTZ NOT NULL,
+    assignee_id UUID REFERENCES users(id),
+    acknowledged_at TIMESTAMPTZ,
+    resolved_at TIMESTAMPTZ,
+    metadata JSONB DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_events_status ON events (status);
+CREATE INDEX idx_events_severity ON events (severity);
+CREATE INDEX idx_events_trigger_time ON events (trigger_time DESC);
+
+CREATE TABLE event_tags (
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    tag VARCHAR(128) NOT NULL,
+    PRIMARY KEY (event_id, tag)
+);
+
+CREATE TABLE event_timeline (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    entry_type VARCHAR(32) NOT NULL,
+    message TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}'::JSONB,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_event_timeline_event ON event_timeline (event_id, created_at);
+
+CREATE TABLE event_relations (
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    related_event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    relationship VARCHAR(64) NOT NULL,
+    PRIMARY KEY (event_id, related_event_id)
+);
+
+CREATE TABLE event_ai_analysis (
+    event_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
+    summary TEXT,
+    root_cause TEXT,
+    impact_analysis TEXT,
+    recommendations JSONB DEFAULT '[]'::JSONB,
+    confidence NUMERIC(5,2),
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- =============================
+-- 資源與拓撲
+-- =============================
+CREATE TABLE resources (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    type VARCHAR(32) NOT NULL,
+    ip_address INET NOT NULL,
+    location VARCHAR(128),
+    environment VARCHAR(64),
+    team_id UUID REFERENCES teams(id),
+    os VARCHAR(128),
+    cpu_usage NUMERIC(5,2) DEFAULT 0,
+    memory_usage NUMERIC(5,2) DEFAULT 0,
+    disk_usage NUMERIC(5,2) DEFAULT 0,
+    network_in_mbps NUMERIC(10,2) DEFAULT 0,
+    network_out_mbps NUMERIC(10,2) DEFAULT 0,
+    service_impact TEXT,
+    last_event_count INTEGER DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_resources_status ON resources (status);
+CREATE INDEX idx_resources_type ON resources (type);
+CREATE INDEX idx_resources_team ON resources (team_id);
+
+CREATE TABLE resource_labels (
+    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    label_key VARCHAR(128) NOT NULL,
+    label_value VARCHAR(128) NOT NULL,
+    PRIMARY KEY (resource_id, label_key)
+);
+
+CREATE TABLE resource_groups (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL UNIQUE,
+    description TEXT,
+    owner_team_id UUID REFERENCES teams(id),
+    status_summary JSONB DEFAULT '{"healthy":0,"warning":0,"critical":0}'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE resource_group_members (
+    group_id UUID NOT NULL REFERENCES resource_groups(id) ON DELETE CASCADE,
+    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    added_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (group_id, resource_id)
+);
+
+CREATE TABLE resource_group_subscribers (
+    group_id UUID NOT NULL REFERENCES resource_groups(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    subscribed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (group_id, user_id)
+);
+
+CREATE TABLE topology_edges (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    source_resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    target_resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    relation VARCHAR(64) NOT NULL,
+    traffic_level NUMERIC(10,2) DEFAULT 0,
+    metadata JSONB DEFAULT '{}'::JSONB
+);
+CREATE INDEX idx_topology_edges_source ON topology_edges (source_resource_id);
+
+-- =============================
+-- 儀表板與分析
+-- =============================
+CREATE TABLE dashboards (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL,
+    category VARCHAR(64) NOT NULL,
+    description TEXT,
+    owner_id UUID REFERENCES users(id),
+    is_featured BOOLEAN NOT NULL DEFAULT FALSE,
+    is_published BOOLEAN NOT NULL DEFAULT FALSE,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    views_count INTEGER NOT NULL DEFAULT 0,
+    favorites_count INTEGER NOT NULL DEFAULT 0,
+    published_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_dashboards_category ON dashboards (category);
+CREATE INDEX idx_dashboards_owner ON dashboards (owner_id);
+
+CREATE TABLE dashboard_widgets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+    widget_type VARCHAR(64) NOT NULL,
+    title VARCHAR(128) NOT NULL,
+    config JSONB NOT NULL,
+    position JSONB NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE dashboard_kpis (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+    label VARCHAR(128) NOT NULL,
+    value VARCHAR(128) NOT NULL,
+    trend NUMERIC(6,2),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE capacity_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    time_range VARCHAR(32) NOT NULL,
+    model VARCHAR(32),
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    total_datapoints INTEGER NOT NULL,
+    processing_time NUMERIC(10,2),
+    accuracy NUMERIC(5,2)
+);
+
+CREATE TABLE capacity_forecasts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_id UUID NOT NULL REFERENCES capacity_reports(id) ON DELETE CASCADE,
+    metric VARCHAR(64) NOT NULL,
+    current_usage NUMERIC(10,2),
+    forecast_usage NUMERIC(10,2),
+    series JSONB NOT NULL,
+    best_case JSONB,
+    worst_case JSONB
+);
+CREATE INDEX idx_capacity_forecasts_report ON capacity_forecasts (report_id);
+
+CREATE TABLE capacity_suggestions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_id UUID NOT NULL REFERENCES capacity_reports(id) ON DELETE CASCADE,
+    title VARCHAR(256) NOT NULL,
+    impact VARCHAR(64),
+    effort VARCHAR(64),
+    cost_saving NUMERIC(12,2),
+    description TEXT
+);
+
+CREATE TABLE resource_load_snapshots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    collected_at TIMESTAMPTZ NOT NULL,
+    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    avg_cpu NUMERIC(5,2),
+    avg_memory NUMERIC(5,2),
+    disk_read NUMERIC(10,2),
+    disk_write NUMERIC(10,2),
+    net_in NUMERIC(10,2),
+    net_out NUMERIC(10,2),
+    anomaly_count INTEGER DEFAULT 0
+);
+CREATE INDEX idx_resource_load_resource ON resource_load_snapshots (resource_id, collected_at DESC);
+
+CREATE TABLE ai_insight_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    analysis_type VARCHAR(64) NOT NULL,
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    predicted_events INTEGER,
+    accuracy NUMERIC(5,2),
+    impact_range TEXT,
+    summary TEXT
+);
+
+CREATE TABLE ai_insight_suggestions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    report_id UUID NOT NULL REFERENCES ai_insight_reports(id) ON DELETE CASCADE,
+    title VARCHAR(256) NOT NULL,
+    priority VARCHAR(16) NOT NULL,
+    description TEXT,
+    action_url TEXT
+);
+
+-- =============================
+-- 自動化腳本與排程
+-- =============================
+CREATE TABLE automation_scripts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL UNIQUE,
     type VARCHAR(32) NOT NULL,
     description TEXT,
-    version VARCHAR(32),
     content TEXT NOT NULL,
+    version VARCHAR(32) DEFAULT 'v1',
     tags JSONB DEFAULT '[]'::JSONB,
     last_execution_status VARCHAR(32) DEFAULT 'never',
     last_execution_at TIMESTAMPTZ,
@@ -32,140 +405,22 @@ CREATE TABLE scripts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_scripts_type ON scripts (type);
 
-CREATE TABLE resources (
+CREATE TABLE automation_script_versions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(128) NOT NULL,
-    status VARCHAR(32) NOT NULL,
-    type VARCHAR(32) NOT NULL,
-    ip_address INET NOT NULL,
-    location VARCHAR(128),
-    environment VARCHAR(32),
-    team VARCHAR(64),
-    os VARCHAR(128),
-    cpu_usage NUMERIC(5,2) DEFAULT 0,
-    memory_usage NUMERIC(5,2) DEFAULT 0,
-    disk_usage NUMERIC(5,2) DEFAULT 0,
-    network_in_mbps NUMERIC(10,2) DEFAULT 0,
-    network_out_mbps NUMERIC(10,2) DEFAULT 0,
-    tags JSONB DEFAULT '[]'::JSONB,
-    label_values JSONB DEFAULT '[]'::JSONB,
-    group_ids JSONB DEFAULT '[]'::JSONB,
-    last_event_count INTEGER DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    script_id UUID NOT NULL REFERENCES automation_scripts(id) ON DELETE CASCADE,
+    version VARCHAR(32) NOT NULL,
+    content TEXT NOT NULL,
+    changelog TEXT,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_resources_name ON resources (name);
-CREATE INDEX idx_resources_type ON resources (type);
-CREATE INDEX idx_resources_status ON resources (status);
+CREATE UNIQUE INDEX idx_script_versions_unique ON automation_script_versions (script_id, version);
 
-CREATE TABLE resource_groups (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(128) NOT NULL,
-    description TEXT,
-    owner_id UUID REFERENCES users(id),
-    owner_team VARCHAR(64),
-    member_count INTEGER DEFAULT 0,
-    subscriber_count INTEGER DEFAULT 0,
-    status_summary JSONB DEFAULT '{"healthy":0,"warning":0,"critical":0}'::JSONB,
-    resource_ids JSONB DEFAULT '[]'::JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_resource_groups_name ON resource_groups (name);
-
-CREATE TABLE event_rules (
+CREATE TABLE automation_schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL UNIQUE,
-    description TEXT,
-    enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    severity VARCHAR(32) NOT NULL,
-    target_type VARCHAR(64),
-    label_selectors JSONB DEFAULT '[]'::JSONB,
-    condition_groups JSONB NOT NULL,
-    automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    script_id UUID REFERENCES scripts(id),
-    automation_parameters JSONB DEFAULT '{}'::JSONB,
-    created_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE events (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    event_key VARCHAR(128) UNIQUE,
-    summary VARCHAR(256) NOT NULL,
-    description TEXT,
-    status VARCHAR(32) NOT NULL,
-    severity VARCHAR(32) NOT NULL,
-    service_impact TEXT,
-    resource_id UUID REFERENCES resources(id),
-    rule_id UUID REFERENCES event_rules(id),
-    metric VARCHAR(128),
-    trigger_threshold VARCHAR(64),
-    trigger_value VARCHAR(64),
-    unit VARCHAR(32),
-    trigger_time TIMESTAMPTZ NOT NULL,
-    assignee_id UUID REFERENCES users(id),
-    acknowledged_at TIMESTAMPTZ,
-    resolved_at TIMESTAMPTZ,
-    tags JSONB DEFAULT '[]'::JSONB,
-    detection_source VARCHAR(64),
-    timeline JSONB DEFAULT '[]'::JSONB,
-    related_events JSONB DEFAULT '[]'::JSONB,
-    automation_actions JSONB DEFAULT '[]'::JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_events_trigger_time ON events (trigger_time DESC);
-CREATE INDEX idx_events_status ON events (status);
-CREATE INDEX idx_events_severity ON events (severity);
-CREATE INDEX idx_events_resource ON events (resource_id);
-CREATE INDEX idx_events_rule ON events (rule_id);
-
-CREATE TABLE silences (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(128) NOT NULL,
-    description TEXT,
-    silence_type VARCHAR(32) NOT NULL,
-    scope VARCHAR(32) NOT NULL,
-    matchers JSONB DEFAULT '[]'::JSONB,
-    start_time TIMESTAMPTZ NOT NULL,
-    end_time TIMESTAMPTZ NOT NULL,
-    timezone VARCHAR(64),
-    repeat_pattern JSONB,
-    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    notify_on_start BOOLEAN NOT NULL DEFAULT FALSE,
-    notify_on_end BOOLEAN NOT NULL DEFAULT FALSE,
-    created_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_silences_active ON silences (is_enabled, start_time, end_time);
-
-CREATE TABLE dashboards (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(128) NOT NULL,
-    category VARCHAR(32) NOT NULL,
-    description TEXT,
-    owner_id UUID REFERENCES users(id),
-    tags JSONB DEFAULT '[]'::JSONB,
-    is_published BOOLEAN NOT NULL DEFAULT FALSE,
-    is_default BOOLEAN NOT NULL DEFAULT FALSE,
-    published_at TIMESTAMPTZ,
-    kpi_summary JSONB DEFAULT '{}'::JSONB,
-    widgets JSONB DEFAULT '[]'::JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_dashboards_category ON dashboards (category);
-CREATE INDEX idx_dashboards_owner ON dashboards (owner_id);
-
-CREATE TABLE schedules (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(128) NOT NULL UNIQUE,
-    script_id UUID NOT NULL REFERENCES scripts(id),
+    script_id UUID NOT NULL REFERENCES automation_scripts(id) ON DELETE CASCADE,
     type VARCHAR(32) NOT NULL,
     cron_expression VARCHAR(128),
     timezone VARCHAR(64) DEFAULT 'UTC',
@@ -181,15 +436,21 @@ CREATE TABLE schedules (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_schedules_script ON schedules (script_id);
-CREATE INDEX idx_schedules_next_run ON schedules (next_run_time);
+CREATE INDEX idx_automation_schedules_script ON automation_schedules (script_id);
+CREATE INDEX idx_automation_schedules_status ON automation_schedules (status);
 
-CREATE TABLE executions (
+CREATE TABLE automation_schedule_channels (
+    schedule_id UUID NOT NULL REFERENCES automation_schedules(id) ON DELETE CASCADE,
+    channel_id UUID NOT NULL,
+    PRIMARY KEY (schedule_id, channel_id)
+);
+
+CREATE TABLE automation_executions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    script_id UUID NOT NULL REFERENCES scripts(id),
-    schedule_id UUID REFERENCES schedules(id),
+    script_id UUID NOT NULL REFERENCES automation_scripts(id) ON DELETE SET NULL,
+    schedule_id UUID REFERENCES automation_schedules(id) ON DELETE SET NULL,
     trigger_source VARCHAR(32) NOT NULL,
-    start_time TIMESTAMPTZ,
+    start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     end_time TIMESTAMPTZ,
     duration_ms INTEGER,
     status VARCHAR(32) NOT NULL,
@@ -198,13 +459,16 @@ CREATE TABLE executions (
     stdout TEXT,
     stderr TEXT,
     error_message TEXT,
-    related_event_ids UUID[] DEFAULT '{}',
+    related_event_ids UUID[] DEFAULT '{}'::UUID[],
     attempt_count INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_executions_start_time ON executions (start_time DESC);
-CREATE INDEX idx_executions_status ON executions (status);
+CREATE INDEX idx_automation_executions_status ON automation_executions (status);
+CREATE INDEX idx_automation_executions_script ON automation_executions (script_id);
 
+-- =============================
+-- 通知策略與歷史
+-- =============================
 CREATE TABLE notification_channels (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL UNIQUE,
@@ -221,32 +485,42 @@ CREATE TABLE notification_channels (
 CREATE INDEX idx_notification_channels_type ON notification_channels (type);
 CREATE INDEX idx_notification_channels_status ON notification_channels (status);
 
-CREATE TABLE notification_policies (
+CREATE TABLE notification_strategies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL UNIQUE,
     description TEXT,
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     priority VARCHAR(32) DEFAULT 'medium',
+    trigger_condition TEXT NOT NULL,
     severity_filters TEXT[] DEFAULT ARRAY['critical','warning','info'],
-    channel_ids UUID[] DEFAULT '{}',
-    recipients JSONB DEFAULT '[]'::JSONB,
-    trigger_condition JSONB DEFAULT '{}'::JSONB,
     resource_filters JSONB DEFAULT '{}'::JSONB,
-    escalation_delay_minutes INTEGER DEFAULT 0,
-    repeat_frequency_minutes INTEGER DEFAULT 0,
-    silence_ids UUID[] DEFAULT '{}',
     created_by UUID REFERENCES users(id),
     updated_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_notification_policies_enabled ON notification_policies (enabled);
-CREATE INDEX idx_notification_policies_priority ON notification_policies (priority);
+CREATE INDEX idx_notification_strategies_enabled ON notification_strategies (enabled);
+
+CREATE TABLE notification_strategy_recipients (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    strategy_id UUID NOT NULL REFERENCES notification_strategies(id) ON DELETE CASCADE,
+    target_type VARCHAR(32) NOT NULL,
+    target_id UUID NOT NULL
+);
+CREATE INDEX idx_notification_recipients_strategy ON notification_strategy_recipients (strategy_id);
+
+CREATE TABLE notification_strategy_channels (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    strategy_id UUID NOT NULL REFERENCES notification_strategies(id) ON DELETE CASCADE,
+    channel_id UUID NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
+    template VARCHAR(128)
+);
+CREATE INDEX idx_notification_strategy_channels_strategy ON notification_strategy_channels (strategy_id);
 
 CREATE TABLE notification_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    policy_id UUID REFERENCES notification_policies(id),
-    channel_id UUID REFERENCES notification_channels(id),
+    strategy_id UUID REFERENCES notification_strategies(id) ON DELETE SET NULL,
+    channel_id UUID REFERENCES notification_channels(id) ON DELETE SET NULL,
     channel_type VARCHAR(32) NOT NULL,
     status VARCHAR(32) NOT NULL,
     recipients JSONB DEFAULT '[]'::JSONB,
@@ -261,44 +535,46 @@ CREATE TABLE notification_history (
 );
 CREATE INDEX idx_notification_history_sent_at ON notification_history (sent_at DESC);
 CREATE INDEX idx_notification_history_status ON notification_history (status);
-CREATE INDEX idx_notification_history_policy ON notification_history (policy_id);
 
-CREATE TABLE labels (
+-- =============================
+-- 平台設定與整合
+-- =============================
+CREATE TABLE tag_definitions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    key VARCHAR(128) NOT NULL,
-    value VARCHAR(128) NOT NULL,
-    category VARCHAR(64),
-    color VARCHAR(32),
-    description TEXT,
-    is_system BOOLEAN NOT NULL DEFAULT FALSE,
-    usage_count INTEGER DEFAULT 0,
+    name VARCHAR(128) NOT NULL,
+    category VARCHAR(64) NOT NULL,
+    required BOOLEAN NOT NULL DEFAULT FALSE,
+    usage_count INTEGER NOT NULL DEFAULT 0,
     created_by UUID REFERENCES users(id),
     updated_by UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (key, value)
+    UNIQUE (name, category)
 );
-CREATE INDEX idx_labels_category ON labels (category);
 
-CREATE TABLE mail_settings (
+CREATE TABLE tag_values (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tag_id UUID NOT NULL REFERENCES tag_definitions(id) ON DELETE CASCADE,
+    value VARCHAR(128) NOT NULL,
+    description TEXT,
+    is_default BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX idx_tag_values_unique ON tag_values (tag_id, value);
+
+CREATE TABLE email_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     smtp_host VARCHAR(256) NOT NULL,
     smtp_port INTEGER NOT NULL,
     username VARCHAR(128),
-    password_encrypted TEXT,
     sender_name VARCHAR(128),
     sender_email VARCHAR(256) NOT NULL,
-    reply_to VARCHAR(256),
     encryption VARCHAR(16) NOT NULL DEFAULT 'none',
     test_recipient VARCHAR(256),
     is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    last_tested_at TIMESTAMPTZ,
-    created_by UUID REFERENCES users(id),
     updated_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_mail_settings_enabled ON mail_settings (is_enabled);
 
 CREATE TABLE auth_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -315,24 +591,23 @@ CREATE TABLE auth_settings (
     logout_url VARCHAR(512),
     scopes TEXT[] DEFAULT ARRAY['openid','profile','email'],
     user_sync BOOLEAN NOT NULL DEFAULT FALSE,
-    last_tested_at TIMESTAMPTZ,
-    created_by UUID REFERENCES users(id),
     updated_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_auth_settings_provider ON auth_settings (provider);
 
-CREATE TABLE user_preferences (
+-- =============================
+-- 審計日誌
+-- =============================
+CREATE TABLE audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    theme VARCHAR(16) NOT NULL DEFAULT 'auto',
-    default_page VARCHAR(32) NOT NULL DEFAULT 'war_room',
-    language VARCHAR(32) DEFAULT 'zh-TW',
-    timezone VARCHAR(64) DEFAULT 'Asia/Taipei',
-    notification_preferences JSONB DEFAULT '{"email_notification":true,"slack_notification":false,"merge_notification":false}'::JSONB,
-    display_options JSONB DEFAULT '{"animation":true,"tooltips":true,"compact_mode":false}'::JSONB,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE (user_id)
+    actor_id UUID REFERENCES users(id),
+    action VARCHAR(128) NOT NULL,
+    target_type VARCHAR(64),
+    target_id UUID,
+    result VARCHAR(32) NOT NULL,
+    ip_address VARCHAR(64),
+    details JSONB DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+CREATE INDEX idx_audit_logs_action ON audit_logs (action);
+CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at DESC);

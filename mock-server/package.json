@@ -1,24 +1,17 @@
 {
-  "name": "sre-platform-mock-server",
+  "name": "mock-server",
   "version": "1.0.0",
-  "description": "Mock server for SRE Platform",
+  "description": "SRE 平台 API mock server",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node server.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
-    "json-server": "^0.17.0"
-  },
-  "devDependencies": {
-    "nodemon": "^2.0.15"
-  },
-  "keywords": [
-    "mock",
-    "server",
-    "sre",
-    "platform"
-  ],
-  "author": "SRE Platform Team",
-  "license": "MIT"
+    "cors": "^2.8.5",
+    "express": "^5.1.0"
+  }
 }

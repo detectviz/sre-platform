@@ -1,3020 +1,1942 @@
-const jsonServer = require('json-server');
-const server = jsonServer.create();
-const router = jsonServer.router('db.json');
-const middlewares = jsonServer.defaults();
+const express = require('express');
+const cors = require('cors');
 
-server.use(middlewares);
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-// 添加自定義路由和中間件
-server.use(jsonServer.bodyParser);
+const PORT = process.env.PORT || 4000;
+const toISO = (value) => new Date(value).toISOString();
+const now = new Date();
 
-// 統一路由註冊，確保 /api/v1 與根路徑都可使用
-const registerRoute = (method, path, handler) => {
-  server[method](path, handler);
-  server[method](`/api/v1${path}`, handler);
+const currentUser = {
+  user_id: 'user-001',
+  username: 'sre.lead',
+  display_name: '林佳瑜',
+  email: 'sre.lead@example.com',
+  roles: ['sre', 'incident-commander'],
+  teams: ['sre-core'],
+  status: 'active',
+  last_login_at: toISO(now),
+  avatar_url: null
 };
 
-const parsePageParam = (value, fallback) => {
-  const num = parseInt(value, 10);
-  return Number.isFinite(num) && num > 0 ? num : fallback;
+const userPreferences = {
+  theme: 'auto',
+  default_page: 'war_room',
+  language: 'zh-TW',
+  timezone: 'Asia/Taipei',
+  notification_preferences: {
+    email_notification: true,
+    slack_notification: true,
+    merge_notification: false
+  },
+  display_options: {
+    animation: true,
+    tooltips: true,
+    compact_mode: false
+  }
 };
 
-const buildPagination = (page, pageSize, totalItems) => {
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+const securityLogins = [
+  {
+    login_time: toISO(now),
+    ip_address: '203.0.113.8',
+    device_info: 'Chrome on macOS',
+    status: 'success',
+    location: 'Taipei'
+  },
+  {
+    login_time: toISO(new Date(now.getTime() - 3600 * 1000)),
+    ip_address: '198.51.100.25',
+    device_info: 'Safari on iOS',
+    status: 'success',
+    location: 'Kaohsiung'
+  },
+  {
+    login_time: toISO(new Date(now.getTime() - 86400 * 1000)),
+    ip_address: '192.0.2.11',
+    device_info: 'Firefox on Windows',
+    status: 'failed',
+    location: 'Unknown'
+  }
+];
+
+const notifications = [
+  {
+    notification_id: 'ntf-001',
+    title: 'API 延遲超過閾值',
+    description: '北區 Gateway API P95 延遲超過 500ms。',
+    severity: 'critical',
+    category: 'incident',
+    status: 'unread',
+    created_at: toISO(now),
+    read_at: null,
+    link_url: '/incidents/evt-001',
+    actions: ['acknowledge', 'view']
+  },
+  {
+    notification_id: 'ntf-002',
+    title: '容量預測完成',
+    description: 'AI 預測資料庫集群於 30 天後達 80% 使用率。',
+    severity: 'warning',
+    category: 'analysis',
+    status: 'read',
+    created_at: toISO(new Date(now.getTime() - 7200 * 1000)),
+    read_at: toISO(new Date(now.getTime() - 3600 * 1000)),
+    link_url: '/analysis/capacity',
+    actions: ['open-report']
+  }
+];
+
+const eventData = [
+  {
+    event_id: 'evt-001',
+    event_key: 'INC-2025-001',
+    summary: 'API 延遲飆高',
+    description: '交易 API P95 延遲持續高於 500ms。',
+    severity: 'critical',
+    status: 'in_progress',
+    resource_id: 'res-001',
+    resource_name: 'web-01',
+    service_impact: '客戶交易延遲，SLA 風險升高',
+    rule_id: 'rule-001',
+    rule_name: 'API 延遲監控',
+    trigger_threshold: '> 500ms',
+    trigger_value: '820ms',
+    unit: 'ms',
+    trigger_time: toISO(new Date(now.getTime() - 15 * 60000)),
+    assignee_id: 'user-002',
+    assignee: '張于庭',
+    acknowledged_at: toISO(new Date(now.getTime() - 10 * 60000)),
+    resolved_at: null,
+    tags: ['production', 'api'],
+    timeline: [
+      {
+        entry_id: 'evt-001-tl-001',
+        event_id: 'evt-001',
+        entry_type: 'status_change',
+        message: '事件自動從 new 轉為 in_progress。',
+        created_by: 'system',
+        created_at: toISO(new Date(now.getTime() - 13 * 60000)),
+        metadata: { status: 'in_progress' }
+      },
+      {
+        entry_id: 'evt-001-tl-002',
+        event_id: 'evt-001',
+        entry_type: 'note',
+        message: '已通知應用團隊檢查最近部署。',
+        created_by: '張于庭',
+        created_at: toISO(new Date(now.getTime() - 9 * 60000)),
+        metadata: { channel: 'slack' }
+      }
+    ],
+    related: [
+      {
+        event_id: 'evt-002',
+        relationship: 'depends_on',
+        summary: '資料庫連線延遲升高',
+        severity: 'warning',
+        status: 'acknowledged',
+        trigger_time: toISO(new Date(now.getTime() - 40 * 60000))
+      }
+    ],
+    analysis: {
+      event_id: 'evt-001',
+      generated_at: toISO(new Date(now.getTime() - 5 * 60000)),
+      summary: '高延遲與資料庫連線峰值相關。',
+      root_cause: '資料庫讀取延遲導致 API 回應時間上升。',
+      confidence: 0.82,
+      impact_analysis: '主要影響交易 API，估計 8% 請求超時。',
+      recommendations: [
+        {
+          title: '增加資料庫連線池',
+          priority: 'high',
+          description: '暫時提高讀取節點的連線池上限。',
+          action_url: '/automation/scripts/autoscale-db'
+        },
+        {
+          title: '啟用查詢快取',
+          priority: 'medium',
+          description: '針對熱門查詢開啟快取降低負載。',
+          action_url: null
+        }
+      ]
+    }
+  },
+  {
+    event_id: 'evt-002',
+    event_key: 'INC-2025-002',
+    summary: '資料庫連線延遲升高',
+    description: 'RDS 叢集讀取延遲偶發飆升。',
+    severity: 'warning',
+    status: 'acknowledged',
+    resource_id: 'res-002',
+    resource_name: 'rds-read-1',
+    service_impact: '延遲影響讀取性能',
+    rule_id: 'rule-002',
+    rule_name: '資料庫延遲監控',
+    trigger_threshold: '> 120ms',
+    trigger_value: '210ms',
+    unit: 'ms',
+    trigger_time: toISO(new Date(now.getTime() - 45 * 60000)),
+    assignee_id: 'user-003',
+    assignee: '蔡敏豪',
+    acknowledged_at: toISO(new Date(now.getTime() - 35 * 60000)),
+    resolved_at: null,
+    tags: ['database', 'production'],
+    timeline: [],
+    related: [],
+    analysis: null
+  }
+];
+
+const eventRules = [
+  {
+    rule_id: 'rule-001',
+    name: 'API 延遲監控',
+    description: '監控交易 API 延遲，超過閾值即觸發事件。',
+    severity: 'critical',
+    enabled: true,
+    automation_enabled: true,
+    creator: '林佳瑜',
+    last_updated: toISO(new Date(now.getTime() - 86400000)),
+    labels: ['app:web'],
+    environments: ['production'],
+    condition_groups: [
+      {
+        logic: 'AND',
+        conditions: [
+          { metric: 'p95_latency', operator: '>', threshold: 500, duration_minutes: 5, severity: 'critical' }
+        ]
+      }
+    ],
+    title_template: '{{service.name}} 延遲異常',
+    content_template: '{{metric.name}} 於 {{duration}} 分鐘內維持 {{metric.value}}ms。',
+    automation: {
+      enabled: true,
+      script_id: 'script-001',
+      parameters: { mode: 'scale-out', count: 2 }
+    }
+  },
+  {
+    rule_id: 'rule-002',
+    name: '資料庫延遲監控',
+    description: '觀察資料庫連線與查詢延遲。',
+    severity: 'warning',
+    enabled: true,
+    automation_enabled: false,
+    creator: '林佳瑜',
+    last_updated: toISO(new Date(now.getTime() - 172800000)),
+    labels: ['tier:db'],
+    environments: ['production'],
+    condition_groups: [
+      {
+        logic: 'AND',
+        conditions: [
+          { metric: 'read_latency', operator: '>', threshold: 120, duration_minutes: 10, severity: 'warning' }
+        ]
+      }
+    ],
+    title_template: '{{resource.name}} 延遲告警',
+    content_template: '{{metric.name}} 超過 {{threshold}} ms。',
+    automation: {
+      enabled: false,
+      script_id: null,
+      parameters: {}
+    }
+  }
+];
+
+const silenceRules = [
+  {
+    silence_id: 'slc-001',
+    name: '週末維運靜音',
+    description: '每週六 02:00-04:00 維運期間靜音。',
+    silence_type: 'recurring',
+    scope: 'resource',
+    enabled: true,
+    created_at: toISO(new Date(now.getTime() - 86400000 * 5)),
+    schedule: {
+      silence_type: 'recurring',
+      starts_at: toISO('2025-01-18T02:00:00Z'),
+      ends_at: toISO('2025-01-18T04:00:00Z'),
+      timezone: 'Asia/Taipei',
+      repeat: { frequency: 'weekly', days: ['sat'], until: null, occurrences: null }
+    },
+    matchers: [
+      { key: 'resource_id', operator: 'equals', value: 'res-001' }
+    ],
+    notify_on_start: true,
+    notify_on_end: false,
+    created_by: 'user-001'
+  }
+];
+
+const resourceData = [
+  {
+    resource_id: 'res-001',
+    name: 'web-01',
+    status: 'warning',
+    type: 'service',
+    ip_address: '10.10.8.11',
+    location: 'ap-southeast-1a',
+    environment: 'production',
+    team: 'sre-core',
+    os: 'Ubuntu 22.04',
+    cpu_usage: 72.4,
+    memory_usage: 68.1,
+    disk_usage: 55.3,
+    network_in_mbps: 125.4,
+    network_out_mbps: 118.2,
+    service_impact: '交易 API',
+    last_event_count: 3,
+    tags: ['production', 'web'],
+    groups: ['grp-001'],
+    created_at: toISO(new Date(now.getTime() - 604800000)),
+    updated_at: toISO(now)
+  },
+  {
+    resource_id: 'res-002',
+    name: 'rds-read-1',
+    status: 'warning',
+    type: 'database',
+    ip_address: '10.10.12.21',
+    location: 'ap-southeast-1b',
+    environment: 'production',
+    team: 'db-team',
+    os: 'Amazon Linux 2023',
+    cpu_usage: 64.8,
+    memory_usage: 71.2,
+    disk_usage: 62.7,
+    network_in_mbps: 95.1,
+    network_out_mbps: 90.4,
+    service_impact: '讀取節點',
+    last_event_count: 2,
+    tags: ['database', 'production'],
+    groups: ['grp-002'],
+    created_at: toISO(new Date(now.getTime() - 2592000000)),
+    updated_at: toISO(now)
+  }
+];
+
+const resourceGroups = [
+  {
+    group_id: 'grp-001',
+    name: '交易前台集群',
+    description: 'Web 與 API 節點',
+    owner_team: 'sre-core',
+    member_count: 1,
+    subscriber_count: 4,
+    status_summary: { healthy: 2, warning: 1, critical: 0 },
+    created_at: toISO(new Date(now.getTime() - 777600000)),
+    members: [
+      { resource_id: 'res-001', name: 'web-01', type: 'service', status: 'warning' }
+    ],
+    subscribers: [
+      { user_id: 'user-001', display_name: '林佳瑜', subscribed_at: toISO(new Date(now.getTime() - 604800000)) }
+    ]
+  }
+];
+
+const topologyGraph = {
+  nodes: [
+    { id: 'res-001', name: 'web-01', type: 'service', status: 'warning', icon: 'service', metrics: { cpu: 72, latency: 820 } },
+    { id: 'res-002', name: 'rds-read-1', type: 'database', status: 'warning', icon: 'database', metrics: { latency: 210 } },
+    { id: 'res-003', name: 'redis-cache', type: 'cache', status: 'healthy', icon: 'cache', metrics: { hitRate: 0.98 } }
+  ],
+  edges: [
+    { source: 'res-001', target: 'res-002', relation: 'reads-from', traffic_level: 320 },
+    { source: 'res-001', target: 'res-003', relation: 'cache', traffic_level: 210 }
+  ]
+};
+
+const dashboards = [
+  {
+    dashboard_id: 'dash-001',
+    name: 'SRE 戰情室儀表板',
+    category: '精選',
+    owner: '事件指揮中心',
+    owner_id: 'team-war-room',
+    description: '跨團隊即時戰情看板，聚焦重大事件與 SLA 指標。',
+    featured: true,
+    published: true,
+    views: 345,
+    favorites: 58,
+    is_default: true,
+    published_at: toISO(new Date(now.getTime() - 86400000)),
+    updated_at: toISO(new Date(now.getTime() - 3600000)),
+    layout: [
+      {
+        widget_id: 'widget-001',
+        type: 'heatmap',
+        title: '系統狀態總覽',
+        config: { metric: 'service_health' },
+        position: { x: 0, y: 0, w: 12, h: 6 }
+      },
+      {
+        widget_id: 'widget-002',
+        type: 'list',
+        title: '活躍事件',
+        config: { severity: ['critical', 'warning'] },
+        position: { x: 0, y: 6, w: 8, h: 6 }
+      }
+    ],
+    kpis: [
+      { label: '業務系統健康度', value: '95%', trend: -2.1 },
+      { label: '關鍵事件監控', value: '3 件待處理', trend: 1 },
+      { label: 'SLA 指標追蹤', value: '99.9%', trend: -0.05 }
+    ]
+  }
+];
+
+const capacitySummary = {
+  total_datapoints: 12847,
+  reports: 3,
+  processing_time: 2.3,
+  accuracy: 97.8
+};
+
+const capacityForecasts = [
+  {
+    metric: 'cpu_usage',
+    current_usage: 68.2,
+    forecast_usage: 82.5,
+    series: [
+      { timestamp: toISO(new Date(now.getTime() - 86400000 * 2)), value: 65 },
+      { timestamp: toISO(new Date(now.getTime() - 86400000)), value: 67 },
+      { timestamp: toISO(now), value: 68 },
+      { timestamp: toISO(new Date(now.getTime() + 86400000)), value: 74 }
+    ],
+    best_case: [
+      { timestamp: toISO(now), value: 68 },
+      { timestamp: toISO(new Date(now.getTime() + 86400000)), value: 70 }
+    ],
+    worst_case: [
+      { timestamp: toISO(now), value: 68 },
+      { timestamp: toISO(new Date(now.getTime() + 86400000)), value: 85 }
+    ]
+  }
+];
+
+const capacitySuggestions = [
+  {
+    title: '調整資料庫資源配額',
+    description: '預估 30 天後容量不足，建議調整節點規格。',
+    impact: 'high',
+    effort: 'medium',
+    cost_saving: 1200
+  }
+];
+
+const resourceLoadSummary = {
+  avg_cpu: 58.4,
+  avg_memory: 62.1,
+  avg_disk: 48.2,
+  avg_network: 95.4,
+  anomalies_detected: 4
+};
+
+const resourceLoadItems = [
+  {
+    resource_id: 'res-001',
+    resource_name: 'web-01',
+    avg_cpu: 72.4,
+    avg_memory: 68.1,
+    disk_read: 85.2,
+    disk_write: 40.1,
+    net_in: 125.4,
+    net_out: 118.2,
+    anomaly_count: 2
+  },
+  {
+    resource_id: 'res-002',
+    resource_name: 'rds-read-1',
+    avg_cpu: 64.8,
+    avg_memory: 71.2,
+    disk_read: 102.3,
+    disk_write: 55.5,
+    net_in: 95.1,
+    net_out: 90.4,
+    anomaly_count: 1
+  }
+];
+
+const aiInsightReports = [
+  {
+    report_id: 'ai-001',
+    analysis_type: 'risk_forecast',
+    generated_at: toISO(now),
+    predicted_events: 5,
+    accuracy: 96.4,
+    impact_range: 'API 可用度、資料庫延遲',
+    summary: '未來 24 小時內 API 服務仍有高風險延遲。',
+    suggestions: [
+      {
+        title: '預熱備援節點',
+        priority: 'high',
+        description: '在高峰前 30 分鐘啟用備援 Web 節點。',
+        action_url: null
+      }
+    ]
+  }
+];
+
+const automationScripts = [
+  {
+    script_id: 'script-001',
+    name: 'Auto Scale Web',
+    type: 'ansible',
+    description: '自動擴充 Web 節點。',
+    version: 'v3',
+    tags: ['autoscale', 'web'],
+    last_execution_status: 'success',
+    last_execution_at: toISO(new Date(now.getTime() - 3600000)),
+    content: '#!/bin/bash\\necho "scale"',
+    versions: [
+      {
+        version_id: 'ver-001',
+        version: 'v3',
+        created_at: toISO(new Date(now.getTime() - 86400000)),
+        created_by: 'user-001',
+        changelog: '新增區域容錯'
+      },
+      {
+        version_id: 'ver-002',
+        version: 'v2',
+        created_at: toISO(new Date(now.getTime() - 604800000)),
+        created_by: 'user-001',
+        changelog: '最佳化重試機制'
+      }
+    ]
+  }
+];
+
+const automationSchedules = [
+  {
+    schedule_id: 'sch-001',
+    name: '夜間健康檢查',
+    type: 'recurring',
+    status: 'enabled',
+    cron_expression: '0 2 * * *',
+    timezone: 'Asia/Taipei',
+    next_run_time: toISO(new Date(now.getTime() + 3600000 * 6)),
+    script_id: 'script-001',
+    script_name: 'Auto Scale Web',
+    concurrency_policy: 'allow',
+    retry_policy: { max_retries: 1, interval_seconds: 300 },
+    notify_on_success: false,
+    notify_on_failure: true,
+    channels: ['chn-001'],
+    last_run_time: toISO(new Date(now.getTime() - 86400000))
+  }
+];
+
+const automationExecutions = [
+  {
+    execution_id: 'exe-001',
+    script_id: 'script-001',
+    script_name: 'Auto Scale Web',
+    status: 'success',
+    trigger_source: 'event_rule',
+    start_time: toISO(new Date(now.getTime() - 3600000)),
+    end_time: toISO(new Date(now.getTime() - 3595000)),
+    duration_ms: 5000,
+    parameters: { mode: 'scale-out', count: 2 },
+    stdout: 'scale out completed',
+    stderr: '',
+    error_message: null,
+    related_event_ids: ['evt-001'],
+    attempt_count: 1
+  }
+];
+
+const iamUsers = [
+  {
+    user_id: 'user-001',
+    username: 'sre.lead',
+    name: '林佳瑜',
+    email: 'sre.lead@example.com',
+    status: 'active',
+    teams: ['sre-core'],
+    roles: ['sre', 'incident-commander'],
+    last_login: toISO(now)
+  },
+  {
+    user_id: 'user-002',
+    username: 'ops.chen',
+    name: '陳昱安',
+    email: 'ops.chen@example.com',
+    status: 'active',
+    teams: ['ops'],
+    roles: ['ops'],
+    last_login: toISO(new Date(now.getTime() - 7200000))
+  }
+];
+
+const iamTeams = [
+  {
+    team_id: 'team-sre',
+    name: 'SRE 核心小組',
+    description: '負責平台可靠性維運',
+    owner: 'user-001',
+    members: 8,
+    subscribers: 12,
+    created_at: toISO(new Date(now.getTime() - 2592000000)),
+    member_ids: ['user-001', 'user-002'],
+    subscriber_ids: ['user-003', 'user-004']
+  }
+];
+
+const iamRoles = [
+  {
+    role_id: 'role-sre',
+    name: 'sre',
+    description: 'SRE 標準權限',
+    status: 'active',
+    user_count: 5,
+    created_at: toISO(new Date(now.getTime() - 2592000000)),
+    permissions: [
+      { module: 'events', actions: ['read', 'update', 'acknowledge'] },
+      { module: 'resources', actions: ['read'] }
+    ],
+    updated_at: toISO(new Date(now.getTime() - 604800000))
+  }
+];
+
+const auditLogs = [
+  {
+    log_id: 'log-001',
+    time: toISO(new Date(now.getTime() - 1800000)),
+    user: '林佳瑜',
+    action: 'event.update',
+    target_type: 'event',
+    target_id: 'evt-001',
+    result: 'success',
+    ip: '203.0.113.8',
+    details: { status: 'in_progress' }
+  },
+  {
+    log_id: 'log-002',
+    time: toISO(new Date(now.getTime() - 7200000)),
+    user: '陳昱安',
+    action: 'script.execute',
+    target_type: 'script',
+    target_id: 'script-001',
+    result: 'success',
+    ip: '198.51.100.25',
+    details: { execution_id: 'exe-001' }
+  }
+];
+
+const notificationChannels = [
+  {
+    channel_id: 'chn-001',
+    name: 'Slack #sre-alert',
+    type: 'slack',
+    status: 'active',
+    description: 'SRE 團隊 Slack 頻道',
+    config: { webhook_url: 'https://hooks.slack.com/...', default_channel: '#sre-alert' },
+    updated_at: toISO(new Date(now.getTime() - 3600000)),
+    last_tested_at: toISO(new Date(now.getTime() - 7200000))
+  },
+  {
+    channel_id: 'chn-002',
+    name: 'Email oncall',
+    type: 'email',
+    status: 'active',
+    description: 'On-call 信箱',
+    config: { from: 'noreply@example.com' },
+    updated_at: toISO(new Date(now.getTime() - 10800000)),
+    last_tested_at: toISO(new Date(now.getTime() - 86400000))
+  }
+];
+
+const notificationStrategies = [
+  {
+    strategy_id: 'str-001',
+    name: 'Critical 事件通知',
+    description: '針對 critical 事件通知核心人員。',
+    trigger_condition: 'severity == critical',
+    channel_count: 2,
+    status: 'enabled',
+    priority: 'high',
+    severity_filters: ['critical'],
+    recipients: [
+      { type: 'team', id: 'team-sre' },
+      { type: 'user', id: 'user-001' }
+    ],
+    channels: [
+      { channel_id: 'chn-001', channel_type: 'slack', template: 'critical-alert' },
+      { channel_id: 'chn-002', channel_type: 'email', template: 'default' }
+    ],
+    resource_filters: {},
+    created_at: toISO(new Date(now.getTime() - 259200000)),
+    updated_at: toISO(new Date(now.getTime() - 86400000))
+  }
+];
+
+const notificationHistory = [
+  {
+    record_id: 'hist-001',
+    sent_time: toISO(new Date(now.getTime() - 3600000)),
+    strategy_name: 'Critical 事件通知',
+    channel_type: 'slack',
+    recipients: ['#sre-alert'],
+    status: 'success',
+    duration_ms: 1200,
+    payload: { event_id: 'evt-001' },
+    attempts: [
+      { sent_at: toISO(new Date(now.getTime() - 3600000)), status: 'success', response: '200 OK' }
+    ],
+    error_message: null,
+    related_event_id: 'evt-001'
+  }
+];
+
+const tagDefinitions = [
+  {
+    tag_id: 'tag-001',
+    name: '環境',
+    category: '基礎設施',
+    required: true,
+    usage_count: 124,
+    values: [
+      { value_id: 'tag-001-v1', value: 'production', description: '正式環境', is_default: true },
+      { value_id: 'tag-001-v2', value: 'staging', description: '預備環境', is_default: false }
+    ]
+  }
+];
+
+const emailSettings = {
+  smtp_host: 'smtp.example.com',
+  smtp_port: 587,
+  username: 'noreply@example.com',
+  sender_name: 'SRE Platform',
+  sender_email: 'noreply@example.com',
+  encryption: 'tls',
+  test_recipient: 'ops@example.com',
+  is_enabled: true,
+  updated_at: toISO(new Date(now.getTime() - 3600000))
+};
+
+const authSettings = {
+  provider: 'Keycloak',
+  oidc_enabled: true,
+  realm: 'sre-platform',
+  client_id: 'sre-ui',
+  client_secret_hint: '***',
+  auth_url: 'https://auth.example.com/realms/sre/protocol/openid-connect/auth',
+  token_url: 'https://auth.example.com/realms/sre/protocol/openid-connect/token',
+  userinfo_url: 'https://auth.example.com/realms/sre/protocol/openid-connect/userinfo',
+  redirect_uri: 'https://sre.example.com/callback',
+  logout_url: 'https://auth.example.com/realms/sre/protocol/openid-connect/logout',
+  scopes: ['openid', 'profile', 'email'],
+  user_sync: true,
+  updated_at: toISO(new Date(now.getTime() - 7200000))
+};
+const paginate = (items, req) => {
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const pageSize = Math.min(Math.max(parseInt(req.query.page_size, 10) || 20, 1), 100);
+  const start = (page - 1) * pageSize;
+  const paged = items.slice(start, start + pageSize);
   return {
     page,
     page_size: pageSize,
-    total: totalItems,
-    total_pages: totalPages
+    total: items.length,
+    items: paged
   };
 };
 
-const withPagination = (items, page, pageSize) => {
-  const total = items.length;
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const pageItems = items.slice(start, end);
-  return {
-    items: pageItems,
-    pagination: buildPagination(page, pageSize, total)
-  };
-};
+const mapEventSummary = (event) => ({
+  event_id: event.event_id,
+  event_key: event.event_key,
+  summary: event.summary,
+  description: event.description,
+  severity: event.severity,
+  status: event.status,
+  resource_id: event.resource_id,
+  resource_name: event.resource_name,
+  service_impact: event.service_impact,
+  rule_name: event.rule_name,
+  trigger_threshold: event.trigger_threshold,
+  assignee: event.assignee,
+  trigger_time: event.trigger_time,
+  tags: event.tags || []
+});
 
-const ensureArrayCollection = (db, key) => {
-  const collection = db.get(key);
-  const value = collection.value();
-  if (!Array.isArray(value)) {
-    db.set(key, []).write();
-    return db.get(key);
-  }
-  return collection;
-};
+const toEventDetail = (event) => ({
+  ...mapEventSummary(event),
+  trigger_value: event.trigger_value,
+  unit: event.unit,
+  acknowledged_at: event.acknowledged_at,
+  resolved_at: event.resolved_at,
+  timeline: event.timeline || [],
+  related_events: event.related || [],
+  automation_actions: event.analysis ? ['scale-out'] : [],
+  analysis: event.analysis
+});
 
-const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
+const getEventById = (id) => eventData.find((evt) => evt.event_id === id);
+const getEventRuleById = (id) => eventRules.find((rule) => rule.rule_id === id);
+const getSilenceRuleById = (id) => silenceRules.find((rule) => rule.silence_id === id);
+const getResourceById = (id) => resourceData.find((res) => res.resource_id === id);
+const getResourceGroupById = (id) => resourceGroups.find((grp) => grp.group_id === id);
+const getDashboardById = (id) => dashboards.find((db) => db.dashboard_id === id);
+const getScriptById = (id) => automationScripts.find((sc) => sc.script_id === id);
+const getScheduleById = (id) => automationSchedules.find((sch) => sch.schedule_id === id);
+const getExecutionById = (id) => automationExecutions.find((exe) => exe.execution_id === id);
+const getIamUserById = (id) => iamUsers.find((u) => u.user_id === id);
+const getTeamById = (id) => iamTeams.find((t) => t.team_id === id);
+const getRoleById = (id) => iamRoles.find((r) => r.role_id === id);
+const getNotificationStrategyById = (id) => notificationStrategies.find((s) => s.strategy_id === id);
+const getNotificationChannelById = (id) => notificationChannels.find((c) => c.channel_id === id);
+const getHistoryById = (id) => notificationHistory.find((h) => h.record_id === id);
+const getTagById = (id) => tagDefinitions.find((tag) => tag.tag_id === id);
 
-const tryParseNumber = (value) => {
-  if (typeof value === 'number' && Number.isFinite(value)) {
-    return value;
-  }
-  if (typeof value === 'string' && value.trim() !== '') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-};
+const notFound = (res, message = '查無資料') => res.status(404).json({ code: 'NOT_FOUND', message });
 
-const pickNumber = (...candidates) => {
-  for (const candidate of candidates) {
-    const parsed = tryParseNumber(candidate);
-    if (parsed !== null) {
-      return parsed;
-    }
-  }
-  return null;
-};
-
-const hashString = (value) => {
-  const input = typeof value === 'string' ? value : String(value ?? '');
-  let hash = 2166136261;
-  for (let index = 0; index < input.length; index += 1) {
-    hash ^= input.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return hash >>> 0;
-};
-
-const createSeededGenerator = (seedInput) => {
-  let state = hashString(seedInput) >>> 0;
-  if (!state) {
-    state = 0x9e3779b9; // Fallback 非零種子，避免固定序列
-  }
-  return () => {
-    state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
-    return state / 0xffffffff;
-  };
-};
-
-const generateMetricHistory = (seedInput, cpuBase = 55, memoryBase = 60, points = 12, rangeMinutes = 60) => {
-  const generator = createSeededGenerator(`${seedInput}:${points}:${rangeMinutes}`);
-  const safePoints = clamp(Math.floor(points), 4, 60);
-  const safeRangeMinutes = clamp(Math.floor(rangeMinutes), 15, 24 * 60);
-  const totalDurationMs = safeRangeMinutes * 60 * 1000;
-  const stepMs = Math.max(60 * 1000, Math.floor(totalDurationMs / safePoints));
-  const timestamps = [];
-  const cpuSeries = [];
-  const memorySeries = [];
-  const now = Date.now();
-  const startTime = now - (safePoints - 1) * stepMs;
-
-  for (let index = 0; index < safePoints; index += 1) {
-    const timestamp = new Date(startTime + index * stepMs).toISOString();
-    timestamps.push(timestamp);
-
-    const cpuNoise = (generator() - 0.5) * 14;
-    const memoryNoise = (generator() - 0.5) * 10;
-
-    cpuSeries.push(clamp(Math.round(cpuBase + cpuNoise), 0, 100));
-    memorySeries.push(clamp(Math.round(memoryBase + memoryNoise), 0, 100));
-  }
-
-  return {
-    timestamps,
-    cpuSeries,
-    memorySeries,
-    cpu_usage: cpuSeries,
-    memory_usage: memorySeries,
-  };
-};
-
-const statusPriority = {
-  CRITICAL: 0,
-  WARNING: 1,
-  MAINTENANCE: 2,
-  SILENCED: 3,
-  HEALTHY: 4,
-  UNKNOWN: 5,
-};
-
-const normalizeStatus = (value) => {
-  if (typeof value !== 'string') {
-    return 'UNKNOWN';
-  }
-  const normalized = value.trim().toUpperCase();
-  return statusPriority.hasOwnProperty(normalized) ? normalized : 'UNKNOWN';
-};
-
-const RESOURCE_CACHE_TTL_MS = 60 * 1000;
-
-const resourceCache = {
-  items: [],
-  groups: [],
-  stats: null,
-  generatedAt: null,
-  expiresAt: 0,
-};
-
-const invalidateResourceCache = () => {
-  resourceCache.expiresAt = 0;
-};
-
-const stripInternalFields = (entry) => {
-  if (!entry || typeof entry !== 'object') {
-    return entry;
-  }
-  return Object.fromEntries(Object.entries(entry).filter(([key]) => !key.startsWith('__')));
-};
-
-const computeHealthInsights = (resource, activeEvents, metricsHistory) => {
-  const reasons = [];
-  const metrics = resource.metrics || {};
-  const cpuUsage = pickNumber(metrics.cpuUsage, metrics.cpu_usage) ?? 0;
-  const memoryUsage = pickNumber(metrics.memoryUsage, metrics.memory_usage) ?? 0;
-  const latencyMs = pickNumber(metrics.latencyMs, metrics.latency_ms);
-
-  if (cpuUsage >= 90) {
-    reasons.push('CPU 使用率於最近 15 分鐘平均高於 90%，可能存在資源飽和風險');
-  } else if (cpuUsage >= 80) {
-    reasons.push('CPU 使用率連續多個周期高於 80%');
-  }
-
-  if (memoryUsage >= 85) {
-    reasons.push('記憶體使用率高於 85%，建議檢查應用程式記憶體配置');
-  }
-
-  if (typeof latencyMs === 'number' && latencyMs >= 180) {
-    reasons.push(`平均延遲 ${latencyMs}ms，高於內部 SLO 門檻`);
-  }
-
-  if (metricsHistory && Array.isArray(metricsHistory.cpuSeries)) {
-    const cpuSeries = metricsHistory.cpuSeries;
-    if (cpuSeries.length >= 2) {
-      const delta = cpuSeries[cpuSeries.length - 1] - cpuSeries[0];
-      if (delta >= 15) {
-        reasons.push('CPU 使用率在過去一小時內上升超過 15%');
-      }
-    }
-  }
-
-  if (activeEvents.length > 0) {
-    const sample = activeEvents[0];
-    const summary = sample.summary || sample.description || sample.id || '監控事件';
-    const severity = (sample.severity || '').toUpperCase();
-    const qualifier = severity === 'CRITICAL' ? '嚴重' : '活躍';
-    reasons.push(`目前有 ${activeEvents.length} 個${qualifier}事件，例如「${summary}」`);
-  }
-
-  if (reasons.length === 0) {
-    reasons.push('所有核心監控指標均在安全範圍內');
-  }
-
-  return {
-    summary: reasons[0],
-    reasons,
-  };
-};
-
-const buildResourceActions = (resource) => {
-  const actions = [];
-  const actionMap = new Map();
-  const type = String(resource.type || '').toLowerCase();
-  const tags = Array.isArray(resource.tags) ? resource.tags : [];
-  const hasProductionTag = tags.some((tag) =>
-    typeof tag?.key === 'string' && tag.key.toLowerCase() === 'environment' && String(tag.value).toLowerCase() === 'production'
-  );
-
-  const pushAction = (action) => {
-    if (!action || !action.key || actionMap.has(action.key)) {
-      return;
-    }
-    actionMap.set(action.key, action);
-    actions.push(action);
-  };
-
-  pushAction({
-    key: 'view-dashboard',
-    label: '查看 Grafana 儀表板',
-    type: 'link',
-    url: resource.observability?.grafana_url ?? `https://grafana.example.com/d/${resource.id}`,
-    description: '開啟 Grafana 儀表板檢視資源即時指標',
+app.post('/auth/login', (req, res) => {
+  const { username } = req.body || {};
+  res.json({
+    access_token: 'mock-access-token',
+    refresh_token: 'mock-refresh-token',
+    token_type: 'Bearer',
+    expires_in: 3600,
+    username: username || currentUser.username
   });
+});
 
-  if (type.includes('database')) {
-    pushAction({
-      key: 'run-backup',
-      label: '執行備份',
-      type: 'automation',
-      description: '透過自動化流程觸發資料庫全量備份 (模擬)',
-    });
-    pushAction({
-      key: 'analyze-slow-query',
-      label: '慢查詢分析',
-      type: 'link',
-      url: `https://grafana.example.com/explore?resource=${resource.id}&view=slow-query`,
-      description: '開啟查詢分析儀表板檢視慢查詢趨勢',
-    });
+app.post('/auth/logout', (req, res) => res.status(204).end());
+
+app.post('/auth/refresh', (req, res) => {
+  res.json({
+    access_token: 'mock-access-token-refreshed',
+    refresh_token: 'mock-refresh-token',
+    token_type: 'Bearer',
+    expires_in: 3600
+  });
+});
+
+app.get('/me', (req, res) => res.json(currentUser));
+
+app.get('/me/preferences', (req, res) => res.json(userPreferences));
+
+app.put('/me/preferences', (req, res) => {
+  Object.assign(userPreferences, req.body || {});
+  res.json(userPreferences);
+});
+
+app.get('/me/security/logins', (req, res) => {
+  res.json(paginate(securityLogins, req));
+});
+
+app.get('/search', (req, res) => {
+  const keyword = (req.query.keyword || '').toLowerCase();
+  const eventResults = eventData
+    .filter((evt) => !keyword || evt.summary.toLowerCase().includes(keyword))
+    .map((evt) => ({
+      id: evt.event_id,
+      title: evt.summary,
+      description: evt.description,
+      url: `/incidents/${evt.event_id}`,
+      icon: 'alert'
+    }));
+  const resourceResults = resourceData
+    .filter((res) => !keyword || res.name.toLowerCase().includes(keyword))
+    .map((res) => ({
+      id: res.resource_id,
+      title: res.name,
+      description: `${res.type} · ${res.environment}`,
+      url: `/resources/${res.resource_id}`,
+      icon: 'database'
+    }));
+  const dashboardResults = dashboards
+    .filter((dash) => !keyword || dash.name.toLowerCase().includes(keyword))
+    .map((dash) => ({
+      id: dash.dashboard_id,
+      title: dash.name,
+      description: dash.description,
+      url: `/dashboards/${dash.dashboard_id}`,
+      icon: 'dashboard'
+    }));
+
+  res.json({
+    query: keyword,
+    groups: [
+      { type: 'event', label: '事件', results: eventResults },
+      { type: 'resource', label: '資源', results: resourceResults },
+      { type: 'dashboard', label: '儀表板', results: dashboardResults }
+    ]
+  });
+});
+
+app.get('/notifications/summary', (req, res) => {
+  const total = notifications.length;
+  const unread = notifications.filter((item) => item.status === 'unread').length;
+  const bySeverity = notifications.reduce((acc, item) => {
+    acc[item.severity] = (acc[item.severity] || 0) + 1;
+    return acc;
+  }, {});
+  res.json({ total, unread, by_severity: bySeverity, last_updated_at: toISO(now) });
+});
+
+app.get('/notifications', (req, res) => {
+  res.json(paginate(notifications, req));
+});
+
+app.post('/notifications/:notification_id/read', (req, res) => {
+  const notification = notifications.find((item) => item.notification_id === req.params.notification_id);
+  if (!notification) {
+    return notFound(res, '找不到通知');
   }
+  notification.status = 'read';
+  notification.read_at = req.body?.read_at || toISO(new Date());
+  res.json(notification);
+});
 
-  if (type.includes('service') || type.includes('application')) {
-    pushAction({
-      key: 'tail-logs',
-      label: '查看即時日誌',
-      type: 'automation',
-      description: '串接 Loki 查詢最近 10 分鐘日誌 (模擬)',
-    });
-    pushAction({
-      key: 'trigger-scale-out',
-      label: '啟動擴容',
-      type: 'automation',
-      description: '透過排程平台擴容服務節點 (模擬)',
-    });
-  }
+app.post('/notifications/mark-all-read', (req, res) => {
+  notifications.forEach((item) => {
+    item.status = 'read';
+    item.read_at = toISO(new Date());
+  });
+  res.json({
+    total: notifications.length,
+    unread: 0,
+    by_severity: notifications.reduce((acc, item) => {
+      acc[item.severity] = (acc[item.severity] || 0) + 1;
+      return acc;
+    }, {}),
+    last_updated_at: toISO(new Date())
+  });
+});
 
-  if (type.includes('cache')) {
-    pushAction({
-      key: 'flush-cache',
-      label: '刷新快取',
-      type: 'automation',
-      description: '清空快取節點資料以釋放資源 (模擬)',
-    });
-  }
+app.get('/events/summary', (req, res) => {
+  const critical = eventData.filter((evt) => evt.severity === 'critical').length;
+  const acknowledged = eventData.filter((evt) => ['acknowledged', 'in_progress'].includes(evt.status)).length;
+  res.json({
+    active_events: { total: eventData.length, critical, acknowledged },
+    resolved_today: { total: 12, automated: 7, trend: 8 },
+    mean_time_to_resolve: { hours: 2.5, trend: -15 },
+    automation_rate: { percentage: 35.2, automated_count: 4 }
+  });
+});
 
-  if (hasProductionTag) {
-    pushAction({
-      key: 'create-incident',
-      label: '建立事故',
-      type: 'navigate',
-      target: '/incidents/new',
-      description: '以此資源為範圍建立事故並指派值班工程師',
-    });
-  }
+app.get('/events', (req, res) => {
+  const items = eventData.map(mapEventSummary);
+  res.json(paginate(items, req));
+});
 
-  return actions.slice(0, 5);
-};
-
-const computeResourceStatistics = (resources, groups, generatedAt) => {
-  const stats = {
-    total: resources.length,
-    healthy: 0,
-    warning: 0,
-    critical: 0,
-    maintenance: 0,
-    groups: groups.length,
-    automationCoverage: 0,
-    offline: 0,
-    lastUpdatedAt: generatedAt,
+app.post('/events', (req, res) => {
+  const payload = req.body || {};
+  const newEvent = {
+    event_id: `evt-${Date.now()}`,
+    event_key: payload.event_key || `INC-${Date.now()}`,
+    summary: payload.summary || '新事件',
+    description: payload.description || '',
+    severity: payload.severity || 'warning',
+    status: payload.status || 'new',
+    resource_id: payload.resource_id || null,
+    resource_name: resourceData.find((r) => r.resource_id === payload.resource_id)?.name || null,
+    service_impact: payload.service_impact || null,
+    rule_id: payload.rule_id || null,
+    rule_name: eventRules.find((rule) => rule.rule_id === payload.rule_id)?.name || null,
+    trigger_threshold: payload.trigger_threshold || null,
+    trigger_value: payload.trigger_value || null,
+    unit: payload.unit || null,
+    trigger_time: payload.trigger_time || toISO(new Date()),
+    assignee_id: payload.assignee_id || null,
+    assignee: iamUsers.find((user) => user.user_id === payload.assignee_id)?.name || null,
+    acknowledged_at: null,
+    resolved_at: null,
+    tags: payload.tags || [],
+    timeline: [],
+    related: [],
+    analysis: null
   };
+  res.status(201).json(toEventDetail(newEvent));
+});
 
-  let automationManaged = 0;
-  let latestUpdatedAt = generatedAt;
+app.get('/events/:event_id', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  res.json(toEventDetail(event));
+});
 
-  resources.forEach((resource) => {
-    const status = normalizeStatus(resource.status);
-    if (status === 'HEALTHY') stats.healthy += 1;
-    if (status === 'WARNING') stats.warning += 1;
-    if (status === 'CRITICAL') stats.critical += 1;
-    if (status === 'MAINTENANCE') stats.maintenance += 1;
-    if (status === 'UNKNOWN') stats.offline += 1;
+app.patch('/events/:event_id', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  Object.assign(event, req.body || {});
+  res.json(toEventDetail(event));
+});
 
-    const hasAutomationTag = Array.isArray(resource.tags)
-      ? resource.tags.some((tag) => /auto|automation|managed/i.test(`${tag.key}:${tag.value}`))
-      : false;
+app.delete('/events/:event_id', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  res.status(204).end();
+});
 
-    if (hasAutomationTag) {
-      automationManaged += 1;
-    }
+app.get('/events/:event_id/timeline', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  res.json({ items: event.timeline || [] });
+});
 
-    const updatedAt = resource.updated_at || resource.updatedAt || resource.last_checked_at || resource.lastCheckedAt;
-    if (updatedAt && (!latestUpdatedAt || new Date(updatedAt).getTime() > new Date(latestUpdatedAt).getTime())) {
-      latestUpdatedAt = updatedAt;
-    }
-  });
-
-  stats.automationCoverage = stats.total > 0 ? Math.round((automationManaged / stats.total) * 100) : 0;
-  stats.lastUpdatedAt = latestUpdatedAt || generatedAt;
-
-  return stats;
-};
-
-const aggregateResourceGroups = (groupRecords, resources, generatedAt) => {
-  const resourceMap = new Map(resources.map((resource) => [resource.id, resource]));
-
-  return groupRecords.map((group) => {
-    const memberIds = Array.isArray(group.resource_ids)
-      ? group.resource_ids.filter((id) => resourceMap.has(id))
-      : Array.isArray(group.member_ids)
-        ? group.member_ids.filter((id) => resourceMap.has(id))
-        : [];
-
-    const tagsAccumulator = new Map();
-    const healthBreakdown = { healthy: 0, warning: 0, critical: 0, maintenance: 0 };
-    let recentChanges = 0;
-    let automationManaged = 0;
-    let groupStatus = 'UNKNOWN';
-
-    memberIds.forEach((memberId) => {
-      const resource = resourceMap.get(memberId);
-      if (!resource) {
-        return;
-      }
-
-      const status = normalizeStatus(resource.status);
-      if (statusPriority[status] < statusPriority[groupStatus] || groupStatus === 'UNKNOWN') {
-        groupStatus = status;
-      }
-
-      if (status === 'HEALTHY') healthBreakdown.healthy += 1;
-      if (status === 'WARNING') healthBreakdown.warning += 1;
-      if (status === 'CRITICAL') healthBreakdown.critical += 1;
-      if (status === 'MAINTENANCE') healthBreakdown.maintenance += 1;
-
-      const updatedAt = resource.updated_at || resource.updatedAt;
-      if (updatedAt && Date.now() - new Date(updatedAt).getTime() < 24 * 60 * 60 * 1000) {
-        recentChanges += 1;
-      }
-
-      if (Array.isArray(resource.tags)) {
-        resource.tags.forEach((tag) => {
-          if (!tag || !tag.key) {
-            return;
-          }
-          const key = `${tag.key}:${tag.value}`;
-          if (!tagsAccumulator.has(key)) {
-            tagsAccumulator.set(key, { key: tag.key, value: tag.value, source: tag.source ?? 'derived' });
-          }
-          if (/auto|automation|managed/i.test(key)) {
-            automationManaged += 1;
-          }
-        });
-      }
-    });
-
-    const memberCount = memberIds.length;
-    const automationCoverage = memberCount > 0 ? Math.round((automationManaged / memberCount) * 100) : 0;
-
-    const payload = {
-      id: group.id,
-      name: group.name,
-      description: group.description ?? null,
-      responsible_team_id: group.owner_team_id ?? group.responsible_team_id ?? null,
-      member_ids: memberIds,
-      tags: Array.from(tagsAccumulator.values()),
-      status: groupStatus,
-      created_at: group.created_at ?? null,
-      updated_at: group.updated_at ?? null,
-      metadata: {
-        member_count: memberCount,
-        health_breakdown: healthBreakdown,
-        recent_changes: recentChanges,
-        automation_coverage: automationCoverage,
-        generated_at: generatedAt,
-      },
-      __searchText: [group.id, group.name, group.description, groupStatus, ...(Array.from(tagsAccumulator.values()).map((tag) => `${tag.key}:${tag.value}`))]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase(),
-    };
-
-    return payload;
-  });
-};
-
-const channelHealthState = new Map();
-
-const recordChannelHealth = (db, result = {}, options = {}) => {
-  if (!result || typeof result !== 'object') {
-    return null;
-  }
-  const channelId = result.id || result.channel_id || result.channelId;
-  if (!channelId) {
-    return null;
-  }
-
-  const normalizedStatus = typeof result.status === 'string'
-    ? result.status.toLowerCase()
-    : 'unknown';
-  const nowIso = typeof result.checkedAt === 'string'
-    ? result.checkedAt
-    : typeof result.checked_at === 'string'
-      ? result.checked_at
-      : new Date().toISOString();
-
+app.post('/events/:event_id/timeline', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
   const entry = {
-    id: options.id || `channel_health_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    channel_id: channelId,
-    status: normalizedStatus,
-    latency_ms: typeof result.latencyMs === 'number' ? Math.round(result.latencyMs) : null,
-    attempts: typeof result.attempts === 'number' ? Math.round(result.attempts) : null,
-    message: result.message ?? null,
-    checked_at: nowIso,
-    source: options.source || 'automatic_probe',
+    entry_id: `evt-${req.params.event_id}-tl-${Date.now()}`,
+    event_id: req.params.event_id,
+    entry_type: req.body?.entry_type || 'note',
+    message: req.body?.message || '更新備註',
+    created_by: req.body?.created_by || currentUser.display_name,
+    created_at: toISO(new Date()),
+    metadata: req.body?.metadata || {}
   };
+  event.timeline = event.timeline || [];
+  event.timeline.push(entry);
+  res.status(201).json(entry);
+});
 
-  const existing = channelHealthState.get(channelId) || { history: [] };
-  const history = [entry, ...existing.history].slice(0, 30);
-  channelHealthState.set(channelId, {
-    status: normalizedStatus,
-    latency_ms: entry.latency_ms,
-    attempts: entry.attempts,
-    message: entry.message,
-    checked_at: entry.checked_at,
-    history,
+app.get('/events/:event_id/related', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  res.json({ items: event.related || [] });
+});
+
+app.post('/events/:event_id/acknowledge', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  event.status = 'acknowledged';
+  event.assignee_id = req.body?.assignee_id || currentUser.user_id;
+  event.assignee = iamUsers.find((u) => u.user_id === event.assignee_id)?.name || currentUser.display_name;
+  event.acknowledged_at = toISO(new Date());
+  res.json(toEventDetail(event));
+});
+
+app.get('/events/:event_id/analysis', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  res.json(event.analysis || {
+    event_id: event.event_id,
+    generated_at: toISO(new Date()),
+    summary: '尚未產生分析',
+    root_cause: null,
+    confidence: 0,
+    impact_analysis: null,
+    recommendations: []
   });
+});
 
-  const healthCollection = ensureArrayCollection(db, 'channel_health_checks');
-  healthCollection.push(entry).write();
-  return entry;
-};
+app.post('/events/:event_id/analysis', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  event.analysis = event.analysis || {
+    event_id: event.event_id,
+    generated_at: toISO(new Date()),
+    summary: 'AI 分析已啟動',
+    root_cause: '預估為資料庫瓶頸',
+    confidence: 0.7,
+    impact_analysis: '影響交易 API 的 12% 需求',
+    recommendations: aiInsightReports[0].suggestions
+  };
+  res.status(202).json(event.analysis);
+});
 
-const loadChannelHealthFromDb = (db) => {
-  const collection = ensureArrayCollection(db, 'channel_health_checks');
-  const records = collection.value() || [];
-  records.slice(-100).forEach((record) => {
-    if (!record || typeof record !== 'object' || !record.channel_id) {
-      return;
-    }
-    const normalizedStatus = typeof record.status === 'string' ? record.status.toLowerCase() : 'unknown';
-    const entry = {
-      status: normalizedStatus,
-      latency_ms: record.latency_ms ?? null,
-      attempts: record.attempts ?? null,
-      message: record.message ?? null,
-      checked_at: record.checked_at ?? null,
-      history: [],
-    };
-    const existing = channelHealthState.get(record.channel_id);
-    const history = existing ? existing.history : [];
-    channelHealthState.set(record.channel_id, {
-      ...entry,
-      history: [
-        {
-          id: record.id,
-          channel_id: record.channel_id,
-          status: normalizedStatus,
-          latency_ms: record.latency_ms ?? null,
-          attempts: record.attempts ?? null,
-          message: record.message ?? null,
-          checked_at: record.checked_at ?? null,
-          source: record.source ?? 'historical',
-        },
-        ...(history || []),
-      ].slice(0, 30),
-    });
+app.post('/events/:event_id/silence', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  const durationHours = req.body?.duration_hours || 2;
+  const start = new Date();
+  const silence = {
+    silence_id: `slc-${Date.now()}`,
+    name: `${event.summary} 靜音`,
+    description: req.body?.reason || '快速靜音',
+    silence_type: 'single',
+    scope: 'resource',
+    enabled: true,
+    created_at: toISO(start),
+    schedule: {
+      silence_type: 'single',
+      starts_at: toISO(start),
+      ends_at: toISO(new Date(start.getTime() + durationHours * 3600000)),
+      timezone: 'UTC',
+      repeat: null
+    },
+    matchers: [
+      { key: 'resource_id', operator: 'equals', value: event.resource_id }
+    ],
+    notify_on_start: false,
+    notify_on_end: req.body?.notify_on_end ?? false,
+    created_by: currentUser.user_id
+  };
+  res.status(201).json(silence);
+});
+app.get('/event-rules/summary', (req, res) => {
+  const enabled = eventRules.filter((rule) => rule.enabled).length;
+  const automation = eventRules.filter((rule) => rule.automation?.enabled).length;
+  res.json({ total: eventRules.length, enabled, automation_enabled: automation });
+});
+
+app.get('/event-rules', (req, res) => {
+  res.json(paginate(eventRules.map((rule) => ({
+    rule_id: rule.rule_id,
+    name: rule.name,
+    description: rule.description,
+    severity: rule.severity,
+    enabled: rule.enabled,
+    automation_enabled: rule.automation_enabled,
+    creator: rule.creator,
+    last_updated: rule.last_updated
+  })), req));
+});
+
+app.post('/event-rules', (req, res) => {
+  const payload = req.body || {};
+  const rule = {
+    rule_id: `rule-${Date.now()}`,
+    name: payload.name || '新事件規則',
+    description: payload.description || '',
+    severity: payload.severity || 'warning',
+    enabled: payload.enabled ?? true,
+    automation_enabled: payload.automation?.enabled ?? false,
+    creator: currentUser.display_name,
+    last_updated: toISO(new Date()),
+    labels: payload.labels || [],
+    environments: payload.environments || [],
+    condition_groups: payload.condition_groups || [],
+    title_template: payload.title_template || '',
+    content_template: payload.content_template || '',
+    automation: payload.automation || { enabled: false, script_id: null, parameters: {} }
+  };
+  res.status(201).json(rule);
+});
+
+app.get('/event-rules/:rule_id', (req, res) => {
+  const rule = getEventRuleById(req.params.rule_id);
+  if (!rule) return notFound(res, '找不到事件規則');
+  res.json(rule);
+});
+
+app.put('/event-rules/:rule_id', (req, res) => {
+  const rule = getEventRuleById(req.params.rule_id);
+  if (!rule) return notFound(res, '找不到事件規則');
+  Object.assign(rule, req.body || {}, { last_updated: toISO(new Date()) });
+  res.json(rule);
+});
+
+app.delete('/event-rules/:rule_id', (req, res) => {
+  const rule = getEventRuleById(req.params.rule_id);
+  if (!rule) return notFound(res, '找不到事件規則');
+  res.status(204).end();
+});
+
+app.post('/event-rules/:rule_id/toggle', (req, res) => {
+  const rule = getEventRuleById(req.params.rule_id);
+  if (!rule) return notFound(res, '找不到事件規則');
+  rule.enabled = !rule.enabled;
+  res.json(rule);
+});
+
+app.post('/event-rules/:rule_id/test', (req, res) => {
+  const rule = getEventRuleById(req.params.rule_id);
+  if (!rule) return notFound(res, '找不到事件規則');
+  res.json({ matches: true, preview_event: mapEventSummary(eventData[0]), messages: ['條件符合範例資料'] });
+});
+
+app.get('/silence-rules', (req, res) => {
+  res.json(paginate(silenceRules.map((rule) => ({
+    silence_id: rule.silence_id,
+    name: rule.name,
+    description: rule.description,
+    silence_type: rule.silence_type,
+    scope: rule.scope,
+    enabled: rule.enabled,
+    created_at: rule.created_at
+  })), req));
+});
+
+app.post('/silence-rules', (req, res) => {
+  const payload = req.body || {};
+  const rule = {
+    silence_id: `slc-${Date.now()}`,
+    name: payload.name || '新靜音規則',
+    description: payload.description || '',
+    silence_type: payload.silence_type || 'single',
+    scope: payload.scope || 'global',
+    enabled: payload.enabled ?? true,
+    created_at: toISO(new Date()),
+    schedule: payload.schedule || null,
+    matchers: payload.matchers || [],
+    notify_on_start: payload.notify_on_start ?? false,
+    notify_on_end: payload.notify_on_end ?? false,
+    created_by: currentUser.user_id
+  };
+  res.status(201).json(rule);
+});
+
+app.get('/silence-rules/:silence_id', (req, res) => {
+  const rule = getSilenceRuleById(req.params.silence_id);
+  if (!rule) return notFound(res, '找不到靜音規則');
+  res.json(rule);
+});
+
+app.put('/silence-rules/:silence_id', (req, res) => {
+  const rule = getSilenceRuleById(req.params.silence_id);
+  if (!rule) return notFound(res, '找不到靜音規則');
+  Object.assign(rule, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(rule);
+});
+
+app.delete('/silence-rules/:silence_id', (req, res) => {
+  const rule = getSilenceRuleById(req.params.silence_id);
+  if (!rule) return notFound(res, '找不到靜音規則');
+  res.status(204).end();
+});
+
+app.post('/silence-rules/:silence_id/toggle', (req, res) => {
+  const rule = getSilenceRuleById(req.params.silence_id);
+  if (!rule) return notFound(res, '找不到靜音規則');
+  rule.enabled = !rule.enabled;
+  res.json(rule);
+});
+
+app.get('/resources/summary', (req, res) => {
+  const healthy = resourceData.filter((resItem) => resItem.status === 'healthy').length;
+  const warning = resourceData.filter((resItem) => resItem.status === 'warning').length;
+  const critical = resourceData.filter((resItem) => resItem.status === 'critical').length;
+  res.json({ total_resources: resourceData.length, healthy, warning, critical, groups: resourceGroups.length });
+});
+
+app.get('/resources', (req, res) => {
+  res.json(paginate(resourceData.map((resItem) => ({
+    resource_id: resItem.resource_id,
+    name: resItem.name,
+    status: resItem.status,
+    type: resItem.type,
+    ip_address: resItem.ip_address,
+    location: resItem.location,
+    environment: resItem.environment,
+    team: resItem.team,
+    os: resItem.os,
+    cpu_usage: resItem.cpu_usage,
+    memory_usage: resItem.memory_usage,
+    disk_usage: resItem.disk_usage,
+    network_in_mbps: resItem.network_in_mbps,
+    network_out_mbps: resItem.network_out_mbps,
+    tags: resItem.tags,
+    last_event_count: resItem.last_event_count
+  })), req));
+});
+
+app.post('/resources', (req, res) => {
+  const payload = req.body || {};
+  const resource = {
+    resource_id: `res-${Date.now()}`,
+    name: payload.name || '新資源',
+    status: payload.status || 'healthy',
+    type: payload.type || 'server',
+    ip_address: payload.ip_address || '10.0.0.1',
+    location: payload.location || 'ap-southeast-1a',
+    environment: payload.environment || 'production',
+    team: payload.team || null,
+    os: payload.os || 'Linux',
+    cpu_usage: 0,
+    memory_usage: 0,
+    disk_usage: 0,
+    network_in_mbps: 0,
+    network_out_mbps: 0,
+    service_impact: payload.service_impact || null,
+    last_event_count: 0,
+    tags: payload.labels || [],
+    groups: [],
+    created_at: toISO(new Date()),
+    updated_at: toISO(new Date())
+  };
+  res.status(201).json(resource);
+});
+
+app.get('/resources/:resource_id', (req, res) => {
+  const resource = getResourceById(req.params.resource_id);
+  if (!resource) return notFound(res, '找不到資源');
+  res.json(resource);
+});
+
+app.patch('/resources/:resource_id', (req, res) => {
+  const resource = getResourceById(req.params.resource_id);
+  if (!resource) return notFound(res, '找不到資源');
+  Object.assign(resource, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(resource);
+});
+
+app.delete('/resources/:resource_id', (req, res) => {
+  const resource = getResourceById(req.params.resource_id);
+  if (!resource) return notFound(res, '找不到資源');
+  res.status(204).end();
+});
+
+app.get('/resources/:resource_id/metrics', (req, res) => {
+  const resource = getResourceById(req.params.resource_id);
+  if (!resource) return notFound(res, '找不到資源');
+  res.json({
+    metrics: [
+      {
+        metric: 'cpu_usage',
+        unit: '%',
+        points: [
+          { timestamp: toISO(new Date(now.getTime() - 3600000 * 2)), value: 55 },
+          { timestamp: toISO(new Date(now.getTime() - 3600000)), value: 60 },
+          { timestamp: toISO(now), value: resource.cpu_usage }
+        ]
+      },
+      {
+        metric: 'memory_usage',
+        unit: '%',
+        points: [
+          { timestamp: toISO(new Date(now.getTime() - 3600000 * 2)), value: 50 },
+          { timestamp: toISO(new Date(now.getTime() - 3600000)), value: 64 },
+          { timestamp: toISO(now), value: resource.memory_usage }
+        ]
+      }
+    ]
   });
-};
+});
 
-const getChannelHealthSnapshot = (channelId) => channelHealthState.get(channelId) || null;
+app.get('/resources/:resource_id/events', (req, res) => {
+  const resource = getResourceById(req.params.resource_id);
+  if (!resource) return notFound(res, '找不到資源');
+  const relatedEvents = eventData.filter((evt) => evt.resource_id === resource.resource_id).map(mapEventSummary);
+  res.json(paginate(relatedEvents, req));
+});
 
-const getChannelHealthHistory = (db, channelId) => {
-  const snapshot = getChannelHealthSnapshot(channelId);
-  if (snapshot && Array.isArray(snapshot.history)) {
-    return snapshot.history;
-  }
-  const collection = ensureArrayCollection(db, 'channel_health_checks');
-  return collection
-    .filter({ channel_id: channelId })
-    .orderBy(['checked_at'], ['desc'])
-    .take(30)
-    .value();
-};
+app.get('/resource-groups', (req, res) => {
+  res.json(paginate(resourceGroups.map((grp) => ({
+    group_id: grp.group_id,
+    name: grp.name,
+    description: grp.description,
+    owner_team: grp.owner_team,
+    member_count: grp.member_count,
+    subscriber_count: grp.subscriber_count,
+    status_summary: grp.status_summary,
+    created_at: grp.created_at
+  })), req));
+});
 
-const serializeChannel = (channel, db, options = {}) => {
-  const healthCollection = Array.isArray(options.healthCollection)
-    ? options.healthCollection
-    : ensureArrayCollection(db, 'channel_health_checks').value();
-  const health = getChannelHealthSnapshot(channel.id);
-  const historyCountFromCollection = Array.isArray(healthCollection)
-    ? healthCollection.filter((record) => record && record.channel_id === channel.id).length
-    : 0;
-  return {
-    id: channel.id,
+app.post('/resource-groups', (req, res) => {
+  const payload = req.body || {};
+  const group = {
+    group_id: `grp-${Date.now()}`,
+    name: payload.name || '新資源群組',
+    description: payload.description || '',
+    owner_team: payload.owner_team || null,
+    member_count: payload.resource_ids ? payload.resource_ids.length : 0,
+    subscriber_count: payload.subscriber_ids ? payload.subscriber_ids.length : 0,
+    status_summary: { healthy: 0, warning: 0, critical: 0 },
+    created_at: toISO(new Date()),
+    members: (payload.resource_ids || []).map((id) => ({ resource_id: id, name: id, type: 'unknown', status: 'healthy' })),
+    subscribers: (payload.subscriber_ids || []).map((id) => ({ user_id: id, display_name: id, subscribed_at: toISO(new Date()) }))
+  };
+  res.status(201).json(group);
+});
+
+app.get('/resource-groups/:group_id', (req, res) => {
+  const group = getResourceGroupById(req.params.group_id);
+  if (!group) return notFound(res, '找不到資源群組');
+  res.json(group);
+});
+
+app.put('/resource-groups/:group_id', (req, res) => {
+  const group = getResourceGroupById(req.params.group_id);
+  if (!group) return notFound(res, '找不到資源群組');
+  Object.assign(group, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(group);
+});
+
+app.delete('/resource-groups/:group_id', (req, res) => {
+  const group = getResourceGroupById(req.params.group_id);
+  if (!group) return notFound(res, '找不到資源群組');
+  res.status(204).end();
+});
+
+app.get('/topology', (req, res) => {
+  res.json(topologyGraph);
+});
+
+app.get('/dashboards/summary', (req, res) => {
+  const published = dashboards.filter((dash) => dash.published).length;
+  const featured = dashboards.filter((dash) => dash.featured).length;
+  const automated = 1;
+  res.json({ total: dashboards.length, published, featured, automated });
+});
+
+app.get('/dashboards', (req, res) => {
+  res.json(paginate(dashboards.map((dash) => ({
+    dashboard_id: dash.dashboard_id,
+    name: dash.name,
+    category: dash.category,
+    owner: dash.owner,
+    featured: dash.featured,
+    published: dash.published,
+    views: dash.views,
+    favorites: dash.favorites,
+    updated_at: dash.updated_at
+  })), req));
+});
+
+app.post('/dashboards', (req, res) => {
+  const payload = req.body || {};
+  const dash = {
+    dashboard_id: `dash-${Date.now()}`,
+    name: payload.name || '新儀表板',
+    category: payload.category || '自訂',
+    owner: currentUser.display_name,
+    owner_id: currentUser.user_id,
+    description: payload.description || '',
+    featured: false,
+    published: false,
+    views: 0,
+    favorites: 0,
+    is_default: false,
+    published_at: null,
+    updated_at: toISO(new Date()),
+    layout: payload.layout || [],
+    kpis: payload.kpis || []
+  };
+  res.status(201).json(dash);
+});
+
+app.get('/dashboards/:dashboard_id', (req, res) => {
+  const dash = getDashboardById(req.params.dashboard_id);
+  if (!dash) return notFound(res, '找不到儀表板');
+  res.json(dash);
+});
+
+app.patch('/dashboards/:dashboard_id', (req, res) => {
+  const dash = getDashboardById(req.params.dashboard_id);
+  if (!dash) return notFound(res, '找不到儀表板');
+  Object.assign(dash, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(dash);
+});
+
+app.delete('/dashboards/:dashboard_id', (req, res) => {
+  const dash = getDashboardById(req.params.dashboard_id);
+  if (!dash) return notFound(res, '找不到儀表板');
+  res.status(204).end();
+});
+
+app.post('/dashboards/:dashboard_id/publish', (req, res) => {
+  const dash = getDashboardById(req.params.dashboard_id);
+  if (!dash) return notFound(res, '找不到儀表板');
+  dash.published = req.body?.published ?? !dash.published;
+  dash.published_at = dash.published ? toISO(new Date()) : null;
+  res.json(dash);
+});
+
+app.post('/dashboards/:dashboard_id/default', (req, res) => {
+  const dash = getDashboardById(req.params.dashboard_id);
+  if (!dash) return notFound(res, '找不到儀表板');
+  dashboards.forEach((item) => {
+    item.is_default = item.dashboard_id === dash.dashboard_id;
+  });
+  dash.is_default = true;
+  res.json(dash);
+});
+app.get('/analysis/capacity/summary', (req, res) => {
+  res.json(capacitySummary);
+});
+
+app.get('/analysis/capacity/forecasts', (req, res) => {
+  res.json({ forecasts: capacityForecasts, suggestions: capacitySuggestions });
+});
+
+app.get('/analysis/resource-load', (req, res) => {
+  res.json({ summary: resourceLoadSummary, items: resourceLoadItems });
+});
+
+app.get('/analysis/ai-insights', (req, res) => {
+  res.json(paginate(aiInsightReports, req));
+});
+
+app.get('/analysis/ai-insights/:report_id', (req, res) => {
+  const report = aiInsightReports.find((item) => item.report_id === req.params.report_id);
+  if (!report) return notFound(res, '找不到 AI 洞察報告');
+  res.json(report);
+});
+
+app.get('/automation/scripts', (req, res) => {
+  res.json(paginate(automationScripts.map((script) => ({
+    script_id: script.script_id,
+    name: script.name,
+    type: script.type,
+    description: script.description,
+    version: script.version,
+    tags: script.tags,
+    last_execution_status: script.last_execution_status,
+    last_execution_at: script.last_execution_at
+  })), req));
+});
+
+app.post('/automation/scripts', (req, res) => {
+  const payload = req.body || {};
+  const script = {
+    script_id: `script-${Date.now()}`,
+    name: payload.name || '新腳本',
+    type: payload.type || 'shell',
+    description: payload.description || '',
+    version: 'v1',
+    tags: payload.tags || [],
+    last_execution_status: 'never',
+    last_execution_at: null,
+    content: payload.content || ''
+  };
+  res.status(201).json(script);
+});
+
+app.get('/automation/scripts/:script_id', (req, res) => {
+  const script = getScriptById(req.params.script_id);
+  if (!script) return notFound(res, '找不到腳本');
+  res.json(script);
+});
+
+app.patch('/automation/scripts/:script_id', (req, res) => {
+  const script = getScriptById(req.params.script_id);
+  if (!script) return notFound(res, '找不到腳本');
+  Object.assign(script, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(script);
+});
+
+app.delete('/automation/scripts/:script_id', (req, res) => {
+  const script = getScriptById(req.params.script_id);
+  if (!script) return notFound(res, '找不到腳本');
+  res.status(204).end();
+});
+
+app.post('/automation/scripts/:script_id/execute', (req, res) => {
+  const script = getScriptById(req.params.script_id);
+  if (!script) return notFound(res, '找不到腳本');
+  res.status(202).json({ execution_id: `exe-${Date.now()}`, status: 'pending', queued_at: toISO(new Date()) });
+});
+
+app.get('/automation/scripts/:script_id/versions', (req, res) => {
+  const script = getScriptById(req.params.script_id);
+  if (!script) return notFound(res, '找不到腳本');
+  res.json(paginate(script.versions || [], req));
+});
+
+app.get('/automation/schedules', (req, res) => {
+  res.json(paginate(automationSchedules.map((sch) => ({
+    schedule_id: sch.schedule_id,
+    name: sch.name,
+    type: sch.type,
+    status: sch.status,
+    cron_expression: sch.cron_expression,
+    next_run_time: sch.next_run_time,
+    script_id: sch.script_id,
+    script_name: sch.script_name
+  })), req));
+});
+
+app.post('/automation/schedules', (req, res) => {
+  const payload = req.body || {};
+  const schedule = {
+    schedule_id: `sch-${Date.now()}`,
+    name: payload.name || '新排程',
+    type: payload.type || 'recurring',
+    status: payload.status || 'enabled',
+    cron_expression: payload.cron_expression || '0 * * * *',
+    timezone: payload.timezone || 'UTC',
+    next_run_time: toISO(new Date(now.getTime() + 3600000)),
+    script_id: payload.script_id || null,
+    script_name: automationScripts.find((s) => s.script_id === payload.script_id)?.name || null,
+    concurrency_policy: payload.concurrency_policy || 'allow',
+    retry_policy: payload.retry_policy || { max_retries: 0, interval_seconds: 0 },
+    notify_on_success: payload.notify_on_success ?? false,
+    notify_on_failure: payload.notify_on_failure ?? true,
+    channels: payload.channels || []
+  };
+  res.status(201).json(schedule);
+});
+
+app.get('/automation/schedules/:schedule_id', (req, res) => {
+  const schedule = getScheduleById(req.params.schedule_id);
+  if (!schedule) return notFound(res, '找不到排程');
+  res.json(schedule);
+});
+
+app.patch('/automation/schedules/:schedule_id', (req, res) => {
+  const schedule = getScheduleById(req.params.schedule_id);
+  if (!schedule) return notFound(res, '找不到排程');
+  Object.assign(schedule, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(schedule);
+});
+
+app.delete('/automation/schedules/:schedule_id', (req, res) => {
+  const schedule = getScheduleById(req.params.schedule_id);
+  if (!schedule) return notFound(res, '找不到排程');
+  res.status(204).end();
+});
+
+app.post('/automation/schedules/:schedule_id/toggle', (req, res) => {
+  const schedule = getScheduleById(req.params.schedule_id);
+  if (!schedule) return notFound(res, '找不到排程');
+  schedule.status = schedule.status === 'enabled' ? 'disabled' : 'enabled';
+  res.json(schedule);
+});
+
+app.get('/automation/executions', (req, res) => {
+  res.json(paginate(automationExecutions, req));
+});
+
+app.get('/automation/executions/:execution_id', (req, res) => {
+  const execution = getExecutionById(req.params.execution_id);
+  if (!execution) return notFound(res, '找不到執行紀錄');
+  res.json(execution);
+});
+
+app.post('/automation/executions/:execution_id/retry', (req, res) => {
+  const execution = getExecutionById(req.params.execution_id);
+  if (!execution) return notFound(res, '找不到執行紀錄');
+  res.status(202).json({ ...execution, status: 'pending', start_time: toISO(new Date()), end_time: null });
+});
+
+app.get('/iam/users', (req, res) => {
+  res.json(paginate(iamUsers, req));
+});
+
+app.post('/iam/users', (req, res) => {
+  const payload = req.body || {};
+  const user = {
+    user_id: `user-${Date.now()}`,
+    username: payload.username || 'new.user',
+    name: payload.name || '新成員',
+    email: payload.email || 'new.user@example.com',
+    status: payload.status || 'active',
+    teams: payload.team_ids || [],
+    roles: payload.role_ids || [],
+    last_login: null
+  };
+  res.status(201).json(user);
+});
+
+app.get('/iam/users/:user_id', (req, res) => {
+  const user = getIamUserById(req.params.user_id);
+  if (!user) return notFound(res, '找不到人員');
+  res.json(user);
+});
+
+app.patch('/iam/users/:user_id', (req, res) => {
+  const user = getIamUserById(req.params.user_id);
+  if (!user) return notFound(res, '找不到人員');
+  Object.assign(user, req.body || {});
+  res.json(user);
+});
+
+app.delete('/iam/users/:user_id', (req, res) => {
+  const user = getIamUserById(req.params.user_id);
+  if (!user) return notFound(res, '找不到人員');
+  res.status(204).end();
+});
+
+app.get('/iam/teams', (req, res) => {
+  res.json(paginate(iamTeams.map((team) => ({
+    team_id: team.team_id,
+    name: team.name,
+    description: team.description,
+    owner: team.owner,
+    members: team.members,
+    subscribers: team.subscribers,
+    created_at: team.created_at
+  })), req));
+});
+
+app.post('/iam/teams', (req, res) => {
+  const payload = req.body || {};
+  const team = {
+    team_id: `team-${Date.now()}`,
+    name: payload.name || '新團隊',
+    description: payload.description || '',
+    owner: payload.owner_id || currentUser.user_id,
+    members: payload.member_ids ? payload.member_ids.length : 0,
+    subscribers: payload.subscriber_ids ? payload.subscriber_ids.length : 0,
+    created_at: toISO(new Date()),
+    member_ids: payload.member_ids || [],
+    subscriber_ids: payload.subscriber_ids || []
+  };
+  res.status(201).json(team);
+});
+
+app.get('/iam/teams/:team_id', (req, res) => {
+  const team = getTeamById(req.params.team_id);
+  if (!team) return notFound(res, '找不到團隊');
+  res.json(team);
+});
+
+app.patch('/iam/teams/:team_id', (req, res) => {
+  const team = getTeamById(req.params.team_id);
+  if (!team) return notFound(res, '找不到團隊');
+  Object.assign(team, req.body || {});
+  res.json(team);
+});
+
+app.delete('/iam/teams/:team_id', (req, res) => {
+  const team = getTeamById(req.params.team_id);
+  if (!team) return notFound(res, '找不到團隊');
+  res.status(204).end();
+});
+
+app.get('/iam/roles', (req, res) => {
+  res.json(iamRoles.map((role) => ({
+    role_id: role.role_id,
+    name: role.name,
+    description: role.description,
+    status: role.status,
+    user_count: role.user_count,
+    created_at: role.created_at
+  })));
+});
+
+app.post('/iam/roles', (req, res) => {
+  const payload = req.body || {};
+  const role = {
+    role_id: `role-${Date.now()}`,
+    name: payload.name || 'new-role',
+    description: payload.description || '',
+    status: payload.status || 'active',
+    permissions: payload.permissions || []
+  };
+  res.status(201).json(role);
+});
+
+app.get('/iam/roles/:role_id', (req, res) => {
+  const role = getRoleById(req.params.role_id);
+  if (!role) return notFound(res, '找不到角色');
+  res.json(role);
+});
+
+app.patch('/iam/roles/:role_id', (req, res) => {
+  const role = getRoleById(req.params.role_id);
+  if (!role) return notFound(res, '找不到角色');
+  Object.assign(role, req.body || {});
+  res.json(role);
+});
+
+app.delete('/iam/roles/:role_id', (req, res) => {
+  const role = getRoleById(req.params.role_id);
+  if (!role) return notFound(res, '找不到角色');
+  res.status(204).end();
+});
+
+app.get('/iam/audit-logs', (req, res) => {
+  res.json(paginate(auditLogs, req));
+});
+
+app.get('/notification/strategies', (req, res) => {
+  res.json(paginate(notificationStrategies.map((strategy) => ({
+    strategy_id: strategy.strategy_id,
+    name: strategy.name,
+    trigger_condition: strategy.trigger_condition,
+    channel_count: strategy.channel_count,
+    status: strategy.status,
+    priority: strategy.priority
+  })), req));
+});
+
+app.post('/notification/strategies', (req, res) => {
+  const payload = req.body || {};
+  const strategy = {
+    strategy_id: `str-${Date.now()}`,
+    name: payload.name || '新策略',
+    description: payload.description || '',
+    trigger_condition: payload.trigger_condition || 'true',
+    channel_count: payload.channels ? payload.channels.length : 0,
+    status: payload.enabled ? 'enabled' : 'disabled',
+    priority: payload.priority || 'medium',
+    severity_filters: payload.severity_filters || [],
+    recipients: payload.recipients || [],
+    channels: payload.channels || [],
+    resource_filters: payload.resource_filters || {}
+  };
+  res.status(201).json(strategy);
+});
+
+app.get('/notification/strategies/:strategy_id', (req, res) => {
+  const strategy = getNotificationStrategyById(req.params.strategy_id);
+  if (!strategy) return notFound(res, '找不到通知策略');
+  res.json(strategy);
+});
+
+app.patch('/notification/strategies/:strategy_id', (req, res) => {
+  const strategy = getNotificationStrategyById(req.params.strategy_id);
+  if (!strategy) return notFound(res, '找不到通知策略');
+  Object.assign(strategy, req.body || {});
+  res.json(strategy);
+});
+
+app.delete('/notification/strategies/:strategy_id', (req, res) => {
+  const strategy = getNotificationStrategyById(req.params.strategy_id);
+  if (!strategy) return notFound(res, '找不到通知策略');
+  res.status(204).end();
+});
+
+app.post('/notification/strategies/:strategy_id/test', (req, res) => {
+  const strategy = getNotificationStrategyById(req.params.strategy_id);
+  if (!strategy) return notFound(res, '找不到通知策略');
+  res.json({ status: 'success', message: '已發送測試通知', details: { recipients: strategy.recipients } });
+});
+
+app.get('/notification/channels', (req, res) => {
+  res.json(notificationChannels.map((channel) => ({
+    channel_id: channel.channel_id,
     name: channel.name,
     type: channel.type,
-    enabled: channel.enabled !== false,
-    description: channel.description ?? null,
-    endpoint: channel.endpoint ?? channel.webhook_url ?? null,
-    default_recipients: Array.isArray(channel.default_recipients) ? channel.default_recipients : [],
-    metadata: typeof channel.metadata === 'object' && channel.metadata !== null ? channel.metadata : null,
-    created_at: channel.created_at ?? null,
-    updated_at: channel.updated_at ?? null,
-    health: health
-      ? {
-        status: health.status ?? 'unknown',
-        latency_ms: health.latency_ms ?? null,
-        attempts: health.attempts ?? null,
-        message: health.message ?? null,
-        checked_at: health.checked_at ?? null,
-      }
-      : null,
-    history_count: Array.isArray(health?.history)
-      ? health.history.length
-      : historyCountFromCollection,
-  };
-};
-
-const BACKGROUND_JOB_BLUEPRINTS = {
-  resource_kpi_precompute: {
-    name: '資源 KPI 預計算作業',
-    description: '每分鐘聚合資源健康統計並更新快取，支援資源頁面即時載入。',
-    intervalMinutes: 1,
-    timezone: 'Asia/Taipei',
-    tags: ['cmdb', 'metrics', 'redis-cache'],
-    ownerTeam: 'team_observability',
-    run: ({ context }) => {
-      const stats = context?.stats ?? computeResourceStatistics(context?.resources ?? [], context?.groups ?? [], context?.generatedAt);
-      const processedResources = context?.resources?.length ?? stats.total ?? 0;
-      const staleThresholdMs = 5 * 60 * 1000;
-      const staleResources = Array.isArray(context?.resources)
-        ? context.resources.filter((resource) => {
-          const updatedAt = resource.updated_at || resource.updatedAt || resource.last_checked_at || resource.lastCheckedAt;
-          if (!updatedAt) {
-            return true;
-          }
-          return Date.now() - new Date(updatedAt).getTime() > staleThresholdMs;
-        }).length
-        : 0;
-
-      const durationMs = Math.round(40 + Math.random() * 50);
-      const message = `已更新 ${processedResources} 筆資源指標快取`;
-      return {
-        success: true,
-        durationMs,
-        message,
-        metrics: {
-          processedResources,
-          healthy: stats.healthy ?? 0,
-          warning: stats.warning ?? 0,
-          critical: stats.critical ?? 0,
-          automationCoverage: stats.automationCoverage ?? 0,
-          staleResources,
-          generatedAt: context?.generatedAt,
-        },
-      };
-    },
-  },
-  notification_channel_health_probe: {
-    name: '通知管道健康檢查',
-    description: '每 15 分鐘模擬呼叫 Grafana API 檢查通知管道路由健康度。',
-    intervalMinutes: 15,
-    timezone: 'Asia/Taipei',
-    tags: ['grafana', 'notifications', 'health-check'],
-    ownerTeam: 'team_notifications',
-    run: ({ db }) => {
-      const channels = db.get('notification_channels').value() || [];
-      const enabledChannels = channels.filter((channel) => channel && channel.enabled !== false);
-      const results = enabledChannels.map((channel) => {
-        const generator = createSeededGenerator(`${channel.id}:${new Date().toISOString().slice(0, 16)}`);
-        const latency = Math.round(80 + generator() * 240);
-        const statusRoll = generator();
-        let status = 'HEALTHY';
-        let message = '響應正常';
-        if (statusRoll > 0.89) {
-          status = 'CRITICAL';
-          message = '多次嘗試後仍無響應';
-        } else if (statusRoll > 0.72) {
-          status = 'WARNING';
-          message = '延遲偏高，已通知值班人員';
-        }
-        return {
-          id: channel.id,
-          name: channel.name,
-          type: channel.type,
-          status,
-          latencyMs: latency,
-          attempts: Math.round(1 + generator() * 3),
-          message,
-        };
-      });
-
-      const checkedAt = new Date().toISOString();
-      const recordedResults = results.map((result) => {
-        recordChannelHealth(db, {
-          ...result,
-          checkedAt,
-        }, { source: 'scheduled_probe' });
-        return {
-          ...result,
-          checkedAt,
-        };
-      });
-
-      const unhealthyChannels = recordedResults.filter((result) => result.status !== 'HEALTHY');
-      const durationMs = Math.round(120 + Math.random() * 160);
-      const message = unhealthyChannels.length
-        ? `發現 ${unhealthyChannels.length} 個管道需要關注`
-        : '所有通知管道回應正常';
-
-      return {
-        success: true,
-        durationMs,
-        message,
-        metrics: {
-          checkedChannels: recordedResults.length,
-          unhealthyChannels: unhealthyChannels.length,
-          healthyChannels: recordedResults.length - unhealthyChannels.length,
-          details: recordedResults,
-          checkedAt,
-        },
-      };
-    },
-  },
-};
-
-const backgroundJobState = new Map();
-
-const ensureJobState = (jobId) => {
-  const blueprint = BACKGROUND_JOB_BLUEPRINTS[jobId];
-  if (!blueprint) {
-    throw new Error(`Unknown job: ${jobId}`);
-  }
-  if (!backgroundJobState.has(jobId)) {
-    const nowIso = new Date().toISOString();
-    backgroundJobState.set(jobId, {
-      id: jobId,
-      name: blueprint.name,
-      description: blueprint.description,
-      intervalMinutes: blueprint.intervalMinutes ?? 5,
-      timezone: blueprint.timezone ?? 'UTC',
-      tags: Array.isArray(blueprint.tags) ? blueprint.tags : [],
-      ownerTeam: blueprint.ownerTeam ?? null,
-      cronExpression: blueprint.cronExpression ?? null,
-      status: 'healthy',
-      lastRunAt: null,
-      nextRunAt: nowIso,
-      lastDurationMs: null,
-      successCount: 0,
-      failureCount: 0,
-      consecutiveFailures: 0,
-      lastMessage: '尚未執行',
-      metricsSummary: {},
-      history: [],
-      createdAt: nowIso,
-      updatedAt: nowIso,
-    });
-  }
-  return backgroundJobState.get(jobId);
-};
-
-const deriveJobStatus = (state) => {
-  if (state.consecutiveFailures >= 3) {
-    return 'critical';
-  }
-  if (state.consecutiveFailures >= 1) {
-    return 'warning';
-  }
-  if (state.metricsSummary && typeof state.metricsSummary.unhealthyChannels === 'number' && state.metricsSummary.unhealthyChannels > 0) {
-    return 'warning';
-  }
-  if (state.metricsSummary && typeof state.metricsSummary.staleResources === 'number' && state.metricsSummary.staleResources > 5) {
-    return 'warning';
-  }
-  return 'healthy';
-};
-
-const recordJobRun = (state, runResult, startedAt, options = {}) => {
-  const success = runResult?.success !== false;
-  const durationMs = typeof runResult?.durationMs === 'number'
-    ? Math.max(1, Math.round(runResult.durationMs))
-    : Math.max(1, Date.now() - startedAt);
-  const message = typeof runResult?.message === 'string'
-    ? runResult.message
-    : success
-      ? '作業完成'
-      : '作業執行失敗';
-
-  state.lastRunAt = new Date(startedAt).toISOString();
-  state.lastDurationMs = durationMs;
-  state.updatedAt = new Date().toISOString();
-  state.metricsSummary = runResult?.metrics ?? state.metricsSummary ?? {};
-  state.lastMessage = message;
-
-  if (success) {
-    state.successCount += 1;
-    state.consecutiveFailures = 0;
-  } else {
-    state.failureCount += 1;
-    state.consecutiveFailures += 1;
-  }
-
-  const intervalMs = Math.max(1, (state.intervalMinutes ?? 5) * 60 * 1000);
-  state.nextRunAt = new Date(startedAt + intervalMs).toISOString();
-
-  const historyEntry = {
-    id: `job_run_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-    job_id: state.id,
-    status: success ? 'success' : 'failure',
-    started_at: state.lastRunAt,
-    duration_ms: durationMs,
-    message,
-    automatic: options.automatic ?? false,
-    metrics: runResult?.metrics ?? null,
-  };
-  state.history.push(historyEntry);
-  if (state.history.length > 30) {
-    state.history.splice(0, state.history.length - 30);
-  }
-
-  state.status = deriveJobStatus(state);
-
-  return { state, historyEntry };
-};
-
-const runBackgroundJob = (jobId, { db, context, automatic = false } = {}) => {
-  const state = ensureJobState(jobId);
-  const blueprint = BACKGROUND_JOB_BLUEPRINTS[jobId];
-  const startedAt = Date.now();
-  let result;
-  try {
-    result = blueprint.run({ db, context, state });
-  } catch (error) {
-    result = {
-      success: false,
-      durationMs: Date.now() - startedAt,
-      message: error instanceof Error ? error.message : '未知錯誤',
-    };
-  }
-  return recordJobRun(state, result, startedAt, { automatic });
-};
-
-const maybeRunScheduledJob = (jobId, db, context) => {
-  const state = ensureJobState(jobId);
-  if (!state.nextRunAt) {
-    return;
-  }
-  const now = Date.now();
-  const nextRunTime = new Date(state.nextRunAt).getTime();
-  if (Number.isFinite(nextRunTime) && now >= nextRunTime) {
-    runBackgroundJob(jobId, { db, context, automatic: true });
-  }
-};
-
-const tickBackgroundJobs = (db, context) => {
-  Object.keys(BACKGROUND_JOB_BLUEPRINTS).forEach((jobId) => {
-    maybeRunScheduledJob(jobId, db, context);
-  });
-};
-
-const serializeJobState = (state, options = {}) => ({
-  id: state.id,
-  name: state.name,
-  description: state.description,
-  status: state.status,
-  interval_minutes: state.intervalMinutes,
-  timezone: state.timezone,
-  cron_expression: state.cronExpression,
-  owner_team: state.ownerTeam,
-  tags: state.tags,
-  last_run_at: state.lastRunAt,
-  next_run_at: state.nextRunAt,
-  last_duration_ms: state.lastDurationMs,
-  success_count: state.successCount,
-  failure_count: state.failureCount,
-  consecutive_failures: state.consecutiveFailures,
-  last_message: state.lastMessage,
-  metrics: state.metricsSummary,
-  history: options.includeHistory ? state.history : undefined,
-  created_at: state.createdAt,
-  updated_at: state.updatedAt,
+    status: channel.status,
+    updated_at: channel.updated_at
+  })));
 });
 
-const listBackgroundJobs = (options = {}) => Array.from(backgroundJobState.values()).map((state) => serializeJobState(state, options));
-
-loadChannelHealthFromDb(router.db);
-
-const buildTagContext = (db, inventory) => {
-  const tagKeys = db.get('tag_keys').value() || [];
-  const allowedValuesRaw = db.get('tag_allowed_values').value() || [];
-  const resourceTagRecords = db.get('resource_tags').value() || [];
-
-  const tagKeyById = new Map();
-  const tagKeyNameSet = new Set();
-  tagKeys.forEach((tagKey) => {
-    const keyName = typeof tagKey.key_name === 'string'
-      ? tagKey.key_name
-      : typeof tagKey.key === 'string'
-        ? tagKey.key
-        : typeof tagKey.name === 'string'
-          ? tagKey.name
-          : null;
-    if (!keyName) {
-      return;
-    }
-    tagKeyById.set(tagKey.id, { ...tagKey, key_name: keyName });
-    tagKeyNameSet.add(keyName);
-  });
-
-  const allowedByKeyId = new Map();
-  allowedValuesRaw.forEach((row) => {
-    const keyId = row.tag_key_id || row.tagKeyId || row.key_id;
-    if (!keyId) {
-      return;
-    }
-    if (!allowedByKeyId.has(keyId)) {
-      allowedByKeyId.set(keyId, []);
-    }
-    allowedByKeyId.get(keyId).push({
-      id: row.id,
-      value: row.value,
-      label: row.label || row.value,
-      color: row.color || null,
-    });
-  });
-
-  const statsByKey = new Map();
-
-  const ensureStatsEntry = (key) => {
-    const normalizedKey = typeof key === 'string' ? key.trim() : '';
-    if (!normalizedKey) {
-      return null;
-    }
-    if (!statsByKey.has(normalizedKey)) {
-      statsByKey.set(normalizedKey, {
-        key: normalizedKey,
-        counts: new Map(),
-        totalCount: 0,
-        allowed: [],
-      });
-    }
-    return statsByKey.get(normalizedKey);
-  };
-
-  const registerTagValue = (key, value) => {
-    const stats = ensureStatsEntry(key);
-    if (!stats) {
-      return;
-    }
-    const normalizedValue = typeof value === 'string'
-      ? value.trim()
-      : value === null || value === undefined
-        ? ''
-        : String(value).trim();
-    if (!normalizedValue) {
-      return;
-    }
-    const existing = stats.counts.get(normalizedValue) || { value: normalizedValue, count: 0 };
-    existing.count += 1;
-    stats.counts.set(normalizedValue, existing);
-    stats.totalCount += 1;
-  };
-
-  (inventory.items || []).forEach((resource) => {
-    const tagArray = Array.isArray(resource.tags) ? resource.tags : [];
-    tagArray.forEach((tag) => {
-      if (!tag || typeof tag !== 'object') {
-        return;
-      }
-      registerTagValue(tag.key || tag.name, tag.value);
-    });
-  });
-
-  resourceTagRecords.forEach((record) => {
-    const tagKeyId = record.tag_key_id || record.tagKeyId;
-    const derivedKey = tagKeyId && tagKeyById.has(tagKeyId)
-      ? tagKeyById.get(tagKeyId).key_name
-      : record.tag_key || record.key || record.name;
-    registerTagValue(derivedKey, record.tag_value || record.value);
-  });
-
-  const metadataList = [];
-
-  const createMetadataFromStats = (key, tagKeyDefinition) => {
-    const stats = ensureStatsEntry(key);
-    if (!stats) {
-      return null;
-    }
-    const allowedRaw = tagKeyDefinition
-      ? (allowedByKeyId.get(tagKeyDefinition.id) || allowedByKeyId.get(tagKeyDefinition.key_name) || [])
-      : [];
-
-    const allowedValues = allowedRaw.map((row) => ({
-      id: row.id,
-      value: row.value,
-      label: row.label || row.value,
-      color: row.color || null,
-      usage_count: stats.counts.get(row.value)?.count ?? 0,
-    }));
-
-    stats.allowed = allowedValues;
-
-    const sortedCounts = Array.from(stats.counts.values())
-      .sort((a, b) => {
-        const diff = (b.count || 0) - (a.count || 0);
-        return diff !== 0 ? diff : String(a.value).localeCompare(String(b.value));
-      });
-
-    const sampleValues = (allowedValues.length > 0 ? allowedValues : sortedCounts.slice(0, 10)).map((entry) => ({
-      value: entry.value,
-      label: entry.label || entry.value,
-      color: entry.color || null,
-      usage_count: entry.usage_count ?? entry.count ?? 0,
-    }));
-
-    const distinctCount = stats.counts.size;
-    const inferredMode = allowedValues.length > 0
-      ? 'ENUM'
-      : tagKeyDefinition?.validation_regex
-        ? 'DYNAMIC'
-        : distinctCount <= 40
-          ? 'DYNAMIC'
-          : 'FREEFORM';
-
-    const metadata = {
-      key,
-      label: key,
-      description: tagKeyDefinition?.description ?? null,
-      category: tagKeyDefinition?.compliance_category ?? null,
-      is_required: Boolean(tagKeyDefinition?.is_required),
-      validation_regex: tagKeyDefinition?.validation_regex ?? null,
-      value_mode: inferredMode,
-      usage_count: typeof tagKeyDefinition?.usage_count === 'number'
-        ? tagKeyDefinition.usage_count
-        : stats.totalCount,
-      distinct_count: distinctCount,
-      allowed_values: allowedValues,
-      sample_values: sampleValues,
-    };
-
-    stats.metadata = metadata;
-    metadataList.push(metadata);
-    return metadata;
-  };
-
-  tagKeys.forEach((tagKey) => {
-    const keyName = tagKey?.key_name || tagKey?.key || tagKey?.name;
-    if (!keyName) {
-      return;
-    }
-    createMetadataFromStats(keyName, tagKey);
-  });
-
-  statsByKey.forEach((stats, key) => {
-    if (!stats.metadata) {
-      createMetadataFromStats(key, null);
-    }
-  });
-
-  metadataList.sort((a, b) => {
-    const usageDiff = (b.usage_count ?? 0) - (a.usage_count ?? 0);
-    if (usageDiff !== 0) {
-      return usageDiff;
-    }
-    return a.key.localeCompare(b.key);
-  });
-
-  return {
-    metadataList,
-    statsByKey,
-  };
-};
-
-const aggregateInventory = (db) => {
-  const now = Date.now();
-  if (resourceCache.expiresAt > now && resourceCache.generatedAt) {
-    return resourceCache;
-  }
-
-  const generatedAt = new Date(now).toISOString();
-  const baseResources = db.get('resources').value() || [];
-  const resourceTags = db.get('resource_tags').value() || [];
-  const groupRecords = db.get('resource_groups').value() || [];
-  const events = db.get('events').value() || [];
-
-  const tagMap = new Map();
-  resourceTags.forEach((tag) => {
-    const resourceId = tag.resource_id || tag.resourceId;
-    if (!resourceId) {
-      return;
-    }
-    const key = String(resourceId);
-    const tagsForResource = tagMap.get(key) || [];
-    tagsForResource.push({
-      key: tag.tag_key || tag.key,
-      value: tag.tag_value || tag.value,
-      source: tag.source || 'cmdb',
-    });
-    tagMap.set(key, tagsForResource);
-  });
-
-  const groupMembership = new Map();
-  const groupTeamMap = new Map();
-  groupRecords.forEach((group) => {
-    const memberIds = Array.isArray(group.resource_ids) ? group.resource_ids : [];
-    memberIds.forEach((memberId) => {
-      const key = String(memberId);
-      const memberships = groupMembership.get(key) || [];
-      memberships.push(group.id);
-      groupMembership.set(key, memberships);
-      if (group.owner_team_id && !groupTeamMap.has(key)) {
-        groupTeamMap.set(key, group.owner_team_id);
-      }
-    });
-  });
-
-  const eventMap = new Map();
-  events.forEach((event) => {
-    const resourceId = event.resource_id || event.resource?.id;
-    if (!resourceId) {
-      return;
-    }
-    const key = String(resourceId);
-    const list = eventMap.get(key) || [];
-    list.push(event);
-    eventMap.set(key, list);
-  });
-
-  const resources = baseResources.map((resourceRaw) => {
-    const id = String(
-      resourceRaw.id
-      ?? resourceRaw.resource_id
-      ?? resourceRaw.key
-      ?? resourceRaw.name
-      ?? `resource_${Date.now()}`
-    );
-
-    const generator = createSeededGenerator(id);
-    const rawTags = Array.isArray(resourceRaw.tags) ? resourceRaw.tags : [];
-    const composedTags = [];
-    const tagSet = new Set();
-
-    const pushTag = (tag) => {
-      if (!tag) {
-        return;
-      }
-      const key = typeof tag.key === 'string' ? tag.key : typeof tag.name === 'string' ? tag.name : null;
-      const value = typeof tag.value === 'string' ? tag.value : typeof tag.label === 'string' ? tag.label : null;
-      if (!key) {
-        return;
-      }
-      const normalizedKey = key.trim();
-      const normalizedValue = value?.trim() ?? normalizedKey;
-      const composite = `${normalizedKey}:${normalizedValue}`;
-      if (tagSet.has(composite)) {
-        return;
-      }
-      tagSet.add(composite);
-      composedTags.push({ key: normalizedKey, value: normalizedValue, source: tag.source || 'cmdb' });
-    };
-
-    rawTags.forEach((tag) => pushTag(tag));
-    (tagMap.get(id) || []).forEach((tag) => pushTag(tag));
-
-    const groupIds = groupMembership.get(id) || [];
-
-    const cpuUsage = pickNumber(resourceRaw.cpu_usage, resourceRaw.cpuUsage, resourceRaw.metrics?.cpu_usage, resourceRaw.metrics?.cpuUsage)
-      ?? clamp(Math.round(generator() * 70 + 20), 0, 100);
-    const memoryUsage = pickNumber(resourceRaw.memory_usage, resourceRaw.memoryUsage, resourceRaw.metrics?.memory_usage, resourceRaw.metrics?.memoryUsage)
-      ?? clamp(Math.round(generator() * 60 + 30), 0, 100);
-    const diskUsage = pickNumber(resourceRaw.disk_usage, resourceRaw.diskUsage, resourceRaw.metrics?.disk_usage, resourceRaw.metrics?.diskUsage)
-      ?? clamp(Math.round(generator() * 50 + 25), 0, 100);
-    const networkIn = pickNumber(resourceRaw.network_in, resourceRaw.networkIn, resourceRaw.metrics?.network_in, resourceRaw.metrics?.networkIn)
-      ?? Math.round(generator() * 400 + 50);
-    const networkOut = pickNumber(resourceRaw.network_out, resourceRaw.networkOut, resourceRaw.metrics?.network_out, resourceRaw.metrics?.networkOut)
-      ?? Math.round(generator() * 400 + 50);
-    const latencyMs = pickNumber(resourceRaw.latency_ms, resourceRaw.latencyMs, resourceRaw.metrics?.latency_ms, resourceRaw.metrics?.latencyMs)
-      ?? Math.round(generator() * 120 + 20);
-
-    const metrics = {
-      cpuUsage,
-      memoryUsage,
-      diskUsage,
-      networkIn,
-      networkOut,
-      latencyMs,
-      cpu_usage: cpuUsage,
-      memory_usage: memoryUsage,
-      disk_usage: diskUsage,
-      network_in: networkIn,
-      network_out: networkOut,
-      latency_ms: latencyMs,
-    };
-
-    const metricsHistory = generateMetricHistory(id, cpuUsage, memoryUsage);
-
-    const relatedEvents = eventMap.get(id) || [];
-    const activeEvents = relatedEvents.filter((event) => {
-      const status = (event.status || '').toUpperCase();
-      return !['RESOLVED', 'CLOSED', 'OK'].includes(status);
-    });
-
-    let status = normalizeStatus(resourceRaw.status || resourceRaw.health_status || resourceRaw.state);
-    const hasCriticalEvent = activeEvents.some((event) => (event.severity || '').toUpperCase() === 'CRITICAL');
-    const hasWarningEvent = activeEvents.some((event) => (event.severity || '').toUpperCase() === 'WARNING');
-
-    if (hasCriticalEvent) {
-      status = 'CRITICAL';
-    } else if (status !== 'CRITICAL' && hasWarningEvent) {
-      status = 'WARNING';
-    } else if (status === 'HEALTHY' && cpuUsage >= 85) {
-      status = 'WARNING';
-    }
-
-    const healthInsights = computeHealthInsights({ metrics }, activeEvents, metricsHistory);
-
-    const grafanaUrl = resourceRaw.grafana_url
-      ?? resourceRaw.dashboard_url
-      ?? `https://grafana.example.com/d/${id}`;
-    const logsUrl = resourceRaw.logs_url
-      ?? `https://logs.example.com/explore?resource=${id}`;
-    const runbookUrl = resourceRaw.runbook_url
-      ?? `https://runbook.example.com/${id}`;
-
-    const observability = {
-      grafana_url: grafanaUrl,
-      logs_url: logsUrl,
-      runbook_url: runbookUrl,
-    };
-
-    let teamId = resourceRaw.team_id || resourceRaw.teamId || null;
-    if (!teamId && groupTeamMap.has(id)) {
-      teamId = groupTeamMap.get(id);
-    }
-
-    const environmentTag = composedTags.find((tag) => tag.key && tag.key.toLowerCase() === 'environment');
-    const providerTag = composedTags.find((tag) => tag.key && tag.key.toLowerCase() === 'provider');
-
-    const environment = resourceRaw.environment || (environmentTag ? environmentTag.value : null);
-    const provider = resourceRaw.provider || resourceRaw.cloud_provider || (providerTag ? providerTag.value : null);
-
-    const lastCheckedAt = resourceRaw.last_checked_at || resourceRaw.updated_at || resourceRaw.lastCheckedAt || resourceRaw.updatedAt || generatedAt;
-
-    const actions = buildResourceActions({
-      id,
-      type: resourceRaw.type,
-      tags: composedTags,
-      observability,
-    });
-
-    const resource = {
-      id,
-      name: resourceRaw.name || id,
-      type: resourceRaw.type || resourceRaw.resource_type || 'unspecified',
-      status,
-      ip_address: resourceRaw.ip_address || resourceRaw.ipAddress || null,
-      ipAddress: resourceRaw.ip_address || resourceRaw.ipAddress || null,
-      team_id: teamId,
-      teamId,
-      provider,
-      environment,
-      location: resourceRaw.location || resourceRaw.region || null,
-      tags: composedTags,
-      groups: groupIds,
-      metrics,
-      metrics_history: metricsHistory,
-      related_incidents: activeEvents.length,
-      related_events: activeEvents.slice(0, 3).map((event) => ({
-        id: event.id,
-        summary: event.summary || event.description || event.id,
-        severity: event.severity,
-        status: event.status,
-        updated_at: event.updated_at || event.updatedAt || event.starts_at || null,
-      })),
-      actions,
-      last_checked_at: lastCheckedAt,
-      created_at: resourceRaw.created_at || resourceRaw.createdAt || null,
-      updated_at: resourceRaw.updated_at || resourceRaw.updatedAt || null,
-      health_summary: healthInsights.summary,
-      health_reasons: healthInsights.reasons,
-      observability,
-      __searchText: [
-        id,
-        resourceRaw.name,
-        resourceRaw.type,
-        teamId,
-        provider,
-        environment,
-        resourceRaw.ip_address,
-        resourceRaw.location,
-        ...groupIds,
-        ...composedTags.map((tag) => `${tag.key}:${tag.value}`),
-        healthInsights.summary,
-      ].filter(Boolean).join(' ').toLowerCase(),
-      __tagTokens: composedTags.map((tag) => `${tag.key}:${tag.value}`.toLowerCase()),
-      __statusPriority: statusPriority[status] ?? statusPriority.UNKNOWN,
-    };
-
-    return resource;
-  });
-
-  resources.sort((a, b) => {
-    const diff = (a.__statusPriority ?? 99) - (b.__statusPriority ?? 99);
-    if (diff !== 0) {
-      return diff;
-    }
-    return String(a.name || '').localeCompare(String(b.name || ''));
-  });
-
-  const groups = aggregateResourceGroups(groupRecords, resources, generatedAt);
-  const stats = computeResourceStatistics(resources, groups, generatedAt);
-
-  tickBackgroundJobs(db, { resources, groups, stats, generatedAt });
-
-  resourceCache.items = resources;
-  resourceCache.groups = groups;
-  resourceCache.stats = stats;
-  resourceCache.generatedAt = generatedAt;
-  resourceCache.expiresAt = now + RESOURCE_CACHE_TTL_MS;
-
-  return resourceCache;
-};
-
-const filterResourcesByQuery = (resources, query) => {
-  const statusFilter = typeof query.status === 'string' ? query.status.trim().toUpperCase() : '';
-  const search = typeof query.search === 'string' ? query.search.trim().toLowerCase() : '';
-  const teamId = typeof query.team_id === 'string' ? query.team_id.trim() : '';
-  const groupId = typeof query.group_id === 'string' ? query.group_id.trim() : '';
-  const environment = typeof query.environment === 'string' ? query.environment.trim().toLowerCase() : '';
-  const tagsInput = query.tags;
-
-  const tagFilters = [];
-  if (Array.isArray(tagsInput)) {
-    tagsInput.forEach((item) => {
-      if (typeof item === 'string' && item.trim()) {
-        tagFilters.push(item.toLowerCase());
-      }
-    });
-  } else if (typeof tagsInput === 'string' && tagsInput.trim()) {
-    tagFilters.push(tagsInput.toLowerCase());
-  }
-
-  return resources.filter((resource) => {
-    if (statusFilter && statusFilter !== 'ALL' && resource.status !== statusFilter) {
-      return false;
-    }
-
-    if (teamId && resource.team_id !== teamId) {
-      return false;
-    }
-
-    if (groupId && !(resource.groups || []).includes(groupId)) {
-      return false;
-    }
-
-    if (environment && String(resource.environment || '').toLowerCase() !== environment) {
-      return false;
-    }
-
-    if (search) {
-      const haystack = resource.__searchText || '';
-      if (!haystack.includes(search)) {
-        return false;
-      }
-    }
-
-    if (tagFilters.length > 0) {
-      const candidateTags = resource.__tagTokens || [];
-      const matchesAll = tagFilters.every((filterTag) =>
-        candidateTags.some((candidate) => candidate.includes(filterTag))
-      );
-      if (!matchesAll) {
-        return false;
-      }
-    }
-
-    return true;
-  });
-};
-
-const buildTopologyGraph = (resources, groups) => {
-  const nodes = resources.map((resource) => ({
-    id: resource.id,
-    name: resource.name,
-    type: String(resource.type || 'unspecified').toLowerCase(),
-    status: resource.status,
-    groupIds: resource.groups || [],
-    metric: resource.metrics,
-    importance: resource.related_incidents || 0,
-    region: resource.location || null,
-  }));
-
-  const nodeMap = new Map(nodes.map((node) => [node.id, node]));
-  const edges = [];
-  const seenEdges = new Set();
-
-  const pushEdge = (source, target, relation) => {
-    if (source === target || !nodeMap.has(source) || !nodeMap.has(target)) {
-      return;
-    }
-    const key = `${source}|${target}|${relation}`;
-    if (seenEdges.has(key)) {
-      return;
-    }
-    seenEdges.add(key);
-
-    const sourceNode = nodeMap.get(source);
-    const targetNode = nodeMap.get(target);
-    const statusOrder = (statusPriority[sourceNode.status] ?? 99) >= (statusPriority[targetNode.status] ?? 99)
-      ? targetNode.status
-      : sourceNode.status;
-
-    edges.push({
-      id: key,
-      source,
-      target,
-      relation,
-      status: statusOrder,
-      bandwidthMbps: Math.round(((sourceNode.metric?.networkOut ?? 50) + (targetNode.metric?.networkIn ?? 50)) / 2),
-      latencyMs: Math.max(sourceNode.metric?.latencyMs ?? 0, targetNode.metric?.latencyMs ?? 0) || undefined,
-    });
-  };
-
-  groups.forEach((group) => {
-    const memberIds = Array.isArray(group.member_ids) ? group.member_ids : [];
-    if (memberIds.length < 2) {
-      return;
-    }
-    const [anchor, ...rest] = memberIds;
-    rest.forEach((member) => pushEdge(anchor, member, `group:${group.id}`));
-  });
-
-  const typeBuckets = new Map();
-  nodes.forEach((node) => {
-    const bucket = typeBuckets.get(node.type) || [];
-    bucket.push(node);
-    typeBuckets.set(node.type, bucket);
-  });
-
-  const applications = [...(typeBuckets.get('service') || []), ...(typeBuckets.get('application') || [])];
-  const databases = typeBuckets.get('database') || [];
-  const caches = typeBuckets.get('cache') || [];
-  const messageQueues = typeBuckets.get('queue') || [];
-
-  applications.forEach((appNode) => {
-    databases.forEach((dbNode) => pushEdge(appNode.id, dbNode.id, 'depends_on:database'));
-    caches.forEach((cacheNode) => pushEdge(appNode.id, cacheNode.id, 'uses:cache'));
-    messageQueues.forEach((queueNode) => pushEdge(appNode.id, queueNode.id, 'publishes:queue'));
-  });
-
-  return { nodes, edges };
-};
-
-const parseTagFilters = (query) => {
-  const raw = query.tag_filters || query.tagFilters;
-  if (!raw) {
-    return [];
-  }
-  let filters = [];
-  if (typeof raw === 'string') {
-    try {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed)) {
-        filters = parsed;
-      }
-    } catch (_error) {
-      const parts = raw.split(',');
-      filters = parts
-        .map((part) => {
-          const [key, operator = 'eq', valueSegment = ''] = part.split(':');
-          if (!key) {
-            return null;
-          }
-          const values = valueSegment
-            .split('|')
-            .map((value) => value.trim())
-            .filter(Boolean);
-          return {
-            key: key.trim(),
-            operator: operator.trim(),
-            values,
-          };
-        })
-        .filter(Boolean);
-    }
-  } else if (Array.isArray(raw)) {
-    filters = raw;
-  }
-
-  return filters
-    .map((filter) => {
-      if (!filter || typeof filter !== 'object') {
-        return null;
-      }
-      const key = typeof filter.key === 'string' ? filter.key.trim() : '';
-      if (!key) {
-        return null;
-      }
-      const operator = typeof filter.operator === 'string'
-        ? filter.operator.trim().toLowerCase()
-        : 'eq';
-      const values = Array.isArray(filter.values)
-        ? filter.values.map((value) => (typeof value === 'string' ? value.trim() : String(value))).filter(Boolean)
-        : [];
-      return {
-        key,
-        operator,
-        values,
-      };
-    })
-    .filter(Boolean);
-};
-
-const safeCreateRegex = (pattern) => {
-  try {
-    return new RegExp(pattern);
-  } catch (_error) {
-    return null;
-  }
-};
-
-const extractTagValues = (resource, key) => {
-  if (!resource || !Array.isArray(resource.tags)) {
-    return [];
-  }
-  return resource.tags
-    .filter((tag) => tag && tag.key === key)
-    .map((tag) => tag.value)
-    .filter((value) => typeof value === 'string' && value.length > 0);
-};
-
-const matchesTagFilter = (resource, filter) => {
-  const values = extractTagValues(resource, filter.key);
-  const operator = (filter.operator || 'eq').toLowerCase();
-  const filterValues = Array.isArray(filter.values) ? filter.values : [];
-  const primary = filterValues[0];
-
-  switch (operator) {
-    case 'eq':
-      return primary ? values.includes(primary) : true;
-    case 'neq':
-      return primary ? !values.includes(primary) : true;
-    case 'in':
-      return filterValues.length ? filterValues.some((candidate) => values.includes(candidate)) : true;
-    case 'not_in':
-      return filterValues.length ? filterValues.every((candidate) => !values.includes(candidate)) : true;
-    case 'regex': {
-      if (!primary) {
-        return true;
-      }
-      const regex = safeCreateRegex(primary);
-      if (!regex) {
-        return false;
-      }
-      return values.some((candidate) => regex.test(candidate));
-    }
-    case 'not_regex': {
-      if (!primary) {
-        return true;
-      }
-      const regex = safeCreateRegex(primary);
-      if (!regex) {
-        return true;
-      }
-      return values.every((candidate) => !regex.test(candidate));
-    }
-    default:
-      return true;
-  }
-};
-
-const applyTagFilters = (resources, filters = []) => {
-  if (!Array.isArray(filters) || filters.length === 0) {
-    return resources;
-  }
-  return resources.filter((resource) => filters.every((filter) => matchesTagFilter(resource, filter)));
-};
-
-// 登入接口
-registerRoute('post', '/auth/login', (req, res) => {
-  const { username, password } = req.body;
-
-  // 簡單的認證邏輯
-  if (username === 'admin' && password === 'password123') {
-    res.jsonp({
-      token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
-      user: {
-        id: 'user_1',
-        username: 'admin',
-        email: 'admin@sre-platform.com',
-        full_name: '系統管理員',
-        role: 'admin',
-        team_id: 'team_1'
-      }
-    });
-  } else {
-    res.status(401).jsonp({
-      code: 'INVALID_CREDENTIALS',
-      message: '人員名或密碼錯誤'
-    });
-  }
-});
-
-// 登出接口
-registerRoute('post', '/auth/logout', (req, res) => {
-  res.jsonp({ message: '登出成功' });
-});
-
-// 儀表板統計數據接口
-registerRoute('get', '/dashboard/stats', (req, res) => {
-  const db = router.db;
-  const stats = db.get('dashboard_stats').value();
-  res.jsonp(stats);
-});
-
-// 儀表板統計數據接口（複數形式）
-registerRoute('get', '/dashboards/stats', (req, res) => {
-  const db = router.db;
-  const stats = db.get('dashboard_stats').value();
-  res.jsonp(stats);
-});
-
-registerRoute('get', '/dashboards', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const category = req.query.category ? String(req.query.category).toLowerCase() : '';
-  const search = (req.query.search || '').toLowerCase();
-
-  let dashboards = db.get('dashboards').value() || [];
-
-  if (category) {
-    dashboards = dashboards.filter((item) => String(item.category || '').toLowerCase() === category);
-  }
-
-  if (search) {
-    dashboards = dashboards.filter((item) => {
-      const name = String(item.name || '').toLowerCase();
-      const description = String(item.description || '').toLowerCase();
-      return name.includes(search) || description.includes(search);
-    });
-  }
-
-  res.jsonp(withPagination(dashboards, page, pageSize));
-});
-
-registerRoute('post', '/dashboards', (req, res) => {
-  const db = router.db;
+app.post('/notification/channels', (req, res) => {
   const payload = req.body || {};
-  const now = new Date().toISOString();
-  const id = payload.id || `dash_${Date.now()}`;
-
-  const record = {
-    id,
-    name: payload.name || '未命名儀表板',
-    description: payload.description || '',
-    category: payload.category || 'custom',
-    owner: payload.owner || null,
-    is_default: Boolean(payload.is_default),
-    is_featured: Boolean(payload.is_featured),
-    viewers_count: payload.viewers_count || 0,
-    favorites_count: payload.favorites_count || 0,
-    panel_count: payload.panel_count || 0,
-    data_sources: payload.data_sources || [],
-    thumbnail_url: payload.thumbnail_url || null,
-    target_page_key: payload.target_page_key || null,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null
-  };
-
-  db.get('dashboards').push(record).write();
-  res.status(201).jsonp(record);
-});
-
-registerRoute('get', '/dashboards/:dashboardId', (req, res) => {
-  const record = router.db.get('dashboards').find({ id: req.params.dashboardId }).value();
-  if (!record) {
-    return res.status(404).jsonp({ code: 'DASHBOARD_NOT_FOUND', message: '儀表板不存在' });
-  }
-  res.jsonp(record);
-});
-
-registerRoute('put', '/dashboards/:dashboardId', (req, res) => {
-  const db = router.db;
-  const query = db.get('dashboards').find({ id: req.params.dashboardId });
-  if (!query.value()) {
-    return res.status(404).jsonp({ code: 'DASHBOARD_NOT_FOUND', message: '儀表板不存在' });
-  }
-
-  const now = new Date().toISOString();
-  query.assign({ ...req.body, id: req.params.dashboardId, updated_at: now }).write();
-  res.jsonp(query.value());
-});
-
-registerRoute('delete', '/dashboards/:dashboardId', (req, res) => {
-  const db = router.db;
-  const removed = db.get('dashboards').remove({ id: req.params.dashboardId }).write();
-  if (!removed || removed.length === 0) {
-    return res.status(404).jsonp({ code: 'DASHBOARD_NOT_FOUND', message: '儀表板不存在' });
-  }
-  res.status(204).end();
-});
-
-registerRoute('get', '/dashboards/stats', (req, res) => {
-  const stats = router.db.get('dashboard_stats').value();
-  res.jsonp(stats || {});
-});
-
-registerRoute('get', '/infrastructure/stats', (req, res) => {
-  const stats = router.db.get('infrastructure_stats').value();
-  if (!stats) {
-    return res.status(404).jsonp({ code: 'INFRA_STATS_NOT_FOUND', message: '尚無基礎設施統計資料' });
-  }
-  res.jsonp(stats);
-});
-
-registerRoute('get', '/infrastructure/resource-usage', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const usage = db.get('infrastructure_resource_usage').value() || [];
-  res.jsonp(withPagination(usage, page, pageSize));
-});
-
-registerRoute('get', '/ai/risk-predictions', (req, res) => {
-  const predictions = router.db.get('ai_risk_predictions').value() || [];
-  res.jsonp({ predictions });
-});
-
-registerRoute('get', '/notification-channels', (req, res) => {
-  const inventory = aggregateInventory(router.db);
-  const channelsCollection = ensureArrayCollection(router.db, 'notification_channels');
-  const healthCollection = ensureArrayCollection(router.db, 'channel_health_checks').value();
-
-  const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-  const typeFilter = typeof req.query.type === 'string' ? req.query.type.trim().toLowerCase() : '';
-  const enabledFilterRaw = req.query.enabled;
-  const enabledFilter = typeof enabledFilterRaw === 'string'
-    ? enabledFilterRaw.toLowerCase()
-    : typeof enabledFilterRaw === 'boolean'
-      ? enabledFilterRaw
-      : null;
-
-  const channels = channelsCollection.value() || [];
-  const filtered = channels.filter((channel) => {
-    if (typeFilter && String(channel.type || '').toLowerCase() !== typeFilter) {
-      return false;
-    }
-    if (enabledFilter !== null) {
-      const isEnabled = channel.enabled !== false;
-      const expected = typeof enabledFilter === 'boolean'
-        ? enabledFilter
-        : enabledFilter === 'true';
-      if (isEnabled !== expected) {
-        return false;
-      }
-    }
-    if (search) {
-      const haystack = [channel.name, channel.type, channel.description, channel.endpoint]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      if (!haystack.includes(search)) {
-        return false;
-      }
-    }
-    return true;
-  });
-
-  const items = filtered.map((channel) => serializeChannel(channel, router.db, { healthCollection }));
-
-  res.jsonp({
-    items,
-    meta: {
-      total: items.length,
-      generated_at: inventory.generatedAt,
-    },
-  });
-});
-
-registerRoute('get', '/notification-channels/:channelId', (req, res) => {
-  const collection = ensureArrayCollection(router.db, 'notification_channels');
-  const channel = collection.find({ id: req.params.channelId }).value();
-  if (!channel) {
-    return res.status(404).jsonp({ code: 'CHANNEL_NOT_FOUND', message: '通知管道不存在' });
-  }
-  res.jsonp(serializeChannel(channel, router.db));
-});
-
-registerRoute('post', '/notification-channels', (req, res) => {
-  const collection = ensureArrayCollection(router.db, 'notification_channels');
-  const payload = req.body || {};
-  const now = new Date().toISOString();
-  const id = typeof payload.id === 'string' && payload.id.trim()
-    ? payload.id.trim()
-    : `channel_${Date.now()}`;
-
   const channel = {
-    id,
-    name: typeof payload.name === 'string' && payload.name.trim() ? payload.name.trim() : '未命名通知管道',
-    type: typeof payload.type === 'string' ? payload.type.trim().toLowerCase() : 'email',
-    description: typeof payload.description === 'string' ? payload.description : null,
-    endpoint: typeof payload.endpoint === 'string' ? payload.endpoint : payload.webhook_url ?? null,
-    default_recipients: Array.isArray(payload.default_recipients)
-      ? payload.default_recipients.map((recipient) => String(recipient))
-      : [],
-    metadata: typeof payload.metadata === 'object' && payload.metadata !== null ? payload.metadata : {},
-    enabled: payload.enabled !== false,
-    created_at: now,
-    updated_at: now,
-  };
-
-  collection.push(channel).write();
-  recordChannelHealth(router.db, {
-    id: channel.id,
-    status: 'healthy',
-    latencyMs: 120,
-    attempts: 1,
-    message: '建立後尚未檢查',
-    checkedAt: now,
-  }, { source: 'bootstrap' });
-
-  res.status(201).jsonp(serializeChannel(channel, router.db));
-});
-
-registerRoute('put', '/notification-channels/:channelId', (req, res) => {
-  const collection = ensureArrayCollection(router.db, 'notification_channels');
-  const query = collection.find({ id: req.params.channelId });
-  const existing = query.value();
-  if (!existing) {
-    return res.status(404).jsonp({ code: 'CHANNEL_NOT_FOUND', message: '通知管道不存在' });
-  }
-
-  const payload = req.body || {};
-  const updates = {};
-  if (typeof payload.name === 'string' && payload.name.trim()) updates.name = payload.name.trim();
-  if (typeof payload.type === 'string' && payload.type.trim()) updates.type = payload.type.trim().toLowerCase();
-  if (typeof payload.description === 'string') updates.description = payload.description;
-  if (payload.endpoint !== undefined) {
-    updates.endpoint = payload.endpoint === null ? null : String(payload.endpoint);
-  }
-  if (Array.isArray(payload.default_recipients)) {
-    updates.default_recipients = payload.default_recipients.map((recipient) => String(recipient));
-  }
-  if (typeof payload.metadata === 'object' && payload.metadata !== null) {
-    updates.metadata = payload.metadata;
-  }
-  if (typeof payload.enabled === 'boolean') {
-    updates.enabled = payload.enabled;
-  }
-  updates.updated_at = new Date().toISOString();
-
-  query.assign({ ...existing, ...updates }).write();
-  const updated = query.value();
-  res.jsonp(serializeChannel(updated, router.db));
-});
-
-registerRoute('delete', '/notification-channels/:channelId', (req, res) => {
-  const collection = ensureArrayCollection(router.db, 'notification_channels');
-  const target = collection.find({ id: req.params.channelId }).value();
-  if (!target) {
-    return res.status(404).jsonp({ code: 'CHANNEL_NOT_FOUND', message: '通知管道不存在' });
-  }
-  collection.remove({ id: req.params.channelId }).write();
-  channelHealthState.delete(req.params.channelId);
-  res.status(204).end();
-});
-
-registerRoute('post', '/notification-channels/:channelId/test', (req, res) => {
-  const collection = ensureArrayCollection(router.db, 'notification_channels');
-  const channel = collection.find({ id: req.params.channelId }).value();
-  if (!channel) {
-    return res.status(404).jsonp({ code: 'CHANNEL_NOT_FOUND', message: '通知管道不存在' });
-  }
-
-  const generator = createSeededGenerator(`${channel.id}:manual_test:${Date.now()}`);
-  const latency = Math.round(100 + generator() * 200);
-  const statusRoll = generator();
-  let status = 'healthy';
-  let message = '測試通知發送成功';
-  if (statusRoll > 0.88) {
-    status = 'critical';
-    message = '測試失敗：模擬超時';
-  } else if (statusRoll > 0.7) {
-    status = 'warning';
-    message = '測試回應延遲偏高';
-  }
-
-  const entry = recordChannelHealth(router.db, {
-    id: channel.id,
-    status,
-    latencyMs: latency,
-    attempts: Math.round(1 + generator() * 2),
-    message,
-    checkedAt: new Date().toISOString(),
-  }, { source: 'manual_test' });
-
-  res.jsonp({
-    message,
-    result: entry,
-    channel: serializeChannel(channel, router.db),
-  });
-});
-
-registerRoute('get', '/notification-channels/:channelId/health-checks', (req, res) => {
-  const collection = ensureArrayCollection(router.db, 'notification_channels');
-  const channel = collection.find({ id: req.params.channelId }).value();
-  if (!channel) {
-    return res.status(404).jsonp({ code: 'CHANNEL_NOT_FOUND', message: '通知管道不存在' });
-  }
-
-  const history = getChannelHealthHistory(router.db, channel.id) || [];
-  res.jsonp({
-    channel_id: channel.id,
-    items: history,
-  });
-});
-
-registerRoute('get', '/tags', (req, res) => {
-  const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-  const inventory = aggregateInventory(router.db);
-  const { metadataList } = buildTagContext(router.db, inventory);
-
-  const filtered = search
-    ? metadataList.filter((item) => {
-      const haystack = [item.key, item.description, item.category]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(search);
-    })
-    : metadataList;
-
-  res.jsonp({
-    tags: filtered,
-    total: filtered.length,
-    generated_at: inventory.generatedAt,
-  });
-});
-
-registerRoute('get', '/tags/:tagKey/values', (req, res) => {
-  const tagKeyParam = req.params.tagKey;
-  const inventory = aggregateInventory(router.db);
-  const { metadataList, statsByKey } = buildTagContext(router.db, inventory);
-  const normalizedKey = decodeURIComponent(tagKeyParam);
-  const metadata = metadataList.find((item) => item.key === normalizedKey);
-  const stats = statsByKey.get(normalizedKey);
-
-  if (!metadata && !stats) {
-    return res.status(404).jsonp({ code: 'TAG_NOT_FOUND', message: '指定的標籤鍵不存在' });
-  }
-
-  const search = typeof req.query.q === 'string' ? req.query.q.trim().toLowerCase() : '';
-  const limit = parsePageParam(req.query.limit, 50);
-
-  const collectFromStats = () => {
-    if (!stats) {
-      return [];
-    }
-    return Array.from(stats.counts.values()).map((entry) => ({
-      value: entry.value,
-      label: entry.value,
-      color: null,
-      usage_count: entry.count ?? 0,
-    }));
-  };
-
-  let candidates = metadata?.allowed_values && metadata.allowed_values.length > 0
-    ? metadata.allowed_values.map((entry) => ({
-      value: entry.value,
-      label: entry.label || entry.value,
-      color: entry.color || null,
-      usage_count: entry.usage_count ?? stats?.counts.get(entry.value)?.count ?? 0,
-    }))
-    : collectFromStats();
-
-  if (search) {
-    candidates = candidates.filter((item) => item.value.toLowerCase().includes(search));
-  }
-
-  candidates.sort((a, b) => {
-    const diff = (b.usage_count ?? 0) - (a.usage_count ?? 0);
-    return diff !== 0 ? diff : a.value.localeCompare(b.value);
-  });
-
-  const limited = candidates.slice(0, limit);
-
-  res.jsonp({
-    key: normalizedKey,
-    mode: metadata?.value_mode ?? (metadata?.allowed_values?.length ? 'ENUM' : candidates.length <= 40 ? 'DYNAMIC' : 'FREEFORM'),
-    total: candidates.length,
-    items: limited,
-    generated_at: inventory.generatedAt,
-  });
-});
-
-registerRoute('get', '/background-jobs', (req, res) => {
-  const inventory = aggregateInventory(router.db);
-  tickBackgroundJobs(router.db, {
-    resources: inventory.items,
-    groups: inventory.groups,
-    stats: inventory.stats,
-    generatedAt: inventory.generatedAt,
-  });
-  res.jsonp({ jobs: listBackgroundJobs() });
-});
-
-registerRoute('get', '/background-jobs/:jobId', (req, res) => {
-  const jobId = req.params.jobId;
-  try {
-    const inventory = aggregateInventory(router.db);
-    tickBackgroundJobs(router.db, {
-      resources: inventory.items,
-      groups: inventory.groups,
-      stats: inventory.stats,
-      generatedAt: inventory.generatedAt,
-    });
-    const state = ensureJobState(jobId);
-    res.jsonp(serializeJobState(state, { includeHistory: true }));
-  } catch (error) {
-    res.status(404).jsonp({ code: 'JOB_NOT_FOUND', message: error instanceof Error ? error.message : '背景作業不存在' });
-  }
-});
-
-registerRoute('post', '/background-jobs/:jobId/run', (req, res) => {
-  const jobId = req.params.jobId;
-  try {
-    const inventory = aggregateInventory(router.db);
-    const { state } = runBackgroundJob(jobId, {
-      db: router.db,
-      context: {
-        resources: inventory.items,
-        groups: inventory.groups,
-        stats: inventory.stats,
-        generatedAt: inventory.generatedAt,
-      },
-      automatic: false,
-    });
-    res.jsonp({
-      job: serializeJobState(state, { includeHistory: true }),
-      triggered_at: new Date().toISOString(),
-    });
-  } catch (error) {
-    res.status(404).jsonp({ code: 'JOB_NOT_FOUND', message: error instanceof Error ? error.message : '背景作業不存在' });
-  }
-});
-
-registerRoute('get', '/background-jobs/:jobId/history', (req, res) => {
-  const jobId = req.params.jobId;
-  try {
-    const state = ensureJobState(jobId);
-    res.jsonp({ job_id: jobId, items: state.history });
-  } catch (error) {
-    res.status(404).jsonp({ code: 'JOB_NOT_FOUND', message: error instanceof Error ? error.message : '背景作業不存在' });
-  }
-});
-
-// 動態 CMDB 資源列表聚合端點
-registerRoute('get', '/resources', (req, res) => {
-  const refreshRequested = String(req.query.refresh ?? '').toLowerCase() === 'true';
-  if (refreshRequested) {
-    invalidateResourceCache();
-  }
-
-  const inventory = aggregateInventory(router.db);
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-
-  const tagFilters = parseTagFilters(req.query);
-  const filteredResources = applyTagFilters(filterResourcesByQuery(inventory.items, req.query), tagFilters);
-  const { items, pagination } = withPagination(filteredResources, page, pageSize);
-  const sanitizedItems = items.map(stripInternalFields);
-
-  res.jsonp({
-    items: sanitizedItems,
-    pagination,
-    meta: {
-      total_filtered: filteredResources.length,
-      generated_at: inventory.generatedAt,
-      cached_until: new Date(inventory.expiresAt).toISOString(),
-      filters: {
-        search: req.query.search ?? null,
-        status: req.query.status ?? null,
-        team_id: req.query.team_id ?? null,
-        group_id: req.query.group_id ?? null,
-        environment: req.query.environment ?? null,
-        tags: Array.isArray(req.query.tags)
-          ? req.query.tags
-          : req.query.tags
-            ? [req.query.tags]
-            : [],
-        tag_filters: tagFilters,
-      },
-      refreshed: refreshRequested,
-    },
-  });
-});
-
-registerRoute('get', '/resources/statistics', (req, res) => {
-  const refreshRequested = String(req.query.refresh ?? '').toLowerCase() === 'true';
-  if (refreshRequested) {
-    invalidateResourceCache();
-  }
-
-  const inventory = aggregateInventory(router.db);
-  const stats = inventory.stats || {};
-
-  res.jsonp({
-    ...stats,
-    groups: inventory.groups.length,
-    generatedAt: inventory.generatedAt,
-    cachedUntil: new Date(inventory.expiresAt).toISOString(),
-    refreshed: refreshRequested,
-  });
-});
-
-const registerResourceGroupRoute = (path) => {
-  registerRoute('get', path, (req, res) => {
-    const inventory = aggregateInventory(router.db);
-    const page = parsePageParam(req.query.page, 1);
-    const pageSize = parsePageParam(req.query.page_size, 20);
-    const search = typeof req.query.search === 'string' ? req.query.search.trim().toLowerCase() : '';
-
-    const filteredGroups = search
-      ? inventory.groups.filter((group) => (group.__searchText || '').includes(search))
-      : inventory.groups;
-
-    const { items, pagination } = withPagination(filteredGroups, page, pageSize);
-    const sanitizedItems = items.map(stripInternalFields);
-
-    res.jsonp({
-      items: sanitizedItems,
-      pagination,
-      meta: {
-        total_filtered: filteredGroups.length,
-        generated_at: inventory.generatedAt,
-        cached_until: new Date(inventory.expiresAt).toISOString(),
-        search,
-      },
-    });
-  });
-};
-
-registerResourceGroupRoute('/resource-groups');
-registerResourceGroupRoute('/resource_groups');
-
-registerRoute('get', '/resources/:resourceId', (req, res) => {
-  const inventory = aggregateInventory(router.db);
-  const resource = inventory.items.find((item) => item.id === req.params.resourceId);
-  if (!resource) {
-    return res.status(404).jsonp({ code: 'RESOURCE_NOT_FOUND', message: '找不到指定資源' });
-  }
-  res.jsonp(stripInternalFields(resource));
-});
-
-registerRoute('get', '/resources/:resourceId/metrics', (req, res) => {
-  const inventory = aggregateInventory(router.db);
-  const resource = inventory.items.find((item) => item.id === req.params.resourceId);
-  if (!resource) {
-    return res.status(404).jsonp({ code: 'RESOURCE_NOT_FOUND', message: '找不到指定資源' });
-  }
-
-  const rangeMinutes = parsePageParam(req.query.range_minutes ?? req.query.range ?? 60, 60);
-  const points = parsePageParam(req.query.points ?? 12, 12);
-  const history = generateMetricHistory(
-    `${resource.id}:${rangeMinutes}:${points}`,
-    pickNumber(resource.metrics?.cpuUsage, resource.metrics?.cpu_usage) ?? 55,
-    pickNumber(resource.metrics?.memoryUsage, resource.metrics?.memory_usage) ?? 60,
-    points,
-    rangeMinutes,
-  );
-
-  res.jsonp({
-    resource_id: resource.id,
-    range_minutes: rangeMinutes,
-    timestamps: history.timestamps,
-    cpu_usage: history.cpu_usage,
-    memory_usage: history.memory_usage,
-    generated_at: inventory.generatedAt,
-    cached_until: new Date(inventory.expiresAt).toISOString(),
-  });
-});
-
-registerRoute('get', '/topology', (req, res) => {
-  const inventory = aggregateInventory(router.db);
-  const groupId = typeof req.query.group_id === 'string' ? req.query.group_id : null;
-  const layout = typeof req.query.layout === 'string' ? req.query.layout : 'force';
-
-  let resources = inventory.items;
-  let groups = inventory.groups;
-
-  if (groupId) {
-    groups = inventory.groups.filter((group) => group.id === groupId);
-    const memberSet = new Set(groups.flatMap((group) => group.member_ids || []));
-    resources = resources.filter((resource) => memberSet.has(resource.id));
-  }
-
-  const graph = buildTopologyGraph(resources, groups.map(stripInternalFields));
-
-  res.jsonp({
-    nodes: graph.nodes,
-    edges: graph.edges,
-    layout,
-    updatedAt: inventory.generatedAt,
-    meta: {
-      resource_count: resources.length,
-      group_count: groups.length,
-      generated_at: inventory.generatedAt,
-      cached_until: new Date(inventory.expiresAt).toISOString(),
-    },
-  });
-});
-
-// 事件列表接口 - 支持分頁和多維度篩選
-registerRoute('get', '/events', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const { status, severity, resource_name, source, incident_id, sort_by, sort_order } = req.query;
-
-  let events = db.get('events').value();
-
-  // 狀態過濾
-  if (status) {
-    events = events.filter(event => event.status.toLowerCase() === status.toLowerCase());
-  }
-
-  // 嚴重性過濾
-  if (severity) {
-    events = events.filter(event => event.severity.toLowerCase() === severity.toLowerCase());
-  }
-
-  // 資源名稱過濾
-  if (resource_name) {
-    const keyword = resource_name.toLowerCase();
-    events = events.filter(event => {
-      const resourceName = event.resource && event.resource.name ? event.resource.name.toLowerCase() : '';
-      return resourceName.includes(keyword);
-    });
-  }
-
-  // 來源過濾
-  if (source) {
-    events = events.filter(event => event.source.toLowerCase() === source.toLowerCase());
-  }
-
-  // 事故 ID 過濾
-  if (incident_id) {
-    events = events.filter(event => event.incident_id === incident_id);
-  }
-
-  // 排序
-  if (sort_by) {
-    const order = sort_order === 'desc' ? -1 : 1;
-    events.sort((a, b) => {
-      const fieldA = a[sort_by];
-      const fieldB = b[sort_by];
-      if (fieldA < fieldB) return -1 * order;
-      if (fieldA > fieldB) return 1 * order;
-      return 0;
-    });
-  }
-
-  res.jsonp(withPagination(events, page, pageSize));
-});
-
-// 事件詳情
-registerRoute('get', '/events/:eventId', (req, res) => {
-  const event = router.db.get('events').find({ id: req.params.eventId }).value();
-  if (!event) {
-    return res.status(404).jsonp({ code: 'EVENT_NOT_FOUND', message: '找不到指定事件' });
-  }
-  res.jsonp(event);
-});
-
-// 為事件新增註記
-registerRoute('post', '/events/:eventId/comments', (req, res) => {
-  const db = router.db;
-  const content = (req.body && req.body.content) || '';
-
-  if (!content.trim()) {
-    return res.status(400).jsonp({ code: 'INVALID_PAYLOAD', message: 'content 為必填欄位' });
-  }
-
-  const eventQuery = db.get('events').find({ id: req.params.eventId });
-  const event = eventQuery.value();
-
-  if (!event) {
-    return res.status(404).jsonp({ code: 'EVENT_NOT_FOUND', message: '找不到指定事件' });
-  }
-
-  const now = new Date().toISOString();
-  const actorId = req.body.actor_id || 'user_ops_lead';
-  const actorName = req.body.actor_name || 'SRE Engineer';
-
-  const historyEntry = {
-    id: `hist_${Date.now()}`,
-    type: 'USER_COMMENT',
-    actor: {
-      type: 'user',
-      id: actorId,
-      name: actorName
-    },
-    content,
-    metadata: {},
-    created_at: now
-  };
-
-  const updatedHistory = Array.isArray(event.history_logs) ? [...event.history_logs, historyEntry] : [historyEntry];
-
-  eventQuery.assign({
-    history_logs: updatedHistory,
-    updated_at: now
-  }).write();
-
-  db.get('event_histories').push({
-    id: historyEntry.id,
-    event_id: req.params.eventId,
-    type: 'USER_COMMENT',
-    actor: `user:${actorId}`,
-    content,
-    metadata: {},
-    created_at: now
-  }).write();
-
-  res.status(201).jsonp(historyEntry);
-});
-
-// 合併事件建立事故
-registerRoute('post', '/incidents', (req, res) => {
-  const db = router.db;
-  const { title, severity, assignee_id, event_ids = [] } = req.body || {};
-
-  if (!title || !severity) {
-    return res.status(400).jsonp({ code: 'INVALID_PAYLOAD', message: 'title 與 severity 為必填欄位' });
-  }
-
-  const id = `inc_${Date.now()}`;
-  const now = new Date().toISOString();
-
-  const incident = {
-    id,
-    title,
-    status: 'investigating',
-    severity: severity.toLowerCase(),
-    assignee_id: assignee_id || null,
-    created_at: now,
-    updated_at: now
-  };
-
-  db.get('incidents').push(incident).write();
-
-  if (Array.isArray(event_ids) && event_ids.length > 0) {
-    event_ids.forEach(eventId => {
-      db.get('events').find({ id: eventId }).assign({ incident_id: id, status: 'MERGED', updated_at: now }).write();
-    });
-  }
-
-  res.status(201).jsonp(incident);
-});
-
-// 更新事故狀態
-registerRoute('patch', '/incidents/:id', (req, res) => {
-  const db = router.db;
-  const { id } = req.params;
-  const { status, acknowledged_at, resolved_at } = req.body || {};
-
-  const incident = db.get('incidents').find({ id }).value();
-  if (!incident) {
-    return res.status(404).jsonp({ code: 'NOT_FOUND', message: `事故 ${id} 不存在` });
-  }
-
-  const now = new Date().toISOString();
-  const updates = {
-    updated_at: now,
-  };
-
-  if (status) {
-    updates.status = status;
-  }
-  if (acknowledged_at) {
-    updates.acknowledged_at = acknowledged_at;
-  }
-  if (resolved_at) {
-    updates.resolved_at = resolved_at;
-  }
-
-  const updatedIncident = db.get('incidents').find({ id }).assign(updates).write();
-
-  // 記錄審計日誌
-  const auditLog = {
-    id: `audit_${Date.now()}`,
-    user_id: 'current_user', // 在實際實現中應該從認證信息中獲取
-    action: 'update_incident_status',
-    resource_type: 'incident',
-    resource_id: id,
-    details: {
-      old_status: incident.status,
-      new_status: status,
-      changes: updates,
-    },
-    timestamp: now,
-  };
-
-  // 確保 audit_logs 集合存在
-  if (!db.has('audit_logs').value()) {
-    db.set('audit_logs', []).write();
-  }
-  db.get('audit_logs').push(auditLog).write();
-
-  res.status(200).jsonp(updatedIncident);
-});
-
-// 週期性靜音規則接口
-registerRoute('get', '/recurring-silence-rules', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const { is_enabled, created_by, search } = req.query;
-
-  let rules = db.get('recurring_silence_rules').value() || [];
-
-  // 啟用狀態過濾
-  if (is_enabled !== undefined) {
-    const enabled = is_enabled === 'true';
-    rules = rules.filter(rule => rule.is_enabled === enabled);
-  }
-
-  // 創建者過濾
-  if (created_by) {
-    rules = rules.filter(rule => rule.created_by === created_by);
-  }
-
-  // 搜索過濾
-  if (search) {
-    rules = rules.filter(rule =>
-      rule.name.toLowerCase().includes(search.toLowerCase()) ||
-      rule.description.toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
-  res.jsonp(withPagination(rules, page, pageSize));
-});
-
-// 單個週期性靜音規則
-registerRoute('get', '/recurring-silence-rules/:ruleId', (req, res) => {
-  const db = router.db;
-  const rule = db.get('recurring_silence_rules').find({ id: req.params.ruleId }).value();
-
-  if (rule) {
-    res.jsonp(rule);
-  } else {
-    res.status(404).jsonp({
-      code: 'RULE_NOT_FOUND',
-      message: '週期性靜音規則不存在'
-    });
-  }
-});
-
-// 創建週期性靜音規則
-registerRoute('post', '/recurring-silence-rules', (req, res) => {
-  const db = router.db;
-  const newRule = {
-    id: `rsr_${Date.now()}`,
-    ...req.body,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    execution_count: 0,
-    last_execution: null,
-    next_execution: null // 這裡應該根據 cron_expression 計算
-  };
-
-  db.get('recurring_silence_rules').push(newRule).write();
-  res.status(201).jsonp(newRule);
-});
-
-// 事件規則列表
-registerRoute('get', '/incident-rules', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const { severity, status, search } = req.query;
-
-  let rules = db.get('incident_rules').value() || [];
-
-  if (severity) {
-    rules = rules.filter((rule) => String(rule.severity ?? '').toLowerCase() === String(severity).toLowerCase());
-  }
-
-  if (status) {
-    rules = rules.filter((rule) => String(rule.status ?? '').toLowerCase() === String(status).toLowerCase());
-  }
-
-  if (search) {
-    const keyword = String(search).toLowerCase();
-    rules = rules.filter((rule) => {
-      const fields = [rule.name, rule.description, rule.owner];
-      return fields.some((field) => field && String(field).toLowerCase().includes(keyword));
-    });
-  }
-
-  res.jsonp(withPagination(rules, page, pageSize));
-});
-
-registerRoute('get', '/incident-rules/:ruleId', (req, res) => {
-  const rule = router.db.get('incident_rules').find({ id: req.params.ruleId }).value();
-  if (!rule) {
-    return res.status(404).jsonp({ code: 'INCIDENT_RULE_NOT_FOUND', message: '找不到指定事件規則' });
-  }
-  res.jsonp(rule);
-});
-
-// AI 日報
-registerRoute('get', '/ai/daily-report', (req, res) => {
-  const report = router.db.get('ai_daily_report').value();
-  if (!report) {
-    return res.status(404).jsonp({ code: 'REPORT_NOT_FOUND', message: '目前沒有可用的 AI 報告' });
-  }
-  res.jsonp(report);
-});
-
-// 通知歷史接口
-registerRoute('get', '/notification-history', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const { channel_type, channel_name, status, event_id, start_date, end_date } = req.query;
-
-  let history = db.get('notification_history').value() || [];
-
-  // 渠道類型過濾
-  if (channel_type) {
-    const targetNames = db
-      .get('notification_channels')
-      .filter({ type: channel_type })
-      .map('name')
-      .value();
-    history = history.filter(h => targetNames.includes(h.channel_name));
-  }
-
-  if (channel_name) {
-    history = history.filter(h => h.channel_name === channel_name);
-  }
-
-  // 狀態過濾
-  if (status) {
-    history = history.filter(h => h.status === status);
-  }
-
-  // 事件ID過濾
-  if (event_id) {
-    history = history.filter(h => h.event_id === event_id);
-  }
-
-  // 日期範圍過濾
-  if (start_date || end_date) {
-    history = history.filter(h => {
-      const sentAt = new Date(h.sent_at || h.created_at);
-      if (start_date && sentAt < new Date(start_date)) return false;
-      if (end_date && sentAt > new Date(end_date)) return false;
-      return true;
-    });
-  }
-
-  // 按發送時間倒序排序
-  history.sort((a, b) => new Date(b.sent_at || b.created_at) - new Date(a.sent_at || a.created_at));
-
-  // 分頁
-  res.jsonp(withPagination(history, page, pageSize));
-});
-
-// 單個通知歷史詳情
-registerRoute('get', '/notification-history/:historyId', (req, res) => {
-  const db = router.db;
-  const history = db.get('notification_history').find({ id: req.params.historyId }).value();
-
-  if (history) {
-    res.jsonp(history);
-  } else {
-    res.status(404).jsonp({
-      code: 'HISTORY_NOT_FOUND',
-      message: '通知歷史記錄不存在'
-    });
-  }
-});
-
-// 重發通知
-registerRoute('post', '/notification-history/:historyId/resend', (req, res) => {
-  const db = router.db;
-  const history = db.get('notification_history').find({ id: req.params.historyId }).value();
-
-  if (!history) {
-    return res.status(404).jsonp({
-      code: 'HISTORY_NOT_FOUND',
-      message: '通知歷史記錄不存在'
-    });
-  }
-
-  // 創建新的重發記錄
-  const now = new Date().toISOString();
-  const newHistory = {
-    id: `notif_${Date.now()}`,
-    event_id: history.event_id,
-    policy_id: history.policy_id,
-    channel_name: history.channel_name,
-    recipient: history.recipient,
-    status: 'sent',
-    error_message: null,
-    raw_payload: history.raw_payload,
-    sent_at: now,
-    created_at: now
-  };
-
-  db.get('notification_history').push(newHistory).write();
-  res.status(201).jsonp(newHistory);
-});
-
-// 標籤鍵管理接口
-registerRoute('get', '/tag-keys', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const { category, is_required, is_system, search } = req.query;
-
-  let tagKeys = db.get('tag_keys').value() || [];
-
-  // 分類過濾
-  if (category) {
-    tagKeys = tagKeys.filter(tk => (tk.compliance_category || '').toLowerCase() === category.toLowerCase());
-  }
-
-  // 必填狀態過濾
-  if (is_required !== undefined) {
-    const required = is_required === 'true';
-    tagKeys = tagKeys.filter(tk => tk.is_required === required);
-  }
-
-  // 系統標籤過濾
-  if (is_system !== undefined) {
-    const system = is_system === 'true';
-    tagKeys = tagKeys.filter(tk => (
-      system ? tk.enforcement_level === 'blocking' : tk.enforcement_level !== 'blocking'
-    ));
-  }
-
-  // 搜索過濾
-  if (search) {
-    tagKeys = tagKeys.filter(tk =>
-      tk.key_name.toLowerCase().includes(search.toLowerCase()) ||
-      (tk.description || '').toLowerCase().includes(search.toLowerCase())
-    );
-  }
-
-  // 按使用次數排序
-  tagKeys.sort((a, b) => b.usage_count - a.usage_count);
-
-  const allowedValues = db.get('tag_allowed_values').value() || [];
-  const enriched = tagKeys.map(tagKey => ({
-    ...tagKey,
-    allowed_values: allowedValues.filter(val => val.tag_key_id === tagKey.id)
-  }));
-
-  res.jsonp(withPagination(enriched, page, pageSize));
-});
-
-// 標籤鍵自動補全
-registerRoute('get', '/tag-keys/autocomplete', (req, res) => {
-  const db = router.db;
-  const { q, category, limit = 10 } = req.query;
-
-  let tagKeys = db.get('tag_keys').value() || [];
-
-  if (q) {
-    tagKeys = tagKeys.filter(tk =>
-      tk.key_name.toLowerCase().includes(q.toLowerCase())
-    );
-  }
-
-  if (category) {
-    tagKeys = tagKeys.filter(tk => (tk.compliance_category || '').toLowerCase() === category.toLowerCase());
-  }
-
-  const suggestions = tagKeys
-    .slice(0, parseInt(limit, 10))
-    .map(tk => ({
-      id: tk.id,
-      key_name: tk.key_name,
-      description: tk.description,
-      enforcement_level: tk.enforcement_level
-    }));
-
-  res.jsonp({
-    suggestions,
-    total: tagKeys.length
-  });
-});
-
-// 標籤值建議
-registerRoute('get', '/tag-keys/:keyId/values/suggestions', (req, res) => {
-  const db = router.db;
-  const { q, limit = 10 } = req.query;
-  const tagKey = db.get('tag_keys').find({ id: req.params.keyId }).value();
-
-  if (!tagKey) {
-    return res.status(404).jsonp({
-      code: 'TAG_KEY_NOT_FOUND',
-      message: '標籤鍵不存在'
-    });
-  }
-
-  const allowedValues = db
-    .get('tag_allowed_values')
-    .filter({ tag_key_id: tagKey.id })
-    .map('value')
-    .value();
-
-  const suggestions = allowedValues.filter(value => !q || value.toLowerCase().includes(q.toLowerCase()));
-
-  res.jsonp({
-    suggestions: suggestions.slice(0, parseInt(limit, 10)),
-    total: suggestions.length
-  });
-});
-
-// 通知歷史統計
-registerRoute('get', '/notification-history/stats', (req, res) => {
-  const db = router.db;
-  const { start_date, end_date, channel_type, channel_name } = req.query;
-
-  let history = db.get('notification_history').value() || [];
-
-  // 日期範圍過濾
-  if (start_date || end_date) {
-    history = history.filter(h => {
-      const sentAt = new Date(h.sent_at || h.created_at);
-      if (start_date && sentAt < new Date(start_date)) return false;
-      if (end_date && sentAt > new Date(end_date)) return false;
-      return true;
-    });
-  }
-
-  // 渠道類型過濾
-  if (channel_type) {
-    const targetNames = db
-      .get('notification_channels')
-      .filter({ type: channel_type })
-      .map('name')
-      .value();
-    history = history.filter(h => targetNames.includes(h.channel_name));
-  }
-
-  if (channel_name) {
-    history = history.filter(h => h.channel_name === channel_name);
-  }
-
-  // 計算統計數據
-  const total = history.length;
-  const byStatus = history.reduce((acc, h) => {
-    acc[h.status] = (acc[h.status] || 0) + 1;
-    return acc;
-  }, {});
-
-  const byChannel = history.reduce((acc, h) => {
-    const name = h.channel_name || 'unknown';
-    acc[name] = (acc[name] || 0) + 1;
-    return acc;
-  }, {});
-
-  const avgResponseTime = history
-    .filter(h => h.response_time_ms)
-    .reduce((sum, h, _, arr) => sum + h.response_time_ms / arr.length, 0);
-
-  const failureRate = total > 0 ? (byStatus.failed || 0) / total : 0;
-
-  res.jsonp({
-    total,
-    by_status: byStatus,
-    by_channel: byChannel,
-    avg_response_time_ms: Math.round(avgResponseTime),
-    failure_rate: Math.round(failureRate * 100) / 100,
-    success_rate: Math.round((1 - failureRate) * 100) / 100
-  });
-});
-
-// 自動化腳本與排程
-registerRoute('get', '/scripts', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const category = req.query.category ? String(req.query.category).toLowerCase() : '';
-  const search = (req.query.search || '').toLowerCase();
-  const isEnabled = typeof req.query.is_enabled !== 'undefined' ? req.query.is_enabled === 'true' : null;
-
-  let scripts = db.get('automation_scripts').value() || [];
-
-  if (category) {
-    scripts = scripts.filter((item) => String(item.category || '').toLowerCase() === category);
-  }
-
-  if (isEnabled !== null) {
-    scripts = scripts.filter((item) => Boolean(item.is_enabled) === isEnabled);
-  }
-
-  if (search) {
-    scripts = scripts.filter((item) => {
-      const name = String(item.name || '').toLowerCase();
-      const description = String(item.description || '').toLowerCase();
-      return name.includes(search) || description.includes(search);
-    });
-  }
-
-  res.jsonp(withPagination(scripts, page, pageSize));
-});
-
-registerRoute('post', '/scripts', (req, res) => {
-  const db = router.db;
-  const payload = req.body || {};
-  const now = new Date().toISOString();
-  const id = payload.id || `script_${Date.now()}`;
-
-  const record = {
-    id,
-    name: payload.name || '未命名腳本',
+    channel_id: `chn-${Date.now()}`,
+    name: payload.name || '新管道',
+    type: payload.type || 'email',
+    status: payload.status || 'active',
     description: payload.description || '',
-    type: payload.type || payload.language || 'python',
-    creator_id: payload.creator_id || 'user_ops_lead',
-    category: payload.category || 'maintenance',
-    parameters_definition: payload.parameters_definition || {},
-    git_repo_url: payload.git_repo_url || '',
-    commit_hash: payload.commit_hash || '',
-    version: payload.version || '1.0.0',
-    is_enabled: typeof payload.is_enabled === 'boolean' ? payload.is_enabled : true,
-    created_at: now,
-    updated_at: now,
-    deleted_at: null
+    config: payload.config || {},
+    updated_at: toISO(new Date()),
+    last_tested_at: null
   };
-
-  db.get('automation_scripts').push(record).write();
-  res.status(201).jsonp(record);
+  res.status(201).json(channel);
 });
 
-registerRoute('get', '/scripts/:scriptId', (req, res) => {
-  const script = router.db.get('automation_scripts').find({ id: req.params.scriptId }).value();
-  if (!script) {
-    return res.status(404).jsonp({ code: 'SCRIPT_NOT_FOUND', message: '腳本不存在' });
-  }
-  res.jsonp(script);
+app.post('/notification/channels/:channel_id/test', (req, res) => {
+  const channel = getNotificationChannelById(req.params.channel_id);
+  if (!channel) return notFound(res, '找不到通知管道');
+  channel.last_tested_at = toISO(new Date());
+  res.json({ status: 'success', message: '測試通知已發送' });
 });
 
-registerRoute('put', '/scripts/:scriptId', (req, res) => {
-  const db = router.db;
-  const query = db.get('automation_scripts').find({ id: req.params.scriptId });
-  if (!query.value()) {
-    return res.status(404).jsonp({ code: 'SCRIPT_NOT_FOUND', message: '腳本不存在' });
-  }
-
-  const now = new Date().toISOString();
-  query.assign({ ...req.body, id: req.params.scriptId, updated_at: now }).write();
-  res.jsonp(query.value());
+app.get('/notification/channels/:channel_id', (req, res) => {
+  const channel = getNotificationChannelById(req.params.channel_id);
+  if (!channel) return notFound(res, '找不到通知管道');
+  res.json(channel);
 });
 
-registerRoute('delete', '/scripts/:scriptId', (req, res) => {
-  const removed = router.db.get('automation_scripts').remove({ id: req.params.scriptId }).write();
-  if (!removed || removed.length === 0) {
-    return res.status(404).jsonp({ code: 'SCRIPT_NOT_FOUND', message: '腳本不存在' });
-  }
+app.patch('/notification/channels/:channel_id', (req, res) => {
+  const channel = getNotificationChannelById(req.params.channel_id);
+  if (!channel) return notFound(res, '找不到通知管道');
+  Object.assign(channel, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(channel);
+});
+
+app.delete('/notification/channels/:channel_id', (req, res) => {
+  const channel = getNotificationChannelById(req.params.channel_id);
+  if (!channel) return notFound(res, '找不到通知管道');
   res.status(204).end();
 });
 
-registerRoute('post', '/scripts/:scriptId/execute', (req, res) => {
-  const db = router.db;
-  const script = db.get('automation_scripts').find({ id: req.params.scriptId }).value();
-  if (!script) {
-    return res.status(404).jsonp({ code: 'SCRIPT_NOT_FOUND', message: '腳本不存在' });
-  }
-
-  const now = new Date();
-  const run = {
-    id: `run_${now.getTime()}`,
-    script_id: script.id,
-    schedule_id: null,
-    status: 'running',
-    trigger_type: req.body?.trigger || 'manual',
-    trigger_metadata: req.body?.trigger_metadata || {},
-    started_at: now.toISOString(),
-    finished_at: null,
-    duration_ms: null,
-    output: null,
-    operator: req.body?.operator || '模擬使用者'
-  };
-
-  db.get('automation_runs').unshift(run).write();
-  res.status(202).jsonp(run);
+app.get('/notification/history', (req, res) => {
+  res.json(paginate(notificationHistory, req));
 });
 
-registerRoute('get', '/schedules', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const isEnabled = typeof req.query.is_enabled !== 'undefined' ? req.query.is_enabled === 'true' : null;
-
-  let schedules = db.get('schedules').value() || [];
-  if (isEnabled !== null) {
-    schedules = schedules.filter((item) => Boolean(item.is_enabled) === isEnabled);
-  }
-
-  res.jsonp(withPagination(schedules, page, pageSize));
+app.get('/notification/history/:record_id', (req, res) => {
+  const record = getHistoryById(req.params.record_id);
+  if (!record) return notFound(res, '找不到通知紀錄');
+  res.json(record);
 });
 
-registerRoute('post', '/schedules', (req, res) => {
-  const db = router.db;
+app.get('/settings/tags', (req, res) => {
+  res.json(tagDefinitions.map((tag) => ({
+    tag_id: tag.tag_id,
+    name: tag.name,
+    category: tag.category,
+    required: tag.required,
+    usage_count: tag.usage_count
+  })));
+});
+
+app.post('/settings/tags', (req, res) => {
   const payload = req.body || {};
-  const now = new Date().toISOString();
-  const id = payload.id || `sch_${Date.now()}`;
-
-  const record = {
-    id,
-    name: payload.name || '未命名排程',
-    description: payload.description || '',
-    script_id: payload.script_id,
-    cron_expression: payload.cron_expression || '* * * * *',
-    parameters: payload.parameters || {},
-    mode: payload.mode || 'simple',
-    frequency: payload.frequency || null,
-    timezone: payload.timezone || 'UTC',
-    is_enabled: typeof payload.is_enabled === 'boolean' ? payload.is_enabled : true,
-    last_status: payload.last_status || 'pending',
-    last_run_at: payload.last_run_at || null,
-    next_run_at: payload.next_run_at || null,
-    creator_id: payload.creator_id || 'user_ops_lead',
-    created_at: now,
-    updated_at: now,
-    deleted_at: null
+  const tag = {
+    tag_id: `tag-${Date.now()}`,
+    name: payload.name || '新標籤',
+    category: payload.category || '自訂',
+    required: payload.required ?? false,
+    usage_count: 0,
+    values: []
   };
-
-  db.get('schedules').push(record).write();
-  res.status(201).jsonp(record);
+  res.status(201).json(tag);
 });
 
-registerRoute('get', '/schedules/:scheduleId', (req, res) => {
-  const schedule = router.db.get('schedules').find({ id: req.params.scheduleId }).value();
-  if (!schedule) {
-    return res.status(404).jsonp({ code: 'SCHEDULE_NOT_FOUND', message: '排程不存在' });
-  }
-  res.jsonp(schedule);
+app.get('/settings/tags/:tag_id', (req, res) => {
+  const tag = getTagById(req.params.tag_id);
+  if (!tag) return notFound(res, '找不到標籤');
+  res.json(tag);
 });
 
-registerRoute('put', '/schedules/:scheduleId', (req, res) => {
-  const db = router.db;
-  const query = db.get('schedules').find({ id: req.params.scheduleId });
-  if (!query.value()) {
-    return res.status(404).jsonp({ code: 'SCHEDULE_NOT_FOUND', message: '排程不存在' });
-  }
-
-  const now = new Date().toISOString();
-  query.assign({ ...req.body, id: req.params.scheduleId, updated_at: now }).write();
-  res.jsonp(query.value());
+app.patch('/settings/tags/:tag_id', (req, res) => {
+  const tag = getTagById(req.params.tag_id);
+  if (!tag) return notFound(res, '找不到標籤');
+  Object.assign(tag, req.body || {});
+  res.json(tag);
 });
 
-registerRoute('delete', '/schedules/:scheduleId', (req, res) => {
-  const removed = router.db.get('schedules').remove({ id: req.params.scheduleId }).write();
-  if (!removed || removed.length === 0) {
-    return res.status(404).jsonp({ code: 'SCHEDULE_NOT_FOUND', message: '排程不存在' });
-  }
+app.delete('/settings/tags/:tag_id', (req, res) => {
+  const tag = getTagById(req.params.tag_id);
+  if (!tag) return notFound(res, '找不到標籤');
   res.status(204).end();
 });
 
-registerRoute('get', '/automation-runs', (req, res) => {
-  const db = router.db;
-  const page = parsePageParam(req.query.page, 1);
-  const pageSize = parsePageParam(req.query.page_size, 20);
-  const status = req.query.status ? String(req.query.status).toLowerCase() : '';
-  const scriptId = req.query.script_id ? String(req.query.script_id) : '';
-
-  let runs = db.get('automation_runs').value() || [];
-  if (status) {
-    runs = runs.filter((run) => String(run.status || '').toLowerCase() === status);
-  }
-  if (scriptId) {
-    runs = runs.filter((run) => run.script_id === scriptId);
-  }
-
-  res.jsonp(withPagination(runs, page, pageSize));
+app.get('/settings/tags/:tag_id/values', (req, res) => {
+  const tag = getTagById(req.params.tag_id);
+  if (!tag) return notFound(res, '找不到標籤');
+  res.json(tag.values);
 });
 
-registerRoute('get', '/automation-runs/:runId', (req, res) => {
-  const run = router.db.get('automation_runs').find({ id: req.params.runId }).value();
-  if (!run) {
-    return res.status(404).jsonp({ code: 'AUTOMATION_RUN_NOT_FOUND', message: '找不到指定的執行紀錄' });
-  }
-  res.jsonp(run);
-});
-
-// 根據事件建立一次性靜音規則
-registerRoute('post', '/silence-rules', (req, res) => {
-  const db = router.db;
-  const { event_id, duration, comment } = req.body;
-
-  if (!event_id || !duration || !comment) {
-    return res.status(400).jsonp({
-      code: 'INVALID_PAYLOAD',
-      message: 'event_id, duration, and comment are required fields.'
-    });
-  }
-
-  const event = db.get('events').find({ id: event_id }).value();
-  if (!event) {
-    return res.status(404).jsonp({ code: 'EVENT_NOT_FOUND', message: '指定的事件不存在' });
-  }
-
-  const matchers = (event.tags || []).map(tag => ({
-    name: tag.key,
-    value: tag.value,
-    isEqual: true,
-    isRegex: false
-  }));
-
-  // 確保至少有一個 matcher，通常是 alertname
-  if (!matchers.some(m => m.name === 'alertname') && event.summary) {
-    matchers.push({ name: 'alertname', value: event.summary, isEqual: true, isRegex: false });
-  }
-
-  const now = new Date();
-  const startsAt = now.toISOString();
-  let endsAt;
-
-  try {
-    const durationRegex = /(\d+)(h|m|d)/g;
-    let totalMs = 0;
-    let match;
-    while ((match = durationRegex.exec(duration)) !== null) {
-      const value = parseInt(match[1], 10);
-      const unit = match[2];
-      if (unit === 'h') totalMs += value * 60 * 60 * 1000;
-      if (unit === 'm') totalMs += value * 60 * 1000;
-      if (unit === 'd') totalMs += value * 24 * 60 * 60 * 1000;
-    }
-    if (totalMs === 0) throw new Error('Invalid duration format');
-    endsAt = new Date(now.getTime() + totalMs).toISOString();
-  } catch (e) {
-    return res.status(400).jsonp({ code: 'INVALID_DURATION', message: '無效的 duration 格式，請使用例如 "1h", "30m", "2d"。' });
-  }
-
-  const newSilence = {
-    id: `silence_${Date.now()}`,
-    matchers,
-    startsAt,
-    endsAt,
-    createdBy: 'mock-user',
-    comment,
-    status: {
-      state: 'active'
-    }
+app.post('/settings/tags/:tag_id/values', (req, res) => {
+  const tag = getTagById(req.params.tag_id);
+  if (!tag) return notFound(res, '找不到標籤');
+  const value = {
+    value_id: `tag-value-${Date.now()}`,
+    value: req.body?.value || 'new-value',
+    description: req.body?.description || '',
+    is_default: req.body?.is_default ?? false
   };
-
-  const silencesCollection = ensureArrayCollection(db, 'silences');
-  silencesCollection.push(newSilence).write();
-
-  res.status(201).jsonp(newSilence);
+  tag.values.push(value);
+  res.status(201).json(value);
 });
 
-// 其他接口使用默認的 json-server 路由
-server.use('/', router);
-server.use('/api/v1', router);
+app.patch('/settings/tags/:tag_id/values/:value_id', (req, res) => {
+  const tag = getTagById(req.params.tag_id);
+  if (!tag) return notFound(res, '找不到標籤');
+  const value = tag.values.find((item) => item.value_id === req.params.value_id);
+  if (!value) return notFound(res, '找不到標籤值');
+  Object.assign(value, req.body || {});
+  res.json(value);
+});
 
-const PORT = process.env.PORT || 8080;
+app.delete('/settings/tags/:tag_id/values/:value_id', (req, res) => {
+  const tag = getTagById(req.params.tag_id);
+  if (!tag) return notFound(res, '找不到標籤');
+  const value = tag.values.find((item) => item.value_id === req.params.value_id);
+  if (!value) return notFound(res, '找不到標籤值');
+  res.status(204).end();
+});
 
-server.listen(PORT, () => {
-  console.log(`Mock server is running on http://localhost:${PORT}`);
-  console.log(`API documentation available at http://localhost:${PORT}/api/v1/docs`);
-  console.log('\n🎯 Available endpoints:');
-  console.log(`  - GET  /api/v1/dashboards`);
-  console.log(`  - GET  /api/v1/dashboards/stats`);
-  console.log(`  - GET  /api/v1/infrastructure/stats`);
-  console.log(`  - GET  /api/v1/ai/risk-predictions`);
-  console.log(`  - GET  /api/v1/scripts`);
-  console.log(`  - GET  /api/v1/schedules`);
-  console.log(`  - GET  /api/v1/automation-runs`);
-  console.log(`  - GET  /api/v1/recurring-silence-rules`);
-  console.log(`  - GET  /api/v1/notification-history`);
-  console.log(`  - GET  /api/v1/tag-keys`);
-  console.log(`  - GET  /api/v1/tag-keys/autocomplete`);
-  console.log(`  - POST /api/v1/auth/login`);
+app.get('/settings/email', (req, res) => res.json(emailSettings));
+
+app.put('/settings/email', (req, res) => {
+  Object.assign(emailSettings, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(emailSettings);
+});
+
+app.get('/settings/auth', (req, res) => res.json(authSettings));
+
+app.put('/settings/auth', (req, res) => {
+  Object.assign(authSettings, req.body || {}, { updated_at: toISO(new Date()) });
+  res.json(authSettings);
+});
+app.listen(PORT, () => {
+  console.log(`Mock server listening on http://localhost:${PORT}`);
 });
