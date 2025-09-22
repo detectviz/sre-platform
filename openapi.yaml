@@ -400,6 +400,30 @@ paths:
           description: 摘要或描述搜尋關鍵字。
           schema:
             type: string
+        - name: resource_name
+          in: query
+          description: 依資源名稱模糊搜尋。
+          schema:
+            type: string
+        - name: resource_type
+          in: query
+          description: 依資源類型篩選。
+          schema:
+            type: string
+        - name: rule_name
+          in: query
+          description: 依規則名稱模糊搜尋。
+          schema:
+            type: string
+        - name: tags
+          in: query
+          description: 依標籤篩選 (以逗號分隔)。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         '200':
           description: 回傳事件分頁列表。
@@ -3288,6 +3312,10 @@ components:
           nullable: true
         summary:
           type: string
+        source:
+          type: string
+          description: 事件來源，例如監控系統名稱。
+          nullable: true
         description:
           type: string
         severity:
