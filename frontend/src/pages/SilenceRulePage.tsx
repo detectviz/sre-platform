@@ -1,5 +1,5 @@
 import React from 'react'
-import { Table, Tag, Space, Button, Tooltip, Switch, DatePicker } from 'antd'
+import { Table, Tag, Space, Button, Tooltip, Switch } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
@@ -10,10 +10,12 @@ import {
   CopyOutlined,
   ClockCircleOutlined,
   PauseOutlined,
-  PlayOutlined,
 } from '@ant-design/icons'
 
 const SilenceRulePage: React.FC = () => {
+  const handleSearch = (value: string) => {
+    console.log('搜尋靜音規則:', value)
+  }
   const kpiData = [
     {
       title: '活躍靜音規則',
@@ -192,6 +194,8 @@ const SilenceRulePage: React.FC = () => {
 
       <ToolbarActions
         onRefresh={() => console.log('刷新靜音規則列表')}
+        onSearch={handleSearch}
+        searchPlaceholder="搜尋靜音規則名稱或資源..."
         actions={[
           {
             key: 'create',

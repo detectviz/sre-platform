@@ -1,19 +1,18 @@
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Avatar, Dropdown } from 'antd'
-import { UserOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons'
+import { UserOutlined, LogoutOutlined } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 
 export const UserMenu: React.FC = () => {
+  const navigate = useNavigate()
+
   const userMenuItems: MenuProps['items'] = [
     {
       key: 'profile',
       icon: <UserOutlined />,
       label: '個人資料',
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: '設定',
+      onClick: () => navigate('/profile/personal'),
     },
     {
       type: 'divider',
@@ -22,6 +21,7 @@ export const UserMenu: React.FC = () => {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '登出',
+      onClick: () => console.log('登出'),
     },
   ]
 

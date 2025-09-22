@@ -74,49 +74,71 @@ export const ContextualKPICard: React.FC<ContextualKPICardProps> = ({
         background: 'var(--bg-elevated)',
         border: '1px solid var(--border-light)',
         borderRadius: 'var(--radius-lg)',
+        height: '120px', // 固定高度
       }}
       styles={{
         body: {
-          padding: 'var(--spacing-lg)',
+          padding: '12px 12px 8px 12px', // 上右下左內距
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
         },
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', marginBottom: 'var(--spacing-xs)' }}>
-            {icon || statusInfo.icon}
-            <Text style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
-              {title}
-            </Text>
-          </div>
-
-          <div style={{ marginBottom: 'var(--spacing-xs)' }}>
-            <Text
-              style={{
-                fontSize: '24px',
-                fontWeight: 'bold',
-                color: 'var(--text-primary)',
-              }}
-            >
-              {value}
-            </Text>
-          </div>
-
-          {description && (
-            <Text style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-              {description}
-            </Text>
-          )}
-
-          {trend && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)', marginTop: 'var(--spacing-xs)' }}>
-              {trendIcon}
-              <Text style={{ fontSize: '12px', color: 'var(--text-tertiary)' }}>
-                {trend}
-              </Text>
-            </div>
-          )}
+      {/* 標題和趨勢行 */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 'var(--spacing-sm)'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-xs)' }}>
+          {icon || statusInfo.icon}
+          <Text style={{ fontSize: '11px', color: 'var(--text-tertiary)', fontWeight: 500 }}>
+            {title}
+          </Text>
         </div>
+
+        {trend && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2px',
+            fontSize: '10px',
+            color: trend.includes('+') ? 'var(--brand-success)' : trend.includes('-') ? 'var(--brand-danger)' : 'var(--text-tertiary)'
+          }}>
+            {trendIcon}
+            <Text style={{ fontSize: '10px', fontWeight: 600 }}>
+              {trend}
+            </Text>
+          </div>
+        )}
+      </div>
+
+      {/* 數值和描述 */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <div style={{ marginBottom: '4px' }}>
+          <Text
+            style={{
+              fontSize: '28px',
+              fontWeight: 'bold',
+              color: 'var(--text-primary)',
+              lineHeight: 1,
+            }}
+          >
+            {value}
+          </Text>
+        </div>
+
+        {description && (
+          <Text style={{
+            fontSize: '13px',
+            color: 'var(--text-secondary)',
+            lineHeight: 1.3
+          }}>
+            {description}
+          </Text>
+        )}
       </div>
     </Card>
   )

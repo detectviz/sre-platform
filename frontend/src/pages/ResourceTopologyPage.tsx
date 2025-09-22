@@ -15,6 +15,9 @@ import {
 const { Title, Text } = Typography
 
 const ResourceTopologyPage: React.FC = () => {
+  const handleSearch = (value: string) => {
+    console.log('搜尋拓撲節點:', value)
+  }
   const kpiData = [
     {
       title: '拓撲節點數',
@@ -100,18 +103,6 @@ const ResourceTopologyPage: React.FC = () => {
     },
   ]
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case '正常':
-        return 'var(--brand-success)'
-      case '警告':
-        return 'var(--brand-warning)'
-      case '異常':
-        return 'var(--brand-danger)'
-      default:
-        return 'var(--brand-info)'
-    }
-  }
 
   const getTypeColor = (type: string) => {
     switch (type) {
@@ -159,6 +150,8 @@ const ResourceTopologyPage: React.FC = () => {
 
       <ToolbarActions
         onRefresh={() => console.log('刷新拓撲視圖')}
+        onSearch={handleSearch}
+        searchPlaceholder="搜尋節點名稱或IP..."
         actions={[
           {
             key: 'zoomIn',
@@ -185,7 +178,7 @@ const ResourceTopologyPage: React.FC = () => {
             tooltip: '全屏顯示',
           },
           {
-            key: 'export',
+            key: 'topology-export',
             label: '匯出',
             icon: <DownloadOutlined />,
             tooltip: '匯出拓撲圖',
@@ -241,7 +234,6 @@ const ResourceTopologyPage: React.FC = () => {
                           background: getTypeColor(node.type),
                         }} />
                         <Tag
-                          size="small"
                           color={node.status === '正常' ? 'success' : node.status === '警告' ? 'warning' : 'error'}
                         >
                           {node.status}

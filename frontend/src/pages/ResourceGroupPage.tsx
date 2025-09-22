@@ -1,5 +1,5 @@
 import React from 'react'
-import { Table, Tag, Progress, Space, Button, Tooltip, Card } from 'antd'
+import { Table, Tag, Progress, Space, Button, Tooltip } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
@@ -8,11 +8,13 @@ import {
   EditOutlined,
   DeleteOutlined,
   GroupOutlined,
-  PlusOutlined,
   AppstoreOutlined,
 } from '@ant-design/icons'
 
 const ResourceGroupPage: React.FC = () => {
+  const handleSearch = (value: string) => {
+    console.log('搜尋資源群組:', value)
+  }
   const kpiData = [
     {
       title: '總群組數',
@@ -202,6 +204,8 @@ const ResourceGroupPage: React.FC = () => {
 
       <ToolbarActions
         onRefresh={() => console.log('刷新資源群組列表')}
+        onSearch={handleSearch}
+        searchPlaceholder="搜尋群組名稱或描述..."
         actions={[
           {
             key: 'create',

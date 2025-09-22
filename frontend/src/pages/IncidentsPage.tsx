@@ -1,5 +1,5 @@
-import React from 'react'
-import { Table, Tag, Space, Button, Tooltip } from 'antd'
+import React, { useState } from 'react'
+import { Table, Tag, Space, Button, Tooltip, Tabs } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
@@ -9,9 +9,13 @@ import {
   DeleteOutlined,
   SoundOutlined,
   RobotOutlined,
+  FileTextOutlined,
+  SettingOutlined,
+  MutedOutlined,
 } from '@ant-design/icons'
 
 const IncidentsPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('list')
   const kpiData = [
     {
       title: '活躍事件',
@@ -116,6 +120,17 @@ const IncidentsPage: React.FC = () => {
     },
   ]
 
+  const columnOptions = [
+    { key: 'id', label: '事件 ID' },
+    { key: 'summary', label: '摘要' },
+    { key: 'resource', label: '資源名稱' },
+    { key: 'impact', label: '服務影響' },
+    { key: 'rule', label: '規則名稱' },
+    { key: 'status', label: '狀態' },
+    { key: 'assignee', label: '負責人' },
+    { key: 'triggerTime', label: '觸發時間' },
+  ]
+
   const mockData = [
     {
       key: '1',
@@ -152,10 +167,203 @@ const IncidentsPage: React.FC = () => {
     },
   ]
 
+
+  const [severityFilter, setSeverityFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [resourceFilter, setResourceFilter] = useState<string>('all')
+
+
+
+  const handleColumnChange = (key: string, visible: boolean) => {
+    console.log('欄位設定:', key, visible)
+  }
+
+  const severityOptions = [
+    { value: 'all', label: '所有嚴重性' },
+    { value: 'critical', label: '嚴重' },
+    { value: 'warning', label: '警告' },
+    { value: 'info', label: '資訊' },
+  ]
+
+  const statusOptions = [
+    { value: 'all', label: '所有狀態' },
+    { value: 'new', label: '新事件' },
+    { value: 'acknowledged', label: '已確認' },
+    { value: 'resolved', label: '已解決' },
+    { value: 'silenced', label: '已靜音' },
+  ]
+
+  const resourceOptions = [
+    { value: 'all', label: '所有資源' },
+    { value: 'api-server-01', label: 'API 伺服器' },
+    { value: 'db-primary', label: '資料庫主機' },
+    { value: 'web-server-02', label: 'Web 伺服器' },
+    { value: 'cache-server-01', label: '快取伺服器' },
+  ]
+
+  const activeFiltersCount = [
+    severityFilter !== 'all',
+    statusFilter !== 'all',
+    resourceFilter !== 'all'
+  ].filter(Boolean).length
+
+  const handleSearch = (value: string) => {
+    console.log('搜尋事件:', value)
+  }
+
+  const filters = [
+    {
+      key: 'severity',
+      label: '嚴重性',
+      options: severityOptions,
+      value: severityFilter,
+      onChange: setSeverityFilter,
+    },
+    {
+      key: 'status',
+      label: '狀態',
+      options: statusOptions,
+      value: statusFilter,
+      onChange: setStatusFilter,
+    },
+    {
+      key: 'resource',
+      label: '資源名稱',
+      options: resourceOptions,
+      value: resourceFilter,
+      onChange: setResourceFilter,
+    },
+  ]
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'list':
+        return (
+          <div>
+            <ToolbarActions
+              onRefresh={() => console.log('刷新事件列表')}
+              onSearch={handleSearch}
+              searchPlaceholder="搜尋事件摘要、資源或處理人..."
+              actions={[
+                {
+                  key: 'batch',
+                  label: '批量操作',
+                  icon: <DeleteOutlined />,
+                  tooltip: '批量處理選中的事件',
+                },
+                {
+                  key: 'ai-analysis',
+                  label: 'AI 分析',
+                  icon: <RobotOutlined />,
+                  tooltip: 'AI 智能分析建議',
+                },
+              ]}
+              filters={filters}
+              showFilters={true}
+              filterCount={activeFiltersCount}
+              columns={columnOptions}
+              onColumnChange={handleColumnChange}
+              showColumnSettings={true}
+            />
+            <Table
+              columns={columns}
+              dataSource={mockData}
+              size="small"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-lg)',
+              }}
+              pagination={{
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+              }}
+            />
+          </div>
+        )
+      case 'rules':
+        return (
+          <div>
+            <ToolbarActions
+              onRefresh={() => console.log('刷新事件規則')}
+              searchPlaceholder="搜尋規則名稱或描述..."
+              actions={[
+                {
+                  key: 'create-rule',
+                  label: '新增規則',
+                  icon: <EditOutlined />,
+                  tooltip: '創建新的事件規則',
+                },
+                {
+                  key: 'test-rule',
+                  label: '測試規則',
+                  icon: <RobotOutlined />,
+                  tooltip: '測試規則的有效性',
+                },
+              ]}
+            />
+            <div style={{ padding: '24px' }}>
+              <p>事件規則管理功能開發中...</p>
+            </div>
+          </div>
+        )
+      case 'silences':
+        return (
+          <div>
+            <ToolbarActions
+              onRefresh={() => console.log('刷新靜音規則')}
+              searchPlaceholder="搜尋靜音規則名稱..."
+              actions={[
+                {
+                  key: 'create-silence',
+                  label: '新增靜音',
+                  icon: <SoundOutlined />,
+                  tooltip: '創建新的靜音規則',
+                },
+                {
+                  key: 'batch-silence',
+                  label: '批量操作',
+                  icon: <DeleteOutlined />,
+                  tooltip: '批量管理靜音規則',
+                },
+              ]}
+            />
+            <div style={{ padding: '24px' }}>
+              <p>靜音規則管理功能開發中...</p>
+            </div>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+
+  const tabItems = [
+    {
+      key: 'list',
+      label: '事件列表',
+      icon: <FileTextOutlined />,
+      children: renderTabContent(),
+    },
+    {
+      key: 'rules',
+      label: '事件規則',
+      icon: <SettingOutlined />,
+      children: renderTabContent(),
+    },
+    {
+      key: 'silences',
+      label: '靜音規則',
+      icon: <MutedOutlined />,
+      children: renderTabContent(),
+    },
+  ]
+
   return (
     <div>
       <PageHeader
-        title="事件列表"
+        title="事件管理"
         subtitle="監控和處理系統異常事件"
       />
 
@@ -179,38 +387,10 @@ const IncidentsPage: React.FC = () => {
         ))}
       </div>
 
-      <ToolbarActions
-        onRefresh={() => console.log('刷新事件列表')}
-        actions={[
-          {
-            key: 'batch',
-            label: '批量操作',
-            icon: <DeleteOutlined />,
-            tooltip: '批量處理選中的事件',
-          },
-          {
-            key: 'ai-analysis',
-            label: 'AI 分析',
-            icon: <RobotOutlined />,
-            tooltip: 'AI 智能分析建議',
-          },
-        ]}
-      />
-
-      <Table
-        columns={columns}
-        dataSource={mockData}
-        size="small"
-        style={{
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border-light)',
-          borderRadius: 'var(--radius-lg)',
-        }}
-        pagination={{
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
-        }}
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={tabItems}
       />
     </div>
   )

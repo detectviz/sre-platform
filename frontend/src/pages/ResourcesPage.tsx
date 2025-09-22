@@ -1,5 +1,5 @@
-import React from 'react'
-import { Table, Tag, Progress, Space, Button, Tooltip } from 'antd'
+import React, { useState } from 'react'
+import { Table, Tag, Progress, Space, Button, Tooltip, Tabs } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
@@ -9,9 +9,13 @@ import {
   DeleteOutlined,
   ReloadOutlined,
   ScanOutlined,
+  AppstoreOutlined,
+  ClusterOutlined,
+  ShareAltOutlined,
 } from '@ant-design/icons'
 
 const ResourcesPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('list')
   const kpiData = [
     {
       title: '總資源數',
@@ -206,10 +210,217 @@ const ResourcesPage: React.FC = () => {
     },
   ]
 
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [typeFilter, setTypeFilter] = useState<string>('all')
+  const [locationFilter, setLocationFilter] = useState<string>('all')
+
+
+
+  const handleResourceColumnChange = (key: string, visible: boolean) => {
+    console.log('資源欄位設定:', key, visible)
+  }
+
+  const statusOptions = [
+    { value: 'all', label: '所有狀態' },
+    { value: '正常', label: '正常' },
+    { value: '警告', label: '警告' },
+    { value: '異常', label: '異常' },
+  ]
+
+  const typeOptions = [
+    { value: 'all', label: '所有類型' },
+    { value: '伺服器', label: '伺服器' },
+    { value: '資料庫', label: '資料庫' },
+    { value: '快取', label: '快取' },
+    { value: '網路設備', label: '網路設備' },
+  ]
+
+  const locationOptions = [
+    { value: 'all', label: '所有位置' },
+    { value: 'us-east-1', label: 'US East 1' },
+    { value: 'us-west-2', label: 'US West 2' },
+    { value: 'eu-west-1', label: 'EU West 1' },
+    { value: 'ap-southeast-1', label: 'Asia Pacific SE 1' },
+  ]
+
+  const activeResourceFiltersCount = [
+    statusFilter !== 'all',
+    typeFilter !== 'all',
+    locationFilter !== 'all'
+  ].filter(Boolean).length
+
+  const handleSearch = (value: string) => {
+    console.log('搜尋資源:', value)
+  }
+
+  const resourceColumnOptions = [
+    { key: 'status', label: '資源狀態' },
+    { key: 'name', label: '資源名稱' },
+    { key: 'ip', label: 'IP 地址' },
+    { key: 'location', label: '位置' },
+    { key: 'type', label: '類型' },
+    { key: 'cpu', label: 'CPU 使用率' },
+    { key: 'memory', label: '記憶體使用率' },
+    { key: 'disk', label: '磁碟使用率' },
+    { key: 'network', label: '網路流量' },
+    { key: 'lastUpdate', label: '最後更新' },
+  ]
+
+  const filters = [
+    {
+      key: 'status',
+      label: '資源狀態',
+      options: statusOptions,
+      value: statusFilter,
+      onChange: setStatusFilter,
+    },
+    {
+      key: 'type',
+      label: '資源類型',
+      options: typeOptions,
+      value: typeFilter,
+      onChange: setTypeFilter,
+    },
+    {
+      key: 'location',
+      label: '位置',
+      options: locationOptions,
+      value: locationFilter,
+      onChange: setLocationFilter,
+    },
+  ]
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'list':
+        return (
+          <div>
+            <ToolbarActions
+              onRefresh={() => console.log('刷新資源列表')}
+              onSearch={handleSearch}
+              searchPlaceholder="搜尋資源名稱、IP 或位置..."
+              actions={[
+                {
+                  key: 'scan',
+                  label: '掃描網路',
+                  icon: <ScanOutlined />,
+                  tooltip: '掃描網路資源',
+                },
+                {
+                  key: 'resource-export',
+                  label: '匯出',
+                  icon: <DeleteOutlined />,
+                  tooltip: '匯出資源列表',
+                },
+              ]}
+              filters={filters}
+              showFilters={true}
+              filterCount={activeResourceFiltersCount}
+              columns={resourceColumnOptions}
+              onColumnChange={handleResourceColumnChange}
+              showColumnSettings={true}
+            />
+            <Table
+              columns={columns}
+              dataSource={mockData}
+              size="small"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-lg)',
+              }}
+              pagination={{
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+              }}
+            />
+          </div>
+        )
+      case 'groups':
+        return (
+          <div>
+            <ToolbarActions
+              onRefresh={() => console.log('刷新資源群組')}
+              onSearch={handleSearch}
+              searchPlaceholder="搜尋群組名稱..."
+              actions={[
+                {
+                  key: 'create-group',
+                  label: '新增群組',
+                  icon: <EditOutlined />,
+                  tooltip: '創建新的資源群組',
+                },
+                {
+                  key: 'batch-group',
+                  label: '批量操作',
+                  icon: <DeleteOutlined />,
+                  tooltip: '批量管理資源群組',
+                },
+              ]}
+            />
+            <div style={{ padding: '24px' }}>
+              <p>資源群組管理功能開發中...</p>
+            </div>
+          </div>
+        )
+      case 'topology':
+        return (
+          <div>
+            <ToolbarActions
+              onRefresh={() => console.log('刷新拓撲視圖')}
+              onSearch={handleSearch}
+              searchPlaceholder="搜尋拓撲節點..."
+              actions={[
+                {
+                  key: 'fullscreen',
+                  label: '全屏',
+                  icon: <AppstoreOutlined />,
+                  tooltip: '全屏顯示',
+                },
+                {
+                  key: 'topology-export',
+                  label: '匯出',
+                  icon: <DeleteOutlined />,
+                  tooltip: '匯出拓撲圖',
+                },
+              ]}
+            />
+            <div style={{ padding: '24px' }}>
+              <p>拓撲視圖功能開發中...</p>
+            </div>
+          </div>
+        )
+      default:
+        return null
+    }
+  }
+
+  const tabItems = [
+    {
+      key: 'list',
+      label: '資源列表',
+      icon: <AppstoreOutlined />,
+      children: renderTabContent(),
+    },
+    {
+      key: 'groups',
+      label: '資源群組',
+      icon: <ClusterOutlined />,
+      children: renderTabContent(),
+    },
+    {
+      key: 'topology',
+      label: '拓撲視圖',
+      icon: <ShareAltOutlined />,
+      children: renderTabContent(),
+    },
+  ]
+
   return (
     <div>
       <PageHeader
-        title="資源列表"
+        title="資源管理"
         subtitle="監控和管理所有基礎設施資源"
       />
 
@@ -233,38 +444,10 @@ const ResourcesPage: React.FC = () => {
         ))}
       </div>
 
-      <ToolbarActions
-        onRefresh={() => console.log('刷新資源列表')}
-        actions={[
-          {
-            key: 'scan',
-            label: '掃描網路',
-            icon: <ScanOutlined />,
-            tooltip: '掃描網路資源',
-          },
-          {
-            key: 'export',
-            label: '匯出',
-            icon: <DeleteOutlined />,
-            tooltip: '匯出資源列表',
-          },
-        ]}
-      />
-
-      <Table
-        columns={columns}
-        dataSource={mockData}
-        size="small"
-        style={{
-          background: 'var(--bg-elevated)',
-          border: '1px solid var(--border-light)',
-          borderRadius: 'var(--radius-lg)',
-        }}
-        pagination={{
-          showSizeChanger: true,
-          showQuickJumper: true,
-          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
-        }}
+      <Tabs
+        activeKey={activeTab}
+        onChange={setActiveTab}
+        items={tabItems}
       />
     </div>
   )
