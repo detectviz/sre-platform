@@ -10104,25 +10104,6 @@
     const ResourceGroupsDetailPage = ({ onNavigate }) => {
       return (
         <React.Fragment>
-          {/* 功能說明區塊 */}
-          <Alert
-            message="資源群組管理"
-            description="按業務邏輯組織資源，方便團隊協作和權限管理。一個資源可以屬於多個群組，群組可以分配給特定團隊進行管理。"
-            type="info"
-            showIcon
-            style={{ marginBottom: 'var(--spacing-lg)' }}
-            action={
-              <Space>
-                <Button size="small" onClick={() => onNavigate('resource-overview')}>
-                  返回總覽
-                </Button>
-                <Button size="small" type="link" onClick={() => onNavigate('platform-settings')}>
-                  管理標籤
-                </Button>
-              </Space>
-            }
-          />
-
           {/* 嵌入原有的資源群組功能 */}
           <ResourceGroupsTab onNavigate={onNavigate} />
         </React.Fragment>
@@ -10133,25 +10114,6 @@
     const ResourceTopologyDetailPage = ({ onNavigate }) => {
       return (
         <React.Fragment>
-          {/* 功能說明區塊 */}
-          <Alert
-            message="資源拓撲視圖"
-            description="視覺化展示資源間的依賴關係，幫助理解系統架構和進行影響分析。支援故障追蹤和變更影響評估。"
-            type="info"
-            showIcon
-            style={{ marginBottom: 'var(--spacing-lg)' }}
-            action={
-              <Space>
-                <Button size="small" onClick={() => onNavigate('resource-overview')}>
-                  返回總覽
-                </Button>
-                <Button size="small" onClick={() => onNavigate('resource-groups')}>
-                  查看群組
-                </Button>
-              </Space>
-            }
-          />
-
           {/* 嵌入原有的拓撲功能 */}
           <ResourceTopologyTab onNavigate={onNavigate} />
         </React.Fragment>
@@ -10346,61 +10308,6 @@
             >
               <CapacityPlanningPage themeMode={themeMode} />
             </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={
-                <span>
-                  <ThunderboltOutlined />
-                  性能洞察
-                </span>
-              }
-              key="performance-insights"
-            >
-              <PlaceholderPage title="性能洞察" subtitle="深入分析系統性能瓶頸，提供智能優化建議。" icon={<ThunderboltOutlined />} />
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={
-                <span>
-                  <LineChartOutlined />
-                  事件趨勢
-                </span>
-              }
-              key="incident-trends"
-            >
-              <PlaceholderPage title="事件趨勢分析" subtitle="分析事件發生模式，識別重複問題和根本原因。" icon={<LineChartOutlined />} />
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={
-                <span>
-                  <DollarOutlined />
-                  成本分析
-                </span>
-              }
-              key="cost-analysis"
-            >
-              <PlaceholderPage title="成本分析" subtitle="追蹤資源使用成本，識別成本節約機會。" icon={<DollarOutlined />} />
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={
-                <span>
-                  <FieldTimeOutlined />
-                  MTTR 分析
-                </span>
-              }
-              key="mttr-analysis"
-            >
-              <PlaceholderPage title="MTTR 分析" subtitle="追蹤平均修復時間，找出效率改善機會。" icon={<FieldTimeOutlined />} />
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={
-                <span>
-                  <FileDoneOutlined />
-                  SLA 報告
-                </span>
-              }
-              key="sla-reports"
-            >
-              <PlaceholderPage title="SLA 報告" subtitle="追蹤服務級別協議的達成情況和趨勢分析。" icon={<FileDoneOutlined />} />
-            </Tabs.TabPane>
           </Tabs>
         </React.Fragment>
       );
@@ -10479,159 +10386,6 @@
             </Row>
           </div>
 
-          {/* 複合概要視圖 */}
-          <Row gutter={[24, 24]} style={{ marginBottom: 'var(--spacing-xl)' }}>
-            {/* 最近執行日誌 */}
-            <Col xs={24} lg={16}>
-              <Card
-                className="dashboard-card"
-                title={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <HistoryOutlined style={{ color: '#1890ff' }} />
-                    <span>最近執行日誌</span>
-                    <Badge count={recentExecutions} style={{ marginLeft: 'auto' }} />
-                  </div>
-                }
-                bodyStyle={{ padding: '12px' }}
-                style={{ height: '320px', display: 'flex', flexDirection: 'column' }}
-              >
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                  {executions.slice(0, 5).map(execution => (
-                    <div key={execution.key} style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      padding: '8px 12px',
-                      marginBottom: '8px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                      borderRadius: '6px',
-                      border: '1px solid rgba(255, 255, 255, 0.06)'
-                    }}>
-                      <div style={{ marginRight: '12px' }}>
-                        {execution.status === 'success' ? (
-                          <CheckCircleOutlined style={{ color: '#52c41a' }} />
-                        ) : execution.status === 'failed' ? (
-                          <ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />
-                        ) : (
-                          <ClockCircleOutlined style={{ color: '#faad14' }} />
-                        )}
-                      </div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontWeight: 500, marginBottom: '2px' }}>
-                          {scripts.find(s => s.id === execution.script_id)?.name || `腳本 ${execution.script_id}`}
-                        </div>
-                        <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                          {dayjs(execution.start_time).format('MM-DD HH:mm')} •
-                          耗時 {execution.duration}ms
-                        </div>
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)' }}>
-                        {execution.triggeredBy}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            </Col>
-
-            {/* 熱門腳本 */}
-            <Col xs={24} lg={8}>
-              <Card
-                className="dashboard-card"
-                title={
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <FireOutlined style={{ color: '#ff7a45' }} />
-                    <span>熱門腳本</span>
-                  </div>
-                }
-                bodyStyle={{ padding: '12px' }}
-                style={{ height: '320px', display: 'flex', flexDirection: 'column' }}
-              >
-                <div style={{ flex: 1, overflowY: 'auto' }}>
-                  {scripts && scripts.length > 0 ? scripts
-                    .filter(s => s.status === 'active')
-                    .sort((a, b) => (b.executionCount || 0) - (a.executionCount || 0))
-                    .slice(0, 3)
-                    .map((script, index) => (
-                      <div key={`hot-script-${script.key}-${index}`} style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        padding: '8px',
-                        marginBottom: '6px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                        borderRadius: '6px',
-                        border: '1px solid rgba(255, 255, 255, 0.08)',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s ease'
-                      }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)';
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)';
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
-                          e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-                        }}>
-                        <div style={{
-                          width: '24px',
-                          height: '24px',
-                          backgroundColor: index === 0 ? '#ff7a45' : index === 1 ? '#ffa940' : '#fadb14',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '12px',
-                          fontWeight: 'bold',
-                          color: '#fff',
-                          marginRight: '12px'
-                        }}>
-                          {index + 1}
-                        </div>
-                        <div style={{ marginRight: '12px' }}>
-                          <Tag color={script.category === 'monitoring' ? 'blue' :
-                            script.category === 'deployment' ? 'green' :
-                              script.category === 'maintenance' ? 'orange' :
-                                script.category === 'performance' ? 'purple' : 'default'}>
-                            {script.category === 'monitoring' ? '監控' :
-                              script.category === 'deployment' ? '部署' :
-                                script.category === 'maintenance' ? '維護' :
-                                  script.category === 'performance' ? '效能' : '其他'}
-                          </Tag>
-                        </div>
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 500, marginBottom: '4px', color: 'rgba(255, 255, 255, 0.9)' }}>
-                            {script.name}
-                          </div>
-                          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                            執行 {script.executionCount || 0} 次 • 建立者：{script.creator}
-                          </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <div style={{
-                            fontSize: '16px',
-                            fontWeight: 'bold',
-                            color: '#ff7a45',
-                            marginBottom: '2px'
-                          }}>
-                            {script.executionCount || 0}
-                          </div>
-                          <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                            次執行
-                          </div>
-                        </div>
-                      </div>
-                    )) :
-                    <div style={{
-                      textAlign: 'center',
-                      padding: '24px',
-                      color: 'rgba(255, 255, 255, 0.6)'
-                    }}>
-                      暫無腳本數據
-                    </div>
-                  }
-                </div>
-              </Card>
-            </Col>
-          </Row>
 
           <Tabs
             defaultActiveKey={tabKey}
@@ -18046,11 +17800,6 @@
         return localStorage.getItem('default-dashboard') || 'business-dashboard';
       });
 
-      // State for active tab
-      const [activeTab, setActiveTab] = useState('library');
-
-      // State for table category filter
-      const [tableCategoryFilter, setTableCategoryFilter] = useState('ALL');
 
       // Function to set a dashboard as default
       const setAsDefaultDashboard = (dashboardKey) => {
@@ -18190,57 +17939,12 @@
         },
       };
 
-      // Filtered table data
-      const tableData = tableCategoryFilter === 'ALL'
-        ? mockDashboards
-        : mockDashboards.filter(d => d.category === tableCategoryFilter);
-
-      // Popular dashboards (top 5 by favorite count)
-      const popularDashboards = [...mockDashboards]
-        .sort((a, b) => (b.favoriteCount || 0) - (a.favoriteCount || 0))
-        .slice(0, 5);
+      // Table data
+      const tableData = mockDashboards;
 
 
 
-      // KPI Card component
-      const KPICard = ({ title, value, unit, status, description, icon }) => (
-        <Card className="nav-item" style={{ height: '100%' }}>
-          <Space direction="vertical" size={8} style={{ width: '100%' }}>
-            <Space align="center">
-              <div style={{
-                width: 40,
-                height: 40,
-                borderRadius: '50%',
-                background: status === 'success' ? '#52c41a20' :
-                  status === 'warning' ? '#faad1420' :
-                    status === 'error' ? '#ff4d4f20' : '#1890ff20',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: status === 'success' ? '#52c41a' :
-                  status === 'warning' ? '#faad14' :
-                    status === 'error' ? '#ff4d4f' : '#1890ff',
-                fontSize: 20,
-              }}>
-                {icon}
-              </div>
-              <div>
-                <div style={{ fontSize: '24px', fontWeight: 'bold', color: 'rgba(255, 255, 255, 0.9)' }}>
-                  {value}{unit}
-                </div>
-                <div style={{ fontSize: '14px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                  {title}
-                </div>
-              </div>
-            </Space>
-            {description && (
-              <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                {description}
-              </div>
-            )}
-          </Space>
-        </Card>
-      );
+
 
       // Dashboard table columns
       const tableColumns = [
@@ -18248,36 +17952,32 @@
           title: '名稱',
           dataIndex: 'name',
           key: 'name',
-          render: (_, record) => (
-            <Space direction="vertical" size={6} style={{ width: '100%' }}>
-              <Space size={8} wrap>
-                <Text strong style={{ color: 'rgba(255, 255, 255, 0.9)' }}>{record.name}</Text>
-                {record.id === defaultDashboard && <Tag color="gold">預設</Tag>}
-                {record.status === 'draft' && <Tag color="cyan">草稿</Tag>}
-                {record.isFeatured && <Tag color="purple">精選</Tag>}
-              </Space>
-              {record.description && (
-                <Text type="secondary" style={{ fontSize: 12 }}>
-                  {record.description}
-                </Text>
-              )}
-              {record.tags && record.tags.length > 0 && (
-                <Space size={[4, 4]} wrap>
-                  {record.tags.slice(0, 3).map((tag) => (
-                    <Tag key={tag}>{tag}</Tag>
-                  ))}
-                  {record.tags.length > 3 && <Tag>+{record.tags.length - 3}</Tag>}
-                </Space>
-              )}
-            </Space>
-          ),
         },
         {
           title: '類別',
           dataIndex: 'category',
           key: 'category',
           render: (value) => (
-            <Tag color={categoryMeta[value]?.accent}>{categoryMeta[value]?.label ?? value}</Tag>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px',
+              padding: '2px 6px',
+              background: `${categoryMeta[value]?.accent || '#666'}20`,
+              border: `1px solid ${categoryMeta[value]?.accent || '#666'}40`,
+              borderRadius: '4px',
+              fontSize: '12px',
+              fontWeight: 500
+            }}>
+              <div style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                backgroundColor: categoryMeta[value]?.accent || '#666',
+                flexShrink: 0
+              }} />
+              <span>{categoryMeta[value]?.label ?? value}</span>
+            </div>
           ),
         },
         {
@@ -18285,13 +17985,6 @@
           dataIndex: 'owner',
           key: 'owner',
           render: (owner) => owner ?? '—',
-        },
-        {
-          title: '瀏覽 / 收藏',
-          key: 'engagement',
-          render: (_, record) => (
-            <Text type="secondary">{record.viewers ?? 0} / {record.favoriteCount ?? 0}</Text>
-          ),
         },
         {
           title: '更新時間',
@@ -18339,269 +18032,245 @@
         },
       ];
 
-      // Overview content with category cards
-      const overviewContent = (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <Row gutter={[16, 16]}>
-            {Object.keys(categoryMeta).map((key) => {
-              const categoryKey = key;
-              const items = mockDashboards.filter(d => d.category === categoryKey);
-              const meta = categoryMeta[categoryKey];
-              return (
-                <Col key={categoryKey} xs={24} md={12} xl={8}>
-                  <Card
-                    className="nav-item"
-                    title={
-                      <Space size={12} align="start">
-                        <div
-                          style={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: '50%',
-                            background: `${meta.accent}33`,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            color: meta.accent,
-                            fontSize: 20,
-                          }}
-                        >
-                          {meta.icon}
-                        </div>
-                        <Space direction="vertical" size={0}>
-                          <Text strong>{meta.label}</Text>
-                          <Text type="secondary" style={{ fontSize: 12 }}>
-                            {meta.description}
-                          </Text>
-                        </Space>
-                      </Space>
-                    }
-                    extra={<Badge count={items.length} style={{ backgroundColor: meta.accent }} />}
-                    styles={{ body: { paddingTop: 16 } }}
-                  >
-                    {items.length === 0 ? (
-                      <Empty description="尚無儀表板" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-                    ) : (
-                      <List
-                        dataSource={items.slice(0, 3)}
-                        split={false}
-                        renderItem={(item) => (
-                          <List.Item
-                            style={{ padding: '12px 0' }}
-                            actions={[
-                              <Button
-                                key="open"
-                                type="link"
-                                size="small"
-                                onClick={() => onNavigate && onNavigate(item.targetPageKey || item.id)}
-                              >
-                                開啟
-                              </Button>,
-                            ]}
-                          >
-                            <List.Item.Meta
-                              title={
-                                <Space size={8} wrap>
-                                  <Text strong>{item.name}</Text>
-                                  {item.id === defaultDashboard && <Tag color="gold">預設</Tag>}
-                                </Space>
-                              }
-                              description={
-                                <Space direction="vertical" size={4}>
-                                  <Text type="secondary" style={{ fontSize: 12 }}>
-                                    擁有者：{item.owner ?? '未指定'}
-                                  </Text>
-                                  <Text type="secondary" style={{ fontSize: 12 }}>
-                                    更新於：{item.updatedAt ? dayjs(item.updatedAt).fromNow() : '未知'}
-                                  </Text>
-                                </Space>
-                              }
-                            />
-                          </List.Item>
-                        )}
-                      />
-                    )}
 
-                    <Button
-                      block
-                      type="text"
-                      onClick={() => {
-                        setTableCategoryFilter(categoryKey);
-                        setActiveTab('library');
-                      }}
-                    >
-                      查看此分類的所有儀表板
-                    </Button>
-                  </Card>
-                </Col>
-              );
-            })}
-          </Row>
-
-          <Card className="nav-item" title="熱門儀表板">
-            {popularDashboards.length === 0 ? (
-              <Empty description="暫無統計資料" image={Empty.PRESENTED_IMAGE_SIMPLE} />
-            ) : (
-              <List
-                dataSource={popularDashboards}
-                renderItem={(item) => (
-                  <List.Item
-                    actions={[
-                      <Tooltip key="favorite" title="收藏數">
-                        <Space size={4}>
-                          <StarOutlined style={{ color: '#faad14' }} />
-                          <span>{item.favoriteCount ?? 0}</span>
-                        </Space>
-                      </Tooltip>,
-                      <Tooltip key="viewer" title="瀏覽次數">
-                        <Space size={4}>
-                          <LineChartOutlined style={{ color: '#1890ff' }} />
-                          <span>{item.viewers ?? 0}</span>
-                        </Space>
-                      </Tooltip>,
-                      <Button key="open" type="link" onClick={() => onNavigate && onNavigate(item.targetPageKey || item.id)}>
-                        開啟
-                      </Button>,
-                    ]}
-                  >
-                    <List.Item.Meta
-                      title={
-                        <Space size={8}>
-                          <Text strong>{item.name}</Text>
-                          <Tag color={categoryMeta[item.category]?.accent}>
-                            {categoryMeta[item.category]?.label ?? item.category}
-                          </Tag>
-                        </Space>
-                      }
-                      description={item.description}
-                    />
-                  </List.Item>
-                )}
-              />
-            )}
-          </Card>
-        </Space>
-      );
+      // 儀表板分類統計
+      const categoryStats = {
+        all: { name: '全部', count: tableData.length, color: '#1890ff' },
+        infrastructure: {
+          name: '基礎設施洞察',
+          count: tableData.filter(d => d.category === 'infrastructure').length,
+          color: '#1890ff'
+        },
+        business: {
+          name: '業務與 SLA 指標',
+          count: tableData.filter(d => d.category === 'business').length,
+          color: '#52c41a'
+        },
+        operations: {
+          name: '營運與容量',
+          count: tableData.filter(d => d.category === 'operations').length,
+          color: '#fa8c16'
+        },
+        automation: {
+          name: '自動化與效率',
+          count: tableData.filter(d => d.category === 'automation').length,
+          color: '#9254de'
+        },
+        custom: {
+          name: '團隊自訂',
+          count: tableData.filter(d => d.category === 'custom').length,
+          color: '#13c2c2'
+        }
+      };
 
       // Library content with table
       const libraryContent = (
         <div>
-          <Space wrap style={{ marginBottom: '16px' }}>
-            <Segmented
-              value={tableCategoryFilter}
-              onChange={(value) => setTableCategoryFilter(value)}
-              options={[
-                { label: '全部', value: 'ALL' },
-                { label: categoryMeta.infrastructure.label, value: 'infrastructure' },
-                { label: categoryMeta.business.label, value: 'business' },
-                { label: categoryMeta.operations.label, value: 'operations' },
-                { label: categoryMeta.automation.label, value: 'automation' },
-                { label: categoryMeta.custom.label, value: 'custom' },
-              ]}
-            />
-            <Tooltip title="重新整理">
-              <Button icon={<ReloadOutlined />} onClick={() => antd.message.info('重新整理儀表板資料 (模擬)')} />
-            </Tooltip>
+          {/* 分類導航按鈕 */}
+          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
+            <Button.Group style={{
+              borderRadius: '8px',
+              overflow: 'hidden',
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+              border: '1px solid rgba(255, 255, 255, 0.15)'
+            }}>
+              <Button
+                type="default"
+                style={{
+                  height: '36px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '0 14px',
+                  fontWeight: 500,
+                  border: 'none',
+                  borderRadius: '0',
+                  background: '#1890ff',
+                  color: '#fff',
+                  borderRight: '1px solid rgba(255, 255, 255, 0.1)'
+                }}
+              >
+                <span style={{ fontSize: '13px' }}>
+                  全部
+                </span>
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.25)',
+                  color: '#fff',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  minWidth: '20px',
+                  textAlign: 'center',
+                  lineHeight: '14px'
+                }}>
+                  {categoryStats.all.count}
+                </div>
+              </Button>
+              {Object.entries(categoryStats).filter(([key]) => key !== 'all').map(([key, cat], index, arr) => (
+                <Button
+                  key={key}
+                  type="default"
+                  style={{
+                    height: '36px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '0 14px',
+                    fontWeight: 500,
+                    border: 'none',
+                    borderRadius: '0',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    borderRight: index < arr.length - 1 ? '1px solid rgba(255, 255, 255, 0.1)' : 'none'
+                  }}
+                >
+                  <div style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: cat.color,
+                    opacity: 0.8
+                  }} />
+                  <span style={{ fontSize: '13px' }}>
+                    {cat.name}
+                  </span>
+                  <div style={{
+                    background: `${cat.color}20`,
+                    color: cat.color,
+                    padding: '2px 6px',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    minWidth: '18px',
+                    textAlign: 'center',
+                    lineHeight: '14px'
+                  }}>
+                    {cat.count}
+                  </div>
+                </Button>
+              ))}
+            </Button.Group>
+          </div>
+
+          {/* 工具列 */}
+          <Space style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 'var(--spacing-lg)',
+            width: '100%'
+          }}>
+            <Space>
+              <Input.Search
+                placeholder="搜尋儀表板名稱..."
+                style={{ width: 300 }}
+                allowClear
+              />
+              <Button className="toolbar-btn" icon={<FilterOutlined />}>
+                篩選
+              </Button>
+            </Space>
+            <Space>
+              <Button className="toolbar-btn" icon={<DownloadOutlined />}>匯出</Button>
+              <Button type="primary" icon={<PlusOutlined />}>
+                新增儀表板
+              </Button>
+            </Space>
           </Space>
-          <Table
-            dataSource={tableData}
-            columns={tableColumns}
-            rowKey="id"
-            pagination={{
-              showSizeChanger: true,
-              showQuickJumper: true,
-              showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} 個儀表板`,
-            }}
-            style={{ background: 'transparent' }}
-          />
+
+          {/* 表格區域 - 使用 table-wrapper 包裹 */}
+          <div className="table-wrapper">
+            <Table
+              dataSource={tableData}
+              columns={tableColumns}
+              rowKey="id"
+              className="transparent-bg"
+              size="small"
+              pagination={{
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `${range[0]}-${range[1]} / ${total} 個儀表板`,
+              }}
+            />
+          </div>
         </div>
       );
 
-      // Tab items
-      const tabItems = [
-        {
-          key: 'overview',
-          label: '概覽',
-          children: overviewContent,
-        },
-        {
-          key: 'library',
-          label: '儀表板列表',
-          children: libraryContent,
-        },
-      ];
 
       return (
-        <Space direction="vertical" size="large" style={{ width: '100%' }}>
-          <div>
-            <Title level={2} className="page-title" style={{ marginBottom: '2px' }}>儀表板管理</Title>
-            <Paragraph className="page-subtitle" type="secondary" style={{ marginBottom: '4px' }}>
-              統一管理基礎設施與業務儀表板
-            </Paragraph>
-            <Text type="secondary" style={{ fontSize: '14px' }}>
-              建立、分享與治理所有 SRE 儀表板，確保視覺一致性與數據可靠性。
-            </Text>
+        <React.Fragment>
+          <PageHeader
+            title="儀表板管理"
+            subtitle="統一管理基礎設施與業務儀表板"
+            icon={<BarChartOutlined />}
+          />
+
+          {/* 📊 儀表板管理儀表板 - 核心指標總覽 */}
+          <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+            <Row gutter={[16, 16]}>
+              <Col xs={24} sm={12} md={6}>
+                <ContextualKPICard
+                  title="儀表板總數"
+                  value={mockStats.totalDashboards}
+                  unit="個"
+                  status="info"
+                  description="涵蓋所有業務類型"
+                  icon={<AppstoreOutlined />}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <ContextualKPICard
+                  title="已發布"
+                  value={mockStats.publishedDashboards}
+                  unit="個"
+                  status="success"
+                  description="可供所有角色使用"
+                  icon={<ShareAltOutlined />}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <ContextualKPICard
+                  title="自訂儀表板"
+                  value={mockStats.customDashboards}
+                  unit="個"
+                  status="warning"
+                  description="由團隊自行建立"
+                  icon={<UserOutlined />}
+                />
+              </Col>
+              <Col xs={24} sm={12} md={6}>
+                <ContextualKPICard
+                  title="自動化覆蓋率"
+                  value={mockStats.automationCoverage}
+                  unit="%"
+                  status={mockStats.automationCoverage >= 60 ? 'success' : 'warning'}
+                  description="有自動更新資料的儀表板"
+                  icon={<ThunderboltOutlined />}
+                />
+              </Col>
+            </Row>
           </div>
 
-          <Alert
-            showIcon
-            type="info"
-            message="目前顯示為內建模擬資料"
-            description="尚未連接到 /dashboards API，以下內容為範例數據。"
-          />
-
-          {/* KPI Cards */}
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} xl={6}>
-              <KPICard
-                title="儀表板總數"
-                value={mockStats.totalDashboards}
-                unit="個"
-                status="info"
-                description={mockStats.lastUpdatedAt ? `最後更新：${dayjs(mockStats.lastUpdatedAt).fromNow()}` : undefined}
-                icon={<AppstoreOutlined style={{ fontSize: 28, color: '#1890ff' }} />}
-              />
-            </Col>
-            <Col xs={24} sm={12} xl={6}>
-              <KPICard
-                title="已發布"
-                value={mockStats.publishedDashboards}
-                unit="個"
-                status="success"
-                description="可供所有角色使用"
-                icon={<ShareAltOutlined style={{ fontSize: 28, color: '#52c41a' }} />}
-              />
-            </Col>
-            <Col xs={24} sm={12} xl={6}>
-              <KPICard
-                title="自訂儀表板"
-                value={mockStats.customDashboards}
-                unit="個"
-                status="warning"
-                description="由團隊自行建立"
-                icon={<UserOutlined style={{ fontSize: 28, color: '#faad14' }} />}
-              />
-            </Col>
-            <Col xs={24} sm={12} xl={6}>
-              <KPICard
-                title="自動化覆蓋率"
-                value={mockStats.automationCoverage}
-                unit="%"
-                status={mockStats.automationCoverage >= 60 ? 'success' : 'warning'}
-                description="有自動更新資料的儀表板"
-                icon={<ThunderboltOutlined style={{ fontSize: 28, color: '#9254de' }} />}
-              />
-            </Col>
-          </Row>
-
-          {/* Tabs */}
           <Tabs
-            activeKey={activeTab}
-            onChange={setActiveTab}
-            items={tabItems}
-            style={{ background: 'transparent' }}
-          />
-        </Space>
+            defaultActiveKey="dashboard-list"
+            tabBarStyle={{
+              '--tab-bar-margin': '0 0 var(--spacing-lg) 0'
+            }}
+          >
+            <Tabs.TabPane
+              tab={
+                <span>
+                  <BarsOutlined />
+                  儀表板列表
+                </span>
+              }
+              key="dashboard-list"
+            >
+              {libraryContent}
+            </Tabs.TabPane>
+          </Tabs>
+        </React.Fragment>
       );
     };
 
@@ -20886,7 +20555,7 @@
 
     // 平台設定頁面組件
     const PlatformSettingsPage = ({ onNavigate, pageKey }) => {
-      const tabKey = ['tag-management', 'email-settings', 'auth-settings', 'identity-access-management'].includes(pageKey) ? pageKey : 'tag-management';
+      const tabKey = ['tag-management', 'email-settings', 'auth-settings'].includes(pageKey) ? pageKey : 'tag-management';
 
       // 平台設定統計資料
       const settingsStats = {
@@ -20982,17 +20651,6 @@
               key="auth-settings"
             >
               <AuthSettingsPage />
-            </Tabs.TabPane>
-            <Tabs.TabPane
-              tab={
-                <span>
-                  <UserOutlined />
-                  身份與存取管理
-                </span>
-              }
-              key="identity-access-management"
-            >
-              <UserPermissionsPage />
             </Tabs.TabPane>
           </Tabs>
         </React.Fragment>
@@ -21586,61 +21244,6 @@
             </Row>
           </div>
 
-          {/* 卡片式分組佈局 */}
-          <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-            <Row gutter={[24, 24]}>
-              {/* 管道狀態概覽 */}
-              <Col xs={24}>
-                <Card
-                  className="dashboard-card"
-                  title={
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <MonitorOutlined style={{ color: '#1890ff' }} />
-                      <span>管道狀態概覽</span>
-                    </div>
-                  }
-                  bodyStyle={{ padding: '16px' }}
-                >
-                  <Row gutter={[16, 16]}>
-                    {[
-                      { name: 'Email', status: 'active', lastTest: '2小時前', rate: '99.2%' },
-                      { name: 'Slack', status: 'active', lastTest: '1小時前', rate: '98.7%' },
-                      { name: 'Teams', status: 'active', lastTest: '30分鐘前', rate: '97.8%' },
-                      { name: 'Webhook', status: 'warning', lastTest: '失敗', rate: '0%' },
-                      { name: 'PagerDuty', status: 'active', lastTest: '15分鐘前', rate: '100%' },
-                      { name: 'SMS', status: 'inactive', lastTest: '未測試', rate: '-' }
-                    ].map(channel => (
-                      <Col xs={24} sm={8} md={4} key={channel.name}>
-                        <div style={{
-                          padding: '12px',
-                          backgroundColor: 'rgba(255, 255, 255, 0.02)',
-                          borderRadius: '6px',
-                          border: '1px solid rgba(255, 255, 255, 0.06)'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ marginRight: '8px' }}>
-                              {channel.status === 'active' ? (
-                                <Badge status="success" />
-                              ) : channel.status === 'warning' ? (
-                                <Badge status="warning" />
-                              ) : (
-                                <Badge status="default" />
-                              )}
-                            </div>
-                            <span style={{ fontWeight: 500 }}>{channel.name}</span>
-                          </div>
-                          <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                            <div>成功率: {channel.rate}</div>
-                            <div>最後測試: {channel.lastTest}</div>
-                          </div>
-                        </div>
-                      </Col>
-                    ))}
-                  </Row>
-                </Card>
-              </Col>
-            </Row>
-          </div>
 
           <Tabs
             defaultActiveKey={tabKey}
@@ -21774,7 +21377,7 @@
         getItem('首頁', 'home', <DashboardOutlined />),
         getItem('事件管理', 'incidents', <HistoryOutlined />),
         getItem('資源管理', 'resources', <HddOutlined />),
-        getItem('儀表板', 'dashboard', <BarChartOutlined />),
+        getItem('儀表板管理', 'dashboard', <BarChartOutlined />),
         getItem('分析中心', 'analyzing', <BarChartOutlined />),
         getItem('自動化中心', 'automation', <CodeOutlined />),
         getItem('設定', 'settings', <SettingOutlined />, [
