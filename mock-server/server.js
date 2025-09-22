@@ -53,11 +53,21 @@ const mockEvents = {
 
 const mockEventDetail = {
     ...mockEvents.items[0],
-    description: "生產環境伺服器 server-prod-01 的 CPU 使用率在過去 5 分鐘內持續高於 90%。",
+    id: "evt_1", // ensure id is stable
+    description: "生產環境伺服器 server-prod-01 的 CPU 使用率在過去 5 分鐘內持續高於 90%。這可能是由於流量高峰或背景處理程序異常導致。建議檢查最近的部署或服務日誌。",
     history: [
+        { timestamp: new Date(Date.now() - 2 * 60 * 1000).toISOString(), user: "Jules", action: "將狀態從 new 改為 ack" },
         { timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(), user: "系統", action: "事件觸發" }
     ],
-    related_events: [],
+    related_events: [
+        {
+          id: "evt_4",
+          summary: "相關服務 API 延遲增加",
+          resource_name: "service-auth-api",
+          status: "new",
+          trigger_time: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
+        }
+    ],
     automation_logs: [],
 };
 
@@ -97,6 +107,31 @@ const mockEventRules = [
     }
 ];
 
+const mockSilences = [
+    {
+        id: "sil_1",
+        enabled: true,
+        name: "週末維護窗口",
+        silence_type: "repeat",
+        matchers: "env=production, service=*",
+        time_range: "Sat 00:00 - Sun 23:59",
+        scope: "全域",
+        creator: "Admin",
+        created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+    },
+    {
+        id: "sil_2",
+        enabled: false,
+        name: "月底批次作業",
+        silence_type: "condition",
+        matchers: "job=batch-process",
+        time_range: "每月最後一天 02:00-04:00",
+        scope: "特定資源",
+        creator: "李四",
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
+    }
+];
+
 
 // --- API Endpoints ---
 
@@ -117,7 +152,42 @@ apiRouter.get('/event-rules', (req, res) => {
 
 apiRouter.get('/silences', (req, res) => {
     console.log('GET /api/v1/silences');
-    res.json([]);
+    res.json(mockSilences);
+});
+
+apiRouter.post('/silences', (req, res) => {
+    console.log('POST /api/v1/silences', req.body);
+    const newSilence = {
+        id: `sil_${Date.now()}`,
+        created_at: new Date().toISOString(),
+        ...req.body,
+    };
+    mockSilences.push(newSilence);
+    res.status(201).json(newSilence);
+});
+
+apiRouter.put('/silences/:id', (req, res) => {
+    const { id } = req.params;
+    console.log(`PUT /api/v1/silences/${id}`, req.body);
+    const index = mockSilences.findIndex(s => s.id === id);
+    if (index !== -1) {
+        mockSilences[index] = { ...mockSilences[index], ...req.body };
+        res.json(mockSilences[index]);
+    } else {
+        res.status(404).json({ message: 'Silence not found' });
+    }
+});
+
+apiRouter.delete('/silences/:id', (req, res) => {
+    const { id } = req.params;
+    console.log(`DELETE /api/v1/silences/${id}`);
+    const index = mockSilences.findIndex(s => s.id === id);
+    if (index !== -1) {
+        mockSilences.splice(index, 1);
+        res.status(204).send();
+    } else {
+        res.status(404).json({ message: 'Silence not found' });
+    }
 });
 
 apiRouter.get('/resources', (req, res) => {

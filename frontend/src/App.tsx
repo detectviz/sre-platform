@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Layout, Menu } from 'antd';
 import EventListPage from './pages/events/EventListPage';
 import EventRulePage from './pages/events/EventRulePage';
+import SilenceRulePage from './pages/events/SilenceRulePage'; // 引入新的頁面
 
 const { Header, Content, Sider } = Layout;
 
@@ -21,6 +22,9 @@ const App: React.FC = () => {
             <Menu.Item key="/rules">
               <Link to="/rules">事件規則</Link>
             </Menu.Item>
+            <Menu.Item key="/silences">
+              <Link to="/silences">靜音規則</Link>
+            </Menu.Item>
           </Menu>
         </Sider>
         <Layout>
@@ -30,6 +34,7 @@ const App: React.FC = () => {
               <Routes>
                 <Route path="/" element={<EventListPage />} />
                 <Route path="/rules" element={<EventRulePage />} />
+                <Route path="/silences" element={<SilenceRulePage />} />
               </Routes>
             </div>
           </Content>
