@@ -582,20 +582,45 @@ CREATE TABLE notification_history (
     alert_title TEXT,
     actor VARCHAR(128),
     message TEXT,
-    recipients JSONB DEFAULT '[]'::JSONB,
+    recipients JSONB NOT NULL DEFAULT '[]'::JSONB,
     sent_at TIMESTAMPTZ NOT NULL,
     completed_at TIMESTAMPTZ,
-    retry_count INTEGER DEFAULT 0,
+    retry_count INTEGER NOT NULL DEFAULT 0,
     duration_ms INTEGER,
     error_message TEXT,
-    payload TEXT,
-    attempts JSONB DEFAULT '[]'::JSONB,
+    raw_payload JSONB NOT NULL DEFAULT '{}'::JSONB,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    attempts JSONB NOT NULL DEFAULT '[]'::JSONB,
     related_event_id UUID REFERENCES events(id),
-    CONSTRAINT chk_notification_history_status CHECK (status IN ('SUCCESS','FAILED','RETRYING')),
+    resend_count INTEGER NOT NULL DEFAULT 0,
+    last_resend_at TIMESTAMPTZ,
+    last_status_change_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_notification_history_status CHECK (status IN ('SUCCESS','FAILED','RETRYING','QUEUED')),
     CONSTRAINT chk_notification_history_channel CHECK (channel_type IN ('Email','Slack','PagerDuty','Webhook','Teams','LINE Notify','SMS'))
 );
 CREATE INDEX idx_notification_history_sent_at ON notification_history (sent_at DESC);
 CREATE INDEX idx_notification_history_status ON notification_history (status);
+CREATE INDEX idx_notification_history_last_resend ON notification_history (last_resend_at DESC);
+
+CREATE TABLE notification_resend_jobs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    notification_history_id UUID NOT NULL REFERENCES notification_history(id) ON DELETE CASCADE,
+    requested_by UUID REFERENCES users(id),
+    status VARCHAR(32) NOT NULL,
+    channel_id UUID REFERENCES notification_channels(id) ON DELETE SET NULL,
+    recipients TEXT[] DEFAULT ARRAY[]::TEXT[],
+    dry_run BOOLEAN NOT NULL DEFAULT FALSE,
+    note TEXT,
+    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    result_message TEXT,
+    error_message TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    CONSTRAINT chk_notification_resend_status CHECK (status IN ('queued','running','completed','failed'))
+);
+CREATE INDEX idx_notification_resend_jobs_history ON notification_resend_jobs (notification_history_id);
+CREATE INDEX idx_notification_resend_jobs_requested_at ON notification_resend_jobs (requested_at DESC);
 
 -- =============================
 -- 平台設定與整合
@@ -619,9 +644,33 @@ CREATE TABLE tag_values (
     value VARCHAR(128) NOT NULL,
     description TEXT,
     is_default BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    usage_count INTEGER NOT NULL DEFAULT 0,
+    last_synced_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX idx_tag_values_unique ON tag_values (tag_id, value);
+
+CREATE TABLE tag_category_metrics (
+    category VARCHAR(64) PRIMARY KEY,
+    total_keys INTEGER NOT NULL DEFAULT 0,
+    required_keys INTEGER NOT NULL DEFAULT 0,
+    optional_keys INTEGER NOT NULL DEFAULT 0,
+    total_values INTEGER NOT NULL DEFAULT 0,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE tag_key_statistics (
+    tag_id UUID PRIMARY KEY REFERENCES tag_definitions(id) ON DELETE CASCADE,
+    total_values INTEGER NOT NULL DEFAULT 0,
+    required_value_count INTEGER NOT NULL DEFAULT 0,
+    optional_value_count INTEGER NOT NULL DEFAULT 0,
+    usage_count INTEGER NOT NULL DEFAULT 0,
+    last_used_at TIMESTAMPTZ,
+    top_values JSONB NOT NULL DEFAULT '[]'::JSONB,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_tag_key_statistics_usage ON tag_key_statistics (usage_count DESC);
 
 CREATE TABLE email_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -637,6 +686,23 @@ CREATE TABLE email_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_email_settings_encryption CHECK (encryption IN ('none','tls','ssl'))
 );
+
+CREATE TABLE email_test_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    triggered_by UUID REFERENCES users(id),
+    status VARCHAR(32) NOT NULL,
+    recipient VARCHAR(256) NOT NULL,
+    template_key VARCHAR(128),
+    subject_override TEXT,
+    body_override TEXT,
+    duration_ms INTEGER,
+    response_message TEXT,
+    error_message TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_email_test_history_status CHECK (status IN ('queued','success','failed'))
+);
+CREATE INDEX idx_email_test_history_executed_at ON email_test_history (executed_at DESC);
 
 CREATE TABLE auth_settings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
