@@ -1,8 +1,10 @@
-import React from 'react';
-import { Table, Spin, Alert, Tag } from 'antd';
+import React, { useState } from 'react';
+import { Table, Spin, Alert, Tag, Button, Space } from 'antd';
+import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useEvents } from '../../hooks/useEvents';
 import type { paths } from '../../types/api';
+import EventFilterModal from './EventFilterModal';
 
 type Event = paths['/events']['get']['responses']['200']['content']['application/json']['items'][number];
 
@@ -47,11 +49,8 @@ const columns: ColumnsType<Event> = [
 ];
 
 const EventListPage: React.FC = () => {
-  const { events, loading, error } = useEvents();
-
-  if (loading) {
-    return <Spin size="large" style={{ display: 'block', marginTop: '50px' }} />;
-  }
+  const { events, loading, error, filters, setFilters } = useEvents();
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   if (error) {
     return <Alert message="錯誤" description={error.message} type="error" showIcon />;
@@ -59,8 +58,23 @@ const EventListPage: React.FC = () => {
 
   return (
     <div style={{ padding: '24px' }}>
-      <h1>事件列表</h1>
-      <Table columns={columns} dataSource={events} rowKey="id" />
+      <Space style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between' }}>
+        <h1>事件列表</h1>
+        <Button icon={<SearchOutlined />} onClick={() => setIsModalVisible(true)}>
+          搜索篩選
+        </Button>
+      </Space>
+
+      <Spin spinning={loading}>
+        <Table columns={columns} dataSource={events} rowKey="id" />
+      </Spin>
+
+      <EventFilterModal
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        onApplyFilters={setFilters}
+        initialFilters={filters}
+      />
     </div>
   );
 };

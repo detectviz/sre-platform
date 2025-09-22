@@ -136,8 +136,43 @@ const mockSilences = [
 // --- API Endpoints ---
 
 apiRouter.get('/events', (req, res) => {
-  console.log('GET /api/v1/events');
-  res.json(mockEvents);
+  const { q, status, severity } = req.query;
+  console.log('GET /api/v1/events', req.query);
+
+  let filteredItems = [...mockEvents.items];
+
+  // 根據查詢參數過濾
+  if (status) {
+    filteredItems = filteredItems.filter(event => event.status === status);
+  }
+
+  // 注意：openapi.yaml 的 severity 參數對應 mock data 的 service_impact
+  if (severity) {
+    // 簡單對應，實際情況可能更複雜
+    const severityMap = {
+        'critical': 'Critical',
+        'high': 'High',
+        'medium': 'Medium',
+        'low': 'Low'
+    };
+    const mappedImpact = severityMap[severity.toLowerCase()];
+    if (mappedImpact) {
+        filteredItems = filteredItems.filter(event => event.service_impact === mappedImpact);
+    }
+  }
+
+  if (q) {
+    const searchTerm = q.toLowerCase();
+    filteredItems = filteredItems.filter(event =>
+      event.summary.toLowerCase().includes(searchTerm) ||
+      event.resource_name.toLowerCase().includes(searchTerm)
+    );
+  }
+
+  res.json({
+    items: filteredItems,
+    total: filteredItems.length,
+  });
 });
 
 apiRouter.get('/events/:id', (req, res) => {
