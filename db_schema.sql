@@ -121,6 +121,38 @@ CREATE TABLE user_notifications (
 CREATE INDEX idx_user_notifications_user ON user_notifications (user_id, status, created_at DESC);
 
 -- =============================
+-- 自動化腳本 (供事件規則及排程引用)
+-- =============================
+CREATE TABLE automation_scripts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL UNIQUE,
+    type VARCHAR(32) NOT NULL,
+    description TEXT,
+    content TEXT NOT NULL,
+    version VARCHAR(32) DEFAULT 'v1',
+    tags JSONB DEFAULT '[]'::JSONB,
+    last_execution_status VARCHAR(32) DEFAULT 'never',
+    last_execution_at TIMESTAMPTZ,
+    created_by UUID REFERENCES users(id),
+    updated_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_automation_scripts_type CHECK (type IN ('shell','python','ansible','terraform')),
+    CONSTRAINT chk_automation_scripts_last_status CHECK (last_execution_status IN ('never','running','success','failed'))
+);
+
+CREATE TABLE automation_script_versions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    script_id UUID NOT NULL REFERENCES automation_scripts(id) ON DELETE CASCADE,
+    version VARCHAR(32) NOT NULL,
+    content TEXT NOT NULL,
+    changelog TEXT,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE UNIQUE INDEX idx_script_versions_unique ON automation_script_versions (script_id, version);
+
+-- =============================
 -- 事件資料模型
 -- =============================
 CREATE TABLE event_rules (
@@ -281,6 +313,17 @@ CREATE TABLE resource_labels (
     PRIMARY KEY (resource_id, label_key)
 );
 
+CREATE TABLE resource_metrics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
+    metric VARCHAR(64) NOT NULL,
+    unit VARCHAR(16),
+    collected_at TIMESTAMPTZ NOT NULL,
+    value NUMERIC(12,4) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_resource_metrics_resource ON resource_metrics (resource_id, metric, collected_at DESC);
+
 CREATE TABLE resource_groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL UNIQUE,
@@ -427,37 +470,8 @@ CREATE TABLE ai_insight_suggestions (
 );
 
 -- =============================
--- 自動化腳本與排程
+-- 自動化排程與執行
 -- =============================
-CREATE TABLE automation_scripts (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    name VARCHAR(128) NOT NULL UNIQUE,
-    type VARCHAR(32) NOT NULL,
-    description TEXT,
-    content TEXT NOT NULL,
-    version VARCHAR(32) DEFAULT 'v1',
-    tags JSONB DEFAULT '[]'::JSONB,
-    last_execution_status VARCHAR(32) DEFAULT 'never',
-    last_execution_at TIMESTAMPTZ,
-    created_by UUID REFERENCES users(id),
-    updated_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_automation_scripts_type CHECK (type IN ('shell','python','ansible','terraform')),
-    CONSTRAINT chk_automation_scripts_last_status CHECK (last_execution_status IN ('never','running','success','failed'))
-);
-
-CREATE TABLE automation_script_versions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    script_id UUID NOT NULL REFERENCES automation_scripts(id) ON DELETE CASCADE,
-    version VARCHAR(32) NOT NULL,
-    content TEXT NOT NULL,
-    changelog TEXT,
-    created_by UUID REFERENCES users(id),
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE UNIQUE INDEX idx_script_versions_unique ON automation_script_versions (script_id, version);
-
 CREATE TABLE automation_schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL UNIQUE,
@@ -482,12 +496,6 @@ CREATE TABLE automation_schedules (
 );
 CREATE INDEX idx_automation_schedules_script ON automation_schedules (script_id);
 CREATE INDEX idx_automation_schedules_status ON automation_schedules (status);
-
-CREATE TABLE automation_schedule_channels (
-    schedule_id UUID NOT NULL REFERENCES automation_schedules(id) ON DELETE CASCADE,
-    channel_id UUID NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
-    PRIMARY KEY (schedule_id, channel_id)
-);
 
 CREATE TABLE automation_executions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -537,6 +545,12 @@ CREATE TABLE notification_channels (
 );
 CREATE INDEX idx_notification_channels_type ON notification_channels (type);
 CREATE INDEX idx_notification_channels_status ON notification_channels (status);
+
+CREATE TABLE automation_schedule_channels (
+    schedule_id UUID NOT NULL REFERENCES automation_schedules(id) ON DELETE CASCADE,
+    channel_id UUID NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
+    PRIMARY KEY (schedule_id, channel_id)
+);
 
 CREATE TABLE notification_strategies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -593,6 +607,7 @@ CREATE TABLE notification_history (
     attempts JSONB NOT NULL DEFAULT '[]'::JSONB,
     related_event_id UUID REFERENCES events(id),
     resend_count INTEGER NOT NULL DEFAULT 0,
+    resend_available BOOLEAN NOT NULL DEFAULT FALSE,
     last_resend_at TIMESTAMPTZ,
     last_status_change_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_notification_history_status CHECK (status IN ('SUCCESS','FAILED','RETRYING','QUEUED')),

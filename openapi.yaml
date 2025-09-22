@@ -3058,6 +3058,35 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+  /settings/auth/test:
+    post:
+      tags:
+        - 平台設定
+      summary: 測試身份驗證設定連線
+      operationId: testAuthSettings
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthTestRequest'
+      responses:
+        '200':
+          description: 測試結果摘要。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTestResult'
+        '202':
+          description: 測試請求已排入背景工作。
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthTestResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /tags/keys:
     get:
       tags:
@@ -5494,3 +5523,41 @@ components:
             client_secret:
               type: string
               format: password
+    AuthTestRequest:
+      type: object
+      properties:
+        settings_override:
+          $ref: '#/components/schemas/AuthSettingsRequest'
+        test_username:
+          type: string
+        test_password:
+          type: string
+          format: password
+        scope_override:
+          type: array
+          items:
+            type: string
+        async:
+          type: boolean
+          description: 是否以背景方式執行測試。
+    AuthTestResult:
+      type: object
+      required: [status, executed_at]
+      properties:
+        status:
+          type: string
+          enum: [success, failed, queued]
+        executed_at:
+          type: string
+          format: date-time
+        latency_ms:
+          type: integer
+        message:
+          type: string
+        warnings:
+          type: array
+          items:
+            type: string
+        trace_id:
+          type: string
+          nullable: true
