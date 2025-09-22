@@ -9,6 +9,10 @@
 #### 頁面概述
 登入頁面是平台的安全入口，提供用戶身份驗證功能。
 
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/LoginPage.tsx` (待實現)
+- **路由配置**: `/frontend/src/config/routes.ts`
+
 **界面元素**
 
 - **平台標題**: `SRE Platform`
@@ -37,6 +41,10 @@
 #### 彈窗概述
 用戶下拉選單提供個人資訊查看和系統操作功能。
 
+**檔案對應**
+- **前端實現**: `/frontend/src/components/UserMenu.tsx`
+- **路由配置**: `/frontend/src/config/routes.ts`
+
 **界面元素**
 
 - **用戶資訊區**:
@@ -44,8 +52,7 @@
   - 用戶名稱 (顯示真實姓名)
   - 角色 (Badge, 顯示用戶角色標籤)
 - **選單項目**:
-  - 個人資料 (跳轉至個人資料頁面)
-  - 設定 (跳轉至系統設定頁面)
+  - 個人資料 (跳轉至個人設定頁面的個人資訊標籤)
   - 通知中心 (打開通知中心彈窗)
   - 登出 (執行登出操作)
 
@@ -67,6 +74,10 @@
 
 #### 頁面概述
 全局搜索欄位於系統頂部工具列，提供跨模塊的統一搜索功能，支援資源、事件、腳本等多種類型的搜索。
+
+**檔案對應**
+- **前端實現**: `/frontend/src/components/GlobalSearch.tsx` (待實現)
+- **組件依賴**: `/frontend/src/layouts/AppLayout.tsx`
 
 **界面元素**
 
@@ -108,6 +119,10 @@
 
 #### 彈窗概述
 通知中心提供系統通知和警報的集中管理，支援多種通知類型、實時狀態更新和快速操作。
+
+**檔案對應**
+- **前端實現**: `/frontend/src/components/NotificationCenter.tsx`
+- **組件依賴**: `/frontend/src/layouts/AppLayout.tsx`
 
 **主要功能**
 
@@ -163,6 +178,13 @@
 
 #### 頁面概述  
 事件列表頁面是 SRE 平台的中央事件監控中心，提供事件篩選、搜索、狀態查看和快速操作功能。
+
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/IncidentsPage.tsx`
+- **路由配置**: `/frontend/src/config/routes.ts`
+- **組件依賴**:
+  - `/frontend/src/components/ToolbarActions.tsx`
+  - `/frontend/src/components/ContextualKPICard.tsx`
 
 **界面元素**
 
@@ -458,6 +480,13 @@
 **頁面概述**
 資源列表頁面提供基礎設施資源的集中管理界面，顯示所有監控資源的健康狀態和性能指標。
 
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/ResourcesPage.tsx`
+- **路由配置**: `/frontend/src/config/routes.ts`
+- **組件依賴**:
+  - `/frontend/src/components/ToolbarActions.tsx`
+  - `/frontend/src/components/ContextualKPICard.tsx`
+
 **界面元素**
 
 - **頁面標題**: "資源列表"
@@ -659,18 +688,68 @@
 ## 4. 儀表板管理
 
 **頁面概述**
-統一的系統監控與業務洞察儀表板入口。
+統一的系統監控與業務洞察儀表板入口，支援任一儀表板作為預設首頁。
+
+#### 儀表板類型說明
+
+SRE 平台支援兩種不同類型的儀表板：
+
+**1. 內建儀表板 (Built-in Dashboards)**
+- **技術實現**: 使用 React 組件實現，完全集成在平台內部
+- **特色功能**:
+  - 完整的互動性操作
+  - 即時數據更新和動態圖表
+  - 與平台其他功能的深度整合
+  - 支援自訂佈局和組件配置
+- **代表頁面**:
+  - SRE 戰情室儀表板 (`/frontend/src/pages/SREWarRoomPage.tsx`)
+  - 基礎設施洞察儀表板 (`/frontend/src/pages/SREInfrastructureInsightPage.tsx`)
+- **使用場景**: 需要高度互動性和即時數據更新的監控場景
+
+**2. Grafana 儀表板 (Grafana Dashboards)**
+- **技術實現**: 通過 iframe 嵌入現有的 Grafana 儀表板
+- **特色功能**:
+  - 利用 Grafana 豐富的視覺化組件
+  - 支援 Grafana 的完整功能集
+  - 時間範圍選擇和儀表板控制
+  - 深色/淺色主題切換
+  - 即時面板自動調整
+- **代表組件**:
+  - GrafanaDashboard 組件 (`/frontend/src/components/GrafanaDashboard.tsx`)
+  - DashboardViewPage 頁面 (`/frontend/src/pages/DashboardViewPage.tsx`)
+- **使用場景**: 利用現有 Grafana 儀表板的組織或需要 Grafana 特有功能時
+
+**兩種儀表板的整合**
+- 在儀表板列表中，點擊儀表板名稱會根據類型自動導航：
+  - 內建儀表板 → 直接跳轉到對應的 React 頁面
+  - Grafana 儀表板 → 跳轉到 DashboardViewPage 並嵌入 Grafana 儀表板
+- 支援將任一類型的儀表板設定為預設首頁
+- 統一的權限管理和訪問統計
 
 **頁籤子頁面**
-1. 儀表板列表 (DashboardListPage)
-2. SRE 戰情室儀表板 (作為預設首頁, SREWarRoomPage)
+1. 儀表板列表 (DashboardPage)
+2. SRE 戰情室儀表板 (SREWarRoomPage)
 3. 基礎設施洞察儀表板 (SREInfrastructureInsightPage)
 
 **指標概覽卡片**
-1. 儀表板總數 (3個, 0 個自訂儀表板, stable)
-2. 已發布 (0個, 可供所有角色使用, stable)
-3. 自訂儀表板 (0個, 由團隊自行建立, stable)
-4. 自動化覆蓋率 (33%, 有自動更新資料的儀表板, down)
+1. 總儀表板數 (25, 包含內建儀表板和 Grafana 儀表板, +4)
+2. 活躍用戶 (156, 本月訪問儀表板的用戶, +12.5%)
+3. SRE 戰情室 (4, 高優先級監控室, 內建儀表板, stable)
+4. 基礎設施洞察 (10, 專注於基礎設施監控的儀表板, +2)
+
+**分類按鈕**
+- 全部 (25個儀表板)
+- 基礎設施洞察 (2個儀表板)
+  - 內建儀表板: 1個
+  - Grafana 儀表板: 1個
+- 業務與 SLA 指標 (2個儀表板)
+  - 內建儀表板: 1個
+  - Grafana 儀表板: 1個
+- 營運與容量 (2個儀表板)
+  - 內建儀表板: 1個
+  - Grafana 儀表板: 1個
+- 自動化與效率 (1個儀表板)
+- 團隊自訂 (1個儀表板)
 
 ---
 
@@ -679,70 +758,113 @@
 **頁面概述**
 儀表板管理頁面提供監控儀表板的統一管理界面，支援多種類型儀表板的創建、發布和權限管理。
 
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/DashboardPage.tsx`
+- **路由配置**: `/frontend/src/config/routes.ts`
+- **組件依賴**:
+  - `/frontend/src/components/ToolbarActions.tsx`
+  - `/frontend/src/components/ContextualKPICard.tsx`
+  - `/frontend/src/components/CategoryFilter.tsx`
+  - `/frontend/src/components/GrafanaDashboard.tsx`
+  - `/frontend/src/hooks/useCategories.ts`
+
+**相關頁面**:
+  - `/frontend/src/pages/DashboardViewPage.tsx` (Grafana 儀表板顯示頁面)
+
 **界面元素**
 - **頁面標題**: "儀表板管理"
 
 **KPI 統計卡片** (ContextualKPICard):
-- **儀表板總數** (3個, 最後更新：3 days ago)
-- **已發布** (0個, 可供所有角色使用)
-- **自訂儀表板** (0個, 由團隊自行建立)
-- **自動化覆蓋率** (33%, 有自動更新資料的儀表板)
+- **總儀表板數** (25, 包含內建儀表板和 Grafana 儀表板)
+  - 內建儀表板: 15個
+  - Grafana 儀表板: 10個
+- **活躍用戶** (156, 本月訪問儀表板的用戶)
+- **SRE 戰情室** (4, 高優先級監控室, 內建儀表板)
+- **基礎設施洞察** (10, 專注於基礎設施監控的儀表板)
+  - 內建儀表板: 8個
+  - Grafana 儀表板: 2個
 
-**標籤頁導航** (Tabs):
-- **全部**: 顯示所有儀表板
-- **基礎設施洞察**: 基礎設施相關監控儀表板
-- **業務與 SLA 指標**: 業務和服務等級協議監控
-- **營運與容量**: 營運指標和容量規劃
-- **自動化與效率**: 自動化效能和效率指標
-- **團隊自訂**: 團隊自訂的專屬儀表板
-
-**工具列** (ToolbarActions):
-- 刷新按鈕 (ReloadOutlined, 重新整理儀表板列表)
-- 搜索篩選按鈕 (SearchOutlined, 統一的搜索和篩選入口)
-- 匯出按鈕 (DownloadOutlined, 匯出儀表板列表)
-- 批量操作按鈕 (Batch操作)
-- 新增儀表板按鈕 (PlusOutlined, 新增儀表板)
-
-**儀表板列表** (Table):
+**頁面佈局**
+- **標題區域**:
+  - 頁面標題和副標題
+  - 搜尋框 (右側對齊)
+  - 新增儀表板按鈕 (右側對齊)
+- **分類按鈕** (ToolbarActions):
+  - 全部
+  - 基礎設施洞察
+  - 業務與 SLA 指標 (1個儀表板)
+  - 營運與容量 (1個儀表板)
+  - 自動化與效率 (1個儀表板)
+  - 團隊自訂 (1個儀表板)
+- **工具列** (ToolbarActions):
+  - 欄位設定按鈕 (SettingOutlined, 表格欄位顯示設定)
+- **儀表板列表** (Table):
 - **名稱** (dataIndex: 'name', 儀表板名稱, 支援排序和搜索)
+    - 支援點擊跳轉至對應儀表板頁面
+    - 內建儀表板: 直接跳轉到 React 組件頁面
+      - 基礎設施洞察 → `/infrastructure`
+      - SRE 戰情室 → `/warroom`
+    - Grafana 儀表板: 跳轉到 DashboardViewPage 並嵌入 Grafana 儀表板
+      - API 服務狀態 → `/dashboard/API服務狀態`
+      - 用戶體驗監控 → `/dashboard/用戶體驗監控`
+- **類型** (dataIndex: 'type', 內建儀表板 / Grafana 儀表板, 支援篩選)
+    - 內建儀表板: 使用 React 組件實現
+    - Grafana 儀表板: 通過 iframe 嵌入 Grafana 儀表板
 - **類別** (dataIndex: 'category', 儀表板分類標籤)
-  - 精選 (Tag, 精選儀表板)
-    - 基礎設施洞察 (精選類別, 基礎設施監控)
-    - SRE 戰情室 (精選類別, 業務指標與效能監控)
-  - 自動化與效率 (Tag, 自動化相關)
-    - 自動化效能總覽 (自動化與效率類別, 效能指標監控)
 - **擁有者** (dataIndex: 'owner', 儀表板創建者和負責人)
-- **瀏覽 / 收藏** (dataIndex: 'views_favorites', 瀏覽次數和收藏數量, 格式 "0/0")
-- **更新時間** (dataIndex: 'updated_at', 最後更新時間, 支援排序)
+- **更新時間** (dataIndex: 'updateTime', 最後更新時間)
 - **操作** (操作按鈕列):
-  - 開啟按鈕 (打開儀表板)
-  - 設定預設按鈕 (設為預設)
-  - 更多下拉選單 (編輯、刪除、複製等操作)
+  - 設定為首頁 (Button, 將此儀表板設為預設首頁)
+  - 查看詳情
+  - 編輯
+  - 複製
+  - 分享
+  - 刪除
 
 **預設儀表板項目**
-- **基礎設施洞察** (精選類別):
+- **基礎設施洞察** (基礎設施洞察類別, 內建儀表板):
   - 描述: "整合多雲與多中心資源健康狀態"
   - 擁有者: "SRE 平台團隊"
-  - 最後更新: "2025/09/18 17:15"
-- **SRE 戰情室** (精選類別):
+  - 最後更新: "2025/09/18 16:30"
+  - 訪問路徑: `/infrastructure`
+- **SRE 戰情室** (業務與 SLA 指標類別, 內建儀表板):
   - 描述: "跨團隊即時戰情看板，聚焦重大事件與 SLA 指標"
   - 擁有者: "事件指揮中心"
-  - 最後更新: "2025/09/18 17:45"
+  - 最後更新: "2025/09/18 17:15"
+  - 訪問路徑: `/warroom`
+- **API 服務狀態** (業務與 SLA 指標類別, Grafana 儀表板):
+  - 描述: "API 響應時間、錯誤率、吞吐量等服務指標"
+  - 擁有者: "SRE 平台團隊"
+  - 最後更新: "2025/09/18 16:45"
+  - 訪問路徑: `/dashboard/API服務狀態`
+  - Grafana URL: `http://localhost:3000/d/aead3d54-423b-4a91-b91c-dbdf40d7fff5`
+- **用戶體驗監控** (營運與容量類別, Grafana 儀表板):
+  - 描述: "頁面載入時間、用戶行為分析、錯誤追蹤"
+  - 擁有者: "前端團隊"
+  - 最後更新: "2025/09/18 17:00"
+  - 訪問路徑: `/dashboard/用戶體驗監控`
 
 
 **主要功能**
 1. **儀表板管理**: 創建、編輯、刪除監控儀表板
 2. **分類管理**: 支援多種類型儀表板的分類組織
-3. **權限控制**: 設定儀表板的訪問和編輯權限
-4. **發布管理**: 控制儀表板的發布狀態和範圍
-5. **統計監控**: 追蹤儀表板的訪問和使用統計
+3. **首頁設定**: 支援任一儀表板設為預設首頁
+4. **權限控制**: 設定儀表板的訪問和編輯權限
+5. **發布管理**: 控制儀表板的發布狀態和範圍
+6. **統計監控**: 追蹤儀表板的訪問和使用統計
+7. **多類型儀表板支援**: 統一管理內建儀表板和 Grafana 儀表板
+8. **智能導航**: 根據儀表板類型自動選擇合適的顯示方式
+9. **導航整合**: 點擊儀表板名稱直接跳轉對應頁面
 
 **操作流程**
 1. 選擇所需的分類標籤頁
 2. 查看儀表板列表和統計資訊
 3. 使用搜索篩選功能過濾儀表板
-4. 點擊操作按鈕進行管理操作
-5. 開啟儀表板查看詳細內容
+4. 點擊"設定為首頁"按鈕將儀表板設為預設首頁
+5. **儀表板訪問**:
+   - 內建儀表板: 點擊儀表板名稱直接跳轉到 React 組件頁面 (`/warroom`、`/infrastructure`)
+   - Grafana 儀表板: 點擊儀表板名稱跳轉到 DashboardViewPage 並嵌入 Grafana 儀表板
+6. 點擊操作按鈕進行管理操作
 
 ---
 
@@ -808,53 +930,39 @@
 ### 4.3 SRE 戰情室儀表板
 
 **頁面概述**
-SRE 戰情室儀表板作為預設首頁，提供跨團隊即時戰情看板，聚焦重大事件與 SLA 指標。
+SRE 戰情室儀表板提供跨團隊即時戰情看板，聚焦重大事件與 SLA 指標，移除了工具列操作按鈕，可設定為預設首頁。
+
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/SREWarRoomPage.tsx`
+- **路由配置**: `/frontend/src/config/routes.ts`
+- **組件依賴**:
+  - `/frontend/src/components/PageHeader.tsx`
+  - `/frontend/src/components/ContextualKPICard.tsx`
 
 **界面元素**
-- **頁面標題**: "SRE 戰情室儀表板"
-
-**工具列** (ToolbarActions):
-- 刷新按鈕 (ReloadOutlined, 重新整理戰情室數據)
-- 時間範圍選擇器 (DateRangePicker, 選擇監控時間範圍)
-- 匯出按鈕 (DownloadOutlined, 匯出戰情報告)
-- 全屏按鈕 (ExpandOutlined, 進入全屏模式)
-- 設定按鈕 (SettingOutlined, 自訂戰情室配置)
-- 警報模式切換 (BellOutlined, 切換警報模式)
+- **頁面標題**: "SRE 戰情室"
 
 **主要元件**
 - **頂部狀態卡片** (ContextualKPICard):
-  - 業務系統健康度 (dataIndex: 'system_health', 95%, 12/13 系統正常)
-  - 關鍵事件監控 (dataIndex: 'critical_events', 3個待處理事件)
-  - SLA 指標追蹤 (dataIndex: 'sla_metrics', 99.9% 可用度)
-  - 資源使用概覽 (dataIndex: 'resource_usage', 78% 平均使用率)
-- **即時監控面板**
-  - **系統狀態總覽** (ECharts Heatmap):
-    - 指標：延遲 / 流量 / 錯誤 / 可用度 (多維度熱力圖)
-    - 色彩區分健康 / 警告 / 嚴重 (紅/黃/綠顏色編碼)
-    - 實時數據更新 (每 30 秒自動刷新)
-  - **活躍事件列表** (List):
-    - 事件標題 (dataIndex: 'title', 事件標題, 支援點擊查看詳情)
-    - 嚴重程度 (dataIndex: 'severity', Critical/Warning/Info, 顏色標籤)
-    - 狀態 (dataIndex: 'status', New/Acknowledged/Resolved, 狀態標籤)
-    - 時間 (dataIndex: 'timestamp', 事件發生時間)
-    - 操作按鈕 (查看詳情/編輯/靜音)
-  - **資源健康地圖** (ECharts Bar Chart):
-  - 群組：Web 集群 / 資料庫 / 開發環境 / 災備系統
-    - 狀態：Healthy / Warning / Critical (柱狀圖顯示)
-    - 實時更新 (每 60 秒刷新)
-  - **效能指標趨勢** (ECharts Line Chart):
-    - 延遲趨勢 (dataIndex: 'latency', 平均延遲線圖)
-    - 錯誤率趨勢 (dataIndex: 'error_rate', 錯誤率線圖)
-    - CPU 使用率趨勢 (dataIndex: 'cpu_usage', CPU 使用率線圖)
-    - 記憶體使用率趨勢 (dataIndex: 'memory_usage', 記憶體使用率線圖)
-- **AI 分析面板** (Alert):
-  - 異常檢測結果 (TextArea, 智能分析結果)
-  - 建議操作 (List, 具體建議操作項目)
-  - 預測風險 (Card, 未來風險預測)
-- **快速操作區**:
-  - 事件處理快捷鍵 (Button Group, 常用事件處理按鈕)
-  - 資源重啟按鈕 (Button, 快速重啟異常資源)
-  - 通知靜音按鈕 (Button, 暫時靜音所有通知)
+  - 待處理事件 (5, 其中 2 嚴重)
+  - 處理中 (3, ↓15% 較昨日)
+  - 今日已解決 (12, ↑8% 較昨日)
+  - AI 每日簡報 (1, 系統效能與風險預測)
+- **第二排：AI 每日簡報**
+  - 整體系統穩定性分析
+  - 關鍵資源使用率監控
+  - 異常檢測和建議操作
+- **第三排：服務健康度和資源群組狀態**
+  - **服務健康度總覽** (Card):
+    - 檔案儲存健康度 (85% 健康, 10% 警告, 5% 嚴重)
+    - API 服務健康度 (92% 健康, 8% 警告, 0% 嚴重)
+    - 資料庫健康度 (88% 健康, 12% 警告, 0% 嚴重)
+    - 快取服務健康度 (90% 健康, 10% 警告, 0% 嚴重)
+  - **資源群組狀態總覽** (Card):
+    - Web 集群狀態 (12 健康, 3 警告, 1 嚴重)
+    - 資料庫集群狀態 (8 健康, 2 警告, 0 嚴重)
+    - 開發環境狀態 (15 健康, 1 警告, 2 嚴重)
+    - 災備系統狀態 (9 健康, 4 警告, 0 嚴重)
 
 **主要功能**
 1. **即時監控**: 系統狀態與事件總覽
@@ -1265,12 +1373,6 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 5. 執行重試或下載日誌
 
 ---
-
-
-
-
-
-
 
 ## 7. 設定
 
@@ -1757,15 +1859,21 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 ---
 
-## 8. 個人資料與偏好設定
+## 8. 個人設定
 
 **頁面概述**
-提供用戶個人資訊管理、偏好設定和安全配置功能。
+提供用戶個人資訊管理、偏好設定和安全配置功能，已統一更名為"個人設定"。
 
 **頁籤子頁面**
 1. 個人資訊 (PersonalInformationPage)
-2. 密碼安全 (PasswordSecurityPage)
+2. 安全設定 (SecuritySettingsPage)
 3. 偏好設定 (PreferenceSettingsPage)
+
+**KPI 統計卡片**
+1. 最後更新 (3天前, 個人資料更新時間)
+2. 關聯團隊 (2個, 所屬團隊數量)
+3. 安全評分 (92分, 密碼和2FA 安全評估)
+4. 總人員數 (156, 142 個啟用中)
 
 ---
 
@@ -1773,6 +1881,14 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 **頁面概述**
 個人資訊頁面顯示用戶的基本資料，由 Keycloak 統一管理。
+
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/ProfilePage.tsx` (個人資訊標籤)
+- **路由配置**: `/frontend/src/config/routes.ts`
+- **組件依賴**:
+  - `/frontend/src/components/PageHeader.tsx`
+  - `/frontend/src/components/ContextualKPICard.tsx`
+  - `/frontend/src/components/profile/PersonalInfoForm.tsx`
 
 **界面元素**
 - **頁面標題**: "個人資訊"
@@ -1800,13 +1916,21 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 ---
 
-### 8.2 密碼安全頁面
+### 8.2 安全設定頁面
 
 **頁面概述**
-密碼安全頁面提供密碼變更和安全設定功能，由 Keycloak 統一管理。
+安全設定頁面提供密碼變更和安全設定功能，由 Keycloak 統一管理。
+
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/ProfilePage.tsx` (安全設定標籤)
+- **路由配置**: `/frontend/src/config/routes.ts`
+- **組件依賴**:
+  - `/frontend/src/components/PageHeader.tsx`
+  - `/frontend/src/components/ContextualKPICard.tsx`
+  - `/frontend/src/components/profile/SecuritySettings.tsx`
 
 **界面元素**
-- **頁面標題**: "密碼安全"
+- **頁面標題**: "安全設定"
 
 **密碼變更表單** (Form, 唯讀):
 - **舊密碼** (Input.Password, name="old_password", 占位提示: "輸入當前密碼")
@@ -1845,12 +1969,29 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 **頁面概述**
 偏好設定頁面提供用戶個性化操作體驗的配置選項。
 
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/ProfilePage.tsx` (偏好設定標籤)
+- **路由配置**: `/frontend/src/config/routes.ts`
+- **組件依賴**:
+  - `/frontend/src/components/PageHeader.tsx`
+  - `/frontend/src/components/ContextualKPICard.tsx`
+  - `/frontend/src/components/profile/PreferencesSettings.tsx`
+
 **界面元素**
 - **頁面標題**: "偏好設定"
 
 **偏好設定表單** (Form):
 - **介面主題** (Select, name="theme", 選項: "淺色", "深色", "自動")
-- **預設頁面** (Select, name="default_page", 選項: "SRE 戰情室", "事件管理", "資源管理", "儀表板管理")
+- **預設頁面** (Select, name="default_page", 支援任一儀表板作為首頁):
+  - SRE 戰情室
+  - 基礎設施洞察
+  - 容量規劃儀表板
+  - 自動化效能總覽
+  - 團隊自訂儀表板
+  - 事件管理
+  - 資源管理
+  - 分析中心
+  - 自動化中心
 - **語言** (Select, name="language", 選項: "繁體中文", "English")
 - **時區** (Select, name="timezone", 選項: "Asia/Taipei", "UTC", "America/New_York" 等)
 - **通知偏好** (Checkbox Group):
@@ -1869,16 +2010,17 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 
 **主要功能**
 1. **主題設定**: 選擇介面顏色主題
-2. **預設頁面**: 設定登入後預設頁面
+2. **預設首頁**: 支援任一儀表板作為預設首頁，包括自訂儀表板
 3. **語言時區**: 配置地區和語言設定
 4. **通知偏好**: 自訂通知接收方式
 5. **顯示選項**: 調整介面顯示效果
+6. **儀表板偏好**: 設定儀表板刷新間隔和自動保存佈局
 
 **操作流程**
 1. 選擇介面主題和語言
-2. 設定預設頁面和時區
-3. 配置通知偏好
-4. 調整顯示設定
+2. 設定預設首頁（可選擇任一儀表板）
+3. 配置時區和通知偏好
+4. 調整顯示設定和儀表板偏好
 5. 儲存並預覽變更效果
 
 ---
@@ -1896,67 +2038,79 @@ SRE 平台總共包含 **8 個核心功能模組**，每個模組都有明確的
 5. **分析中心** - 深入了解系統趨勢、效能瓶頸和運營數據
 6. **自動化中心** - 提供自動化腳本管理、排程配置和執行追蹤功能
 7. **設定** - 提供系統全域配置管理，包含身份與存取管理、通知管理、平台設定
-8. **個人資料與偏好設定** - 提供用戶個人資訊管理、偏好設定和安全配置功能
+8. **個人設定** - 提供用戶個人資訊管理、偏好設定和安全配置功能
 
 **系統特性**
 - **全局搜索** - 平台級搜索功能，支援跨模組快速檢索
+- **靈活首頁設定** - 支援任一儀表板作為預設首頁，包括自訂儀表板
 - **統一設計語言** - 基於 Ant Design 5.19.1 設計系統
 - **響應式佈局** - 支援桌面和移動端訪問
 - **深色主題** - 完整的深色模式支援
+- **個性化配置** - 用戶可自訂預設頁面、主題和儀表板偏好
 
-### 9.2 原型實現頁面
+### 9.2 平台頁面統計
 
-根據 `sitemap.md` 和 `prototype.html` 的對應分析，SRE 平台共實現了 **32 個功能頁面**：
+SRE 平台共實現了 **32 個功能頁面**：
 
 **核心功能模組對應**
 1. 登入與導航 (4個頁面)
-   - 登入頁面 (LoginPage)
-   - 使用者選單 (UserMenu)
-   - 全局搜索欄 (GlobalSearch)
-   - 通知中心 (NotificationCenter)
+   - 登入頁面 (LoginPage) - `/frontend/src/pages/LoginPage.tsx` (待實現)
+   - 使用者選單 (UserMenu) - `/frontend/src/components/UserMenu.tsx`
+   - 全局搜索欄 (GlobalSearch) - `/frontend/src/components/GlobalSearch.tsx` (待實現)
+   - 通知中心 (NotificationCenter) - `/frontend/src/components/NotificationCenter.tsx`
 2. 事件管理 (3個頁面)
-   - 事件列表 (EventListPage)
-   - 事件規則 (EventRulePage)
-   - 靜音規則 (SilenceRulePage)
+   - 事件列表 (EventListPage) - `/frontend/src/pages/IncidentsPage.tsx`
+   - 事件規則 (EventRulePage) - `/frontend/src/pages/EventRulePage.tsx`
+   - 靜音規則 (SilenceRulePage) - `/frontend/src/pages/SilenceRulePage.tsx`
 3. 資源管理 (3個頁面)
-   - 資源列表 (ResourceListPage)
-   - 資源群組 (ResourceGroupPage)
-   - 拓撲視圖 (TopologyViewPage)
+   - 資源列表 (ResourceListPage) - `/frontend/src/pages/ResourcesPage.tsx`
+   - 資源群組 (ResourceGroupPage) - `/frontend/src/pages/ResourceGroupPage.tsx`
+   - 拓撲視圖 (TopologyViewPage) - `/frontend/src/pages/ResourceTopologyPage.tsx`
 4. 儀表板管理 (3個頁面)
-   - 儀表板列表 (DashboardListPage)
-   - 基礎設施洞察儀表板 (SREInfrastructureInsightPage)
-   - SRE 戰情室儀表板 (SREWarRoomPage)
+   - 儀表板列表 (DashboardPage) - `/frontend/src/pages/DashboardPage.tsx`
+   - 基礎設施洞察儀表板 (SREInfrastructureInsightPage) - `/frontend/src/pages/SREInfrastructureInsightPage.tsx`
+   - SRE 戰情室儀表板 (SREWarRoomPage) - `/frontend/src/pages/SREWarRoomPage.tsx`
 5. 分析中心 (3個頁面)
-   - 容量規劃 (CapacityPlanningPage)
-   - 資源負載分析 (ResourceLoadAnalysisPage)
-   - AI 洞察 (AICapabilityPage)
+   - 容量規劃 (CapacityPlanningPage) - `/frontend/src/pages/AnalyzingPage.tsx`
+   - 資源負載分析 (ResourceLoadAnalysisPage) - `/frontend/src/pages/AnalyzingPage.tsx` (待實現)
+   - AI 洞察 (AICapabilityPage) - `/frontend/src/pages/AnalyzingPage.tsx` (待實現)
 6. 自動化中心 (3個頁面)
-   - 腳本庫 (ScriptLibraryPage)
-   - 排程管理 (ScheduleManagementPage)
-   - 執行日誌 (ExecutionLogsPage)
+   - 腳本庫 (ScriptLibraryPage) - `/frontend/src/pages/AutomationPage.tsx`
+   - 排程管理 (ScheduleManagementPage) - `/frontend/src/pages/AutomationPage.tsx` (待實現)
+   - 執行日誌 (ExecutionLogsPage) - `/frontend/src/pages/AutomationPage.tsx` (待實現)
 7. 設定 (13個頁面)
    - 身份與存取管理 (4個頁面)
-     - 人員管理 (UserManagementPage)
-     - 團隊管理 (TeamManagementPage)
-     - 角色管理 (RoleManagementPage)
-     - 審計日誌 (AuditLogsPage)
+     - 人員管理 (UserManagementPage) - `/frontend/src/pages/IdentitySettingsPage.tsx`
+     - 團隊管理 (TeamManagementPage) - `/frontend/src/pages/IdentitySettingsPage.tsx` (待實現)
+     - 角色管理 (RoleManagementPage) - `/frontend/src/pages/IdentitySettingsPage.tsx` (待實現)
+     - 審計日誌 (AuditLogsPage) - `/frontend/src/pages/IdentitySettingsPage.tsx` (待實現)
    - 通知管理 (3個頁面)
-     - 通知策略 (NotificationStrategyPage)
-     - 通知管道 (NotificationChannelPage)
-     - 通知歷史 (NotificationHistoryPage)
+     - 通知策略 (NotificationStrategyPage) - `/frontend/src/pages/NotificationSettingsPage.tsx`
+     - 通知管道 (NotificationChannelPage) - `/frontend/src/pages/NotificationSettingsPage.tsx` (待實現)
+     - 通知歷史 (NotificationHistoryPage) - `/frontend/src/pages/NotificationSettingsPage.tsx` (待實現)
    - 平台設定 (3個頁面)
-     - 標籤管理 (TagManagementPage)
-     - 郵件設定 (EmailSettingsPage)
-     - 身份驗證 (AuthSettingsPage)
-8. 個人資料與偏好設定 (3個頁面)
-   - 個人資訊 (PersonalInformationPage)
-   - 密碼安全 (PasswordSecurityPage)
-   - 偏好設定 (PreferenceSettingsPage)
+     - 標籤管理 (TagManagementPage) - `/frontend/src/pages/PlatformSettingsPage.tsx`
+     - 郵件設定 (EmailSettingsPage) - `/frontend/src/pages/PlatformSettingsPage.tsx` (待實現)
+     - 身份驗證 (AuthSettingsPage) - `/frontend/src/pages/PlatformSettingsPage.tsx` (待實現)
+8. 個人設定 (3個頁面)
+   - 個人資訊 (PersonalInformationPage) - `/frontend/src/pages/ProfilePage.tsx`
+   - 安全設定 (SecuritySettingsPage) - `/frontend/src/pages/ProfilePage.tsx`
+   - 偏好設定 (PreferenceSettingsPage) - `/frontend/src/pages/ProfilePage.tsx`
 
-**頁面實現狀態**
-- ✅ **已完整實現**: 32個頁面全部完成詳細規格記錄
-- ✅ **設計對齊**: 所有頁面規格與 `sitemap.md` 完全一致
-- ✅ **功能完整**: 每個頁面都包含 KPI 卡片、工具列、表格和操作邏輯
+
+**最新更新 (2025-09-22)**
+- 📁 **檔案對應記錄**: 為所有功能模組添加前端實現檔案路徑對應
+- 🔄 **個人設定頁面**: 統一更名為"個人設定"，移除"設定"選項，"個人資料"直接導航至個人設定
+- 🔄 **儀表板管理**: DashboardListPage 改為 DashboardPage，實現完整的表格列表和分類篩選功能
+- 🔄 **首頁設定**: 支援任一儀表板作為預設首頁，不再固定為 SRE 戰情室
+- 🔄 **儀表板操作**: 新增"設定為首頁"功能，允許用戶選擇任意儀表板作為預設首頁
+- 🔄 **偏好設定**: 擴展預設頁面選項，包含所有可用的儀表板類型
+- 🔄 **路由結構**: 更新路由配置，支援 `/infrastructure` 和 `/warroom` 導航
+- 🔄 **使用者選單**: 移除"設定"選項，簡化導航結構
+- 🔄 **安全設定**: 更新為"安全設定"，移除未使用的"密碼安全"頁面
+- 📊 **平台頁面統計**: 詳細記錄 32 個功能頁面的前端實現檔案路徑
+- 📋 **儀表板類型說明**: 新增內建儀表板和 Grafana 儀表板的詳細說明和區分方式
+- 📊 **儀表板統計更新**: 更新總儀表板數至 25 個，包含 15 個內建儀表板和 10 個 Grafana 儀表板
 
 ### 9.3 設計特點
 
@@ -1965,6 +2119,16 @@ SRE 平台總共包含 **8 個核心功能模組**，每個模組都有明確的
 - 實現完整的深色主題支援
 - 統一的色彩系統和間距規範
 - 響應式網格系統適配多螢幕尺寸
+
+**檔案結構規範**
+- **頁面組件**: `/frontend/src/pages/` - 包含所有主要功能頁面 (17個檔案)
+- **共用組件**: `/frontend/src/components/` - 包含可重用的UI組件 (11個檔案)
+  - 核心組件: `PageHeader.tsx`, `ToolbarActions.tsx`, `ContextualKPICard.tsx`
+  - 個人設定: `profile/PersonalInfoForm.tsx`, `profile/PreferencesSettings.tsx`, `profile/SecuritySettings.tsx`
+- **配置管理**: `/frontend/src/config/routes.ts` - 統一路由配置管理
+- **工具函數**: `/frontend/src/utils/` - 共用工具函數和常量 (2個檔案)
+- **佈局組件**: `/frontend/src/layouts/AppLayout.tsx` - 應用主佈局
+- **樣式系統**: `/frontend/src/styles/` - 設計系統和變量定義 (2個檔案)
 
 **元件化架構**
 - 33個頁面使用 20+ 種 Ant Design 元件
@@ -1985,22 +2149,31 @@ SRE 平台總共包含 **8 個核心功能模組**，每個模組都有明確的
 **SRE 工程師**
 - 主要使用事件管理、資源管理、儀表板管理
 - 關注系統穩定性和效能監控
+- 可將 SRE 戰情室或基礎設施洞察設為首頁
 - 需要配置通知策略和自動化腳本
 
 **開發團隊**
 - 主要使用資源管理、分析中心
 - 關注應用效能和容量規劃
+- 可將容量規劃儀表板或資源監控設為首頁
 - 需要查看系統健康度和錯誤趨勢
 
 **管理層**
 - 主要使用儀表板管理、分析中心
 - 關注業務指標和整體系統健康度
+- 可將業務儀表板或分析報告設為首頁
 - 需要查看高層次的統計報告
 
 **平台管理員**
 - 主要使用設定、通知管理
 - 負責系統配置和用戶權限管理
+- 可將管理儀表板設為首頁
 - 需要管理標籤系統和認證設定
+
+**自訂儀表板用戶**
+- 可創建個人化儀表板並設為預設首頁
+- 支援團隊共享的自訂儀表板
+- 可根據工作需求靈活調整首頁內容
 
 ---
 
@@ -2276,7 +2449,7 @@ CREATE TABLE event_history (
   - 身份驗證頁面 (AuthSettingsPage)
     - 指標概覽卡片: 認證提供商狀態、活躍會話數、登入成功率、失敗次數
 
-**個人資料與偏好設定**
+**個人設定**
 - 個人資訊頁面 (PersonalInformationPage)
   - 指標概覽卡片: 個人資料完整度、最後更新時間、關聯團隊數、角色數量
 - 密碼安全頁面 (PasswordSecurityPage)
@@ -2424,6 +2597,15 @@ CREATE TABLE event_history (
 - **Day.js**: 日期時間處理
 - **Babel Standalone**: 瀏覽器內 JSX 轉換
 
+**前端檔案結構**
+- **主應用**: `/frontend/src/App.tsx` - 應用入口和路由配置
+- **頁面組件**: `/frontend/src/pages/` - 功能頁面實現 (17個檔案)
+- **共用組件**: `/frontend/src/components/` - UI組件 (11個檔案)
+- **配置管理**: `/frontend/src/config/routes.ts` - 路由和選單配置
+- **工具函數**: `/frontend/src/utils/` - 共用工具函數 (2個檔案)
+- **樣式定義**: `/frontend/src/styles/` - 設計系統和變量 (2個檔案)
+- **佈局系統**: `/frontend/src/layouts/AppLayout.tsx` - 主佈局組件
+
 **設計系統特性**
 - **Design Tokens**: 統一的設計標記系統
 - **8px 網格系統**: 規範化的間距系統
@@ -2432,10 +2614,11 @@ CREATE TABLE event_history (
 - **深色主題**: 完整的深色模式支援
 
 **效能優化**
-- React.memo 用於元件記憶化
-- useCallback 和 useMemo 優化渲染
-- 圖表虛擬化渲染
-- 按需載入和代碼分割
-- CDN 資源加速載入
+- **React.memo 用於元件記憶化** - `/frontend/src/components/` 組件
+- **useCallback 和 useMemo 優化渲染** - 避免不必要的重渲染
+- **圖表虛擬化渲染** - ECharts 組件效能優化
+- **按需載入和代碼分割** - 路由級別的 lazy loading
+- **CDN 資源加速載入** - 靜態資源優化
+- **檔案路徑規範** - 清晰的目錄結構便於維護和擴展
 
 ---

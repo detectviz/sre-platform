@@ -1,10 +1,6 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Table, Tag, Button, Tooltip, Space, Input } from 'antd'
-
-const { Search } = Input
-import { ContextualKPICard } from '../components/ContextualKPICard'
-import { ToolbarActions } from '../components/ToolbarActions'
 import {
   EyeOutlined,
   EditOutlined,
@@ -13,6 +9,12 @@ import {
   ShareAltOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
+
+const { Search } = Input
+import { ContextualKPICard } from '../components/ContextualKPICard'
+import { CategoryFilter } from '../components/CategoryFilter'
+import { useCategories } from '../hooks/useCategories'
+import { getCategoryColor } from '../utils/category'
 
 interface DashboardData {
   key: string
@@ -25,12 +27,6 @@ interface DashboardData {
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate()
-  const [selectedCategory, setSelectedCategory] = useState<string>('全部')
-  const [searchText, setSearchText] = useState<string>('')
-  const handleSearch = (value: string) => {
-    console.log('搜尋儀表板:', value)
-    setSearchText(value)
-  }
 
   // 儀表板數據
   const dashboardData = [
@@ -40,7 +36,7 @@ const DashboardPage: React.FC = () => {
       category: '基礎設施洞察',
       owner: 'SRE 平台團隊',
       updateTime: '2025/09/18 16:30',
-      color: '#1890ff',
+      color: getCategoryColor('基礎設施洞察'),
     },
     {
       key: '2',
@@ -48,7 +44,7 @@ const DashboardPage: React.FC = () => {
       category: '業務與 SLA 指標',
       owner: '事件指揮中心',
       updateTime: '2025/09/18 17:15',
-      color: '#52c41a',
+      color: getCategoryColor('業務與 SLA 指標'),
     },
     {
       key: '3',
@@ -56,7 +52,7 @@ const DashboardPage: React.FC = () => {
       category: '營運與容量',
       owner: '平台架構組',
       updateTime: '2025/09/17 00:05',
-      color: '#faad14',
+      color: getCategoryColor('營運與容量'),
     },
     {
       key: '4',
@@ -64,7 +60,7 @@ const DashboardPage: React.FC = () => {
       category: '自動化與效率',
       owner: '自動化中心',
       updateTime: '2025/09/17 19:40',
-      color: '#722ed1',
+      color: getCategoryColor('自動化與效率'),
     },
     {
       key: '5',
@@ -72,26 +68,106 @@ const DashboardPage: React.FC = () => {
       category: '團隊自訂',
       owner: 'DevOps 小組',
       updateTime: '2025/09/12 21:20',
-      color: '#13c2c2',
+      color: getCategoryColor('團隊自訂'),
+    },
+    // 新增測試資料
+    {
+      key: '6',
+      name: '網路效能監控',
+      category: '基礎設施洞察',
+      owner: '網路團隊',
+      updateTime: '2025/09/18 14:22',
+      color: getCategoryColor('基礎設施洞察'),
+    },
+    {
+      key: '7',
+      name: '資料庫效能儀表板',
+      category: '基礎設施洞察',
+      owner: 'DBA 團隊',
+      updateTime: '2025/09/18 15:45',
+      color: getCategoryColor('基礎設施洞察'),
+    },
+    {
+      key: '8',
+      name: 'API 服務狀態',
+      category: '業務與 SLA 指標',
+      owner: 'API 團隊',
+      updateTime: '2025/09/18 16:10',
+      color: getCategoryColor('業務與 SLA 指標'),
+    },
+    {
+      key: '9',
+      name: '用戶體驗監控',
+      category: '業務與 SLA 指標',
+      owner: '前端團隊',
+      updateTime: '2025/09/18 17:30',
+      color: getCategoryColor('業務與 SLA 指標'),
+    },
+    {
+      key: '10',
+      name: 'Kubernetes 集群監控',
+      category: '營運與容量',
+      owner: '平台團隊',
+      updateTime: '2025/09/18 13:15',
+      color: getCategoryColor('營運與容量'),
+    },
+    {
+      key: '11',
+      name: 'CI/CD 流程監控',
+      category: '自動化與效率',
+      owner: 'DevOps 團隊',
+      updateTime: '2025/09/18 18:00',
+      color: getCategoryColor('自動化與效率'),
+    },
+    {
+      key: '12',
+      name: '成本優化儀表板',
+      category: '營運與容量',
+      owner: '財務團隊',
+      updateTime: '2025/09/18 11:30',
+      color: getCategoryColor('營運與容量'),
+    },
+    {
+      key: '13',
+      name: '安全性監控儀表板',
+      category: '團隊自訂',
+      owner: '安全團隊',
+      updateTime: '2025/09/18 12:45',
+      color: getCategoryColor('團隊自訂'),
+    },
+    {
+      key: '14',
+      name: '測試環境監控',
+      category: '團隊自訂',
+      owner: 'QA 團隊',
+      updateTime: '2025/09/18 10:15',
+      color: getCategoryColor('團隊自訂'),
+    },
+    {
+      key: '15',
+      name: '備份狀態監控',
+      category: '營運與容量',
+      owner: '運維團隊',
+      updateTime: '2025/09/18 09:30',
+      color: getCategoryColor('營運與容量'),
     },
   ]
 
-  // 分類按鈕配置
-  const categories = [
-    { key: '全部', label: '全部', count: dashboardData.length },
-    { key: '基礎設施洞察', label: '基礎設施洞察', count: dashboardData.filter(item => item.category === '基礎設施洞察').length },
-    { key: '業務與 SLA 指標', label: '業務與 SLA 指標', count: dashboardData.filter(item => item.category === '業務與 SLA 指標').length },
-    { key: '營運與容量', label: '營運與容量', count: dashboardData.filter(item => item.category === '營運與容量').length },
-    { key: '自動化與效率', label: '自動化與效率', count: dashboardData.filter(item => item.category === '自動化與效率').length },
-    { key: '團隊自訂', label: '團隊自訂', count: dashboardData.filter(item => item.category === '團隊自訂').length },
-  ]
+  // 使用分類管理 Hook
+  const {
+    categories,
+    selectedCategory,
+    setSelectedCategory,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    searchText,
+    setSearchText,
+    filteredData
+  } = useCategories(dashboardData, 'category', ['name', 'owner'])
 
-  // 過濾數據
-  const filteredData = dashboardData.filter(item => {
-    const matchesCategory = selectedCategory === '全部' || item.category === selectedCategory
-    const matchesSearch = searchText === '' || item.name.toLowerCase().includes(searchText.toLowerCase()) || item.owner.toLowerCase().includes(searchText.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+  const handleSearch = (value: string) => {
+    console.log('搜尋儀表板:', value, '當前搜尋狀態:', searchText)
+    setSearchText(value)
+  }
 
   const columns: ColumnsType<DashboardData> = [
     {
@@ -116,11 +192,10 @@ const DashboardPage: React.FC = () => {
               fontSize: '14px'
             }}
             onClick={() => {
-              if (record.name === '基礎設施洞察') {
-                navigate('/infrastructure')
-              } else if (record.name === 'SRE 戰情室') {
-                navigate('/warroom')
-              }
+              // 跳轉到動態儀表板頁面
+              const dashboardPath = `/dashboard/${encodeURIComponent(record.name)}`
+              console.log(`導航到儀表板: ${record.name} -> ${dashboardPath}`)
+              navigate(dashboardPath)
             }}
           >
             {text}
@@ -133,11 +208,7 @@ const DashboardPage: React.FC = () => {
       dataIndex: 'category',
       key: 'category',
       render: (category: string) => (
-        <Tag color={category === '基礎設施洞察' ? 'blue' :
-          category === '業務與 SLA 指標' ? 'green' :
-            category === '營運與容量' ? 'orange' :
-              category === '自動化與效率' ? 'purple' :
-                category === '團隊自訂' ? 'cyan' : 'default'}>
+        <Tag color={getCategoryColor(category)}>
           {category}
         </Tag>
       ),
@@ -181,9 +252,9 @@ const DashboardPage: React.FC = () => {
   const kpiData = [
     {
       title: '總儀表板數',
-      value: '23',
+      value: '15',
       description: '包含業務和技術儀表板',
-      trend: '+2',
+      trend: '+3',
       status: 'info' as const,
     },
     {
@@ -296,84 +367,10 @@ const DashboardPage: React.FC = () => {
         ))}
       </div>
 
-      <ToolbarActions
-        showRefresh={false}
-        showSearch={false}
-        actions={[]}
-        middleContent={
-          <Button.Group style={{
-            borderRadius: 'var(--radius-lg)',
-            overflow: 'hidden',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}>
-            {categories.map((category, index) => {
-              const getCategoryColor = (categoryKey: string) => {
-                switch (categoryKey) {
-                  case '全部': return '#1890ff'
-                  case '基礎設施洞察': return '#1890ff'
-                  case '業務與 SLA 指標': return '#52c41a'
-                  case '營運與容量': return '#fa8c16'
-                  case '自動化與效率': return '#9254de'
-                  case '團隊自訂': return '#13c2c2'
-                  default: return '#1890ff'
-                }
-              }
-
-              const isSelected = selectedCategory === category.key
-              const color = getCategoryColor(category.key)
-
-              return (
-                <Button
-                  key={category.key}
-                  type="default"
-                  onClick={() => setSelectedCategory(category.key)}
-                  style={{
-                    height: '36px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '0 14px',
-                    fontWeight: 500,
-                    border: 'none',
-                    borderRadius: '0',
-                    background: isSelected ? 'var(--brand-primary)' : 'rgba(255, 255, 255, 0.05)',
-                    color: isSelected ? 'white' : 'rgba(255, 255, 255, 0.85)',
-                    borderRight: index < categories.length - 1 ? '1px solid rgba(255, 255, 255, 0.2)' : 'none',
-                    position: 'relative'
-                  }}
-                >
-                  {category.key !== '全部' && (
-                    <div style={{
-                      width: '6px',
-                      height: '6px',
-                      borderRadius: '50%',
-                      background: color,
-                      opacity: 0.8
-                    }} />
-                  )}
-                  <span style={{ fontSize: '13px' }}>
-                    {category.label}
-                  </span>
-                  <div style={{
-                    background: `${color}20`,
-                    color: color,
-                    padding: '2px 6px',
-                    borderRadius: '8px',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    minWidth: '18px',
-                    textAlign: 'center',
-                    lineHeight: '14px'
-                  }}>
-                    {category.count}
-                  </div>
-                </Button>
-              )
-            })}
-          </Button.Group>
-        }
-        middleContentPosition="left"
+      <CategoryFilter
+        categories={categories}
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
       />
 
       <Table

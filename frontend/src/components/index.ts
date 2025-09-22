@@ -3,6 +3,7 @@ export { ToolbarActions, type FilterOption, type ToolbarAction, type ColumnOptio
 export { PageHeader } from './PageHeader'
 export { NotificationCenter } from './NotificationCenter'
 export { UserMenu } from './UserMenu'
+export { GrafanaDashboard } from './GrafanaDashboard'
 
 // Type exports for external use
 export type { FilterOption as FilterOptionType } from './ToolbarActions'
@@ -18,4 +19,5 @@ export { default as NotificationSettingsPage } from '../pages/NotificationSettin
 export { default as PlatformSettingsPage } from '../pages/PlatformSettingsPage'
 export { default as SREWarRoomPage } from '../pages/SREWarRoomPage'
 export { default as SREInfrastructureInsightPage } from '../pages/SREInfrastructureInsightPage'
+export { default as DashboardViewPage } from '../pages/DashboardViewPage'
 // Removed HomePage export as it's no longer used

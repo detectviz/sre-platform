@@ -68,20 +68,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
+              $ref: "#/components/schemas/LoginRequest"
       responses:
-        '200':
+        "200":
           description: 登入成功，回傳存取與刷新令牌。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/TokenResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /auth/logout:
     post:
       tags:
@@ -89,10 +89,10 @@ paths:
       summary: 登出並註銷目前的存取令牌
       operationId: logout
       responses:
-        '204':
+        "204":
           description: 已成功登出。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /auth/refresh:
     post:
       tags:
@@ -104,18 +104,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RefreshRequest'
+              $ref: "#/components/schemas/RefreshRequest"
       responses:
-        '200':
+        "200":
           description: 成功換發新的令牌。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TokenResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '500':
-          $ref: '#/components/responses/InternalError'
+                $ref: "#/components/schemas/TokenResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /me:
     get:
       tags:
@@ -123,14 +123,14 @@ paths:
       summary: 取得目前登入者的個人資訊
       operationId: getCurrentUser
       responses:
-        '200':
+        "200":
           description: 回傳使用者基本資料與角色。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserProfile'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /me/preferences:
     get:
       tags:
@@ -138,14 +138,14 @@ paths:
       summary: 取得使用者偏好設定
       operationId: getPreferences
       responses:
-        '200':
+        "200":
           description: 回傳偏好設定資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserPreference'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/UserPreference"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     put:
       tags:
         - 個人偏好
@@ -156,18 +156,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/PreferenceUpdateRequest'
+              $ref: "#/components/schemas/PreferenceUpdateRequest"
       responses:
-        '200':
+        "200":
           description: 偏好設定已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserPreference'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/UserPreference"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /me/security/logins:
     get:
       tags:
@@ -175,24 +175,24 @@ paths:
       summary: 取得最近登入記錄
       operationId: listSecurityLogins
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
-        '200':
+        "200":
           description: 回傳登入記錄列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/SecurityLoginRecord'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/SecurityLoginRecord"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /search:
     get:
       tags:
@@ -211,10 +211,10 @@ paths:
           description: 限制搜尋類型 (以逗號分隔)。
           schema:
             type: string
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
-        '200':
+        "200":
           description: 回傳依類型分組的搜尋結果。
           content:
             application/json:
@@ -226,9 +226,9 @@ paths:
                   groups:
                     type: array
                     items:
-                      $ref: '#/components/schemas/GlobalSearchGroup'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                      $ref: "#/components/schemas/GlobalSearchGroup"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /notifications/summary:
     get:
       tags:
@@ -236,14 +236,14 @@ paths:
       summary: 取得通知中心摘要
       operationId: getNotificationSummary
       responses:
-        '200':
+        "200":
           description: 回傳未讀數量與分類統計。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/NotificationSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /notifications:
     get:
       tags:
@@ -251,8 +251,8 @@ paths:
       summary: 取得通知列表
       operationId: listNotifications
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: status
           in: query
           description: 依通知狀態篩選。
@@ -266,21 +266,21 @@ paths:
             type: string
             enum: [critical, warning, info, success]
       responses:
-        '200':
+        "200":
           description: 回傳個人通知列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/NotificationItem'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/NotificationItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /notifications/{notification_id}/read:
     post:
       tags:
@@ -299,18 +299,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/MarkNotificationReadRequest'
+              $ref: "#/components/schemas/MarkNotificationReadRequest"
       responses:
-        '200':
+        "200":
           description: 已更新通知狀態。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationItem'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/NotificationItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /notifications/mark-all-read:
     post:
       tags:
@@ -318,14 +318,14 @@ paths:
       summary: 將所有通知標記為已讀
       operationId: markAllNotificationsRead
       responses:
-        '200':
+        "200":
           description: 返回更新後的通知摘要。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/NotificationSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /events/summary:
     get:
       tags:
@@ -346,14 +346,14 @@ paths:
             type: string
             format: date-time
       responses:
-        '200':
+        "200":
           description: 事件總覽統計。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventSummaryMetrics'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/EventSummaryMetrics"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /events:
     get:
       tags:
@@ -361,10 +361,10 @@ paths:
       summary: 取得事件列表
       operationId: listEvents
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           schema:
@@ -427,21 +427,21 @@ paths:
             items:
               type: string
       responses:
-        '200':
+        "200":
           description: 回傳事件分頁列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/EventSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/EventSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 事件管理
@@ -452,20 +452,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateEventRequest'
+              $ref: "#/components/schemas/CreateEventRequest"
       responses:
-        '201':
+        "201":
           description: 事件建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/EventDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /events/{event_id}:
     parameters:
       - name: event_id
@@ -480,16 +480,16 @@ paths:
       summary: 取得事件詳情
       operationId: getEventById
       responses:
-        '200':
+        "200":
           description: 回傳事件詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 事件管理
@@ -500,32 +500,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateEventRequest'
+              $ref: "#/components/schemas/UpdateEventRequest"
       responses:
-        '200':
+        "200":
           description: 事件已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 事件管理
       summary: 刪除事件
       operationId: deleteEvent
       responses:
-        '204':
+        "204":
           description: 事件已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /events/{event_id}/timeline:
     get:
       tags:
@@ -533,7 +533,7 @@ paths:
       summary: 取得事件處理歷史
       operationId: getEventTimeline
       responses:
-        '200':
+        "200":
           description: 回傳事件歷程清單。
           content:
             application/json:
@@ -543,11 +543,11 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/EventTimelineEntry'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                      $ref: "#/components/schemas/EventTimelineEntry"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags:
         - 事件管理
@@ -558,20 +558,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EventTimelineEntry'
+              $ref: "#/components/schemas/EventTimelineEntry"
       responses:
-        '201':
+        "201":
           description: 已新增事件歷程。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventTimelineEntry'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventTimelineEntry"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /events/{event_id}/related:
     get:
       tags:
@@ -579,7 +579,7 @@ paths:
       summary: 取得關聯事件
       operationId: getRelatedEvents
       responses:
-        '200':
+        "200":
           description: 回傳關聯事件列表。
           content:
             application/json:
@@ -589,11 +589,11 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/EventRelatedItem'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                      $ref: "#/components/schemas/EventRelatedItem"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /events/{event_id}/acknowledge:
     post:
       tags:
@@ -605,18 +605,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AcknowledgeEventRequest'
+              $ref: "#/components/schemas/AcknowledgeEventRequest"
       responses:
-        '200':
+        "200":
           description: 事件已標記為接手。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /events/{event_id}/analysis:
     get:
       tags:
@@ -624,32 +624,32 @@ paths:
       summary: 取得最新的 AI 事件分析
       operationId: getEventAnalysis
       responses:
-        '200':
+        "200":
           description: 回傳事件 AI 分析內容。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventAnalysisReport'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventAnalysisReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags:
         - 事件管理
       summary: 重新產生 AI 事件分析
       operationId: generateEventAnalysis
       responses:
-        '202':
+        "202":
           description: 已觸發分析，回傳最新結果或排程資訊。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventAnalysisReport'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventAnalysisReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /events/{event_id}/silence:
     post:
       tags:
@@ -661,18 +661,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/QuickSilenceRequest'
+              $ref: "#/components/schemas/QuickSilenceRequest"
       responses:
-        '201':
+        "201":
           description: 已建立新的靜音規則。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SilenceRuleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SilenceRuleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /event-rules/summary:
     get:
       tags:
@@ -680,7 +680,7 @@ paths:
       summary: 取得事件規則統計
       operationId: getEventRuleSummary
       responses:
-        '200':
+        "200":
           description: 規則啟用狀態統計。
           content:
             application/json:
@@ -693,8 +693,8 @@ paths:
                     type: integer
                   automation_enabled:
                     type: integer
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /event-rules:
     get:
       tags:
@@ -702,10 +702,10 @@ paths:
       summary: 取得事件規則列表
       operationId: listEventRules
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: severity
           in: query
           schema:
@@ -720,21 +720,21 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳事件規則列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/EventRuleSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/EventRuleSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 事件規則
@@ -745,20 +745,20 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateEventRuleRequest'
+              $ref: "#/components/schemas/CreateEventRuleRequest"
       responses:
-        '201':
+        "201":
           description: 規則建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRuleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '409':
-          $ref: '#/components/responses/Conflict'
+                $ref: "#/components/schemas/EventRuleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /event-rules/{rule_id}:
     parameters:
       - name: rule_id
@@ -773,16 +773,16 @@ paths:
       summary: 取得事件規則詳情
       operationId: getEventRuleById
       responses:
-        '200':
+        "200":
           description: 規則詳情資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRuleDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventRuleDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     put:
       tags:
         - 事件規則
@@ -793,32 +793,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateEventRuleRequest'
+              $ref: "#/components/schemas/UpdateEventRuleRequest"
       responses:
-        '200':
+        "200":
           description: 規則已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRuleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventRuleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 事件規則
       summary: 刪除事件規則
       operationId: deleteEventRule
       responses:
-        '204':
+        "204":
           description: 規則已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /event-rules/{rule_id}/toggle:
     post:
       tags:
@@ -826,16 +826,16 @@ paths:
       summary: 切換事件規則啟用狀態
       operationId: toggleEventRule
       responses:
-        '200':
+        "200":
           description: 規則狀態已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EventRuleDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/EventRuleDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /event-rules/{rule_id}/test:
     post:
       tags:
@@ -847,18 +847,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestEventRuleRequest'
+              $ref: "#/components/schemas/TestEventRuleRequest"
       responses:
-        '200':
+        "200":
           description: 回傳測試結果摘要。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestEventRuleResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TestEventRuleResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /silence-rules:
     get:
       tags:
@@ -866,8 +866,8 @@ paths:
       summary: 取得靜音規則列表
       operationId: listSilenceRules
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: silence_type
           in: query
           schema:
@@ -878,21 +878,21 @@ paths:
           schema:
             type: boolean
       responses:
-        '200':
+        "200":
           description: 回傳靜音規則列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/SilenceRuleSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/SilenceRuleSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 靜音規則
@@ -903,18 +903,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateSilenceRuleRequest'
+              $ref: "#/components/schemas/CreateSilenceRuleRequest"
       responses:
-        '201':
+        "201":
           description: 靜音規則建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SilenceRuleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/SilenceRuleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /silence-rules/{silence_id}:
     parameters:
       - name: silence_id
@@ -929,16 +929,16 @@ paths:
       summary: 取得靜音規則詳情
       operationId: getSilenceRuleById
       responses:
-        '200':
+        "200":
           description: 靜音規則詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SilenceRuleDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/SilenceRuleDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     put:
       tags:
         - 靜音規則
@@ -949,32 +949,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateSilenceRuleRequest'
+              $ref: "#/components/schemas/UpdateSilenceRuleRequest"
       responses:
-        '200':
+        "200":
           description: 靜音規則已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SilenceRuleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/SilenceRuleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 靜音規則
       summary: 刪除靜音規則
       operationId: deleteSilenceRule
       responses:
-        '204':
+        "204":
           description: 靜音規則已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /silence-rules/{silence_id}/toggle:
     post:
       tags:
@@ -982,16 +982,16 @@ paths:
       summary: 切換靜音規則啟用狀態
       operationId: toggleSilenceRule
       responses:
-        '200':
+        "200":
           description: 靜音規則狀態已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SilenceRuleDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/SilenceRuleDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /resources/summary:
     get:
       tags:
@@ -999,14 +999,14 @@ paths:
       summary: 取得資源 KPI 指標
       operationId: getResourceSummary
       responses:
-        '200':
+        "200":
           description: 資源統計資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceSummaryMetrics'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/ResourceSummaryMetrics"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /resources:
     get:
       tags:
@@ -1014,10 +1014,10 @@ paths:
       summary: 取得資源列表
       operationId: listResources
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
           schema:
@@ -1038,21 +1038,21 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳資源列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/ResourceSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/ResourceSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 資源管理
@@ -1063,18 +1063,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateResourceRequest'
+              $ref: "#/components/schemas/CreateResourceRequest"
       responses:
-        '201':
+        "201":
           description: 資源建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/ResourceDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /resources/{resource_id}:
     parameters:
       - name: resource_id
@@ -1089,16 +1089,16 @@ paths:
       summary: 取得資源詳情
       operationId: getResourceById
       responses:
-        '200':
+        "200":
           description: 回傳資源詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ResourceDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 資源管理
@@ -1109,32 +1109,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateResourceRequest'
+              $ref: "#/components/schemas/UpdateResourceRequest"
       responses:
-        '200':
+        "200":
           description: 資源已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ResourceDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 資源管理
       summary: 刪除資源
       operationId: deleteResource
       responses:
-        '204':
+        "204":
           description: 資源已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /resources/{resource_id}/metrics:
     get:
       tags:
@@ -1148,7 +1148,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳資源指標趨勢。
           content:
             application/json:
@@ -1158,11 +1158,11 @@ paths:
                   metrics:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ResourceMetric'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                      $ref: "#/components/schemas/ResourceMetric"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /resources/{resource_id}/events:
     get:
       tags:
@@ -1170,26 +1170,26 @@ paths:
       summary: 取得資源關聯事件
       operationId: getResourceEvents
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
-        '200':
+        "200":
           description: 回傳該資源的事件列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/EventSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                          $ref: "#/components/schemas/EventSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /resource-groups:
     get:
       tags:
@@ -1197,28 +1197,28 @@ paths:
       summary: 取得資源群組列表
       operationId: listResourceGroups
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: keyword
           in: query
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳資源群組列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/ResourceGroupSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/ResourceGroupSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 資源群組
@@ -1229,18 +1229,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateResourceGroupRequest'
+              $ref: "#/components/schemas/CreateResourceGroupRequest"
       responses:
-        '201':
+        "201":
           description: 群組建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceGroupDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/ResourceGroupDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /resource-groups/{group_id}:
     parameters:
       - name: group_id
@@ -1255,16 +1255,16 @@ paths:
       summary: 取得資源群組詳情
       operationId: getResourceGroupById
       responses:
-        '200':
+        "200":
           description: 回傳群組詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceGroupDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ResourceGroupDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     put:
       tags:
         - 資源群組
@@ -1275,32 +1275,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateResourceGroupRequest'
+              $ref: "#/components/schemas/UpdateResourceGroupRequest"
       responses:
-        '200':
+        "200":
           description: 群組已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResourceGroupDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ResourceGroupDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 資源群組
       summary: 刪除資源群組
       operationId: deleteResourceGroup
       responses:
-        '204':
+        "204":
           description: 群組已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /topology:
     get:
       tags:
@@ -1319,14 +1319,97 @@ paths:
             type: string
             enum: [healthy, warning, critical]
       responses:
-        '200':
+        "200":
           description: 拓撲節點與連線資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TopologyGraph'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/TopologyGraph"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /resources/batch:
+    post:
+      tags:
+        - 資源管理
+      summary: 批次操作資源
+      operationId: batchResources
+      security:
+        - bearerAuth: [team_manager, super_admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchResourceRequest"
+      responses:
+        "202":
+          description: 批次操作已啟動。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchOperationResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /resources/scan:
+    post:
+      tags:
+        - 資源管理
+      summary: 啟動網路資源掃描
+      operationId: scanResources
+      security:
+        - bearerAuth: [team_manager, super_admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ScanRequest"
+      responses:
+        "202":
+          description: 掃描任務已啟動。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanTaskResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /resources/scan/{task_id}:
+    get:
+      tags:
+        - 資源管理
+      summary: 查詢掃描任務狀態
+      operationId: getScanTask
+      security:
+        - bearerAuth: [team_manager, super_admin]
+      parameters:
+        - $ref: "#/components/parameters/TaskIdParam"
+      responses:
+        "200":
+          description: 掃描任務狀態。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ScanTaskResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /dashboards/summary:
     get:
       tags:
@@ -1334,7 +1417,7 @@ paths:
       summary: 取得儀表板統計
       operationId: getDashboardSummary
       responses:
-        '200':
+        "200":
           description: 儀表板 KPI 資訊。
           content:
             application/json:
@@ -1349,8 +1432,8 @@ paths:
                     type: integer
                   automated:
                     type: integer
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /dashboards:
     get:
       tags:
@@ -1358,10 +1441,10 @@ paths:
       summary: 取得儀表板列表
       operationId: listDashboards
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
-        - $ref: '#/components/parameters/SortByParam'
-        - $ref: '#/components/parameters/SortOrderParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: category
           in: query
           schema:
@@ -1371,21 +1454,21 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳儀表板列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/DashboardSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/DashboardSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 儀表板
@@ -1396,18 +1479,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateDashboardRequest'
+              $ref: "#/components/schemas/CreateDashboardRequest"
       responses:
-        '201':
+        "201":
           description: 儀表板建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/DashboardDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /dashboards/{dashboard_id}:
     parameters:
       - name: dashboard_id
@@ -1422,16 +1505,16 @@ paths:
       summary: 取得儀表板詳情
       operationId: getDashboardById
       responses:
-        '200':
+        "200":
           description: 回傳儀表板設定與元件。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/DashboardDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 儀表板
@@ -1442,32 +1525,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateDashboardRequest'
+              $ref: "#/components/schemas/UpdateDashboardRequest"
       responses:
-        '200':
+        "200":
           description: 儀表板已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/DashboardDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 儀表板
       summary: 刪除儀表板
       operationId: deleteDashboard
       responses:
-        '204':
+        "204":
           description: 儀表板已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /dashboards/{dashboard_id}/publish:
     post:
       tags:
@@ -1485,16 +1568,16 @@ paths:
                   type: boolean
                   default: true
       responses:
-        '200':
+        "200":
           description: 儀表板發布狀態已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/DashboardDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /dashboards/{dashboard_id}/default:
     post:
       tags:
@@ -1502,16 +1585,63 @@ paths:
       summary: 設定儀表板為預設首頁
       operationId: setDefaultDashboard
       responses:
-        '200':
+        "200":
           description: 已更新預設儀表板。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/DashboardDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /dashboards/{dashboard_id}/grafana-url:
+    get:
+      tags:
+        - 儀表板
+      summary: 獲取Grafana Dashboard iframe URL
+      operationId: getGrafanaDashboardUrl
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: dashboard_id
+          in: path
+          required: true
+          description: 儀表板唯一識別碼。
+          schema:
+            type: string
+        - name: theme
+          in: query
+          required: false
+          description: 主題模式 (light/dark)。
+          schema:
+            type: string
+            enum: [light, dark]
+        - name: kiosk
+          in: query
+          required: false
+          description: 無頭模式 (TV模式)。
+          schema:
+            type: boolean
+        - name: refresh
+          in: query
+          required: false
+          description: 自動刷新間隔 (秒)。
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Grafana Dashboard iframe URL。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrafanaDashboardUrl"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
   /analysis/capacity/summary:
     get:
       tags:
@@ -1525,14 +1655,14 @@ paths:
             type: string
             example: 30d
       responses:
-        '200':
+        "200":
           description: 容量使用摘要。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/CapacitySummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/CapacitySummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /analysis/capacity/forecasts:
     get:
       tags:
@@ -1551,7 +1681,7 @@ paths:
             type: string
             enum: [arima, prophet, lstm]
       responses:
-        '200':
+        "200":
           description: 預測趨勢與建議。
           content:
             application/json:
@@ -1561,13 +1691,13 @@ paths:
                   forecasts:
                     type: array
                     items:
-                      $ref: '#/components/schemas/CapacityForecast'
+                      $ref: "#/components/schemas/CapacityForecast"
                   suggestions:
                     type: array
                     items:
-                      $ref: '#/components/schemas/OptimizationSuggestion'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                      $ref: "#/components/schemas/OptimizationSuggestion"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /analysis/resource-load:
     get:
       tags:
@@ -1575,8 +1705,8 @@ paths:
       summary: 取得資源負載分析
       operationId: getResourceLoadAnalysis
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: type
           in: query
           schema:
@@ -1587,7 +1717,7 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳資源負載統計。
           content:
             application/json:
@@ -1595,13 +1725,13 @@ paths:
                 type: object
                 properties:
                   summary:
-                    $ref: '#/components/schemas/ResourceLoadSummary'
+                    $ref: "#/components/schemas/ResourceLoadSummary"
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/ResourceLoadRow'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                      $ref: "#/components/schemas/ResourceLoadRow"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /analysis/ai-insights:
     get:
       tags:
@@ -1609,24 +1739,24 @@ paths:
       summary: 取得最新 AI 洞察報告
       operationId: listAIInsights
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
-        '200':
+        "200":
           description: 回傳 AI 洞察報告列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/AIInsightReport'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/AIInsightReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /analysis/ai-insights/{report_id}:
     parameters:
       - name: report_id
@@ -1641,16 +1771,16 @@ paths:
       summary: 取得單一 AI 洞察詳情
       operationId: getAIInsightById
       responses:
-        '200':
+        "200":
           description: 回傳完整的 AI 洞察資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AIInsightReport'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/AIInsightReport"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /automation/scripts:
     get:
       tags:
@@ -1658,8 +1788,8 @@ paths:
       summary: 取得腳本列表
       operationId: listAutomationScripts
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: type
           in: query
           schema:
@@ -1670,21 +1800,21 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳腳本列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/AutomationScriptSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/AutomationScriptSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 自動化
@@ -1695,18 +1825,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateAutomationScriptRequest'
+              $ref: "#/components/schemas/CreateAutomationScriptRequest"
       responses:
-        '201':
+        "201":
           description: 腳本建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationScriptDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/AutomationScriptDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /automation/scripts/{script_id}:
     parameters:
       - name: script_id
@@ -1721,16 +1851,16 @@ paths:
       summary: 取得腳本詳情
       operationId: getAutomationScriptById
       responses:
-        '200':
+        "200":
           description: 腳本詳情資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationScriptDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/AutomationScriptDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 自動化
@@ -1741,32 +1871,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateAutomationScriptRequest'
+              $ref: "#/components/schemas/UpdateAutomationScriptRequest"
       responses:
-        '200':
+        "200":
           description: 腳本已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationScriptDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/AutomationScriptDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 自動化
       summary: 刪除自動化腳本
       operationId: deleteAutomationScript
       responses:
-        '204':
+        "204":
           description: 腳本已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /automation/scripts/{script_id}/execute:
     post:
       tags:
@@ -1778,18 +1908,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ExecuteScriptRequest'
+              $ref: "#/components/schemas/ExecuteScriptRequest"
       responses:
-        '202':
+        "202":
           description: 已排入腳本執行。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ExecuteScriptResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/ExecuteScriptResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /automation/scripts/{script_id}/versions:
     get:
       tags:
@@ -1797,26 +1927,26 @@ paths:
       summary: 取得腳本版本列表
       operationId: listAutomationScriptVersions
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
       responses:
-        '200':
+        "200":
           description: 回傳腳本版本。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/AutomationScriptVersion'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                          $ref: "#/components/schemas/AutomationScriptVersion"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /automation/schedules:
     get:
       tags:
@@ -1824,29 +1954,29 @@ paths:
       summary: 取得排程列表
       operationId: listAutomationSchedules
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: status
           in: query
           schema:
             type: string
             enum: [enabled, disabled, running]
       responses:
-        '200':
+        "200":
           description: 回傳排程列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/AutomationScheduleSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/AutomationScheduleSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 自動化
@@ -1857,18 +1987,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateAutomationScheduleRequest'
+              $ref: "#/components/schemas/CreateAutomationScheduleRequest"
       responses:
-        '201':
+        "201":
           description: 排程建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationScheduleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/AutomationScheduleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /automation/schedules/{schedule_id}:
     parameters:
       - name: schedule_id
@@ -1883,16 +2013,16 @@ paths:
       summary: 取得排程詳情
       operationId: getAutomationScheduleById
       responses:
-        '200':
+        "200":
           description: 排程詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationScheduleDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/AutomationScheduleDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 自動化
@@ -1903,32 +2033,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateAutomationScheduleRequest'
+              $ref: "#/components/schemas/UpdateAutomationScheduleRequest"
       responses:
-        '200':
+        "200":
           description: 排程已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationScheduleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/AutomationScheduleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 自動化
       summary: 刪除排程
       operationId: deleteAutomationSchedule
       responses:
-        '204':
+        "204":
           description: 排程已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /automation/schedules/{schedule_id}/toggle:
     post:
       tags:
@@ -1940,18 +2070,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ToggleScheduleRequest'
+              $ref: "#/components/schemas/ToggleScheduleRequest"
       responses:
-        '200':
+        "200":
           description: 排程狀態已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationScheduleDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/AutomationScheduleDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /automation/executions:
     get:
       tags:
@@ -1959,8 +2089,8 @@ paths:
       summary: 取得執行日誌列表
       operationId: listAutomationExecutions
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: status
           in: query
           schema:
@@ -1971,21 +2101,21 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳執行日誌。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/AutomationExecutionSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/AutomationExecutionSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /automation/executions/{execution_id}:
     parameters:
       - name: execution_id
@@ -2000,16 +2130,16 @@ paths:
       summary: 取得單筆執行詳情
       operationId: getAutomationExecutionById
       responses:
-        '200':
+        "200":
           description: 執行詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationExecutionDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/AutomationExecutionDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /automation/executions/{execution_id}/retry:
     post:
       tags:
@@ -2021,18 +2151,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RetryExecutionRequest'
+              $ref: "#/components/schemas/RetryExecutionRequest"
       responses:
-        '202':
+        "202":
           description: 已排入重新執行。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AutomationExecutionDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/AutomationExecutionDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /iam/users:
     get:
       tags:
@@ -2040,8 +2170,8 @@ paths:
       summary: 取得人員列表
       operationId: listIamUsers
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: status
           in: query
           schema:
@@ -2052,21 +2182,21 @@ paths:
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳人員列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/IAMUserSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/IAMUserSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 身份與存取
@@ -2077,18 +2207,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateIAMUserRequest'
+              $ref: "#/components/schemas/CreateIAMUserRequest"
       responses:
-        '201':
+        "201":
           description: 人員建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IAMUserDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/IAMUserDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /iam/users/{user_id}:
     parameters:
       - name: user_id
@@ -2103,16 +2233,16 @@ paths:
       summary: 取得人員詳情
       operationId: getIamUserById
       responses:
-        '200':
+        "200":
           description: 人員詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IAMUserDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/IAMUserDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 身份與存取
@@ -2123,32 +2253,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateIAMUserRequest'
+              $ref: "#/components/schemas/UpdateIAMUserRequest"
       responses:
-        '200':
+        "200":
           description: 人員資料已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IAMUserDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/IAMUserDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 身份與存取
       summary: 停用人員帳號
       operationId: deleteIamUser
       responses:
-        '204':
+        "204":
           description: 人員已停用。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /iam/teams:
     get:
       tags:
@@ -2156,28 +2286,28 @@ paths:
       summary: 取得團隊列表
       operationId: listIamTeams
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: keyword
           in: query
           schema:
             type: string
       responses:
-        '200':
+        "200":
           description: 回傳團隊列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/TeamSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/TeamSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 身份與存取
@@ -2188,18 +2318,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTeamRequest'
+              $ref: "#/components/schemas/CreateTeamRequest"
       responses:
-        '201':
+        "201":
           description: 團隊建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TeamDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/TeamDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /iam/teams/{team_id}:
     parameters:
       - name: team_id
@@ -2214,16 +2344,16 @@ paths:
       summary: 取得團隊詳情
       operationId: getIamTeamById
       responses:
-        '200':
+        "200":
           description: 團隊詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TeamDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TeamDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 身份與存取
@@ -2234,32 +2364,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateTeamRequest'
+              $ref: "#/components/schemas/UpdateTeamRequest"
       responses:
-        '200':
+        "200":
           description: 團隊資料已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TeamDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TeamDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 身份與存取
       summary: 刪除團隊
       operationId: deleteIamTeam
       responses:
-        '204':
+        "204":
           description: 團隊已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /iam/roles:
     get:
       tags:
@@ -2267,16 +2397,16 @@ paths:
       summary: 取得角色列表
       operationId: listIamRoles
       responses:
-        '200':
+        "200":
           description: 回傳角色列表。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RoleSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                  $ref: "#/components/schemas/RoleSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 身份與存取
@@ -2287,18 +2417,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRoleRequest'
+              $ref: "#/components/schemas/CreateRoleRequest"
       responses:
-        '201':
+        "201":
           description: 角色建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/RoleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /iam/roles/{role_id}:
     parameters:
       - name: role_id
@@ -2313,16 +2443,16 @@ paths:
       summary: 取得角色詳情
       operationId: getIamRoleById
       responses:
-        '200':
+        "200":
           description: 角色詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/RoleDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 身份與存取
@@ -2333,32 +2463,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateRoleRequest'
+              $ref: "#/components/schemas/UpdateRoleRequest"
       responses:
-        '200':
+        "200":
           description: 角色已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/RoleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 身份與存取
       summary: 刪除角色
       operationId: deleteIamRole
       responses:
-        '204':
+        "204":
           description: 角色已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /iam/audit-logs:
     get:
       tags:
@@ -2366,8 +2496,8 @@ paths:
       summary: 取得審計日誌
       operationId: listAuditLogs
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: action
           in: query
           schema:
@@ -2383,21 +2513,21 @@ paths:
             type: string
             format: date-time
       responses:
-        '200':
+        "200":
           description: 回傳審計日誌列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/AuditLogEntry'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/AuditLogEntry"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /notification/strategies:
     get:
       tags:
@@ -2405,29 +2535,29 @@ paths:
       summary: 取得通知策略列表
       operationId: listNotificationStrategies
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: status
           in: query
           schema:
             type: string
             enum: [enabled, disabled]
       responses:
-        '200':
+        "200":
           description: 回傳通知策略列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/NotificationStrategySummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/NotificationStrategySummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 通知管理
@@ -2438,18 +2568,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateNotificationStrategyRequest'
+              $ref: "#/components/schemas/CreateNotificationStrategyRequest"
       responses:
-        '201':
+        "201":
           description: 通知策略建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationStrategyDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/NotificationStrategyDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /notification/strategies/{strategy_id}:
     parameters:
       - name: strategy_id
@@ -2464,16 +2594,16 @@ paths:
       summary: 取得通知策略詳情
       operationId: getNotificationStrategyById
       responses:
-        '200':
+        "200":
           description: 通知策略詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationStrategyDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/NotificationStrategyDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 通知管理
@@ -2484,32 +2614,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateNotificationStrategyRequest'
+              $ref: "#/components/schemas/UpdateNotificationStrategyRequest"
       responses:
-        '200':
+        "200":
           description: 通知策略已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationStrategyDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/NotificationStrategyDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 通知管理
       summary: 刪除通知策略
       operationId: deleteNotificationStrategy
       responses:
-        '204':
+        "204":
           description: 通知策略已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /notification/strategies/{strategy_id}/test:
     post:
       tags:
@@ -2521,18 +2651,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestNotificationStrategyRequest'
+              $ref: "#/components/schemas/TestNotificationStrategyRequest"
       responses:
-        '200':
+        "200":
           description: 測試結果摘要。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestNotificationResult'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TestNotificationResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /notification/channels:
     get:
       tags:
@@ -2540,16 +2670,16 @@ paths:
       summary: 取得通知管道列表
       operationId: listNotificationChannels
       responses:
-        '200':
+        "200":
           description: 回傳通知管道列表。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/NotificationChannelSummary'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                  $ref: "#/components/schemas/NotificationChannelSummary"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 通知管理
@@ -2560,18 +2690,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateNotificationChannelRequest'
+              $ref: "#/components/schemas/CreateNotificationChannelRequest"
       responses:
-        '201':
+        "201":
           description: 通知管道建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationChannelDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/NotificationChannelDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /notification/channels/{channel_id}:
     parameters:
       - name: channel_id
@@ -2586,16 +2716,16 @@ paths:
       summary: 取得通知管道詳情
       operationId: getNotificationChannelById
       responses:
-        '200':
+        "200":
           description: 通知管道詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationChannelDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/NotificationChannelDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 通知管理
@@ -2606,32 +2736,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateNotificationChannelRequest'
+              $ref: "#/components/schemas/UpdateNotificationChannelRequest"
       responses:
-        '200':
+        "200":
           description: 通知管道已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationChannelDetail'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/NotificationChannelDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 通知管理
       summary: 刪除通知管道
       operationId: deleteNotificationChannel
       responses:
-        '204':
+        "204":
           description: 通知管道已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /notification/channels/{channel_id}/test:
     post:
       tags:
@@ -2643,18 +2773,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TestNotificationChannelRequest'
+              $ref: "#/components/schemas/TestNotificationChannelRequest"
       responses:
-        '200':
+        "200":
           description: 測試結果。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TestNotificationResult'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TestNotificationResult"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /notification/history:
     get:
       tags:
@@ -2662,29 +2792,29 @@ paths:
       summary: 取得通知歷史
       operationId: listNotificationHistory
       parameters:
-        - $ref: '#/components/parameters/PageParam'
-        - $ref: '#/components/parameters/PageSizeParam'
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
         - name: status
           in: query
           schema:
             type: string
             enum: [SUCCESS, FAILED, RETRYING]
       responses:
-        '200':
+        "200":
           description: 回傳通知歷史列表。
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/PaginatedResponse'
+                  - $ref: "#/components/schemas/PaginatedResponse"
                   - type: object
                     properties:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/NotificationHistoryRecord'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                          $ref: "#/components/schemas/NotificationHistoryRecord"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /notification/history/{record_id}:
     parameters:
       - name: record_id
@@ -2699,16 +2829,16 @@ paths:
       summary: 取得單筆通知歷史詳情
       operationId: getNotificationHistoryById
       responses:
-        '200':
+        "200":
           description: 通知歷史詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationHistoryDetail'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/NotificationHistoryDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     post:
       tags:
         - 通知管理
@@ -2719,18 +2849,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationResendRequest'
+              $ref: "#/components/schemas/NotificationResendRequest"
       responses:
-        '202':
+        "202":
           description: 已接受重新發送請求。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationResendResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/NotificationResendResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /notification/history/resend:
     post:
       tags:
@@ -2742,18 +2872,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationBulkResendRequest'
+              $ref: "#/components/schemas/NotificationBulkResendRequest"
       responses:
-        '202':
+        "202":
           description: 已排入批次重新發送工作。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/NotificationBulkResendResponse'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/NotificationBulkResendResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/tags:
     get:
       tags:
@@ -2761,16 +2891,16 @@ paths:
       summary: 取得標籤類型列表
       operationId: listTagDefinitions
       responses:
-        '200':
+        "200":
           description: 回傳標籤類型。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TagDefinition'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                  $ref: "#/components/schemas/TagDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 平台設定
@@ -2781,18 +2911,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTagRequest'
+              $ref: "#/components/schemas/CreateTagRequest"
       responses:
-        '201':
+        "201":
           description: 標籤類型建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagDefinition'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/TagDefinition"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/tags/{tag_id}:
     parameters:
       - name: tag_id
@@ -2807,16 +2937,16 @@ paths:
       summary: 取得標籤類型詳情
       operationId: getTagDefinitionById
       responses:
-        '200':
+        "200":
           description: 標籤類型詳情。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagDefinition'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TagDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     patch:
       tags:
         - 平台設定
@@ -2827,32 +2957,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateTagRequest'
+              $ref: "#/components/schemas/UpdateTagRequest"
       responses:
-        '200':
+        "200":
           description: 標籤類型已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagDefinition'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TagDefinition"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 平台設定
       summary: 刪除標籤類型
       operationId: deleteTagDefinition
       responses:
-        '204':
+        "204":
           description: 標籤類型已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/tags/{tag_id}/values:
     get:
       tags:
@@ -2860,16 +2990,16 @@ paths:
       summary: 取得標籤值列表
       operationId: listTagValues
       responses:
-        '200':
+        "200":
           description: 回傳標籤值列表。
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/TagValue'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                  $ref: "#/components/schemas/TagValue"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 平台設定
@@ -2880,18 +3010,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateTagValueRequest'
+              $ref: "#/components/schemas/CreateTagValueRequest"
       responses:
-        '201':
+        "201":
           description: 標籤值建立成功。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagValue'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/TagValue"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/tags/{tag_id}/values/{value_id}:
     parameters:
       - name: tag_id
@@ -2914,32 +3044,32 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateTagValueRequest'
+              $ref: "#/components/schemas/UpdateTagValueRequest"
       responses:
-        '200':
+        "200":
           description: 標籤值已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagValue'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TagValue"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
     delete:
       tags:
         - 平台設定
       summary: 刪除標籤值
       operationId: deleteTagValue
       responses:
-        '204':
+        "204":
           description: 標籤值已刪除。
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /settings/tags/summary:
     get:
       tags:
@@ -2947,14 +3077,14 @@ paths:
       summary: 取得標籤治理摘要
       operationId: getTagSummary
       responses:
-        '200':
+        "200":
           description: 回傳標籤分類與使用統計摘要。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagSummaryResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/TagSummaryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/email:
     get:
       tags:
@@ -2962,14 +3092,14 @@ paths:
       summary: 取得郵件設定
       operationId: getEmailSettings
       responses:
-        '200':
+        "200":
           description: 郵件設定資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailSettings'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/EmailSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     put:
       tags:
         - 平台設定
@@ -2980,18 +3110,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailSettingsRequest'
+              $ref: "#/components/schemas/EmailSettingsRequest"
       responses:
-        '200':
+        "200":
           description: 郵件設定已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailSettings'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/EmailSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/email/test:
     post:
       tags:
@@ -3003,24 +3133,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/EmailTestRequest'
+              $ref: "#/components/schemas/EmailTestRequest"
       responses:
-        '200':
+        "200":
           description: 測試結果。可同步回傳詳細測試資訊。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailTestResult'
-        '202':
+                $ref: "#/components/schemas/EmailTestResult"
+        "202":
           description: 測試請求已排入佇列。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/EmailTestResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/EmailTestResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/auth:
     get:
       tags:
@@ -3028,14 +3158,14 @@ paths:
       summary: 取得身份驗證設定
       operationId: getAuthSettings
       responses:
-        '200':
+        "200":
           description: 身份驗證設定資料。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSettings'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/AuthSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     put:
       tags:
         - 平台設定
@@ -3046,18 +3176,18 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthSettingsRequest'
+              $ref: "#/components/schemas/AuthSettingsRequest"
       responses:
-        '200':
+        "200":
           description: 身份驗證設定已更新。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthSettings'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/AuthSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/auth/test:
     post:
       tags:
@@ -3069,24 +3199,24 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/AuthTestRequest'
+              $ref: "#/components/schemas/AuthTestRequest"
       responses:
-        '200':
+        "200":
           description: 測試結果摘要。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthTestResult'
-        '202':
+                $ref: "#/components/schemas/AuthTestResult"
+        "202":
           description: 測試請求已排入背景工作。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AuthTestResult'
-        '400':
-          $ref: '#/components/responses/BadRequest'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/AuthTestResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /tags/keys:
     get:
       tags:
@@ -3107,14 +3237,14 @@ paths:
             type: string
           description: 關鍵字搜尋標籤鍵或描述。
       responses:
-        '200':
+        "200":
           description: 標籤鍵列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagKeyListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
+                $ref: "#/components/schemas/TagKeyListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /tags/{tag_key}/values:
     parameters:
       - name: tag_key
@@ -3137,16 +3267,107 @@ paths:
             maximum: 200
           description: 限制返回的標籤值數量，預設為 50。
       responses:
-        '200':
+        "200":
           description: 標籤值列表。
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TagValueListResponse'
-        '401':
-          $ref: '#/components/responses/Unauthorized'
-        '404':
-          $ref: '#/components/responses/NotFound'
+                $ref: "#/components/schemas/TagValueListResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /admin/settings:
+    get:
+      tags:
+        - 系統管理
+      summary: 獲取系統設定
+      operationId: getSystemSettings
+      security:
+        - bearerAuth: [super_admin]
+      responses:
+        "200":
+          description: 系統設定資訊。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSettings"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+    post:
+      tags:
+        - 系統管理
+      summary: 更新系統設定
+      operationId: updateSystemSettings
+      security:
+        - bearerAuth: [super_admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemSettingsRequest"
+      responses:
+        "200":
+          description: 系統設定已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /admin/diagnostics:
+    get:
+      tags:
+        - 系統管理
+      summary: 獲取系統診斷資訊
+      operationId: getSystemDiagnostics
+      security:
+        - bearerAuth: [super_admin]
+      responses:
+        "200":
+          description: 系統診斷資訊。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemDiagnostics"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /admin/diagnostics/health:
+    get:
+      tags:
+        - 系統管理
+      summary: 獲取系統健康檢查
+      operationId: getSystemHealth
+      security:
+        - bearerAuth: [super_admin]
+      responses:
+        "200":
+          description: 系統健康狀態。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemHealth"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
 components:
   parameters:
     PageParam:
@@ -3179,43 +3400,50 @@ components:
       schema:
         type: string
         enum: [asc, desc]
+    TaskIdParam:
+      name: task_id
+      in: path
+      required: true
+      description: 任務唯一識別碼。
+      schema:
+        type: string
   responses:
     BadRequest:
       description: 請求資料不正確。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
       description: 尚未登入或登入已逾期。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Forbidden:
       description: 權限不足。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     NotFound:
       description: 查無資料。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     Conflict:
       description: 資料狀態衝突或重複。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
     InternalError:
       description: 伺服器發生未預期錯誤。
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/ErrorResponse'
+            $ref: "#/components/schemas/ErrorResponse"
   schemas:
     ErrorResponse:
       type: object
@@ -3338,7 +3566,7 @@ components:
               type: boolean
     PreferenceUpdateRequest:
       allOf:
-        - $ref: '#/components/schemas/UserPreference'
+        - $ref: "#/components/schemas/UserPreference"
     SecurityLoginRecord:
       type: object
       required: [login_time, ip_address, device_info, status]
@@ -3369,7 +3597,7 @@ components:
         results:
           type: array
           items:
-            $ref: '#/components/schemas/GlobalSearchResult'
+            $ref: "#/components/schemas/GlobalSearchResult"
     GlobalSearchResult:
       type: object
       required: [id, title, url]
@@ -3447,7 +3675,8 @@ components:
           description: 執行的快速操作名稱。
     EventSummaryMetrics:
       type: object
-      required: [active_events, resolved_today, mean_time_to_resolve, automation_rate]
+      required:
+        [active_events, resolved_today, mean_time_to_resolve, automation_rate]
       properties:
         active_events:
           type: object
@@ -3483,7 +3712,8 @@ components:
               type: integer
     EventSummary:
       type: object
-      required: [event_id, summary, severity, status, resource_name, trigger_time]
+      required:
+        [event_id, summary, severity, status, resource_name, trigger_time]
       properties:
         event_id:
           type: string
@@ -3579,7 +3809,7 @@ components:
             type: string
     EventDetail:
       allOf:
-        - $ref: '#/components/schemas/EventSummary'
+        - $ref: "#/components/schemas/EventSummary"
         - type: object
           properties:
             metric:
@@ -3599,17 +3829,17 @@ components:
             timeline:
               type: array
               items:
-                $ref: '#/components/schemas/EventTimelineEntry'
+                $ref: "#/components/schemas/EventTimelineEntry"
             related_events:
               type: array
               items:
-                $ref: '#/components/schemas/EventRelatedItem'
+                $ref: "#/components/schemas/EventRelatedItem"
             automation_actions:
               type: array
               items:
                 type: string
             analysis:
-              $ref: '#/components/schemas/EventAnalysisReport'
+              $ref: "#/components/schemas/EventAnalysisReport"
     EventTimelineEntry:
       type: object
       required: [entry_id, event_id, entry_type, message, created_at]
@@ -3677,7 +3907,7 @@ components:
         recommendations:
           type: array
           items:
-            $ref: '#/components/schemas/AIInsightSuggestion'
+            $ref: "#/components/schemas/AIInsightSuggestion"
     QuickSilenceRequest:
       type: object
       required: [duration_hours]
@@ -3719,7 +3949,7 @@ components:
           type: string
         operator:
           type: string
-          enum: ['>', '<', '>=', '<=']
+          enum: [">", "<", ">=", "<="]
         threshold:
           type: number
         duration_minutes:
@@ -3737,7 +3967,7 @@ components:
         conditions:
           type: array
           items:
-            $ref: '#/components/schemas/RuleCondition'
+            $ref: "#/components/schemas/RuleCondition"
     AutomationSetting:
       type: object
       properties:
@@ -3750,7 +3980,7 @@ components:
           additionalProperties: true
     EventRuleDetail:
       allOf:
-        - $ref: '#/components/schemas/EventRuleSummary'
+        - $ref: "#/components/schemas/EventRuleSummary"
         - type: object
           properties:
             description:
@@ -3766,19 +3996,19 @@ components:
             condition_groups:
               type: array
               items:
-                $ref: '#/components/schemas/ConditionGroup'
+                $ref: "#/components/schemas/ConditionGroup"
             title_template:
               type: string
             content_template:
               type: string
             automation:
-              $ref: '#/components/schemas/AutomationSetting'
+              $ref: "#/components/schemas/AutomationSetting"
     CreateEventRuleRequest:
       allOf:
-        - $ref: '#/components/schemas/EventRuleDetail'
+        - $ref: "#/components/schemas/EventRuleDetail"
     UpdateEventRuleRequest:
       allOf:
-        - $ref: '#/components/schemas/EventRuleDetail'
+        - $ref: "#/components/schemas/EventRuleDetail"
     TestEventRuleRequest:
       type: object
       properties:
@@ -3792,7 +4022,7 @@ components:
         matches:
           type: boolean
         preview_event:
-          $ref: '#/components/schemas/EventSummary'
+          $ref: "#/components/schemas/EventSummary"
         messages:
           type: array
           items:
@@ -3860,15 +4090,15 @@ components:
           format: date-time
     SilenceRuleDetail:
       allOf:
-        - $ref: '#/components/schemas/SilenceRuleSummary'
+        - $ref: "#/components/schemas/SilenceRuleSummary"
         - type: object
           properties:
             schedule:
-              $ref: '#/components/schemas/SilenceSchedule'
+              $ref: "#/components/schemas/SilenceSchedule"
             matchers:
               type: array
               items:
-                $ref: '#/components/schemas/SilenceMatcher'
+                $ref: "#/components/schemas/SilenceMatcher"
             notify_on_start:
               type: boolean
             notify_on_end:
@@ -3877,10 +4107,10 @@ components:
               type: string
     CreateSilenceRuleRequest:
       allOf:
-        - $ref: '#/components/schemas/SilenceRuleDetail'
+        - $ref: "#/components/schemas/SilenceRuleDetail"
     UpdateSilenceRuleRequest:
       allOf:
-        - $ref: '#/components/schemas/SilenceRuleDetail'
+        - $ref: "#/components/schemas/SilenceRuleDetail"
     ResourceSummaryMetrics:
       type: object
       required: [total_resources, healthy, warning, critical, groups]
@@ -3897,7 +4127,8 @@ components:
           type: integer
     ResourceSummary:
       type: object
-      required: [resource_id, name, status, type, ip_address, cpu_usage, memory_usage]
+      required:
+        [resource_id, name, status, type, ip_address, cpu_usage, memory_usage]
       properties:
         resource_id:
           type: string
@@ -3963,7 +4194,7 @@ components:
             type: string
     UpdateResourceRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateResourceRequest'
+        - $ref: "#/components/schemas/CreateResourceRequest"
     ResourceMetric:
       type: object
       required: [metric, points]
@@ -3975,10 +4206,10 @@ components:
         points:
           type: array
           items:
-            $ref: '#/components/schemas/CapacitySeriesPoint'
+            $ref: "#/components/schemas/CapacitySeriesPoint"
     ResourceDetail:
       allOf:
-        - $ref: '#/components/schemas/ResourceSummary'
+        - $ref: "#/components/schemas/ResourceSummary"
         - type: object
           properties:
             created_at:
@@ -4063,20 +4294,20 @@ components:
             type: string
     UpdateResourceGroupRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateResourceGroupRequest'
+        - $ref: "#/components/schemas/CreateResourceGroupRequest"
     ResourceGroupDetail:
       allOf:
-        - $ref: '#/components/schemas/ResourceGroupSummary'
+        - $ref: "#/components/schemas/ResourceGroupSummary"
         - type: object
           properties:
             members:
               type: array
               items:
-                $ref: '#/components/schemas/ResourceGroupMember'
+                $ref: "#/components/schemas/ResourceGroupMember"
             subscribers:
               type: array
               items:
-                $ref: '#/components/schemas/ResourceGroupSubscriber'
+                $ref: "#/components/schemas/ResourceGroupSubscriber"
     TopologyNode:
       type: object
       required: [id, name, type, status]
@@ -4114,11 +4345,11 @@ components:
         nodes:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyNode'
+            $ref: "#/components/schemas/TopologyNode"
         edges:
           type: array
           items:
-            $ref: '#/components/schemas/TopologyEdge'
+            $ref: "#/components/schemas/TopologyEdge"
     DashboardSummary:
       type: object
       required: [dashboard_id, name, category, owner, status, updated_at]
@@ -4219,14 +4450,14 @@ components:
         layout:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardWidget'
+            $ref: "#/components/schemas/DashboardWidget"
         kpis:
           type: array
           items:
-            $ref: '#/components/schemas/DashboardKPI'
+            $ref: "#/components/schemas/DashboardKPI"
     UpdateDashboardRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateDashboardRequest'
+        - $ref: "#/components/schemas/CreateDashboardRequest"
         - type: object
           properties:
             is_default:
@@ -4236,7 +4467,7 @@ components:
               enum: [draft, published]
     DashboardDetail:
       allOf:
-        - $ref: '#/components/schemas/DashboardSummary'
+        - $ref: "#/components/schemas/DashboardSummary"
         - type: object
           properties:
             description:
@@ -4246,11 +4477,11 @@ components:
             layout:
               type: array
               items:
-                $ref: '#/components/schemas/DashboardWidget'
+                $ref: "#/components/schemas/DashboardWidget"
             kpis:
               type: array
               items:
-                $ref: '#/components/schemas/DashboardKPI'
+                $ref: "#/components/schemas/DashboardKPI"
             is_default:
               type: boolean
             published_at:
@@ -4291,15 +4522,15 @@ components:
         series:
           type: array
           items:
-            $ref: '#/components/schemas/CapacitySeriesPoint'
+            $ref: "#/components/schemas/CapacitySeriesPoint"
         best_case:
           type: array
           items:
-            $ref: '#/components/schemas/CapacitySeriesPoint'
+            $ref: "#/components/schemas/CapacitySeriesPoint"
         worst_case:
           type: array
           items:
-            $ref: '#/components/schemas/CapacitySeriesPoint'
+            $ref: "#/components/schemas/CapacitySeriesPoint"
     OptimizationSuggestion:
       type: object
       required: [title, impact, effort]
@@ -4386,7 +4617,7 @@ components:
         suggestions:
           type: array
           items:
-            $ref: '#/components/schemas/AIInsightSuggestion'
+            $ref: "#/components/schemas/AIInsightSuggestion"
     AutomationScriptSummary:
       type: object
       required: [script_id, name, type, version]
@@ -4427,7 +4658,7 @@ components:
             type: string
     UpdateAutomationScriptRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateAutomationScriptRequest'
+        - $ref: "#/components/schemas/CreateAutomationScriptRequest"
         - type: object
           properties:
             version:
@@ -4449,7 +4680,7 @@ components:
           type: string
     AutomationScriptDetail:
       allOf:
-        - $ref: '#/components/schemas/AutomationScriptSummary'
+        - $ref: "#/components/schemas/AutomationScriptSummary"
         - type: object
           properties:
             content:
@@ -4461,7 +4692,7 @@ components:
             versions:
               type: array
               items:
-                $ref: '#/components/schemas/AutomationScriptVersion'
+                $ref: "#/components/schemas/AutomationScriptVersion"
     ExecuteScriptRequest:
       type: object
       properties:
@@ -4541,10 +4772,10 @@ components:
             type: string
     UpdateAutomationScheduleRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateAutomationScheduleRequest'
+        - $ref: "#/components/schemas/CreateAutomationScheduleRequest"
     AutomationScheduleDetail:
       allOf:
-        - $ref: '#/components/schemas/AutomationScheduleSummary'
+        - $ref: "#/components/schemas/AutomationScheduleSummary"
         - type: object
           properties:
             timezone:
@@ -4597,7 +4828,7 @@ components:
           type: integer
     AutomationExecutionDetail:
       allOf:
-        - $ref: '#/components/schemas/AutomationExecutionSummary'
+        - $ref: "#/components/schemas/AutomationExecutionSummary"
         - type: object
           properties:
             end_time:
@@ -4672,7 +4903,7 @@ components:
             type: string
     UpdateIAMUserRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateIAMUserRequest'
+        - $ref: "#/components/schemas/CreateIAMUserRequest"
         - type: object
           properties:
             status:
@@ -4680,7 +4911,7 @@ components:
               enum: [active, disabled]
     IAMUserDetail:
       allOf:
-        - $ref: '#/components/schemas/IAMUserSummary'
+        - $ref: "#/components/schemas/IAMUserSummary"
         - type: object
           properties:
             created_at:
@@ -4735,13 +4966,13 @@ components:
         subscribers:
           type: array
           items:
-            $ref: '#/components/schemas/TeamSubscriberInput'
+            $ref: "#/components/schemas/TeamSubscriberInput"
     UpdateTeamRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateTeamRequest'
+        - $ref: "#/components/schemas/CreateTeamRequest"
     TeamDetail:
       allOf:
-        - $ref: '#/components/schemas/TeamSummary'
+        - $ref: "#/components/schemas/TeamSummary"
         - type: object
           properties:
             member_ids:
@@ -4755,7 +4986,7 @@ components:
             subscribers:
               type: array
               items:
-                $ref: '#/components/schemas/TeamSubscriber'
+                $ref: "#/components/schemas/TeamSubscriber"
     TeamSubscriberInput:
       type: object
       required: [subscriber_id, subscriber_type]
@@ -4767,7 +4998,7 @@ components:
           enum: [USER, SLACK_CHANNEL, EMAIL_GROUP, ON_CALL_SCHEDULE]
     TeamSubscriber:
       allOf:
-        - $ref: '#/components/schemas/TeamSubscriberInput'
+        - $ref: "#/components/schemas/TeamSubscriberInput"
         - type: object
           properties:
             display_name:
@@ -4811,10 +5042,10 @@ components:
         permissions:
           type: array
           items:
-            $ref: '#/components/schemas/RolePermission'
+            $ref: "#/components/schemas/RolePermission"
     UpdateRoleRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateRoleRequest'
+        - $ref: "#/components/schemas/CreateRoleRequest"
         - type: object
           properties:
             status:
@@ -4822,13 +5053,13 @@ components:
               enum: [active, inactive]
     RoleDetail:
       allOf:
-        - $ref: '#/components/schemas/RoleSummary'
+        - $ref: "#/components/schemas/RoleSummary"
         - type: object
           properties:
             permissions:
               type: array
               items:
-                $ref: '#/components/schemas/RolePermission'
+                $ref: "#/components/schemas/RolePermission"
             updated_at:
               type: string
               format: date-time
@@ -4874,7 +5105,7 @@ components:
           type: string
         channel_type:
           type: string
-          enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
         template:
           type: string
     NotificationStrategySummary:
@@ -4917,20 +5148,20 @@ components:
         recipients:
           type: array
           items:
-            $ref: '#/components/schemas/NotificationRecipient'
+            $ref: "#/components/schemas/NotificationRecipient"
         channels:
           type: array
           items:
-            $ref: '#/components/schemas/NotificationChannelRef'
+            $ref: "#/components/schemas/NotificationChannelRef"
         resource_filters:
           type: object
           additionalProperties: true
     UpdateNotificationStrategyRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateNotificationStrategyRequest'
+        - $ref: "#/components/schemas/CreateNotificationStrategyRequest"
     NotificationStrategyDetail:
       allOf:
-        - $ref: '#/components/schemas/NotificationStrategySummary'
+        - $ref: "#/components/schemas/NotificationStrategySummary"
         - type: object
           properties:
             description:
@@ -4938,11 +5169,11 @@ components:
             recipients:
               type: array
               items:
-                $ref: '#/components/schemas/NotificationRecipient'
+                $ref: "#/components/schemas/NotificationRecipient"
             channels:
               type: array
               items:
-                $ref: '#/components/schemas/NotificationChannelRef'
+                $ref: "#/components/schemas/NotificationChannelRef"
             resource_filters:
               type: object
               additionalProperties: true
@@ -4976,7 +5207,7 @@ components:
           type: string
         type:
           type: string
-          enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
         enabled:
           type: boolean
         status:
@@ -5005,7 +5236,7 @@ components:
           type: string
         type:
           type: string
-          enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
         description:
           type: string
         enabled:
@@ -5018,7 +5249,7 @@ components:
           additionalProperties: true
     UpdateNotificationChannelRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateNotificationChannelRequest'
+        - $ref: "#/components/schemas/CreateNotificationChannelRequest"
         - type: object
           properties:
             status:
@@ -5035,7 +5266,7 @@ components:
               nullable: true
     NotificationChannelDetail:
       allOf:
-        - $ref: '#/components/schemas/NotificationChannelSummary'
+        - $ref: "#/components/schemas/NotificationChannelSummary"
         - type: object
           properties:
             description:
@@ -5053,7 +5284,8 @@ components:
           additionalProperties: true
     NotificationHistoryRecord:
       type: object
-      required: [record_id, sent_at, status, channel_type, channel_label, strategy_name]
+      required:
+        [record_id, sent_at, status, channel_type, channel_label, strategy_name]
       properties:
         record_id:
           type: string
@@ -5065,7 +5297,7 @@ components:
           enum: [SUCCESS, FAILED, RETRYING, QUEUED]
         channel_type:
           type: string
-          enum: [Email, Slack, PagerDuty, Webhook, Teams, 'LINE Notify', SMS]
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
         channel_label:
           type: string
         channel_id:
@@ -5100,7 +5332,7 @@ components:
           type: string
     NotificationHistoryDetail:
       allOf:
-        - $ref: '#/components/schemas/NotificationHistoryRecord'
+        - $ref: "#/components/schemas/NotificationHistoryRecord"
         - type: object
           properties:
             raw_payload:
@@ -5128,7 +5360,7 @@ components:
             resend_jobs:
               type: array
               items:
-                $ref: '#/components/schemas/NotificationResendJob'
+                $ref: "#/components/schemas/NotificationResendJob"
     NotificationResendRequest:
       type: object
       properties:
@@ -5249,7 +5481,7 @@ components:
         values:
           type: array
           items:
-            $ref: '#/components/schemas/TagValue'
+            $ref: "#/components/schemas/TagValue"
     CreateTagRequest:
       type: object
       required: [name, category]
@@ -5262,7 +5494,7 @@ components:
           type: boolean
     UpdateTagRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateTagRequest'
+        - $ref: "#/components/schemas/CreateTagRequest"
     TagValue:
       type: object
       required: [value_id, value]
@@ -5293,7 +5525,7 @@ components:
           type: boolean
     UpdateTagValueRequest:
       allOf:
-        - $ref: '#/components/schemas/CreateTagValueRequest'
+        - $ref: "#/components/schemas/CreateTagValueRequest"
     TagSummaryResponse:
       type: object
       required: [updated_at, totals, categories]
@@ -5316,7 +5548,7 @@ components:
         categories:
           type: array
           items:
-            $ref: '#/components/schemas/TagKeySummary'
+            $ref: "#/components/schemas/TagKeySummary"
     TagKeySummary:
       type: object
       required: [category, total_keys, required_keys, optional_keys]
@@ -5338,7 +5570,7 @@ components:
         top_keys:
           type: array
           items:
-            $ref: '#/components/schemas/TagKeyHighlight'
+            $ref: "#/components/schemas/TagKeyHighlight"
     TagKeyHighlight:
       type: object
       required: [tag_key, usage_count]
@@ -5360,7 +5592,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/TagKeyOption'
+            $ref: "#/components/schemas/TagKeyOption"
     TagKeyOption:
       type: object
       required: [tag_key]
@@ -5394,7 +5626,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/TagValueOption'
+            $ref: "#/components/schemas/TagValueOption"
     TagValueOption:
       type: object
       required: [value]
@@ -5438,7 +5670,7 @@ components:
           format: date-time
     EmailSettingsRequest:
       allOf:
-        - $ref: '#/components/schemas/EmailSettings'
+        - $ref: "#/components/schemas/EmailSettings"
     EmailTestRequest:
       type: object
       properties:
@@ -5517,7 +5749,7 @@ components:
           format: date-time
     AuthSettingsRequest:
       allOf:
-        - $ref: '#/components/schemas/AuthSettings'
+        - $ref: "#/components/schemas/AuthSettings"
         - type: object
           properties:
             client_secret:
@@ -5527,7 +5759,7 @@ components:
       type: object
       properties:
         settings_override:
-          $ref: '#/components/schemas/AuthSettingsRequest'
+          $ref: "#/components/schemas/AuthSettingsRequest"
         test_username:
           type: string
         test_password:
@@ -5561,3 +5793,319 @@ components:
         trace_id:
           type: string
           nullable: true
+    GrafanaDashboardUrl:
+      type: object
+      required: [url, embed_url, expires_at]
+      properties:
+        url:
+          type: string
+          description: Grafana dashboard 的完整 URL
+        embed_url:
+          type: string
+          description: 可直接用於 iframe src 的嵌入 URL
+        expires_at:
+          type: string
+          format: date-time
+          description: 臨時訪問令牌的過期時間
+        parameters:
+          type: object
+          properties:
+            theme:
+              type: string
+              enum: [light, dark]
+            kiosk:
+              type: boolean
+            refresh:
+              type: integer
+              description: 刷新間隔（秒）
+    GrafanaEmbedSettings:
+      type: object
+      properties:
+        allow_fullscreen:
+          type: boolean
+          default: true
+        allow_transparency:
+          type: boolean
+          default: false
+        height:
+          type: string
+          default: "600px"
+        width:
+          type: string
+          default: "100%"
+    BatchResourceRequest:
+      type: object
+      required: [action, resource_ids]
+      properties:
+        action:
+          type: string
+          enum: [delete, update_status, assign_team, add_tags, remove_tags]
+        resource_ids:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [healthy, warning, critical, offline]
+        team_id:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+    BatchOperationResult:
+      type: object
+      required: [batch_id, status, total_count]
+      properties:
+        batch_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        total_count:
+          type: integer
+        processed_count:
+          type: integer
+        success_count:
+          type: integer
+        failed_count:
+          type: integer
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchResourceResult"
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+    BatchResourceResult:
+      type: object
+      required: [resource_id, success]
+      properties:
+        resource_id:
+          type: string
+        success:
+          type: boolean
+        message:
+          type: string
+        error:
+          type: string
+    ScanRequest:
+      type: object
+      required: [scan_type, target]
+      properties:
+        scan_type:
+          type: string
+          enum: [network, resources, infrastructure]
+        target:
+          type: string
+        options:
+          type: object
+          properties:
+            ports:
+              type: array
+              items:
+                type: integer
+            timeout:
+              type: integer
+            max_depth:
+              type: integer
+            include_types:
+              type: array
+              items:
+                type: string
+    ScanTaskResponse:
+      type: object
+      required: [task_id, status, created_at]
+      properties:
+        task_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        scan_type:
+          type: string
+        target:
+          type: string
+        progress:
+          type: number
+          minimum: 0
+          maximum: 100
+        results_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/ScanResult"
+    ScanResult:
+      type: object
+      required: [resource_id, name, type, status]
+      properties:
+        resource_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        status:
+          type: string
+        ip_address:
+          type: string
+        location:
+          type: string
+        discovered_at:
+          type: string
+          format: date-time
+        services:
+          type: array
+          items:
+            type: object
+            properties:
+              port:
+                type: integer
+              protocol:
+                type: string
+              service:
+                type: string
+              version:
+                type: string
+    SystemSettings:
+      type: object
+      properties:
+        maintenance_mode:
+          type: boolean
+          default: false
+        max_concurrent_scans:
+          type: integer
+          default: 10
+        auto_discovery_enabled:
+          type: boolean
+          default: true
+        alert_integration_enabled:
+          type: boolean
+          default: true
+        retention_policy:
+          type: object
+          properties:
+            events_days:
+              type: integer
+              default: 90
+            logs_days:
+              type: integer
+              default: 30
+            metrics_days:
+              type: integer
+              default: 365
+        updated_at:
+          type: string
+          format: date-time
+    SystemSettingsRequest:
+      allOf:
+        - $ref: "#/components/schemas/SystemSettings"
+    SystemDiagnostics:
+      type: object
+      properties:
+        platform:
+          type: object
+          properties:
+            version:
+              type: string
+            uptime:
+              type: string
+            memory_usage:
+              type: number
+            cpu_usage:
+              type: number
+            disk_usage:
+              type: number
+        database:
+          type: object
+          properties:
+            connection_status:
+              type: string
+              enum: [healthy, degraded, failed]
+            pool_size:
+              type: integer
+            active_connections:
+              type: integer
+            query_time:
+              type: number
+        cache:
+          type: object
+          properties:
+            status:
+              type: string
+              enum: [healthy, degraded, failed]
+            memory_used:
+              type: number
+            hit_rate:
+              type: number
+        services:
+          type: object
+          properties:
+            notification_service:
+              type: string
+              enum: [running, stopped, degraded]
+            automation_service:
+              type: string
+              enum: [running, stopped, degraded]
+            ai_service:
+              type: string
+              enum: [running, stopped, degraded]
+        external_integrations:
+          type: object
+          properties:
+            grafana:
+              type: string
+              enum: [connected, disconnected, degraded]
+            keycloak:
+              type: string
+              enum: [connected, disconnected, degraded]
+        generated_at:
+          type: string
+          format: date-time
+    SystemHealth:
+      type: object
+      properties:
+        overall_status:
+          type: string
+          enum: [healthy, warning, critical]
+        checks:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthCheck"
+        generated_at:
+          type: string
+          format: date-time
+    HealthCheck:
+      type: object
+      required: [name, status, message]
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [pass, warn, fail]
+        message:
+          type: string
+        duration_ms:
+          type: integer
+        last_checked:
+          type: string
+          format: date-time

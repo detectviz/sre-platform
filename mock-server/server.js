@@ -2279,6 +2279,278 @@ app.put('/settings/auth', (req, res) => {
   res.json(authSettings);
 });
 
+// Admin endpoints
+const systemSettings = {
+  maintenance_mode: false,
+  max_concurrent_scans: 10,
+  auto_discovery_enabled: true,
+  alert_integration_enabled: true,
+  retention_policy: {
+    events_days: 90,
+    logs_days: 30,
+    metrics_days: 365
+  },
+  updated_at: toISO(now)
+};
+
+const systemDiagnostics = {
+  platform: {
+    version: '3.0.0',
+    uptime: '7 days 4 hours',
+    memory_usage: 68.5,
+    cpu_usage: 23.1,
+    disk_usage: 45.2
+  },
+  database: {
+    connection_status: 'healthy',
+    pool_size: 20,
+    active_connections: 8,
+    query_time: 12.5
+  },
+  cache: {
+    status: 'healthy',
+    memory_used: 256,
+    hit_rate: 97.8
+  },
+  services: {
+    notification_service: 'running',
+    automation_service: 'running',
+    ai_service: 'running'
+  },
+  external_integrations: {
+    grafana: 'connected',
+    keycloak: 'connected'
+  },
+  generated_at: toISO(now)
+};
+
+const systemHealth = {
+  overall_status: 'healthy',
+  checks: [
+    {
+      name: 'Database Connection',
+      status: 'pass',
+      message: 'All database connections are healthy',
+      duration_ms: 8,
+      last_checked: toISO(new Date(now.getTime() - 30000))
+    },
+    {
+      name: 'Cache Service',
+      status: 'pass',
+      message: 'Redis cluster is responding normally',
+      duration_ms: 5,
+      last_checked: toISO(new Date(now.getTime() - 15000))
+    },
+    {
+      name: 'External Integrations',
+      status: 'pass',
+      message: 'Grafana and Keycloak are reachable',
+      duration_ms: 120,
+      last_checked: toISO(new Date(now.getTime() - 60000))
+    }
+  ],
+  generated_at: toISO(now)
+};
+
+// Batch operations
+const batchOperations = new Map();
+const scanTasks = new Map();
+
+// Admin endpoints
+app.get('/admin/settings', (req, res) => {
+  res.json(systemSettings);
+});
+
+app.post('/admin/settings', (req, res) => {
+  Object.assign(systemSettings, req.body, { updated_at: toISO(new Date()) });
+  res.json(systemSettings);
+});
+
+app.get('/admin/diagnostics', (req, res) => {
+  res.json(systemDiagnostics);
+});
+
+app.get('/admin/diagnostics/health', (req, res) => {
+  res.json(systemHealth);
+});
+
+// Resource batch operations
+app.post('/resources/batch', (req, res) => {
+  const { action, resource_ids, status, team_id, tags, reason } = req.body;
+  const batchId = `batch-${Date.now()}`;
+
+  batchOperations.set(batchId, {
+    batch_id: batchId,
+    status: 'pending',
+    total_count: resource_ids.length,
+    processed_count: 0,
+    success_count: 0,
+    failed_count: 0,
+    results: [],
+    created_at: toISO(new Date()),
+    completed_at: null
+  });
+
+  // Simulate async processing
+  setTimeout(() => {
+    const operation = batchOperations.get(batchId);
+    if (operation) {
+      operation.status = 'completed';
+      operation.completed_at = toISO(new Date());
+
+      // Mock results
+      operation.results = resource_ids.map(id => ({
+        resource_id: id,
+        success: Math.random() > 0.1, // 90% success rate
+        message: Math.random() > 0.1 ? 'Operation successful' : 'Resource not found'
+      }));
+
+      operation.processed_count = operation.results.length;
+      operation.success_count = operation.results.filter(r => r.success).length;
+      operation.failed_count = operation.results.filter(r => !r.success).length;
+
+      batchOperations.set(batchId, operation);
+    }
+  }, 2000);
+
+  res.status(202).json({
+    batch_id: batchId,
+    status: 'pending',
+    total_count: resource_ids.length,
+    created_at: toISO(new Date())
+  });
+});
+
+// Resource scanning
+app.post('/resources/scan', (req, res) => {
+  const { scan_type, target, options = {} } = req.body;
+  const taskId = `scan-${Date.now()}`;
+
+  scanTasks.set(taskId, {
+    task_id: taskId,
+    status: 'pending',
+    scan_type,
+    target,
+    progress: 0,
+    results_count: 0,
+    created_at: toISO(new Date()),
+    started_at: null,
+    completed_at: null,
+    results: []
+  });
+
+  // Simulate async scanning
+  setTimeout(() => {
+    const task = scanTasks.get(taskId);
+    if (task) {
+      task.status = 'running';
+      task.started_at = toISO(new Date());
+      scanTasks.set(taskId, task);
+    }
+  }, 1000);
+
+  setTimeout(() => {
+    const task = scanTasks.get(taskId);
+    if (task) {
+      task.status = 'completed';
+      task.progress = 100;
+      task.completed_at = toISO(new Date());
+      task.results = [
+        {
+          resource_id: `res-${Date.now()}`,
+          name: 'Discovered Server',
+          type: 'server',
+          status: 'healthy',
+          ip_address: '192.168.1.100',
+          location: 'Data Center A',
+          discovered_at: toISO(new Date()),
+          services: [
+            {
+              port: 22,
+              protocol: 'tcp',
+              service: 'ssh',
+              version: 'OpenSSH 8.9'
+            },
+            {
+              port: 80,
+              protocol: 'tcp',
+              service: 'http',
+              version: 'nginx/1.21.6'
+            }
+          ]
+        }
+      ];
+      task.results_count = task.results.length;
+      scanTasks.set(taskId, task);
+    }
+  }, 5000);
+
+  res.status(202).json({
+    task_id: taskId,
+    status: 'pending',
+    scan_type,
+    target,
+    created_at: toISO(new Date())
+  });
+});
+
+app.get('/resources/scan/:task_id', (req, res) => {
+  const task = scanTasks.get(req.params.task_id);
+  if (!task) {
+    return notFound(res, 'Scan task not found');
+  }
+  res.json(task);
+});
+
+// Grafana Dashboard URL generation
+const grafanaBaseUrl = process.env.GRAFANA_URL || 'http://localhost:3000';
+const grafanaServiceAccountToken = process.env.GRAFANA_SERVICE_ACCOUNT_TOKEN || 'eyJrIjoiM2R6MzB5VzF5ZGdZWnR3Z3h5dE5oRmJ6d1h5V1VnT2t2MnciLCJuIjoiU1JFUGxhdGZvcm0iLCJpZCI6MX0=';
+
+app.get('/dashboards/:dashboard_id/grafana-url', (req, res) => {
+  const { dashboard_id } = req.params;
+  const { theme, kiosk, refresh } = req.query;
+
+  // Mock dashboard mapping (in real implementation, this would be stored in database)
+  const grafanaDashboardMap = {
+    'dash-001': 'sre-war-room', // SRE 戰情室
+    'dash-002': 'infrastructure-insight', // 基礎設施洞察
+    'dash-003': 'capacity-planning' // 容量規劃
+  };
+
+  const grafanaDashboardId = grafanaDashboardMap[dashboard_id];
+  if (!grafanaDashboardId) {
+    return notFound(res, 'Dashboard not found or not configured for Grafana embedding');
+  }
+
+  // Generate temporary access token (mock implementation)
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
+  const tempToken = `temp-token-${Date.now()}`;
+
+  // Build Grafana URL with parameters
+  let embedUrl = `${grafanaBaseUrl}/d/${grafanaDashboardId}?orgId=1`;
+
+  if (theme) embedUrl += `&theme=${theme}`;
+  if (kiosk) embedUrl += '&kiosk=true';
+  if (refresh) embedUrl += `&refresh=${refresh}s`;
+
+  // Add authentication token
+  embedUrl += `&authToken=${grafanaServiceAccountToken}`;
+
+  const response = {
+    url: `${grafanaBaseUrl}/d/${grafanaDashboardId}`,
+    embed_url: embedUrl,
+    expires_at: toISO(expiresAt),
+    parameters: {
+      theme: theme || 'light',
+      kiosk: Boolean(kiosk),
+      refresh: parseInt(refresh, 10) || null
+    }
+  };
+
+  res.json(response);
+});
+
 app.post('/settings/auth/test', (req, res) => {
   const executedAt = toISO(new Date());
   const asyncMode = Boolean(req.body?.async);
