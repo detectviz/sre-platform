@@ -284,46 +284,6 @@ CREATE UNIQUE INDEX idx_script_versions_unique ON automation_script_versions (sc
 -- =============================
 -- 事件資料模型
 -- =============================
-CREATE TABLE event_rules (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 名稱
-    name VARCHAR(128) NOT NULL UNIQUE,
-    -- 描述
-    description TEXT,
-    -- 嚴重度
-    severity VARCHAR(32) NOT NULL,
-    -- 預設優先順序
-    default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
-    -- 啟用
-    enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 標籤
-    labels JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 環境
-    environments JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 條件群組
-    condition_groups JSONB NOT NULL,
-    -- 標題範本
-    title_template TEXT,
-    -- 內容範本
-    content_template TEXT,
-    -- 自動化啟用
-    automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 自動化腳本識別碼
-    automation_script_id UUID REFERENCES automation_scripts(id),
-    -- 自動化參數
-    automation_parameters JSONB DEFAULT '{}'::JSONB,
-    -- 建立者識別碼
-    creator_id UUID REFERENCES users(id),
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_event_rules_severity CHECK (severity IN ('critical','warning','info')),
-    CONSTRAINT chk_event_rules_priority CHECK (default_priority IN ('P0','P1','P2','P3'))
-);
-CREATE INDEX idx_event_rules_enabled ON event_rules (enabled);
-
 CREATE TABLE silence_rules (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -402,14 +362,16 @@ CREATE TABLE events (
     status VARCHAR(32) NOT NULL,
     -- 優先順序
     priority VARCHAR(8) NOT NULL DEFAULT 'P2',
+    -- 事件來源分類
+    event_source VARCHAR(32) NOT NULL DEFAULT 'platform_internal',
     -- 來源
     source VARCHAR(100),
     -- 服務影響
     service_impact TEXT,
     -- 資源識別碼
     resource_id UUID,
-    -- 規則識別碼
-    rule_id UUID REFERENCES event_rules(id),
+    -- Grafana 告警規則 UID
+    grafana_rule_uid VARCHAR(64),
     -- 觸發門檻
     trigger_threshold VARCHAR(64),
     -- 觸發數值
@@ -432,12 +394,16 @@ CREATE TABLE events (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_events_severity CHECK (severity IN ('critical','warning','info')),
     CONSTRAINT chk_events_status CHECK (status IN ('new','acknowledged','in_progress','resolved','silenced')),
-    CONSTRAINT chk_events_priority CHECK (priority IN ('P0','P1','P2','P3'))
+    CONSTRAINT chk_events_priority CHECK (priority IN ('P0','P1','P2','P3')),
+    CONSTRAINT chk_events_source CHECK (event_source IN ('grafana_webhook','platform_internal','manual_created'))
 );
 CREATE INDEX idx_events_status ON events (status);
 CREATE INDEX idx_events_severity ON events (severity);
 CREATE INDEX idx_events_trigger_time ON events (trigger_time DESC);
 CREATE INDEX idx_events_priority ON events (priority);
+CREATE INDEX idx_events_rule_uid ON events (grafana_rule_uid);
+CREATE INDEX idx_events_source_status_time ON events (event_source, status, trigger_time DESC);
+COMMENT ON TABLE events IS '事件增值處理資料表，專注於 AI 分析、關聯分析與處理追蹤，不承載告警規則管理邏輯。';
 
 CREATE TABLE event_tags (
     -- 事件識別碼
@@ -475,6 +441,7 @@ CREATE TABLE event_relations (
     relationship VARCHAR(64) NOT NULL,
     PRIMARY KEY (event_id, related_event_id)
 );
+COMMENT ON TABLE event_relations IS '管理事件之間的關聯資訊，支援根因定位與影響分析。';
 
 CREATE TABLE event_ai_analysis (
     -- 事件識別碼
@@ -492,6 +459,104 @@ CREATE TABLE event_ai_analysis (
     -- 產生時間
     generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+COMMENT ON TABLE event_ai_analysis IS '儲存 AI 根因分析與建議結果，協助值班人員快速決策。';
+
+CREATE TABLE event_rule_templates (
+    -- 範本鍵值
+    template_key VARCHAR(64) PRIMARY KEY,
+    -- 範本名稱
+    name VARCHAR(128) NOT NULL,
+    -- 範本描述
+    description TEXT,
+    -- 預設嚴重度
+    severity VARCHAR(32) NOT NULL,
+    -- 預設優先順序
+    default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
+    -- 預設標籤
+    labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 預設環境
+    environments TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 預設條件群組
+    condition_groups JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 標題模板
+    title_template TEXT,
+    -- 內容模板
+    content_template TEXT,
+    -- 建立時間
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_event_rule_templates_severity CHECK (severity IN ('critical','warning','info')),
+    CONSTRAINT chk_event_rule_templates_priority CHECK (default_priority IN ('P0','P1','P2','P3'))
+);
+CREATE INDEX idx_event_rule_templates_name ON event_rule_templates (name);
+COMMENT ON TABLE event_rule_templates IS '事件規則快速套用範本表，提供前端精靈預設條件與內容模板。';
+
+CREATE TABLE event_rule_snapshots (
+    -- Grafana 規則 UID
+    grafana_rule_uid VARCHAR(64) PRIMARY KEY,
+    -- 快取的完整規則定義 (Grafana JSON 結構)
+    raw_definition JSONB NOT NULL,
+    -- 快取規則名稱供清單快速顯示
+    cached_name VARCHAR(128) NOT NULL,
+    -- 快取規則描述
+    cached_description TEXT,
+    -- 快取的嚴重度資訊
+    cached_severity VARCHAR(32) NOT NULL,
+    -- 快取的啟用狀態
+    cached_enabled BOOLEAN NOT NULL,
+    -- 快取的預設優先級
+    cached_default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
+    -- 快取的範本鍵值
+    cached_template_key VARCHAR(64),
+    -- 快取的標籤
+    cached_labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 快取的環境設定
+    cached_environments TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 快取的標題模板
+    cached_title_template TEXT,
+    -- 快取的內容模板
+    cached_content_template TEXT,
+    -- 快取的規則建立者
+    cached_creator VARCHAR(128) NOT NULL,
+    -- 快取的最後更新時間
+    cached_last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 與 Grafana 最新同步時間
+    last_synced_at TIMESTAMPTZ,
+    -- 同步狀態 (fresh: 已同步、stale: 使用快取、failed: 同步失敗)
+    sync_status VARCHAR(16) NOT NULL DEFAULT 'fresh',
+    -- 同步結果補充訊息
+    sync_message TEXT,
+    -- 最近更新操作者
+    updated_by UUID REFERENCES users(id),
+    -- 建立時間
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 最近更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_event_rule_snapshot_status CHECK (sync_status IN ('fresh','stale','failed')),
+    CONSTRAINT chk_event_rule_snapshot_severity CHECK (cached_severity IN ('critical','warning','info')),
+    CONSTRAINT chk_event_rule_snapshot_priority CHECK (cached_default_priority IN ('P0','P1','P2','P3'))
+);
+CREATE INDEX idx_event_rule_snapshots_status ON event_rule_snapshots (sync_status);
+CREATE INDEX idx_event_rule_snapshots_synced_at ON event_rule_snapshots (last_synced_at DESC);
+COMMENT ON TABLE event_rule_snapshots IS '快取 Grafana 告警規則的最新設定與建立者／最後更新時間，以支援離線檢視與編輯時的表單回填。';
+
+CREATE TABLE event_rule_automation_bindings (
+    -- Grafana 規則 UID
+    grafana_rule_uid VARCHAR(64) PRIMARY KEY REFERENCES event_rule_snapshots(grafana_rule_uid) ON DELETE CASCADE,
+    -- 是否啟用自動化
+    automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 綁定腳本識別碼
+    script_id UUID REFERENCES automation_scripts(id) ON DELETE SET NULL,
+    -- 腳本參數
+    parameters JSONB NOT NULL DEFAULT '{}'::JSONB,
+    -- 最後更新者
+    updated_by UUID REFERENCES users(id),
+    -- 更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_event_rule_automation_script ON event_rule_automation_bindings (script_id);
+COMMENT ON TABLE event_rule_automation_bindings IS '儲存事件規則的自動化綁定設定，並串聯快取資訊補齊 Grafana 規則未提供的擴充屬性。';
 
 CREATE TABLE batch_operations (
     -- 主鍵識別碼
@@ -1158,6 +1223,7 @@ CREATE TABLE notification_channels (
 );
 CREATE INDEX idx_notification_channels_type ON notification_channels (type);
 CREATE INDEX idx_notification_channels_status ON notification_channels (status);
+COMMENT ON TABLE notification_channels IS '平台專用通知通道設定，統一管理多種傳遞渠道並與 Grafana 告警互補。';
 
 CREATE TABLE notification_channel_links (
     -- 主鍵識別碼
@@ -1195,6 +1261,14 @@ CREATE TABLE notification_strategies (
     severity_filters TEXT[] DEFAULT ARRAY['critical','warning','info'],
     -- 資源篩選條件
     resource_filters JSONB DEFAULT '{}'::JSONB,
+    -- 重試策略
+    retry_policy JSONB NOT NULL DEFAULT '{"max_attempts":1,"interval_seconds":300,"escalation_channel_ids":[]}'::JSONB,
+    -- 通知送達設定
+    delivery_settings JSONB NOT NULL DEFAULT '{"enable_aggregation":false,"aggregation_window_seconds":0,"enable_delay":false,"delay_seconds":0,"enable_repeat_suppression":false,"repeat_suppression_minutes":0,"webhook_headers":{},"encrypt_payload":false,"api_token_secret_id":null}'::JSONB,
+    -- 靜音設定
+    snooze_settings JSONB NOT NULL DEFAULT '{"auto_snooze_minutes":0,"resume_on_resolve":true,"schedule":null}'::JSONB,
+    -- 關聯靜音規則
+    linked_silence_ids UUID[] NOT NULL DEFAULT '{}'::UUID[],
     -- 建立者識別碼
     created_by UUID REFERENCES users(id),
     -- 更新者識別碼
@@ -1207,6 +1281,8 @@ CREATE TABLE notification_strategies (
 );
 CREATE INDEX idx_notification_strategies_enabled ON notification_strategies (enabled);
 CREATE INDEX idx_notification_strategies_priority ON notification_strategies (priority);
+CREATE INDEX idx_notification_strategies_enabled_priority ON notification_strategies (enabled, priority, created_at DESC);
+COMMENT ON TABLE notification_strategies IS '平台特有通知策略表，支援複雜業務條件、多渠道路由與重試/靜音等進階設定，補足 Grafana 通知限制。';
 
 CREATE TABLE notification_strategy_recipients (
     -- 主鍵識別碼
@@ -1320,67 +1396,6 @@ CREATE TABLE tag_values (
 );
 CREATE UNIQUE INDEX idx_tag_values_unique ON tag_values (tag_id, value);
 
-CREATE TABLE email_settings (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- SMTP主機
-    smtp_host VARCHAR(256) NOT NULL,
-    -- SMTP連接埠
-    smtp_port INTEGER NOT NULL,
-    -- 使用者帳號
-    username VARCHAR(128),
-    -- 寄件者名稱
-    sender_name VARCHAR(128),
-    -- 寄件者電子郵件
-    sender_email VARCHAR(256) NOT NULL,
-    -- 加密
-    encryption VARCHAR(16) NOT NULL DEFAULT 'none',
-    -- 測試收件者
-    test_recipient VARCHAR(256),
-    -- 是否啟用
-    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 更新者識別碼
-    updated_by UUID REFERENCES users(id),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_email_settings_encryption CHECK (encryption IN ('none','tls','ssl'))
-);
-
-CREATE TABLE auth_settings (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 供應商
-    provider VARCHAR(32) NOT NULL,
-    -- OIDC啟用
-    oidc_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 領域
-    realm VARCHAR(128),
-    -- 客戶端識別碼
-    client_id VARCHAR(256) NOT NULL,
-    -- 客戶端密鑰加密後
-    client_secret_encrypted TEXT,
-    -- 客戶端密鑰提示
-    client_secret_hint VARCHAR(64),
-    -- 認證網址
-    auth_url VARCHAR(512) NOT NULL,
-    -- 令牌網址
-    token_url VARCHAR(512) NOT NULL,
-    -- 使用者資訊網址
-    userinfo_url VARCHAR(512),
-    -- 重新導向URI
-    redirect_uri VARCHAR(512),
-    -- 登出網址
-    logout_url VARCHAR(512),
-    -- 授權範圍
-    scopes TEXT[] DEFAULT ARRAY['openid','profile','email'],
-    -- 使用者同步
-    user_sync BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 更新者識別碼
-    updated_by UUID REFERENCES users(id),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 CREATE TABLE layout_widgets (
     -- 小工具識別碼
     widget_id VARCHAR(128) PRIMARY KEY,
@@ -1456,3 +1471,26 @@ CREATE TABLE audit_logs (
 );
 CREATE INDEX idx_audit_logs_action ON audit_logs (action);
 CREATE INDEX idx_audit_logs_created_at ON audit_logs (created_at DESC);
+COMMENT ON TABLE audit_logs IS '審計日誌資料表，用於追蹤平台關鍵操作並符合合規需求。';
+
+-- =============================
+-- 審計日誌保留策略函式
+-- =============================
+CREATE OR REPLACE FUNCTION cleanup_old_audit_logs(retention_interval INTERVAL DEFAULT INTERVAL '2 years')
+RETURNS INTEGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    removed_count INTEGER := 0;
+BEGIN
+    WITH removed AS (
+        DELETE FROM audit_logs
+        WHERE created_at < NOW() - retention_interval
+        RETURNING 1
+    )
+    SELECT COUNT(*) INTO removed_count FROM removed;
+
+    RETURN COALESCE(removed_count, 0);
+END;
+$$;
+COMMENT ON FUNCTION cleanup_old_audit_logs(INTERVAL) IS '刪除早於保留期間的審計日誌並回傳刪除筆數，預設保留兩年資料。';
