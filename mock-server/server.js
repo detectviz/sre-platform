@@ -7,6 +7,23 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 4000;
 const toISO = (value) => new Date(value).toISOString();
+const toCsv = (records, columns) => {
+  const header = columns.map((col) => col.header || col.key).join(',');
+  const rows = records.map((record) =>
+    columns
+      .map((col) => {
+        const rawValue = typeof col.value === 'function' ? col.value(record) : record[col.key];
+        if (rawValue === undefined || rawValue === null) {
+          return '';
+        }
+        const cell = String(rawValue);
+        const needsEscape = /[",\r\n]/.test(cell);
+        return needsEscape ? `"${cell.replace(/"/g, '""')}"` : cell;
+      })
+      .join(',')
+  );
+  return [header, ...rows].join('\n');
+};
 const now = new Date();
 
 const currentUser = {
@@ -118,6 +135,8 @@ const eventData = [
     event_key: 'INC-2025-001',
     summary: 'API 延遲飆高',
     description: '交易 API P95 延遲持續高於 500ms。',
+    event_source: 'grafana_webhook',
+    source: 'Grafana Alerting',
     severity: 'critical',
     status: 'in_progress',
     priority: 'P0',
@@ -193,6 +212,8 @@ const eventData = [
     event_key: 'INC-2025-002',
     summary: '資料庫連線延遲升高',
     description: 'RDS 叢集讀取延遲偶發飆升。',
+    event_source: 'grafana_webhook',
+    source: 'Grafana Alerting',
     severity: 'warning',
     status: 'acknowledged',
     priority: 'P2',
@@ -216,6 +237,107 @@ const eventData = [
   }
 ];
 
+const eventRuleTemplates = [
+  {
+    template_key: 'cpu_high',
+    name: 'CPU 使用率過高',
+    description: '當 CPU 使用率持續高於 80% 時觸發告警。',
+    severity: 'warning',
+    default_priority: 'P1',
+    labels: ['tier:compute'],
+    environments: ['production'],
+    condition_groups: [
+      {
+        logic: 'AND',
+        conditions: [
+          { metric: 'cpu.utilization', operator: '>', threshold: 80, duration_minutes: 5, severity: 'warning' }
+        ]
+      }
+    ],
+    title_template: '{{resource.name}} CPU 使用率告警',
+    content_template: '{{metric.name}} 已持續 {{duration}} 分鐘超過 {{threshold}}%。',
+    suggested_script_id: 'script-002'
+  },
+  {
+    template_key: 'memory_pressure',
+    name: '記憶體使用率過高',
+    description: '記憶體使用率超過 85% 以上並持續一段時間。',
+    severity: 'warning',
+    default_priority: 'P2',
+    labels: ['tier:frontend'],
+    environments: ['production', 'staging'],
+    condition_groups: [
+      {
+        logic: 'AND',
+        conditions: [
+          { metric: 'memory.utilization', operator: '>', threshold: 85, duration_minutes: 10, severity: 'warning' }
+        ]
+      }
+    ],
+    title_template: '{{resource.name}} 記憶體壓力升高',
+    content_template: '記憶體使用率為 {{metric.value}}%，已超過 {{threshold}}% 門檻。'
+  },
+  {
+    template_key: 'disk_capacity',
+    name: '磁碟容量不足',
+    description: '磁碟使用率超過 90% 時提醒容量不足。',
+    severity: 'warning',
+    default_priority: 'P1',
+    labels: ['tier:storage'],
+    environments: ['production'],
+    condition_groups: [
+      {
+        logic: 'AND',
+        conditions: [
+          { metric: 'disk.utilization', operator: '>', threshold: 90, duration_minutes: 15, severity: 'warning' }
+        ]
+      }
+    ],
+    title_template: '{{resource.name}} 磁碟容量警示',
+    content_template: '磁碟使用率為 {{metric.value}}%，請評估擴容或清理。'
+  },
+  {
+    template_key: 'db_latency',
+    name: '資料庫延遲異常',
+    description: '偵測資料庫讀寫延遲飆升的情境。',
+    severity: 'critical',
+    default_priority: 'P0',
+    labels: ['tier:db'],
+    environments: ['production'],
+    condition_groups: [
+      {
+        logic: 'AND',
+        conditions: [
+          { metric: 'db.read_latency', operator: '>', threshold: 200, duration_minutes: 5, severity: 'critical' }
+        ]
+      }
+    ],
+    title_template: '{{resource.name}} 延遲異常',
+    content_template: '目前讀取延遲 {{metric.value}}ms，超過閾值 {{threshold}}ms。',
+    suggested_script_id: 'script-001'
+  },
+  {
+    template_key: 'api_latency',
+    name: 'API 延遲異常',
+    description: 'API 回應時間過長時通知應用團隊。',
+    severity: 'critical',
+    default_priority: 'P0',
+    labels: ['app:web'],
+    environments: ['production'],
+    condition_groups: [
+      {
+        logic: 'AND',
+        conditions: [
+          { metric: 'api.p95_latency', operator: '>', threshold: 500, duration_minutes: 5, severity: 'critical' }
+        ]
+      }
+    ],
+    title_template: '{{service.name}} 延遲異常',
+    content_template: 'API 延遲 {{metric.value}}ms，超過 {{threshold}}ms 門檻。',
+    suggested_script_id: 'script-001'
+  }
+];
+
 const eventRules = [
   {
     rule_uid: 'rule-001',
@@ -225,8 +347,11 @@ const eventRules = [
     default_priority: 'P0',
     enabled: true,
     automation_enabled: true,
+    template_key: 'api_latency',
     creator: '林佳瑜',
     last_updated: toISO(new Date(now.getTime() - 86400000)),
+    last_synced_at: toISO(new Date(now.getTime() - 600000)),
+    sync_status: 'fresh',
     labels: ['app:web'],
     environments: ['production'],
     condition_groups: [
@@ -253,8 +378,11 @@ const eventRules = [
     default_priority: 'P2',
     enabled: true,
     automation_enabled: false,
+    template_key: 'db_latency',
     creator: '林佳瑜',
     last_updated: toISO(new Date(now.getTime() - 172800000)),
+    last_synced_at: toISO(new Date(now.getTime() - 3600000)),
+    sync_status: 'stale',
     labels: ['tier:db'],
     environments: ['production'],
     condition_groups: [
@@ -929,14 +1057,45 @@ const notificationChannels = [
   }
 ];
 
+const defaultRetryPolicy = () => ({
+  max_attempts: 1,
+  interval_seconds: 300,
+  escalation_channel_ids: [],
+  backoff_factor: 1
+});
+
+const defaultDeliverySettings = () => ({
+  enable_aggregation: false,
+  aggregation_window_seconds: 0,
+  enable_delay: false,
+  delay_seconds: 0,
+  enable_repeat_suppression: false,
+  repeat_suppression_minutes: 0,
+  webhook_headers: {},
+  encrypt_payload: false,
+  api_token_secret_id: null,
+  custom_payload_template: null
+});
+
+const defaultSnoozeSettings = () => ({
+  auto_snooze_minutes: 0,
+  resume_on_resolve: true,
+  schedule: null
+});
+
+const mergeSettings = (factory, incoming) => {
+  const base = factory();
+  if (!incoming || typeof incoming !== 'object') return base;
+  return { ...base, ...incoming };
+};
+
 const notificationStrategies = [
   {
     strategy_id: 'str-001',
     name: 'Critical 事件通知',
     description: '針對 critical 事件通知核心人員。',
     trigger_condition: 'severity == critical',
-    channel_count: 2,
-    status: 'enabled',
+    enabled: true,
     priority: 'high',
     severity_filters: ['critical'],
     recipients: [
@@ -948,6 +1107,17 @@ const notificationStrategies = [
       { channel_id: 'chn-002', channel_type: 'Email', template: 'default' }
     ],
     resource_filters: {},
+    retry_policy: defaultRetryPolicy(),
+    delivery_settings: {
+      ...defaultDeliverySettings(),
+      enable_repeat_suppression: true,
+      repeat_suppression_minutes: 30
+    },
+    snooze_settings: {
+      ...defaultSnoozeSettings(),
+      auto_snooze_minutes: 15
+    },
+    linked_silence_ids: ['slc-001'],
     created_at: toISO(new Date(now.getTime() - 259200000)),
     updated_at: toISO(new Date(now.getTime() - 86400000))
   }
@@ -1635,6 +1805,8 @@ const mapEventSummary = (event) => ({
   event_key: event.event_key,
   summary: event.summary,
   description: event.description,
+  event_source: event.event_source || 'platform_internal',
+  source: event.source || null,
   severity: event.severity,
   status: event.status,
   priority: event.priority || 'P2',
@@ -1865,12 +2037,18 @@ const mapNotificationStrategyDetail = (strategy) => {
     description: strategy.description || '',
     trigger_condition: strategy.trigger_condition || '',
     channel_count: channels.length,
-    status: strategy.status || 'disabled',
+    enabled: Boolean(strategy.enabled),
     priority: strategy.priority || 'medium',
     severity_filters: strategy.severity_filters || [],
     recipients,
     channels,
-    resource_filters: strategy.resource_filters || {}
+    resource_filters: strategy.resource_filters || {},
+    retry_policy: mergeSettings(defaultRetryPolicy, strategy.retry_policy),
+    delivery_settings: mergeSettings(defaultDeliverySettings, strategy.delivery_settings),
+    snooze_settings: mergeSettings(defaultSnoozeSettings, strategy.snooze_settings),
+    linked_silence_ids: Array.isArray(strategy.linked_silence_ids)
+      ? [...strategy.linked_silence_ids]
+      : []
   };
 };
 
@@ -2747,6 +2925,13 @@ app.post('/events', (req, res) => {
     event_key: payload.event_key || `INC-${Date.now()}`,
     summary: payload.summary || '新事件',
     description: payload.description || '',
+    event_source:
+      payload.event_source && ['grafana_webhook', 'platform_internal', 'manual_created'].includes(payload.event_source)
+        ? payload.event_source
+        : payload.rule_uid
+          ? 'grafana_webhook'
+          : 'platform_internal',
+    source: payload.source || (payload.rule_uid ? 'Grafana Alerting' : 'SRE 平台'),
     severity: payload.severity || 'warning',
     status: initialStatus,
     priority: payload.priority || defaultPriority,
@@ -2985,6 +3170,22 @@ app.get('/event-rules/summary', (req, res) => {
   res.json({ total: eventRules.length, enabled, automation_enabled: automation });
 });
 
+app.get('/event-rules/templates', (req, res) => {
+  const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+
+  const templates = eventRuleTemplates.filter((tpl) => {
+    if (!matchesEnumFilter(tpl.severity, severityFilter)) return false;
+    if (keyword) {
+      const text = `${tpl.name} ${tpl.description || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
+  });
+
+  res.json(templates);
+});
+
 app.get('/event-rules', (req, res) => {
   const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
   const enabledFilter = parseBooleanParam(req.query.enabled);
@@ -3008,9 +3209,29 @@ app.get('/event-rules', (req, res) => {
     enabled: rule.enabled,
     automation_enabled: rule.automation_enabled,
     default_priority: rule.default_priority || 'P2',
+    template_key: rule.template_key || null,
     creator: rule.creator,
-    last_updated: rule.last_updated
+    last_updated: rule.last_updated,
+    last_synced_at: rule.last_synced_at || null,
+    sync_status: rule.sync_status || 'fresh'
   }));
+
+  if ((req.query.format || 'json').toLowerCase() === 'csv') {
+    const csv = toCsv(items, [
+      { key: 'rule_uid' },
+      { key: 'name' },
+      { key: 'severity' },
+      { key: 'enabled', value: (row) => (row.enabled ? 'true' : 'false') },
+      { key: 'automation_enabled', value: (row) => (row.automation_enabled ? 'true' : 'false') },
+      { key: 'default_priority' },
+      { key: 'sync_status' },
+      { key: 'last_synced_at', value: (row) => row.last_synced_at || '' },
+      { key: 'last_updated' },
+      { key: 'creator' }
+    ]);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    return res.send(csv);
+  }
 
   res.json(
     paginate(items, req, {
@@ -3023,22 +3244,38 @@ app.get('/event-rules', (req, res) => {
 
 app.post('/event-rules', (req, res) => {
   const payload = req.body || {};
+  const template = payload.template_key
+    ? eventRuleTemplates.find((item) => item.template_key === payload.template_key)
+    : null;
+
+  const clone = (value) => (value ? JSON.parse(JSON.stringify(value)) : value);
+
   const rule = {
     rule_uid: `rule-${Date.now()}`,
-    name: payload.name || '新事件規則',
-    description: payload.description || '',
-    severity: payload.severity || 'warning',
-    default_priority: payload.default_priority || 'P2',
+
+    name: payload.name || template?.name || '新事件規則',
+    description: payload.description || template?.description || '',
+    severity: payload.severity || template?.severity || 'warning',
+    default_priority: payload.default_priority || template?.default_priority || 'P2',
     enabled: payload.enabled ?? true,
     automation_enabled: payload.automation?.enabled ?? false,
+    template_key: payload.template_key || template?.template_key || null,
     creator: currentUser.display_name,
     last_updated: toISO(new Date()),
-    labels: payload.labels || [],
-    environments: payload.environments || [],
-    condition_groups: payload.condition_groups || [],
-    title_template: payload.title_template || '',
-    content_template: payload.content_template || '',
-    automation: payload.automation || { enabled: false, script_id: null, parameters: {} }
+    last_synced_at: toISO(new Date()),
+    sync_status: 'fresh',
+    labels: payload.labels || clone(template?.labels) || [],
+    environments: payload.environments || clone(template?.environments) || [],
+    condition_groups:
+      payload.condition_groups || clone(template?.condition_groups) || [],
+    title_template: payload.title_template || template?.title_template || '',
+    content_template: payload.content_template || template?.content_template || '',
+    automation:
+      payload.automation || {
+        enabled: false,
+        script_id: template?.suggested_script_id || null,
+        parameters: {}
+      }
   };
   eventRules.push(rule);
   res.status(201).json(rule);
@@ -3053,7 +3290,14 @@ app.get('/event-rules/:rule_uid', (req, res) => {
 app.put('/event-rules/:rule_uid', (req, res) => {
   const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
-  Object.assign(rule, req.body || {}, { last_updated: toISO(new Date()) });
+  Object.assign(rule, req.body || {}, {
+    last_updated: toISO(new Date()),
+    last_synced_at: toISO(new Date()),
+    sync_status: 'fresh'
+  });
+  if (rule.automation && typeof rule.automation === 'object') {
+    rule.automation_enabled = Boolean(rule.automation.enabled);
+  }
   res.json(rule);
 });
 
@@ -3067,6 +3311,9 @@ app.post('/event-rules/:rule_uid/toggle', (req, res) => {
   const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
   rule.enabled = !rule.enabled;
+  rule.last_updated = toISO(new Date());
+  rule.last_synced_at = toISO(new Date());
+  rule.sync_status = 'fresh';
   res.json(rule);
 });
 
@@ -3094,6 +3341,23 @@ app.get('/silence-rules', (req, res) => {
     enabled: rule.enabled,
     created_at: rule.created_at
   }));
+
+  if ((req.query.format || 'json').toLowerCase() === 'csv') {
+    const csv = toCsv(filtered, [
+      { key: 'silence_id' },
+      { key: 'name' },
+      { key: 'silence_type' },
+      { key: 'scope' },
+      { key: 'enabled', value: (row) => (row.enabled ? 'true' : 'false') },
+      { key: 'created_at' },
+      { header: 'starts_at', value: (row) => row.schedule?.starts_at || '' },
+      { header: 'ends_at', value: (row) => row.schedule?.ends_at || '' },
+      { header: 'timezone', value: (row) => row.schedule?.timezone || '' },
+      { header: 'repeat_frequency', value: (row) => row.schedule?.repeat?.frequency || '' }
+    ]);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    return res.send(csv);
+  }
 
   res.json(
     paginate(items, req, {
@@ -3915,7 +4179,7 @@ app.get('/notification-config/strategies', (req, res) => {
   const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
 
   const filtered = notificationStrategies.filter((strategy) => {
-    const statusValue = strategy.status || 'disabled';
+    const statusValue = strategy.enabled ? 'enabled' : 'disabled';
     if (!matchesEnumFilter(statusValue, statusFilter)) return false;
 
     const priorityValue = strategy.priority || 'medium';
@@ -3962,14 +4226,38 @@ app.get('/notification-config/strategies', (req, res) => {
       name: strategy.name,
       trigger_condition: strategy.trigger_condition,
       channel_count: channels.length,
-      status: strategy.status || 'disabled',
+      enabled: Boolean(strategy.enabled),
       priority: strategy.priority || 'medium'
     };
   });
 
+  if ((req.query.format || 'json').toLowerCase() === 'csv') {
+    const csv = toCsv(filtered, [
+      { key: 'strategy_id' },
+      { key: 'name' },
+      { header: 'enabled', value: (row) => (row.enabled ? 'true' : 'false') },
+      { key: 'priority', value: (row) => row.priority || 'medium' },
+      {
+        header: 'channel_count',
+        value: (row) => (Array.isArray(row.channels) ? row.channels.length : 0)
+      },
+      { key: 'trigger_condition' },
+      {
+        header: 'severity_filters',
+        value: (row) => (Array.isArray(row.severity_filters) ? row.severity_filters.join(';') : '')
+      },
+      {
+        header: 'linked_silence_ids',
+        value: (row) => (Array.isArray(row.linked_silence_ids) ? row.linked_silence_ids.join(';') : '')
+      }
+    ]);
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    return res.send(csv);
+  }
+
   res.json(
     paginate(items, req, {
-      allowedSortFields: ['name', 'status', 'priority', 'channel_count'],
+      allowedSortFields: ['name', 'enabled', 'priority', 'channel_count'],
       defaultSortKey: 'name',
       defaultSortOrder: 'asc'
     })
@@ -3983,12 +4271,18 @@ app.post('/notification-config/strategies', (req, res) => {
     name: payload.name || '新策略',
     description: payload.description || '',
     trigger_condition: payload.trigger_condition || 'true',
-    status: payload.enabled ? 'enabled' : 'disabled',
+    enabled: payload.enabled ?? true,
     priority: payload.priority || 'medium',
     severity_filters: payload.severity_filters || [],
     recipients: payload.recipients || [],
     channels: payload.channels || [],
     resource_filters: payload.resource_filters || {},
+    retry_policy: mergeSettings(defaultRetryPolicy, payload.retry_policy),
+    delivery_settings: mergeSettings(defaultDeliverySettings, payload.delivery_settings),
+    snooze_settings: mergeSettings(defaultSnoozeSettings, payload.snooze_settings),
+    linked_silence_ids: Array.isArray(payload.linked_silence_ids)
+      ? [...payload.linked_silence_ids]
+      : [],
     created_at: toISO(new Date()),
     updated_at: toISO(new Date())
   };
@@ -4014,7 +4308,21 @@ app.patch('/notification-config/strategies/:strategy_id', (req, res) => {
   if (payload.recipients !== undefined) strategy.recipients = payload.recipients;
   if (payload.channels !== undefined) strategy.channels = payload.channels;
   if (payload.resource_filters !== undefined) strategy.resource_filters = payload.resource_filters;
-  if (payload.enabled !== undefined) strategy.status = payload.enabled ? 'enabled' : 'disabled';
+  if (payload.enabled !== undefined) strategy.enabled = payload.enabled;
+  if (payload.retry_policy !== undefined) {
+    strategy.retry_policy = mergeSettings(defaultRetryPolicy, payload.retry_policy);
+  }
+  if (payload.delivery_settings !== undefined) {
+    strategy.delivery_settings = mergeSettings(defaultDeliverySettings, payload.delivery_settings);
+  }
+  if (payload.snooze_settings !== undefined) {
+    strategy.snooze_settings = mergeSettings(defaultSnoozeSettings, payload.snooze_settings);
+  }
+  if (payload.linked_silence_ids !== undefined) {
+    strategy.linked_silence_ids = Array.isArray(payload.linked_silence_ids)
+      ? [...payload.linked_silence_ids]
+      : [];
+  }
   strategy.updated_at = toISO(new Date());
   res.json(mapNotificationStrategyDetail(strategy));
 });

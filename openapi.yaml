@@ -1008,13 +1008,42 @@ paths:
                     type: integer
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /event-rules/templates:
+    get:
+      tags:
+        - 事件規則
+      summary: 取得事件規則範本列表
+      operationId: listEventRuleTemplates
+      description: 提供前端精靈快速載入的標準事件規則範本內容。
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, warning, info]
+        - name: keyword
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 規則範本清單。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EventRuleTemplate"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /event-rules:
     get:
       tags:
         - 事件規則
       summary: 取得事件規則列表
       operationId: listEventRules
-      description: 從 Grafana Alerting 取得告警規則快取，並合併平台擴充的自動化設定資訊。
+
+      description: 從 Grafana Alerting 取得告警規則快取，並合併平台擴充的自動化設定資訊；若同步失敗則回傳快取資料並於 sync_status 標示。
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -1033,6 +1062,13 @@ paths:
           in: query
           schema:
             type: string
+        - name: format
+          in: query
+          description: 指定回應格式，預設為 JSON；設為 csv 時回傳文字檔供匯出使用。
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
       responses:
         "200":
           description: 回傳事件規則列表。
@@ -1047,6 +1083,10 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/EventRuleSummary"
+            text/csv:
+              schema:
+                type: string
+                description: 當 format=csv 時回傳的匯出內容，欄位以逗號分隔。
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
@@ -1087,7 +1127,7 @@ paths:
         - 事件規則
       summary: 取得事件規則詳情
       operationId: getEventRuleById
-      description: 從 Grafana Alerting 取得指定告警規則並附帶平台的擴充屬性。
+      description: 從 Grafana Alerting 取得指定告警規則並附帶平台的擴充屬性；若 Grafana 暫時不可用則回傳快取內容並揭露 sync_status 與 last_synced_at。
       responses:
         "200":
           description: 規則詳情資料。
@@ -1179,6 +1219,13 @@ paths:
           in: query
           schema:
             type: boolean
+        - name: format
+          in: query
+          description: 指定回應格式，預設為 JSON；設為 csv 時回傳文字檔供匯出使用。
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
       responses:
         "200":
           description: 回傳靜音規則列表。
@@ -1193,6 +1240,10 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/SilenceRuleSummary"
+            text/csv:
+              schema:
+                type: string
+                description: 當 format=csv 時回傳的匯出內容，欄位以逗號分隔。
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
@@ -2753,6 +2804,13 @@ paths:
           description: 依策略名稱、描述或觸發條件關鍵字模糊搜尋。
           schema:
             type: string
+        - name: format
+          in: query
+          description: 指定回應格式，預設為 JSON；設為 csv 時回傳文字檔供匯出使用。
+          schema:
+            type: string
+            enum: [json, csv]
+            default: json
       responses:
         "200":
           description: 回傳通知策略列表。
@@ -2767,6 +2825,10 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/NotificationStrategySummary"
+            text/csv:
+              schema:
+                type: string
+                description: 當 format=csv 時回傳的匯出內容，欄位以逗號分隔。
         "401":
           $ref: "#/components/responses/Unauthorized"
     post:
@@ -4353,7 +4415,7 @@ components:
     EventSummary:
       type: object
       required:
-        [event_id, summary, severity, status, resource_name, trigger_time, priority]
+        [event_id, summary, event_source, severity, status, resource_name, trigger_time, priority]
       properties:
         event_id:
           type: string
@@ -4362,6 +4424,10 @@ components:
           nullable: true
         summary:
           type: string
+        event_source:
+          type: string
+          enum: [grafana_webhook, platform_internal, manual_created]
+          description: 事件來源分類，用於區分 Grafana Webhook、平台內部與人工建立事件。
         source:
           type: string
           description: 事件來源，例如監控系統名稱。
@@ -4419,8 +4485,15 @@ components:
           type: string
         description:
           type: string
+        event_source:
+          type: string
+          enum: [grafana_webhook, platform_internal, manual_created]
+          default: platform_internal
+          description: 建立事件時指定來源類型，預設為平台內部建立。
         source:
           type: string
+          description: 事件來源描述，例如外部監控系統名稱。
+          nullable: true
         severity:
           type: string
           enum: [critical, warning, info]
@@ -4455,6 +4528,10 @@ components:
     UpdateEventRequest:
       type: object
       properties:
+        event_source:
+          type: string
+          enum: [grafana_webhook, platform_internal, manual_created]
+          description: 更新事件來源分類，通常用於人工補登或資料修正。
         status:
           type: string
           enum: [new, acknowledged, in_progress, resolved, silenced]
@@ -4697,9 +4774,49 @@ components:
           type: string
         notify_on_end:
           type: boolean
+    EventRuleTemplate:
+      type: object
+      required: [template_key, name, severity, default_priority, condition_groups]
+      properties:
+        template_key:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        default_priority:
+          type: string
+          enum: [P0, P1, P2, P3]
+        labels:
+          type: array
+          items:
+            type: string
+        environments:
+          type: array
+          items:
+            type: string
+        condition_groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionGroup"
+        title_template:
+          type: string
+        content_template:
+          type: string
+        suggested_script_id:
+          type: string
+          nullable: true
+          description: 建議搭配的自動化腳本識別碼，可協助前端顯示提示用語。
+    EventRuleSyncStatus:
+      type: string
+      description: 事件規則資料的同步狀態，標示是否為即時資料或快取結果。
+      enum: [fresh, stale, failed]
     EventRuleSummary:
       type: object
-      required: [rule_uid, name, severity, enabled]
+      required: [rule_uid, name, severity, enabled, creator, last_updated, sync_status]
       properties:
         rule_uid:
           type: string
@@ -4719,11 +4836,24 @@ components:
           type: string
           enum: [P0, P1, P2, P3]
           description: 透過此規則產生事件時套用的預設優先級。
+        template_key:
+          type: string
+          nullable: true
+          description: 若規則來自快速套用範本，回傳範本鍵值以利顯示。
         creator:
           type: string
+          description: 規則建立者，若 Grafana 暫不可用則使用快取的建立者資訊。
         last_updated:
           type: string
           format: date-time
+          description: 規則最後更新時間，來源為 Grafana 回傳值或本地快取記錄。
+        last_synced_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 最近一次成功同步 Grafana 規則的時間；若為 null 代表僅有快取資料。
+        sync_status:
+          $ref: "#/components/schemas/EventRuleSyncStatus"
     RuleCondition:
       type: object
       required: [metric, operator, threshold]
@@ -4766,6 +4896,9 @@ components:
         - $ref: "#/components/schemas/EventRuleSummary"
         - type: object
           properties:
+            template_key:
+              type: string
+              nullable: true
             description:
               type: string
             labels:
@@ -4794,6 +4927,9 @@ components:
           type: string
         description:
           type: string
+        template_key:
+          type: string
+          nullable: true
         severity:
           type: string
           enum: [critical, warning, info]
@@ -6240,6 +6376,66 @@ components:
           type: string
           description: 通知管道的顯示名稱，僅於回應中提供。
           readOnly: true
+    NotificationRetryPolicy:
+      type: object
+      properties:
+        max_attempts:
+          type: integer
+          minimum: 0
+          default: 1
+        interval_seconds:
+          type: integer
+          minimum: 0
+          default: 300
+        escalation_channel_ids:
+          type: array
+          items:
+            type: string
+        backoff_factor:
+          type: number
+          minimum: 1
+          default: 1
+          description: 指數回退倍率，1 表示固定間隔。
+    NotificationDeliverySettings:
+      type: object
+      properties:
+        enable_aggregation:
+          type: boolean
+        aggregation_window_seconds:
+          type: integer
+          minimum: 0
+        enable_delay:
+          type: boolean
+        delay_seconds:
+          type: integer
+          minimum: 0
+        enable_repeat_suppression:
+          type: boolean
+        repeat_suppression_minutes:
+          type: integer
+          minimum: 0
+        webhook_headers:
+          type: object
+          additionalProperties:
+            type: string
+        encrypt_payload:
+          type: boolean
+        api_token_secret_id:
+          type: string
+          nullable: true
+        custom_payload_template:
+          type: string
+          nullable: true
+    NotificationSnoozeSettings:
+      type: object
+      properties:
+        auto_snooze_minutes:
+          type: integer
+          minimum: 0
+        resume_on_resolve:
+          type: boolean
+        schedule:
+          $ref: "#/components/schemas/SilenceSchedule"
     NotificationStrategySummary:
       type: object
       required: [strategy_id, name, enabled]
@@ -6286,6 +6482,16 @@ components:
         resource_filters:
           type: object
           additionalProperties: true
+        retry_policy:
+          $ref: "#/components/schemas/NotificationRetryPolicy"
+        delivery_settings:
+          $ref: "#/components/schemas/NotificationDeliverySettings"
+        snooze_settings:
+          $ref: "#/components/schemas/NotificationSnoozeSettings"
+        linked_silence_ids:
+          type: array
+          items:
+            type: string
     CreateNotificationStrategyRequest:
       allOf:
         - $ref: "#/components/schemas/NotificationStrategyPayload"
@@ -6315,6 +6521,16 @@ components:
             resource_filters:
               type: object
               additionalProperties: true
+            retry_policy:
+              $ref: "#/components/schemas/NotificationRetryPolicy"
+            delivery_settings:
+              $ref: "#/components/schemas/NotificationDeliverySettings"
+            snooze_settings:
+              $ref: "#/components/schemas/NotificationSnoozeSettings"
+            linked_silence_ids:
+              type: array
+              items:
+                type: string
     TestNotificationStrategyRequest:
       type: object
       properties:
