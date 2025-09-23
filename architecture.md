@@ -401,6 +401,12 @@ graph LR
 - **VictoriaMetrics**：時序數據庫存儲
 - **Prometheus node_exporter**：系統指標收集
 - **snmp_exporter**：網路設備指標收集
+- **Grafana OpenAPI SDK**：已有社群產生的 OpenAPI Go client：`github.com/grafana/grafana-openapi-client-go`，由 Swagger/OpenAPI 規範自動生成，支援全 API 覆蓋。
+- **Keycloak OpenAPI**：
+https://www.keycloak.org/docs-api/latest/rest-api/openapi.yaml
+- **Grafana OpenAPI**：
+https://github.com/grafana/grafana/blob/main/public/api-merged.json
+
 
 ### 觀測性架構 (Observability)
 - **OpenTelemetry 統一匯出**：Logs/Traces/Metrics 三合一觀測性數據
