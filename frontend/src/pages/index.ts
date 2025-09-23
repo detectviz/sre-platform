@@ -2,7 +2,6 @@
 export { default as LoginPage } from './LoginPage'
 export { default as SREWarRoomPage } from './SREWarRoomPage'
 export { default as IncidentsPage } from './IncidentsPage'
-export { default as SilenceRulePage } from './SilenceRulePage'
 export { default as EventRulePage } from './EventRulePage'
 export { default as ResourcesPage } from './ResourcesPage'
 export { default as ResourceGroupPage } from './ResourceGroupPage'

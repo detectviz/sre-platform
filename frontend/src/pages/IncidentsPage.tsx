@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useTabs } from '../hooks'
-import { Table, Tag, Space, Button, Tooltip, Tabs } from 'antd'
+import { Table, Tag, Space, Button, Tooltip, Tabs, Switch } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
@@ -13,10 +14,22 @@ import {
   FileTextOutlined,
   SettingOutlined,
   MutedOutlined,
+  ClockCircleOutlined,
+  CopyOutlined,
+  PauseOutlined,
 } from '@ant-design/icons'
 
 const IncidentsPage: React.FC = () => {
-  const { activeTab, handleTabChange } = useTabs('list', {
+  const location = useLocation()
+
+  // 根據路由決定默認標籤
+  const getDefaultTab = () => {
+    if (location.pathname.includes('/silence')) return 'silences'
+    if (location.pathname.includes('/rules')) return 'rules'
+    return 'list'
+  }
+
+  const { activeTab, handleTabChange } = useTabs(getDefaultTab(), {
     list: '/incidents/list',
     rules: '/incidents/rules',
     silences: '/incidents/silence',
@@ -172,6 +185,125 @@ const IncidentsPage: React.FC = () => {
     },
   ]
 
+  // 靜音規則表格配置
+  const silenceColumns = [
+    {
+      title: '規則名稱',
+      dataIndex: 'name',
+      key: 'name',
+      sorter: true,
+    },
+    {
+      title: '匹配條件',
+      dataIndex: 'matchers',
+      key: 'matchers',
+      ellipsis: true,
+    },
+    {
+      title: '靜音類型',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type: string) => (
+        <Tag color={type === '完全靜音' ? 'red' : type === '部分靜音' ? 'orange' : 'blue'}>
+          {type}
+        </Tag>
+      ),
+    },
+    {
+      title: '持續時間',
+      dataIndex: 'duration',
+      key: 'duration',
+      render: (duration: string) => (
+        <Space>
+          <ClockCircleOutlined style={{ color: 'var(--text-tertiary)' }} />
+          {duration}
+        </Space>
+      ),
+    },
+    {
+      title: '開始時間',
+      dataIndex: 'startTime',
+      key: 'startTime',
+      sorter: true,
+    },
+    {
+      title: '結束時間',
+      dataIndex: 'endTime',
+      key: 'endTime',
+      sorter: true,
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Space>
+          <Switch
+            checked={status === '活躍'}
+            checkedChildren="活躍"
+            unCheckedChildren="暫停"
+            size="small"
+          />
+        </Space>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: () => (
+        <Space size="small">
+          <Tooltip title="查看詳情">
+            <Button type="text" size="small" icon={<EyeOutlined />} />
+          </Tooltip>
+          <Tooltip title="編輯">
+            <Button type="text" size="small" icon={<EditOutlined />} />
+          </Tooltip>
+          <Tooltip title="複製">
+            <Button type="text" size="small" icon={<CopyOutlined />} />
+          </Tooltip>
+          <Tooltip title="暫停/恢復">
+            <Button type="text" size="small" icon={<PauseOutlined />} />
+          </Tooltip>
+          <Tooltip title="刪除">
+            <Button type="text" size="small" icon={<DeleteOutlined />} />
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ]
+
+  const silenceData = [
+    {
+      key: '1',
+      name: '週末維護靜音',
+      matchers: 'service="api" OR service="web"',
+      type: '完全靜音',
+      duration: '48小時',
+      startTime: '2024-01-20 09:00:00',
+      endTime: '2024-01-22 09:00:00',
+      status: '活躍',
+    },
+    {
+      key: '2',
+      name: '資料庫升級靜音',
+      matchers: 'instance="db-primary"',
+      type: '部分靜音',
+      duration: '4小時',
+      startTime: '2024-01-15 02:00:00',
+      endTime: '2024-01-15 06:00:00',
+      status: '活躍',
+    },
+    {
+      key: '3',
+      name: '測試環境靜音',
+      matchers: 'environment="test"',
+      type: '完全靜音',
+      duration: '永久',
+      startTime: '2024-01-10 00:00:00',
+      endTime: '無限期',
+      status: '暫停',
+    },
+  ]
 
   const [severityFilter, setSeverityFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -318,12 +450,13 @@ const IncidentsPage: React.FC = () => {
           <div>
             <ToolbarActions
               onRefresh={() => console.log('刷新靜音規則')}
-              searchPlaceholder="搜尋靜音規則名稱..."
+              onSearch={handleSearch}
+              searchPlaceholder="搜尋靜音規則名稱或資源..."
               actions={[
                 {
                   key: 'create-silence',
                   label: '新增靜音',
-                  icon: <SoundOutlined />,
+                  icon: <MutedOutlined />,
                   tooltip: '創建新的靜音規則',
                 },
                 {
@@ -334,9 +467,21 @@ const IncidentsPage: React.FC = () => {
                 },
               ]}
             />
-            <div style={{ padding: '16px' }}>
-              <p>靜音規則管理功能開發中...</p>
-            </div>
+            <Table
+              columns={silenceColumns}
+              dataSource={silenceData}
+              size="small"
+              style={{
+                background: 'var(--bg-elevated)',
+                border: '1px solid var(--border-light)',
+                borderRadius: 'var(--radius-lg)',
+              }}
+              pagination={{
+                showSizeChanger: true,
+                showQuickJumper: true,
+                showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+              }}
+            />
           </div>
         )
       default:

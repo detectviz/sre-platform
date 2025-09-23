@@ -437,7 +437,7 @@ const IdentitySettingsPage: React.FC = () => {
     label: '人員管理',
     icon: <UserOutlined />,
     children: (
-      <div style={{ padding: '16px 0' }}>
+      <div>
         <ToolbarActions
           onRefresh={handleRefresh}
           onExport={handleExport}
@@ -447,7 +447,6 @@ const IdentitySettingsPage: React.FC = () => {
             key: 'add',
             label: '新增用戶',
             icon: <PlusOutlined />,
-            type: 'primary',
             onClick: handleAddUser,
             tooltip: '新增用戶',
           }]}
@@ -471,7 +470,7 @@ const IdentitySettingsPage: React.FC = () => {
     label: '團隊管理',
     icon: <TeamOutlined />,
     children: (
-      <div style={{ padding: '16px 0' }}>
+      <div>
         <ToolbarActions
           onRefresh={handleRefresh}
           onExport={handleExport}
@@ -481,7 +480,6 @@ const IdentitySettingsPage: React.FC = () => {
             key: 'add',
             label: '新增團隊',
             icon: <PlusOutlined />,
-            type: 'primary',
             onClick: handleAddTeam,
             tooltip: '新增團隊',
           }]}
@@ -505,7 +503,7 @@ const IdentitySettingsPage: React.FC = () => {
     label: '角色管理',
     icon: <IdcardOutlined />,
     children: (
-      <div style={{ padding: '16px 0' }}>
+      <div>
         <ToolbarActions
           onRefresh={handleRefresh}
           onExport={handleExport}
@@ -515,7 +513,6 @@ const IdentitySettingsPage: React.FC = () => {
             key: 'add',
             label: '新增角色',
             icon: <PlusOutlined />,
-            type: 'primary',
             onClick: handleAddRole,
             tooltip: '新增角色',
           }]}
@@ -539,7 +536,7 @@ const IdentitySettingsPage: React.FC = () => {
     label: '審計日誌',
     icon: <AuditOutlined />,
     children: (
-      <div style={{ padding: '16px 0' }}>
+      <div>
         <ToolbarActions
           onRefresh={handleRefresh}
           onExport={handleExport}
@@ -576,7 +573,7 @@ const IdentitySettingsPage: React.FC = () => {
           extra={
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
               <Input.Search
-                placeholder="搜尋儀表板名稱..."
+                placeholder="搜尋用戶名稱..."
                 onSearch={handleSearch}
                 style={{ width: 320 }}
                 allowClear
@@ -612,11 +609,6 @@ const IdentitySettingsPage: React.FC = () => {
           items={tabItems}
         />
       }
-      config={{
-        customSpacing: {
-          kpiCards: 'var(--spacing-lg)', // 減少 KPI 卡片和 Tabs 之間的間距
-        }
-      }}
     />
   )
 }

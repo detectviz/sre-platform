@@ -1814,7 +1814,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 1. 標籤管理 (TagManagementPage)
 2. 郵件設定 (EmailSettingsPage)
 3. 身份驗證 (AuthSettingsPage)
-4. 版面管理 (LayoutManagementPage)
+4. 版面管理 (LayoutManagementPage) ✅ 已實現
 
 **指標概覽卡片**
 1. 標籤總數 (12個, 涵蓋各類資源標籤)
@@ -1957,7 +1957,16 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 ### 7.3.4 版面管理頁面
 
 **頁面概述**
-提供中樞頁面頂部指標卡片的組成與排序管理，採用摺疊面板結合雙欄選擇器的設計，讓平台管理員以最少步驟完成配置。此頁面僅需支援表單提交與即時預覽，不實作拖曳操作。
+提供中樞頁面頂部指標卡片的組成與排序管理，採用摺疊面板結合雙欄選擇器的設計，讓平台管理員以最少步驟完成配置。支援即時編輯和預覽，包含完整的狀態管理和錯誤處理。
+
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/PlatformSettingsPage.tsx` (版面管理標籤) ✅ 已實現
+- **路由配置**: `/frontend/src/config/routes.ts`
+- **組件依賴**:
+  - `/frontend/src/components/ContextualKPICard.tsx`
+  - `/frontend/src/components/profile/PersonalInfoForm.tsx`
+  - `/frontend/src/components/profile/PreferencesSettings.tsx`
+  - `/frontend/src/components/profile/SecuritySettings.tsx`
 
 **界面元素**
 - **頁面標題**: "版面管理"
@@ -1977,54 +1986,137 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 - **自動化中心**
   - 面板標題: "自動化中心"
   - 清單示例: 「1. 今日自動化執行」、「2. 成功率」、「3. 失敗告警轉自動化」。
-- 後續若擴充其他頁面（如儀表板管理），沿用相同面板樣式與互動。
+- **儀表板管理**
+  - 面板標題: "儀表板管理"
+  - 清單示例: 「1. 總儀表板數」、「2. 活躍用戶」、「3. SRE 戰情室」、「4. 基礎設施洞察」。
+- **分析中心**
+  - 面板標題: "分析中心"
+  - 清單示例: 「1. 待處理事件」、「2. 總資源數」、「3. 今日自動化執行」。
+- **身份與存取管理**
+  - 面板標題: "身份與存取管理"
+  - 清單示例: 「1. 總人員數」、「2. 在線人員」、「3. 團隊數量」、「4. 待處理邀請」。
+- **通知管理**
+  - 面板標題: "通知管理"
+  - 清單示例: 「1. 待處理事件」、「2. 今日自動化執行」、「3. 總人員數」。
+- **平台設定**
+  - 面板標題: "平台設定"
+  - 清單示例: 「1. 總人員數」、「2. 在線人員」、「3. 團隊數量」。
+- **個人設定**
+  - 面板標題: "個人設定"
+  - 清單示例: 「1. 總人員數」、「2. 在線人員」、「3. 待處理邀請」。
 
 **操作流程**
 1. 於摺疊面板中選擇要調整的頁面，點擊「✏️ 編輯」。
 2. 彈出指標卡片編輯視窗，左側為「可用的小工具」，右側為「已顯示的小工具」。
-3. 透過 `>` 將待加入卡片移至右側，透過 `<` 移除不需要的卡片。
+3. 透過 `>` 按鈕將待加入卡片移至右側，透過 `<` 按鈕移除不需要的卡片。
 4. 使用 `↑`、`↓` 按鈕調整右側卡片順序；順序即為頁面顯示順序。
-5. 點擊「儲存」後呼叫 `PUT /settings/layouts` 儲存配置；若取消則不更新。
+5. 點擊「儲存」後呼叫 API 儲存配置；若取消則不更新。
 6. 完成儲存後，面板清單同步更新，並提示「已成功更新版面配置」。
 
 **編輯彈窗（Modal）**
-- 標題格式: `編輯「{頁面名稱}」的指標卡片`
-- 寬度: 720px，內含兩欄等寬的列表框。
-- 頁尾按鈕: `取消`、`儲存`，其中 `儲存` 為主色按鈕。
-- 關閉方式: 點擊右上角關閉或 `取消` 按鈕。
+- **標題格式**: `編輯「{頁面名稱}」的指標卡片`
+- **寬度**: 720px，內含兩欄等寬的列表框。
+- **頁尾按鈕**: `取消`、`儲存`，其中 `儲存` 為主色按鈕。
+- **關閉方式**: 點擊右上角關閉或 `取消` 按鈕。
 
 **雙欄選擇器（DualListSelector）**
-- 左側標題: "可用的小工具"
-- 右側標題: "已顯示的小工具"
-- 中央操作按鈕: `>`（新增）、`<`（移除）
-- 右側列表項操作: 每項顯示 `↑`、`↓` 的 IconButton，用於調整排序。
-- 列表項內容: 顯示卡片名稱與資料來源說明 tooltip。
-
-**資料流程**
-1. 進入頁面時呼叫 `GET /settings/widgets` 取得可用指標小工具註冊表。
-2. 根據展開的面板呼叫 `GET /settings/layouts?page_path={page}` 取得當前配置。
-3. 後端依序檢查 `user → role → global` 三種 `scope_type`，回傳第一個命中的 `widgets_config`；並於回應中註明 `resolved_scope_type` 與 `resolved_scope_id`。
-4. 儲存時送出 `PUT /settings/layouts`，包含 `page_path`、`scope_type`、`scope_id`（若為 global 則省略）與排序後的 `widgets` 陣列。
+- **左側標題**: "可用的小工具"
+- **右側標題**: "已顯示的小工具"
+- **中央操作按鈕**: `>`（新增）、`<`（移除）
+- **右側列表項操作**: 每項顯示 `↑`、`↓` 的 IconButton，用於調整排序。
+- **列表項內容**: 顯示卡片名稱與資料來源說明 tooltip。
+- **視覺設計**: 雙欄使用統一的邊框、滾動、樣式設計。
+- **狀態控制**: 按鈕根據可用 Widget 數量自動禁用。
 
 **Widget 註冊表 (Layout Widgets Registry)**
-| widget_id | 顯示名稱 | 適用頁面 (supported_pages) | 資料來源 API | 描述 |
-| :--- | :--- | :--- | :--- | :--- |
-| `incident_pending_count` | 待處理告警 | `["/events"]` | `/api/metrics/incidents/pending` | 顯示待處理事件數量 |
-| `incident_in_progress` | 處理中事件 | `["/events"]` | `/api/metrics/incidents/in-progress` | 追蹤目前由工程師處理的事件數 |
-| `incident_resolved_today` | 今日已解決 | `["/events", "/home"]` | `/api/metrics/incidents/resolved-today` | 顯示今日已關閉事件數 |
-| `resource_total_count` | 總資源數 | `["/resources", "/home"]` | `/api/metrics/resources/total` | 顯示納管資源總量 |
-| `resource_health_rate` | 正常率 | `["/resources"]` | `/api/metrics/resources/healthy-rate` | 顯示健康資源百分比 |
-| `resource_alerting` | 異常資源 | `["/resources"]` | `/api/metrics/resources/alerting` | 顯示異常或離線資源數 |
-| `automation_runs_today` | 今日自動化執行 | `["/automation"]` | `/api/metrics/automation/runs-today` | 顯示今日觸發自動化任務數量 |
-| `automation_success_rate` | 成功率 | `["/automation"]` | `/api/metrics/automation/success-rate` | 顯示自動化任務成功比例 |
-| `automation_suppressed_alerts` | 已抑制告警 | `["/automation", "/events"]` | `/api/metrics/automation/suppressed-alerts` | 顯示因自動化而抑制的告警數 |
+| widget_id | 顯示名稱 | 適用頁面 (supported_pages) | 描述 |
+| :--- | :--- | :--- | :--- |
+| `incident_pending_count` | 待處理告警 | `["事件管理", "SRE 戰情室", "分析中心", "通知管理"]` | 顯示待處理事件數量 |
+| `incident_in_progress` | 處理中事件 | `["事件管理"]` | 追蹤目前由工程師處理的事件數 |
+| `incident_resolved_today` | 今日已解決 | `["事件管理", "SRE 戰情室", "儀表板管理"]` | 顯示今日已關閉事件數 |
+| `resource_total_count` | 總資源數 | `["資源管理", "SRE 戰情室", "分析中心", "儀表板管理"]` | 顯示納管資源總量 |
+| `resource_health_rate` | 正常率 | `["資源管理", "SRE 戰情室"]` | 顯示健康資源百分比 |
+| `resource_alerting` | 異常資源 | `["資源管理", "儀表板管理"]` | 顯示異常或離線資源數 |
+| `automation_runs_today` | 今日自動化執行 | `["自動化中心", "SRE 戰情室", "分析中心", "通知管理"]` | 顯示今日觸發自動化任務數量 |
+| `automation_success_rate` | 成功率 | `["自動化中心"]` | 顯示自動化任務成功比例 |
+| `automation_suppressed_alerts` | 已抑制告警 | `["自動化中心"]` | 顯示因自動化而抑制的告警數 |
+| `user_total_count` | 總人員數 | `["身份與存取管理", "通知管理", "平台設定", "個人設定"]` | 顯示系統總用戶數量 |
+| `user_online_count` | 在線人員 | `["身份與存取管理", "平台設定", "個人設定", "儀表板管理"]` | 顯示當前在線用戶數 |
+| `user_team_count` | 團隊數量 | `["身份與存取管理", "平台設定"]` | 顯示系統中團隊總數 |
+| `user_pending_invites` | 待處理邀請 | `["身份與存取管理", "個人設定"]` | 顯示待處理的用戶邀請 |
 
 **預設版面配置 (Default Layout Configurations)**
 | page_path | 頁面名稱 | 預設小工具 (依序) |
 | :--- | :--- | :--- |
-| `/events` | 事件管理 | 1. `incident_pending_count`（待處理告警）<br>2. `incident_in_progress`（處理中事件）<br>3. `incident_resolved_today`（今日已解決） |
+| `/incidents` | 事件管理 | 1. `incident_pending_count`（待處理告警）<br>2. `incident_in_progress`（處理中事件）<br>3. `incident_resolved_today`（今日已解決） |
 | `/resources` | 資源管理 | 1. `resource_total_count`（總資源數）<br>2. `resource_health_rate`（正常率）<br>3. `resource_alerting`（異常資源） |
 | `/automation` | 自動化中心 | 1. `automation_runs_today`（今日自動化執行）<br>2. `automation_success_rate`（成功率）<br>3. `automation_suppressed_alerts`（已抑制告警） |
+| `/dashboards` | 儀表板管理 | 1. `resource_total_count`（總資源數）<br>2. `user_online_count`（在線人員）<br>3. `incident_resolved_today`（今日已解決）<br>4. `resource_alerting`（異常資源） |
+| `/analyzing` | 分析中心 | 1. `incident_pending_count`（待處理事件）<br>2. `resource_total_count`（總資源數）<br>3. `automation_runs_today`（今日自動化執行） |
+| `/settings/identity` | 身份與存取管理 | 1. `user_total_count`（總人員數）<br>2. `user_online_count`（在線人員）<br>3. `user_team_count`（團隊數量）<br>4. `user_pending_invites`（待處理邀請） |
+| `/settings/notifications` | 通知管理 | 1. `incident_pending_count`（待處理事件）<br>2. `automation_runs_today`（今日自動化執行）<br>3. `user_total_count`（總人員數） |
+| `/settings/platform` | 平台設定 | 1. `user_total_count`（總人員數）<br>2. `user_online_count`（在線人員）<br>3. `user_team_count`（團隊數量） |
+| `/profile` | 個人設定 | 1. `user_total_count`（總人員數）<br>2. `user_online_count`（在線人員）<br>3. `user_pending_invites`（待處理邀請） |
+
+**前端技術實現**
+
+**狀態管理**
+```typescript
+const [editModalVisible, setEditModalVisible] = useState(false)
+const [editingPage, setEditingPage] = useState('')
+const [selectedWidgets, setSelectedWidgets] = useState<string[]>([])
+const [availableWidgets, setAvailableWidgets] = useState<string[]>([])
+```
+
+**編輯處理函數**
+```typescript
+const handleEditClick = (pageName: string) => {
+  // 根據頁面名稱設置初始數據
+  const pageWidgetMap: Record<string, string[]> = {
+    '事件管理': ['incident_pending_count', 'incident_in_progress', 'incident_resolved_today'],
+    '資源管理': ['resource_total_count', 'resource_health_rate', 'resource_alerting'],
+    '自動化中心': ['automation_runs_today', 'automation_success_rate', 'automation_suppressed_alerts'],
+    // ... 其他頁面配置
+  }
+  const pageWidgets = pageWidgetMap[pageName] || []
+  setSelectedWidgets(pageWidgets)
+  setAvailableWidgets(allWidgets.filter(w => !pageWidgets.includes(w.key)).map(w => w.key))
+  setEditModalVisible(true)
+}
+```
+
+**Widget 排序實現**
+```typescript
+const handleMoveUp = (index: number) => {
+  if (index > 0) {
+    const newSelected: string[] = [...selectedWidgets]
+    const temp = newSelected[index - 1]
+    newSelected[index - 1] = newSelected[index]
+    newSelected[index] = temp
+    setSelectedWidgets(newSelected)
+  }
+}
+
+const handleMoveDown = (index: number) => {
+  if (index < selectedWidgets.length - 1) {
+    const newSelected: string[] = [...selectedWidgets]
+    const temp = newSelected[index]
+    newSelected[index] = newSelected[index + 1]
+    newSelected[index + 1] = temp
+    setSelectedWidgets(newSelected)
+  }
+}
+```
+
+**儲存處理**
+```typescript
+const handleEditModalSave = () => {
+  // 調用 API 儲存配置
+  // POST /settings/layouts { page_path, widgets, scope_type, scope_id }
+  setEditModalVisible(false)
+  // 更新面板顯示
+}
+```
 
 **JSON 結構定義**
 ```
@@ -2036,6 +2128,13 @@ widgets_config = [
 ```
 - `order` 為整數且由 1 起算；後端儲存時需重新排序以避免間隔。
 - 若 `widgets_config` 為空陣列，表示該頁面不顯示任何指標卡片。
+
+**資料流程**
+1. 進入頁面時載入所有可用 Widget 註冊表。
+2. 根據展開的面板顯示當前頁面的 Widget 配置。
+3. 編輯過程中即時更新狀態，無需服務器請求。
+4. 儲存時調用 `POST /settings/layouts` API 儲存配置到後端資料庫。
+5. 儲存成功後更新面板顯示並顯示成功提示。
 
 ---
 
@@ -2269,9 +2368,10 @@ SRE 平台共實現了 **33 個功能頁面**：
      - 通知管道 (NotificationChannelPage) - `/frontend/src/pages/NotificationSettingsPage.tsx` (待實現)
      - 通知歷史 (NotificationHistoryPage) - `/frontend/src/pages/NotificationSettingsPage.tsx` (待實現)
    - 平台設定 (4個頁面)
-     - 標籤管理 (TagManagementPage) - `/frontend/src/pages/PlatformSettingsPage.tsx`
+     - 標籤管理 (TagManagementPage) - `/frontend/src/pages/PlatformSettingsPage.tsx` ✅ 已實現
      - 郵件設定 (EmailSettingsPage) - `/frontend/src/pages/PlatformSettingsPage.tsx` (待實現)
      - 身份驗證 (AuthSettingsPage) - `/frontend/src/pages/PlatformSettingsPage.tsx` (待實現)
+     - 版面管理 (LayoutManagementPage) - `/frontend/src/pages/PlatformSettingsPage.tsx` ✅ 已實現
 8. 個人設定 (3個頁面)
    - 個人資訊 (PersonalInformationPage) - `/frontend/src/pages/ProfilePage.tsx`
    - 安全設定 (SecuritySettingsPage) - `/frontend/src/pages/ProfilePage.tsx`

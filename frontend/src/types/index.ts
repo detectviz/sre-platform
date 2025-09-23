@@ -44,7 +44,6 @@ export type {
 export type {
   Incident,
   IncidentTimelineItem,
-  SilenceRule,
   EventRule,
   EventRuleCondition,
   EventRuleAction,
