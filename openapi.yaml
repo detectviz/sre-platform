@@ -601,10 +601,11 @@ paths:
           in: query
           schema:
             type: string
-        - name: rule_id
+        - name: rule_uid
           in: query
           schema:
             type: string
+          description: Grafana 告警規則的 UID。
         - name: assignee_id
           in: query
           schema:
@@ -1013,6 +1014,7 @@ paths:
         - 事件規則
       summary: 取得事件規則列表
       operationId: listEventRules
+      description: 從 Grafana Alerting 取得告警規則快取，並合併平台擴充的自動化設定資訊。
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
@@ -1052,6 +1054,7 @@ paths:
         - 事件規則
       summary: 建立事件規則
       operationId: createEventRule
+      description: 透過 Grafana API 建立告警規則，並儲存平台端額外的自動化綁定設定。
       requestBody:
         required: true
         content:
@@ -1071,12 +1074,12 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "409":
           $ref: "#/components/responses/Conflict"
-  /event-rules/{rule_id}:
+  /event-rules/{rule_uid}:
     parameters:
-      - name: rule_id
+      - name: rule_uid
         in: path
         required: true
-        description: 事件規則唯一識別碼。
+        description: Grafana 告警規則的 UID。
         schema:
           type: string
     get:
@@ -1084,6 +1087,7 @@ paths:
         - 事件規則
       summary: 取得事件規則詳情
       operationId: getEventRuleById
+      description: 從 Grafana Alerting 取得指定告警規則並附帶平台的擴充屬性。
       responses:
         "200":
           description: 規則詳情資料。
@@ -1100,6 +1104,7 @@ paths:
         - 事件規則
       summary: 更新事件規則
       operationId: updateEventRule
+      description: 更新 Grafana 告警規則內容，並同步平台側的自動化綁定資訊。
       requestBody:
         required: true
         content:
@@ -1124,6 +1129,7 @@ paths:
         - 事件規則
       summary: 刪除事件規則
       operationId: deleteEventRule
+      description: 從 Grafana Alerting 刪除指定告警規則並解除平台綁定。
       responses:
         "204":
           description: 規則已刪除。
@@ -1131,12 +1137,13 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /event-rules/{rule_id}/test:
+  /event-rules/{rule_uid}/test:
     post:
       tags:
         - 事件規則
       summary: 測試事件規則
       operationId: testEventRule
+      description: 將測試事件傳送至 Grafana Alerting，回傳模擬比對結果與預覽事件。
       requestBody:
         required: false
         content:
@@ -3353,6 +3360,7 @@ paths:
         - 平台設定
       summary: 取得郵件設定
       operationId: getEmailSettings
+      description: 回傳與 `notification_channels` 表同源的預設郵件通知通道設定。
       responses:
         "200":
           description: 郵件設定資料。
@@ -3367,6 +3375,7 @@ paths:
         - 平台設定
       summary: 更新郵件設定
       operationId: updateEmailSettings
+      description: 更新預設郵件通知通道並同步 `notification_channels` 中的 Email 設定。
       requestBody:
         required: true
         content:
@@ -3390,6 +3399,7 @@ paths:
         - 平台設定
       summary: 測試郵件設定連線
       operationId: testEmailSettings
+      description: 使用目前的郵件通知通道設定進行連線測試。
       requestBody:
         required: false
         content:
@@ -3417,8 +3427,9 @@ paths:
     get:
       tags:
         - 平台設定
-      summary: 取得身份驗證設定
+      summary: 取得身份驗證整合狀態
       operationId: getAuthSettings
+      description: 回傳與 Keycloak 等外部身份供應商整合後的唯讀設定資訊。
       responses:
         "200":
           description: 身份驗證設定資料。
@@ -3431,8 +3442,11 @@ paths:
     put:
       tags:
         - 平台設定
-      summary: 更新身份驗證設定
+      summary: （已棄用）更新身份驗證設定
       operationId: updateAuthSettings
+      deprecated: true
+      description: |-
+        設定改由 Keycloak 等身份供應商集中管理，此端點僅保留向後相容性並將變更轉交外部系統。
       requestBody:
         required: true
         content:
@@ -3454,8 +3468,10 @@ paths:
     post:
       tags:
         - 平台設定
-      summary: 測試身份驗證設定連線
+      summary: （已棄用）測試身份驗證設定連線
       operationId: testAuthSettings
+      deprecated: true
+      description: 身份驗證測試請改於外部身份供應商執行，此端點僅回報既有設定的健康狀態。
       requestBody:
         required: false
         content:
@@ -4365,10 +4381,10 @@ components:
         resource_id:
           type: string
           nullable: true
-        rule_id:
+        rule_uid:
           type: string
           nullable: true
-          description: 觸發該事件的事件規則唯一識別碼。
+          description: 觸發該事件的 Grafana 告警規則 UID。
         resource_name:
           type: string
           nullable: true
@@ -4417,8 +4433,9 @@ components:
           default: P2
         resource_id:
           type: string
-        rule_id:
+        rule_uid:
           type: string
+          description: Grafana 告警規則 UID。
         service_impact:
           type: string
         trigger_threshold:
@@ -4682,10 +4699,11 @@ components:
           type: boolean
     EventRuleSummary:
       type: object
-      required: [rule_id, name, severity, enabled]
+      required: [rule_uid, name, severity, enabled]
       properties:
-        rule_id:
+        rule_uid:
           type: string
+          description: Grafana 告警規則 UID。
         name:
           type: string
         description:
@@ -6634,6 +6652,12 @@ components:
       type: object
       required: [smtp_host, smtp_port, sender_email, encryption]
       properties:
+        channel_id:
+          type: string
+          description: 對應通知通道設定的唯一識別碼。
+        channel_name:
+          type: string
+          description: 預設郵件通知通道名稱。
         smtp_host:
           type: string
         smtp_port:
@@ -6709,6 +6733,13 @@ components:
           type: string
         oidc_enabled:
           type: boolean
+        managed_by:
+          type: string
+          enum: [keycloak, custom]
+          description: 指示設定由哪個外部系統維護。
+        read_only:
+          type: boolean
+          description: 為 true 時代表設定僅提供查詢資訊。
         realm:
           type: string
         client_id:

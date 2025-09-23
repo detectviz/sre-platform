@@ -124,7 +124,7 @@ const eventData = [
     resource_id: 'res-001',
     resource_name: 'web-01',
     service_impact: '客戶交易延遲，SLA 風險升高',
-    rule_id: 'rule-001',
+    rule_uid: 'rule-001',
     rule_name: 'API 延遲監控',
     trigger_threshold: '> 500ms',
     trigger_value: '820ms',
@@ -199,7 +199,7 @@ const eventData = [
     resource_id: 'res-002',
     resource_name: 'rds-read-1',
     service_impact: '延遲影響讀取性能',
-    rule_id: 'rule-002',
+    rule_uid: 'rule-002',
     rule_name: '資料庫延遲監控',
     trigger_threshold: '> 120ms',
     trigger_value: '210ms',
@@ -218,7 +218,7 @@ const eventData = [
 
 const eventRules = [
   {
-    rule_id: 'rule-001',
+    rule_uid: 'rule-001',
     name: 'API 延遲監控',
     description: '監控交易 API 延遲，超過閾值即觸發事件。',
     severity: 'critical',
@@ -246,7 +246,7 @@ const eventRules = [
     }
   },
   {
-    rule_id: 'rule-002',
+    rule_uid: 'rule-002',
     name: '資料庫延遲監控',
     description: '觀察資料庫連線與查詢延遲。',
     severity: 'warning',
@@ -1197,6 +1197,8 @@ const tagValueCatalog = {
 };
 
 const emailSettings = {
+  channel_id: 'channel-email-default',
+  channel_name: '預設郵件通道',
   smtp_host: 'smtp.example.com',
   smtp_port: 587,
   username: 'noreply@example.com',
@@ -1211,6 +1213,8 @@ const emailSettings = {
 const authSettings = {
   provider: 'Keycloak',
   oidc_enabled: true,
+  managed_by: 'keycloak',
+  read_only: true,
   realm: 'sre-platform',
   client_id: 'sre-ui',
   client_secret_hint: '***',
@@ -1637,7 +1641,7 @@ const mapEventSummary = (event) => ({
   resource_id: event.resource_id,
   resource_name: event.resource_name,
   service_impact: event.service_impact,
-  rule_id: event.rule_id,
+  rule_uid: event.rule_uid,
   rule_name: event.rule_name,
   trigger_threshold: event.trigger_threshold,
   assignee_id: event.assignee_id || null,
@@ -1784,7 +1788,7 @@ const getMetricSeriesSeeds = (metricKey, resourceIds = []) => {
 };
 
 const getEventById = (id) => eventData.find((evt) => evt.event_id === id);
-const getEventRuleById = (id) => eventRules.find((rule) => rule.rule_id === id);
+const getEventRuleByUid = (id) => eventRules.find((rule) => rule.rule_uid === id);
 const getSilenceRuleById = (id) => silenceRules.find((rule) => rule.silence_id === id);
 const getResourceById = (id) => resourceData.find((res) => res.resource_id === id);
 const getResourceGroupById = (id) => resourceGroups.find((grp) => grp.group_id === id);
@@ -2600,7 +2604,7 @@ app.get('/events', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
   const resourceIds = parseListParam(req.query.resource_id);
-  const ruleIds = parseListParam(req.query.rule_id);
+  const ruleUids = parseListParam(req.query.rule_uid);
   const assigneeIds = parseListParam(req.query.assignee_id);
   const tagFiltersRaw = parseListParam(req.query.tags);
   const tagFilters = Array.isArray(tagFiltersRaw)
@@ -2617,7 +2621,7 @@ app.get('/events', (req, res) => {
     if (!matchesEnumFilter(event.status, statusFilter)) return false;
     if (!matchesEnumFilter(event.severity, severityFilter)) return false;
     if (resourceIds && resourceIds.length > 0 && !resourceIds.includes(event.resource_id)) return false;
-    if (ruleIds && ruleIds.length > 0 && !ruleIds.includes(event.rule_id)) return false;
+    if (ruleUids && ruleUids.length > 0 && !ruleUids.includes(event.rule_uid)) return false;
     if (assigneeIds && assigneeIds.length > 0 && !assigneeIds.includes(event.assignee_id)) return false;
 
     const eventTime = parseDateSafe(event.trigger_time);
@@ -2644,7 +2648,7 @@ app.get('/events', (req, res) => {
     }
 
     if (ruleNameKeyword) {
-      const rule = event.rule_id ? getEventRuleById(event.rule_id) : null;
+      const rule = event.rule_uid ? getEventRuleByUid(event.rule_uid) : null;
       const ruleText = `${event.rule_name || ''} ${rule?.name || ''}`.toLowerCase();
       if (!ruleText.includes(ruleNameKeyword)) return false;
     }
@@ -2723,7 +2727,7 @@ app.get('/batch-operations/:operation_id', (req, res) => {
 app.post('/events', (req, res) => {
   const payload = req.body || {};
   const nowIso = toISO(new Date());
-  const defaultPriority = eventRules.find((rule) => rule.rule_id === payload.rule_id)?.default_priority || 'P2';
+  const defaultPriority = eventRules.find((rule) => rule.rule_uid === payload.rule_uid)?.default_priority || 'P2';
   const initialStatus = payload.status || 'new';
   const acknowledgedAt =
     typeof payload.acknowledged_at === 'string'
@@ -2749,8 +2753,8 @@ app.post('/events', (req, res) => {
     resource_id: payload.resource_id || null,
     resource_name: resourceData.find((r) => r.resource_id === payload.resource_id)?.name || null,
     service_impact: payload.service_impact || null,
-    rule_id: payload.rule_id || null,
-    rule_name: eventRules.find((rule) => rule.rule_id === payload.rule_id)?.name || null,
+    rule_uid: payload.rule_uid || null,
+    rule_name: eventRules.find((rule) => rule.rule_uid === payload.rule_uid)?.name || null,
     trigger_threshold: payload.trigger_threshold || null,
     trigger_value: payload.trigger_value || null,
     unit: payload.unit || null,
@@ -2997,7 +3001,7 @@ app.get('/event-rules', (req, res) => {
   });
 
   const items = filtered.map((rule) => ({
-    rule_id: rule.rule_id,
+    rule_uid: rule.rule_uid,
     name: rule.name,
     description: rule.description,
     severity: rule.severity,
@@ -3020,7 +3024,7 @@ app.get('/event-rules', (req, res) => {
 app.post('/event-rules', (req, res) => {
   const payload = req.body || {};
   const rule = {
-    rule_id: `rule-${Date.now()}`,
+    rule_uid: `rule-${Date.now()}`,
     name: payload.name || '新事件規則',
     description: payload.description || '',
     severity: payload.severity || 'warning',
@@ -3040,34 +3044,34 @@ app.post('/event-rules', (req, res) => {
   res.status(201).json(rule);
 });
 
-app.get('/event-rules/:rule_id', (req, res) => {
-  const rule = getEventRuleById(req.params.rule_id);
+app.get('/event-rules/:rule_uid', (req, res) => {
+  const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
   res.json(rule);
 });
 
-app.put('/event-rules/:rule_id', (req, res) => {
-  const rule = getEventRuleById(req.params.rule_id);
+app.put('/event-rules/:rule_uid', (req, res) => {
+  const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
   Object.assign(rule, req.body || {}, { last_updated: toISO(new Date()) });
   res.json(rule);
 });
 
-app.delete('/event-rules/:rule_id', (req, res) => {
-  const rule = getEventRuleById(req.params.rule_id);
+app.delete('/event-rules/:rule_uid', (req, res) => {
+  const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
   res.status(204).end();
 });
 
-app.post('/event-rules/:rule_id/toggle', (req, res) => {
-  const rule = getEventRuleById(req.params.rule_id);
+app.post('/event-rules/:rule_uid/toggle', (req, res) => {
+  const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
   rule.enabled = !rule.enabled;
   res.json(rule);
 });
 
-app.post('/event-rules/:rule_id/test', (req, res) => {
-  const rule = getEventRuleById(req.params.rule_id);
+app.post('/event-rules/:rule_uid/test', (req, res) => {
+  const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
   res.json({ matches: true, preview_event: mapEventSummary(eventData[0]), messages: ['條件符合範例資料'] });
 });
@@ -4431,7 +4435,12 @@ app.delete('/settings/tags/:tag_id/values/:value_id', (req, res) => {
 app.get('/settings/email', (req, res) => res.json(emailSettings));
 
 app.put('/settings/email', (req, res) => {
-  Object.assign(emailSettings, req.body || {}, { updated_at: toISO(new Date()) });
+  const { channel_id, channel_name } = emailSettings;
+  Object.assign(emailSettings, req.body || {}, {
+    channel_id,
+    channel_name,
+    updated_at: toISO(new Date())
+  });
   res.json(emailSettings);
 });
 
@@ -4465,7 +4474,11 @@ app.post('/settings/email/test', (req, res) => {
 app.get('/settings/auth', (req, res) => res.json(authSettings));
 
 app.put('/settings/auth', (req, res) => {
-  Object.assign(authSettings, req.body || {}, { updated_at: toISO(new Date()) });
+  Object.assign(authSettings, req.body || {}, {
+    managed_by: 'keycloak',
+    read_only: true,
+    updated_at: toISO(new Date())
+  });
   res.json(authSettings);
 });
 
