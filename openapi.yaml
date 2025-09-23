@@ -824,35 +824,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EventTimelineEntry"
+              $ref: "#/components/schemas/CreateEventTimelineEntryRequest"
       responses:
         "201":
           description: 已新增事件歷程。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventTimelineEntry"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /events/{event_id}/comments:
-    post:
-      tags:
-        - 事件管理
-      summary: 新增事件評論
-      operationId: addEventComment
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddEventCommentRequest"
-      responses:
-        "201":
-          description: 已新增評論並同步至時間軸。
           content:
             application/json:
               schema:
@@ -4373,16 +4348,15 @@ components:
         metadata:
           type: object
           additionalProperties: true
-    AddEventCommentRequest:
+    CreateEventTimelineEntryRequest:
       type: object
-      required: [comment]
+      required: [entry_type, message]
       properties:
-        comment:
+        entry_type:
           type: string
-        visibility:
+          enum: [status_change, note, automation, notification]
+        message:
           type: string
-          enum: [internal, public]
-          default: internal
         metadata:
           type: object
           additionalProperties: true
@@ -4405,10 +4379,6 @@ components:
         resolved_at:
           type: string
           format: date-time
-        visibility:
-          type: string
-          enum: [internal, public]
-          description: 批次新增評論時的顯示範圍。
       allOf:
         - if:
             properties:
@@ -4607,6 +4577,14 @@ components:
       type: object
       required: [duration_hours]
       properties:
+        scope:
+          type: string
+          enum: [event, resource, team]
+          default: event
+        matchers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
         duration_hours:
           type: integer
           enum: [1, 2, 4, 8, 12, 24]
@@ -4763,14 +4741,14 @@ components:
             type: string
     SilenceMatcher:
       type: object
-      required: [key, value]
+      required: [matcher_key, matcher_value]
       properties:
-        key:
+        matcher_key:
           type: string
         operator:
           type: string
           enum: [equals, regex]
-        value:
+        matcher_value:
           type: string
     SilenceSchedule:
       type: object
@@ -4816,12 +4794,15 @@ components:
           enum: [single, repeat, condition]
         scope:
           type: string
-          enum: [global, resource, team, tag]
+          enum: [global, resource, team, tag, event]
         enabled:
           type: boolean
         created_at:
           type: string
           format: date-time
+        event_id:
+          type: string
+          nullable: true
     SilenceRuleDetail:
       allOf:
         - $ref: "#/components/schemas/SilenceRuleSummary"
@@ -4852,9 +4833,12 @@ components:
           enum: [single, repeat, condition]
         scope:
           type: string
-          enum: [global, resource, team, tag]
+          enum: [global, resource, team, tag, event]
         enabled:
           type: boolean
+        event_id:
+          type: string
+          nullable: true
         schedule:
           $ref: "#/components/schemas/SilenceSchedule"
         matchers:
@@ -4885,12 +4869,35 @@ components:
           type: integer
     ResourceTag:
       type: object
-      required: [key, value]
+      required: [tag_value_id, key, value]
       properties:
+        tag_id:
+          type: string
+        tag_value_id:
+          type: string
         key:
           type: string
         value:
           type: string
+        assigned_at:
+          type: string
+          format: date-time
+          nullable: true
+    ResourceTagAssignment:
+      type: object
+      required: [tag_value_id]
+      properties:
+        tag_value_id:
+          type: string
+        tag_id:
+          type: string
+          nullable: true
+        key:
+          type: string
+          nullable: true
+        value:
+          type: string
+          nullable: true
     ResourceSummary:
       type: object
       required:
@@ -4977,7 +4984,7 @@ components:
         tags:
           type: array
           items:
-            $ref: "#/components/schemas/ResourceTag"
+            $ref: "#/components/schemas/ResourceTagAssignment"
         group_ids:
           type: array
           description: 要加入的資源群組識別碼列表。
@@ -5013,7 +5020,7 @@ components:
         tags:
           type: array
           items:
-            $ref: "#/components/schemas/ResourceTag"
+            $ref: "#/components/schemas/ResourceTagAssignment"
         group_ids:
           type: array
           description: 更新後應屬於的資源群組識別碼列表。
