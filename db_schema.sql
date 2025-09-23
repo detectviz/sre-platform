@@ -1145,13 +1145,24 @@ CREATE TABLE notification_channels (
 CREATE INDEX idx_notification_channels_type ON notification_channels (type);
 CREATE INDEX idx_notification_channels_status ON notification_channels (status);
 
-CREATE TABLE automation_schedule_channels (
-    -- 排程識別碼
-    schedule_id UUID NOT NULL REFERENCES automation_schedules(id) ON DELETE CASCADE,
+CREATE TABLE notification_channel_links (
+    -- 主鍵識別碼
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     -- 通知通道識別碼
     channel_id UUID NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
-    PRIMARY KEY (schedule_id, channel_id)
+    -- 關聯類型 (排程或通知策略)
+    link_type VARCHAR(32) NOT NULL,
+    -- 關聯實體識別碼 (排程或策略)
+    link_id UUID NOT NULL,
+    -- 自訂範本 (適用於通知策略)
+    template VARCHAR(128),
+    -- 建立時間
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_notification_channel_links_type CHECK (link_type IN ('schedule','strategy'))
 );
+CREATE UNIQUE INDEX idx_notification_channel_links_unique ON notification_channel_links (link_type, link_id, channel_id);
+CREATE INDEX idx_notification_channel_links_channel ON notification_channel_links (channel_id);
+CREATE INDEX idx_notification_channel_links_link ON notification_channel_links (link_type, link_id);
 
 CREATE TABLE notification_strategies (
     -- 主鍵識別碼
@@ -1196,19 +1207,6 @@ CREATE TABLE notification_strategy_recipients (
 );
 CREATE INDEX idx_notification_recipients_strategy ON notification_strategy_recipients (strategy_id);
 CREATE INDEX idx_notification_recipients_target ON notification_strategy_recipients (target_type, target_id);
-
-CREATE TABLE notification_strategy_channels (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 通知策略識別碼
-    strategy_id UUID NOT NULL REFERENCES notification_strategies(id) ON DELETE CASCADE,
-    -- 通知通道識別碼
-    channel_id UUID NOT NULL REFERENCES notification_channels(id) ON DELETE CASCADE,
-    -- 範本
-    template VARCHAR(128)
-);
-CREATE INDEX idx_notification_strategy_channels_strategy ON notification_strategy_channels (strategy_id);
-CREATE INDEX idx_notification_strategy_channels_channel ON notification_strategy_channels (channel_id);
 
 CREATE TABLE notification_history (
     -- 主鍵識別碼

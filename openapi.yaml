@@ -104,6 +104,8 @@ tags:
     description: 事件偵測與自動化規則設定。
   - name: 靜音規則
     description: 事件靜音排程與條件設定。
+  - name: 批次作業
+    description: 跨模組批次處理事件與資源的操作。
   - name: 資源管理
     description: 資源列表與指標查詢。
   - name: 資源群組
@@ -498,51 +500,31 @@ paths:
                           $ref: "#/components/schemas/NotificationItem"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notifications/{notification_id}/read:
+  /notifications/read:
     post:
       tags:
         - 通知中心
-      summary: 標記單一通知為已讀
-      operationId: markNotificationRead
-      parameters:
-        - name: notification_id
-          in: path
-          required: true
-          description: 通知唯一識別碼。
-          schema:
-            type: string
+      summary: 標記通知為已讀
+      operationId: readNotifications
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/MarkNotificationReadRequest"
+              $ref: "#/components/schemas/NotificationReadRequest"
       responses:
         "200":
-          description: 已更新通知狀態。
+          description: 回傳更新後的通知條目與摘要。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationItem"
+                $ref: "#/components/schemas/NotificationReadResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notifications/mark-all-read:
-    post:
-      tags:
-        - 通知中心
-      summary: 將所有通知標記為已讀
-      operationId: markAllNotificationsRead
-      responses:
-        "200":
-          description: 返回更新後的通知摘要。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationSummary"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /events/summary:
     get:
       tags:
@@ -683,12 +665,14 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "409":
           $ref: "#/components/responses/Conflict"
-  /events/batch:
+  /batch-operations:
     post:
       tags:
-        - 事件管理
-      summary: 批次處理事件
-      operationId: batchEvents
+        - 批次作業
+      summary: 建立事件或資源的批次操作
+      description: |
+        依據 target_type 對事件或資源發起批次操作。當目標為資源時，僅允許團隊管理員或超級管理員執行。
+      operationId: createBatchOperation
       security:
         - bearerAuth: [team_member, team_manager, super_admin]
       requestBody:
@@ -696,7 +680,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EventBatchRequest"
+              $ref: "#/components/schemas/BatchOperationRequest"
       responses:
         "202":
           description: 已接受批次處理請求。
@@ -708,7 +692,11 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /events/batch/{operation_id}:
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /batch-operations/{operation_id}:
     parameters:
       - name: operation_id
         in: path
@@ -718,9 +706,11 @@ paths:
           type: string
     get:
       tags:
-        - 事件管理
-      summary: 查詢事件批次處理狀態
-      operationId: getEventBatchStatus
+        - 批次作業
+      summary: 查詢批次處理狀態
+      operationId: getBatchOperationStatus
+      security:
+        - bearerAuth: [team_member, team_manager, super_admin]
       responses:
         "200":
           description: 批次處理狀態與結果。
@@ -730,6 +720,8 @@ paths:
                 $ref: "#/components/schemas/BatchOperationStatus"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
   /events/{event_id}:
@@ -1590,35 +1582,6 @@ paths:
                 $ref: "#/components/schemas/TopologyGraph"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /resources/batch:
-    post:
-      tags:
-        - 資源管理
-      summary: 批次操作資源
-      operationId: batchResources
-      security:
-        - bearerAuth: [team_manager, super_admin]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/BatchResourceRequest"
-      responses:
-        "202":
-          description: 批次操作已啟動。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/BatchOperationStatus"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalError"
   /resources/scan:
     post:
       tags:
@@ -1806,50 +1769,6 @@ paths:
       responses:
         "204":
           description: 儀表板已刪除。
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /dashboards/{dashboard_id}/publish:
-    post:
-      tags:
-        - 儀表板
-      summary: 發布或取消發布儀表板
-      operationId: publishDashboard
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                published:
-                  type: boolean
-                  default: true
-      responses:
-        "200":
-          description: 儀表板發布狀態已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DashboardDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /dashboards/{dashboard_id}/default:
-    post:
-      tags:
-        - 儀表板
-      summary: 設定儀表板為預設首頁
-      operationId: setDefaultDashboard
-      responses:
-        "200":
-          description: 已更新預設儀表板。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DashboardDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -4220,15 +4139,43 @@ components:
           type: array
           items:
             type: string
-    MarkNotificationReadRequest:
+    NotificationReadRequest:
       type: object
       properties:
+        notification_ids:
+          type: array
+          description: 要標記為已讀的通知識別碼列表。
+          minItems: 1
+          items:
+            type: string
+        mark_all:
+          type: boolean
+          description: 將所有通知標記為已讀。
         read_at:
           type: string
           format: date-time
         action:
           type: string
           description: 執行的快速操作名稱。
+      oneOf:
+        - required: [notification_ids]
+        - required: [mark_all]
+          properties:
+            mark_all:
+              const: true
+              type: boolean
+    NotificationReadResponse:
+      type: object
+      required: [summary]
+      properties:
+        updated_items:
+          type: array
+          description: 本次更新後的通知條目。
+          items:
+            $ref: "#/components/schemas/NotificationItem"
+        summary:
+          $ref: "#/components/schemas/NotificationSummary"
+          description: 最新的通知統計摘要。
     EventSummaryMetrics:
       type: object
       required:
@@ -4409,38 +4356,6 @@ components:
         metadata:
           type: object
           additionalProperties: true
-    EventBatchRequest:
-      type: object
-      required: [action, event_ids]
-      properties:
-        action:
-          type: string
-          enum: [acknowledge, resolve, assign, add_comment]
-        event_ids:
-          type: array
-          minItems: 1
-          items:
-            type: string
-        assignee_id:
-          type: string
-        comment:
-          type: string
-        resolved_at:
-          type: string
-          format: date-time
-      allOf:
-        - if:
-            properties:
-              action:
-                const: assign
-          then:
-            required: [assignee_id]
-        - if:
-            properties:
-              action:
-                const: add_comment
-          then:
-            required: [comment]
     GenerateEventReportRequest:
       type: object
       required: [event_ids]
@@ -4529,6 +4444,9 @@ components:
                 $ref: "#/components/schemas/AutomationExecutionSummary"
             analysis:
               $ref: "#/components/schemas/EventAnalysisReport"
+            metadata:
+              type: object
+              additionalProperties: true
     EventReportTimelineHighlight:
       type: object
       required: [event_id, event_summary, items]
@@ -4802,9 +4720,6 @@ components:
     SilenceSchedule:
       type: object
       properties:
-        silence_type:
-          type: string
-          enum: [single, repeat, condition]
         starts_at:
           type: string
           format: date-time
@@ -5145,18 +5060,20 @@ components:
         created_at:
           type: string
           format: date-time
-    ResourceGroupMember:
-      type: object
-      required: [resource_id, name, type]
-      properties:
-        resource_id:
-          type: string
-        name:
-          type: string
-        type:
-          type: string
-        status:
-          type: string
+      ResourceGroupMember:
+        type: object
+        required: [resource_id, name, type, status]
+        properties:
+          resource_id:
+            type: string
+          name:
+            type: string
+          type:
+            type: string
+            enum: [server, database, cache, gateway, service]
+          status:
+            type: string
+            enum: [healthy, warning, critical, offline]
     ResourceGroupSubscriber:
       type: object
       required: [user_id, display_name]
@@ -5224,18 +5141,21 @@ components:
         metrics:
           type: object
           additionalProperties: true
-    TopologyEdge:
-      type: object
-      required: [source, target]
-      properties:
-        source:
-          type: string
-        target:
-          type: string
-        relation:
-          type: string
-        traffic_level:
-          type: number
+      TopologyEdge:
+        type: object
+        required: [source, target]
+        properties:
+          source:
+            type: string
+          target:
+            type: string
+          relation:
+            type: string
+          traffic_level:
+            type: number
+          metadata:
+            type: object
+            additionalProperties: true
     TopologyGraph:
       type: object
       required: [nodes, edges]
@@ -5880,6 +5800,10 @@ components:
           enum: [pending, running, success, failed, cancelled]
         trigger_source:
           type: string
+          enum: [manual, event_rule, schedule]
+        triggered_by:
+          type: string
+          nullable: true
         start_time:
           type: string
           format: date-time
@@ -6172,6 +6096,7 @@ components:
           enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
         template:
           type: string
+          nullable: true
         channel_name:
           type: string
           description: 通知管道的顯示名稱，僅於回應中提供。
@@ -6896,17 +6821,34 @@ components:
             refresh:
               type: integer
               description: 刷新間隔（秒）
-    BatchResourceRequest:
+    BatchOperationRequest:
       type: object
-      required: [action, resource_ids]
+      required: [target_type, action]
       properties:
+        target_type:
+          type: string
+          enum: [event, resource]
         action:
           type: string
-          enum: [delete, update_status, assign_team, add_tags, remove_tags]
-        resource_ids:
+          enum:
+            [acknowledge, resolve, assign, add_comment, delete, update_status, assign_team, add_tags, remove_tags]
+        event_ids:
           type: array
+          minItems: 1
           items:
             type: string
+        resource_ids:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        assignee_id:
+          type: string
+        comment:
+          type: string
+        resolved_at:
+          type: string
+          format: date-time
         target_status:
           type: string
           enum: [healthy, warning, critical, offline]
@@ -6914,13 +6856,69 @@ components:
           type: string
         tags:
           type: array
+          minItems: 1
           items:
             type: string
         reason:
           type: string
+      allOf:
+        - if:
+            properties:
+              target_type:
+                const: event
+          then:
+            required: [event_ids]
+            properties:
+              action:
+                enum: [acknowledge, resolve, assign, add_comment]
+        - if:
+            properties:
+              target_type:
+                const: resource
+          then:
+            required: [resource_ids]
+            properties:
+              action:
+                enum: [delete, update_status, assign_team, add_tags, remove_tags]
+        - if:
+            properties:
+              action:
+                const: assign
+          then:
+            required: [assignee_id]
+        - if:
+            properties:
+              action:
+                const: add_comment
+          then:
+            required: [comment]
+        - if:
+            properties:
+              action:
+                const: update_status
+          then:
+            required: [target_status]
+        - if:
+            properties:
+              action:
+                const: assign_team
+          then:
+            required: [target_team_id]
+        - if:
+            properties:
+              action:
+                const: add_tags
+          then:
+            required: [tags]
+        - if:
+            properties:
+              action:
+                const: remove_tags
+          then:
+            required: [tags]
     BatchOperationItem:
       type: object
-      required: [target_id, success]
+      required: [target_id, success, processed_at]
       properties:
         target_id:
           type: string
@@ -6934,7 +6932,6 @@ components:
         processed_at:
           type: string
           format: date-time
-          nullable: true
     BatchOperationStatus:
       type: object
       required:
@@ -6947,6 +6944,7 @@ components:
           enum: [event, resource]
         action:
           type: string
+          enum: [acknowledge, resolve, assign, add_comment, delete, update_status, assign_team, add_tags, remove_tags]
         status:
           type: string
           enum: [pending, running, completed, failed]
@@ -7009,12 +7007,16 @@ components:
           enum: [pending, running, completed, failed]
         scan_type:
           type: string
+          enum: [network, resources, infrastructure]
         target:
           type: string
         progress:
           type: number
           minimum: 0
           maximum: 100
+        options:
+          type: object
+          additionalProperties: true
         results_count:
           type: integer
         created_at:
@@ -7028,22 +7030,31 @@ components:
           type: string
           format: date-time
           nullable: true
+        error_message:
+          type: string
+          nullable: true
         results:
           type: array
           items:
             $ref: "#/components/schemas/ScanResult"
     ScanResult:
       type: object
-      required: [resource_id, name, type, status]
+      required: [result_id, name, type, status, discovered_at]
       properties:
+        result_id:
+          type: string
+          description: 掃描結果的唯一識別碼。
         resource_id:
           type: string
+          nullable: true
         name:
           type: string
         type:
           type: string
+          enum: [server, database, cache, gateway, service]
         status:
           type: string
+          enum: [healthy, warning, critical, offline]
         ip_address:
           type: string
         location:
@@ -7064,3 +7075,6 @@ components:
                 type: string
               version:
                 type: string
+        metadata:
+          type: object
+          additionalProperties: true
