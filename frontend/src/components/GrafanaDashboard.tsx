@@ -80,12 +80,12 @@ export const GrafanaDashboard: React.FC<GrafanaDashboardProps> = ({
 
     // 添加組織 ID
     if (orgId) {
-      params.append('orgId', orgId);
+      params.append('orgId', orgId.toString());
     }
 
     // 添加面板 ID（如果指定了 viewPanel）
     if (panelId && viewPanel) {
-      params.append('panelId', panelId);
+      params.append('panelId', panelId.toString());
       params.append('viewPanel', 'true');
     }
 
