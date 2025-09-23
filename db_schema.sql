@@ -284,46 +284,6 @@ CREATE UNIQUE INDEX idx_script_versions_unique ON automation_script_versions (sc
 -- =============================
 -- 事件資料模型
 -- =============================
-CREATE TABLE event_rules (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 名稱
-    name VARCHAR(128) NOT NULL UNIQUE,
-    -- 描述
-    description TEXT,
-    -- 嚴重度
-    severity VARCHAR(32) NOT NULL,
-    -- 預設優先順序
-    default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
-    -- 啟用
-    enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 標籤
-    labels JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 環境
-    environments JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 條件群組
-    condition_groups JSONB NOT NULL,
-    -- 標題範本
-    title_template TEXT,
-    -- 內容範本
-    content_template TEXT,
-    -- 自動化啟用
-    automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 自動化腳本識別碼
-    automation_script_id UUID REFERENCES automation_scripts(id),
-    -- 自動化參數
-    automation_parameters JSONB DEFAULT '{}'::JSONB,
-    -- 建立者識別碼
-    creator_id UUID REFERENCES users(id),
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_event_rules_severity CHECK (severity IN ('critical','warning','info')),
-    CONSTRAINT chk_event_rules_priority CHECK (default_priority IN ('P0','P1','P2','P3'))
-);
-CREATE INDEX idx_event_rules_enabled ON event_rules (enabled);
-
 CREATE TABLE silence_rules (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -408,8 +368,8 @@ CREATE TABLE events (
     service_impact TEXT,
     -- 資源識別碼
     resource_id UUID,
-    -- 規則識別碼
-    rule_id UUID REFERENCES event_rules(id),
+    -- Grafana 告警規則 UID
+    grafana_rule_uid VARCHAR(64),
     -- 觸發門檻
     trigger_threshold VARCHAR(64),
     -- 觸發數值
@@ -438,6 +398,7 @@ CREATE INDEX idx_events_status ON events (status);
 CREATE INDEX idx_events_severity ON events (severity);
 CREATE INDEX idx_events_trigger_time ON events (trigger_time DESC);
 CREATE INDEX idx_events_priority ON events (priority);
+CREATE INDEX idx_events_rule_uid ON events (grafana_rule_uid);
 
 CREATE TABLE event_tags (
     -- 事件識別碼
@@ -1319,67 +1280,6 @@ CREATE TABLE tag_values (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX idx_tag_values_unique ON tag_values (tag_id, value);
-
-CREATE TABLE email_settings (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- SMTP主機
-    smtp_host VARCHAR(256) NOT NULL,
-    -- SMTP連接埠
-    smtp_port INTEGER NOT NULL,
-    -- 使用者帳號
-    username VARCHAR(128),
-    -- 寄件者名稱
-    sender_name VARCHAR(128),
-    -- 寄件者電子郵件
-    sender_email VARCHAR(256) NOT NULL,
-    -- 加密
-    encryption VARCHAR(16) NOT NULL DEFAULT 'none',
-    -- 測試收件者
-    test_recipient VARCHAR(256),
-    -- 是否啟用
-    is_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 更新者識別碼
-    updated_by UUID REFERENCES users(id),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_email_settings_encryption CHECK (encryption IN ('none','tls','ssl'))
-);
-
-CREATE TABLE auth_settings (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 供應商
-    provider VARCHAR(32) NOT NULL,
-    -- OIDC啟用
-    oidc_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 領域
-    realm VARCHAR(128),
-    -- 客戶端識別碼
-    client_id VARCHAR(256) NOT NULL,
-    -- 客戶端密鑰加密後
-    client_secret_encrypted TEXT,
-    -- 客戶端密鑰提示
-    client_secret_hint VARCHAR(64),
-    -- 認證網址
-    auth_url VARCHAR(512) NOT NULL,
-    -- 令牌網址
-    token_url VARCHAR(512) NOT NULL,
-    -- 使用者資訊網址
-    userinfo_url VARCHAR(512),
-    -- 重新導向URI
-    redirect_uri VARCHAR(512),
-    -- 登出網址
-    logout_url VARCHAR(512),
-    -- 授權範圍
-    scopes TEXT[] DEFAULT ARRAY['openid','profile','email'],
-    -- 使用者同步
-    user_sync BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 更新者識別碼
-    updated_by UUID REFERENCES users(id),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
 
 CREATE TABLE layout_widgets (
     -- 小工具識別碼
