@@ -50,6 +50,23 @@ CREATE TABLE team_subscribers (
 CREATE INDEX idx_team_subscribers_user ON team_subscribers (user_id);
 CREATE INDEX idx_team_subscribers_type ON team_subscribers (subscriber_type);
 
+CREATE TABLE user_invitations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    email VARCHAR(256) NOT NULL,
+    name VARCHAR(128),
+    status VARCHAR(32) NOT NULL DEFAULT 'invitation_sent',
+    invited_by UUID REFERENCES users(id),
+    invited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    expires_at TIMESTAMPTZ,
+    accepted_at TIMESTAMPTZ,
+    last_sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    token VARCHAR(256),
+    CONSTRAINT chk_user_invitations_status CHECK (status IN ('invitation_sent','accepted','expired','cancelled'))
+);
+CREATE UNIQUE INDEX idx_user_invitations_active_email ON user_invitations (email)
+    WHERE status = 'invitation_sent';
+CREATE INDEX idx_user_invitations_status ON user_invitations (status);
+
 CREATE TABLE roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(64) NOT NULL UNIQUE,

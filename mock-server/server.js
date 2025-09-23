@@ -290,10 +290,12 @@ const resourceData = [
     network_in_mbps: 125.4,
     network_out_mbps: 118.2,
     service_impact: '交易 API',
-    labels: ['env=production', 'tier=frontend'],
     notes: '主要服務外部交易流量，需要高可用度。',
     last_event_count: 3,
-    tags: ['production', 'web'],
+    tags: [
+      { key: 'env', value: 'production' },
+      { key: 'tier', value: 'frontend' }
+    ],
     groups: ['grp-001'],
     created_at: toISO(new Date(now.getTime() - 604800000)),
     updated_at: toISO(now)
@@ -314,10 +316,12 @@ const resourceData = [
     network_in_mbps: 95.1,
     network_out_mbps: 90.4,
     service_impact: '讀取節點',
-    labels: ['env=production', 'role=read-replica'],
     notes: '供應交易資料庫的讀取節點，需監控延遲。',
     last_event_count: 2,
-    tags: ['database', 'production'],
+    tags: [
+      { key: 'env', value: 'production' },
+      { key: 'role', value: 'read-replica' }
+    ],
     groups: ['grp-002'],
     created_at: toISO(new Date(now.getTime() - 2592000000)),
     updated_at: toISO(now)
@@ -556,8 +560,41 @@ const automationExecutions = [
     error_message: null,
     related_event_ids: ['evt-001'],
     attempt_count: 1
+  },
+  {
+    execution_id: 'exe-002',
+    script_id: 'script-001',
+    script_name: 'Auto Scale Web',
+    status: 'failed',
+    trigger_source: 'manual',
+    start_time: toISO(new Date(now.getTime() - 1800000)),
+    end_time: toISO(new Date(now.getTime() - 1794000)),
+    duration_ms: 6000,
+    parameters: { mode: 'scale-in', count: 1 },
+    stdout: 'attempting to scale in web tier',
+    stderr: 'timeout contacting node web-02',
+    error_message: '節點 web-02 無法回應縮容命令',
+    related_event_ids: ['evt-001'],
+    attempt_count: 1
   }
 ];
+
+const getAutomationExecutionsForEvent = (eventId) =>
+  automationExecutions
+    .filter(
+      (execution) =>
+        Array.isArray(execution.related_event_ids) &&
+        execution.related_event_ids.includes(eventId)
+    )
+    .map(({ execution_id, script_id, script_name, status, trigger_source, start_time, duration_ms }) => ({
+      execution_id,
+      script_id,
+      script_name,
+      status,
+      trigger_source,
+      start_time,
+      duration_ms
+    }));
 
 const iamUsers = [
   {
@@ -581,6 +618,8 @@ const iamUsers = [
     last_login: toISO(new Date(now.getTime() - 7200000))
   }
 ];
+
+const iamInvitations = [];
 
 const iamTeams = [
   {
@@ -936,6 +975,32 @@ const paginate = (items, req) => {
   };
 };
 
+const normalizeTags = (tags) => {
+  if (!Array.isArray(tags)) return [];
+  return tags
+    .map((tag) => {
+      if (!tag) return null;
+      if (typeof tag === 'string') {
+        const [rawKey, ...rawValue] = tag.split('=');
+        const key = rawKey ? rawKey.trim() : '';
+        if (!key) return null;
+        const value = rawValue.join('=').trim();
+        return { key, value };
+      }
+      if (typeof tag === 'object') {
+        const key = typeof tag.key === 'string' ? tag.key.trim() : '';
+        if (!key) return null;
+        const value =
+          tag.value === undefined || tag.value === null ? '' : String(tag.value).trim();
+        return { key, value };
+      }
+      return null;
+    })
+    .filter((tag) => tag && tag.key);
+};
+
+const cloneTags = (tags) => normalizeTags(tags).map(({ key, value }) => ({ key, value }));
+
 const mapEventSummary = (event) => ({
   event_id: event.event_id,
   event_key: event.event_key,
@@ -961,7 +1026,7 @@ const toEventDetail = (event) => ({
   resolved_at: event.resolved_at,
   timeline: event.timeline || [],
   related_events: event.related || [],
-  automation_actions: event.analysis ? ['scale-out'] : [],
+  automation_executions: getAutomationExecutionsForEvent(event.event_id),
   analysis: event.analysis
 });
 
@@ -972,8 +1037,7 @@ const getSilencesForResource = (resourceId) =>
 
 const buildResourceDetail = (resource) => ({
   ...resource,
-  labels: resource.labels || [],
-  tags: resource.tags || [],
+  tags: cloneTags(resource.tags),
   silences: getSilencesForResource(resource.resource_id)
 });
 
@@ -1484,7 +1548,7 @@ app.get('/resources', (req, res) => {
     network_in_mbps: resItem.network_in_mbps,
     network_out_mbps: resItem.network_out_mbps,
     service_impact: resItem.service_impact,
-    tags: resItem.tags,
+    tags: cloneTags(resItem.tags),
     last_event_count: resItem.last_event_count
   })), req));
 });
@@ -1507,8 +1571,7 @@ app.post('/resources', (req, res) => {
     network_in_mbps: 0,
     network_out_mbps: 0,
     service_impact: payload.service_impact || null,
-    labels: payload.labels || [],
-    tags: payload.tags || [],
+    tags: normalizeTags(payload.tags ?? payload.labels),
     notes: payload.notes || null,
     last_event_count: 0,
     groups: [],
@@ -1528,7 +1591,13 @@ app.get('/resources/:resource_id', (req, res) => {
 app.patch('/resources/:resource_id', (req, res) => {
   const resource = getResourceById(req.params.resource_id);
   if (!resource) return notFound(res, '找不到資源');
-  Object.assign(resource, req.body || {}, { updated_at: toISO(new Date()) });
+  const updates = { ...(req.body || {}) };
+  if (Object.prototype.hasOwnProperty.call(updates, 'tags') || Object.prototype.hasOwnProperty.call(updates, 'labels')) {
+    resource.tags = normalizeTags(updates.tags ?? updates.labels);
+    delete updates.tags;
+    delete updates.labels;
+  }
+  Object.assign(resource, updates, { updated_at: toISO(new Date()) });
   res.json(buildResourceDetail(resource));
 });
 
@@ -1874,23 +1943,31 @@ app.post('/automation/executions/:execution_id/retry', (req, res) => {
   res.status(202).json({ ...execution, status: 'pending', start_time: toISO(new Date()), end_time: null });
 });
 
-app.get('/iam/users', (req, res) => {
-  res.json(paginate(iamUsers, req));
+app.post('/iam/invitations', (req, res) => {
+  const payload = req.body || {};
+  const email = typeof payload.email === 'string' ? payload.email.trim() : '';
+  if (!email) {
+    return res.status(400).json({ code: 'invalid_request', message: '請提供邀請 Email。' });
+  }
+  const invitation = {
+    invitation_id: `inv-${Date.now()}`,
+    email,
+    name: typeof payload.name === 'string' ? payload.name.trim() : null,
+    status: 'invitation_sent',
+    sent_at: toISO(new Date())
+  };
+  iamInvitations.push(invitation);
+  res.status(201).json({
+    invitation_id: invitation.invitation_id,
+    status: invitation.status,
+    email: invitation.email,
+    name: invitation.name,
+    sent_at: invitation.sent_at
+  });
 });
 
-app.post('/iam/users', (req, res) => {
-  const payload = req.body || {};
-  const user = {
-    user_id: `user-${Date.now()}`,
-    username: payload.username || 'new.user',
-    name: payload.name || '新成員',
-    email: payload.email || 'new.user@example.com',
-    status: payload.status || 'active',
-    teams: payload.team_ids || [],
-    roles: payload.role_ids || [],
-    last_login: null
-  };
-  res.status(201).json(user);
+app.get('/iam/users', (req, res) => {
+  res.json(paginate(iamUsers, req));
 });
 
 app.get('/iam/users/:user_id', (req, res) => {
@@ -1902,7 +1979,16 @@ app.get('/iam/users/:user_id', (req, res) => {
 app.patch('/iam/users/:user_id', (req, res) => {
   const user = getIamUserById(req.params.user_id);
   if (!user) return notFound(res, '找不到人員');
-  Object.assign(user, req.body || {});
+  const payload = req.body || {};
+  if (Array.isArray(payload.role_ids)) {
+    user.roles = payload.role_ids;
+  }
+  if (Array.isArray(payload.team_ids)) {
+    user.teams = payload.team_ids;
+  }
+  if (typeof payload.status === 'string') {
+    user.status = payload.status;
+  }
   res.json(user);
 });
 

@@ -2163,6 +2163,29 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /iam/invitations:
+    post:
+      tags:
+        - 身份與存取
+      summary: 發送人員邀請
+      operationId: createIamInvitation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateIAMInvitationRequest"
+      responses:
+        "201":
+          description: 邀請已發送。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IAMInvitationResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /iam/users:
     get:
       tags:
@@ -2195,28 +2218,6 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/IAMUserSummary"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-    post:
-      tags:
-        - 身份與存取
-      summary: 建立人員帳號
-      operationId: createIamUser
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateIAMUserRequest"
-      responses:
-        "201":
-          description: 人員建立成功。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IAMUserDetail"
-        "400":
-          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /iam/users/{user_id}:
@@ -3834,10 +3835,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/EventRelatedItem"
-            automation_actions:
+            automation_executions:
               type: array
               items:
-                type: string
+                $ref: "#/components/schemas/AutomationExecutionSummary"
             analysis:
               $ref: "#/components/schemas/EventAnalysisReport"
     EventTimelineEntry:
@@ -4125,6 +4126,14 @@ components:
           type: integer
         groups:
           type: integer
+    ResourceTag:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          type: string
+        value:
+          type: string
     ResourceSummary:
       type: object
       required:
@@ -4163,7 +4172,7 @@ components:
         tags:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ResourceTag"
         last_event_count:
           type: integer
     CreateResourceRequest:
@@ -4188,14 +4197,10 @@ components:
           type: string
         os:
           type: string
-        labels:
-          type: array
-          items:
-            type: string
         tags:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/ResourceTag"
     UpdateResourceRequest:
       allOf:
         - $ref: "#/components/schemas/CreateResourceRequest"
@@ -4223,10 +4228,6 @@ components:
               type: string
               format: date-time
             groups:
-              type: array
-              items:
-                type: string
-            labels:
               type: array
               items:
                 type: string
@@ -4890,33 +4891,46 @@ components:
         last_login:
           type: string
           format: date-time
-    CreateIAMUserRequest:
+    UpdateIAMUserRequest:
       type: object
-      required: [username, name, email]
       properties:
-        username:
-          type: string
-        name:
-          type: string
-        email:
-          type: string
-          format: email
-        team_ids:
-          type: array
-          items:
-            type: string
         role_ids:
           type: array
           items:
             type: string
-    UpdateIAMUserRequest:
-      allOf:
-        - $ref: "#/components/schemas/CreateIAMUserRequest"
-        - type: object
-          properties:
-            status:
-              type: string
-              enum: [active, disabled]
+        team_ids:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, disabled]
+    CreateIAMInvitationRequest:
+      type: object
+      required: [email]
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+    IAMInvitationResponse:
+      type: object
+      required: [status, email, sent_at]
+      properties:
+        invitation_id:
+          type: string
+        status:
+          type: string
+          enum: [invitation_sent, accepted, expired, cancelled]
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        sent_at:
+          type: string
+          format: date-time
     IAMUserDetail:
       allOf:
         - $ref: "#/components/schemas/IAMUserSummary"
