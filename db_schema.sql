@@ -477,9 +477,11 @@ CREATE TABLE event_ai_analysis (
     generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE event_batch_operations (
-    -- 批次識別碼
-    batch_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE batch_operations (
+    -- 主鍵識別碼
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- 目標類型 (事件或資源)
+    target_type VARCHAR(32) NOT NULL,
     -- 操作
     action VARCHAR(32) NOT NULL,
     -- 狀態
@@ -493,31 +495,27 @@ CREATE TABLE event_batch_operations (
     -- 失敗次數
     failed_count INTEGER NOT NULL DEFAULT 0,
     -- 請求者識別碼
-    requested_by UUID NOT NULL REFERENCES users(id),
-    -- 受指派者識別碼
-    assignee_id UUID REFERENCES users(id),
-    -- 註解
-    comment TEXT,
-    -- 請求負載
-    request_payload JSONB NOT NULL DEFAULT '{}'::JSONB,
+    requested_by UUID REFERENCES users(id),
+    -- 目標內容 (指派人、標籤等上下文)
+    context JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 建立時間
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 完成時間
     completed_at TIMESTAMPTZ,
-    CONSTRAINT chk_event_batch_action CHECK (action IN ('acknowledge','resolve','assign','add_comment')),
-    CONSTRAINT chk_event_batch_status CHECK (status IN ('pending','running','completed','failed'))
+    CONSTRAINT chk_batch_operations_target CHECK (target_type IN ('event','resource')),
+    CONSTRAINT chk_batch_operations_status CHECK (status IN ('pending','running','completed','failed'))
 );
-CREATE INDEX idx_event_batch_status ON event_batch_operations (status);
-CREATE INDEX idx_event_batch_created_at ON event_batch_operations (created_at DESC);
-CREATE INDEX idx_event_batch_requested_by ON event_batch_operations (requested_by);
+CREATE INDEX idx_batch_operations_target ON batch_operations (target_type, action);
+CREATE INDEX idx_batch_operations_status ON batch_operations (status);
+CREATE INDEX idx_batch_operations_requested_by ON batch_operations (requested_by);
 
-CREATE TABLE event_batch_results (
-    -- 結果識別碼
-    result_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 批次識別碼
-    batch_id UUID NOT NULL REFERENCES event_batch_operations(batch_id) ON DELETE CASCADE,
-    -- 事件識別碼
-    event_id UUID REFERENCES events(id) ON DELETE SET NULL,
+CREATE TABLE batch_operation_items (
+    -- 主鍵識別碼
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- 批次作業識別碼
+    operation_id UUID NOT NULL REFERENCES batch_operations(id) ON DELETE CASCADE,
+    -- 目標識別碼 (事件或資源)
+    target_id UUID,
     -- 成功
     success BOOLEAN NOT NULL,
     -- 訊息
@@ -527,7 +525,7 @@ CREATE TABLE event_batch_results (
     -- 處理時間
     processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_event_batch_results_batch ON event_batch_results (batch_id);
+CREATE INDEX idx_batch_operation_items_operation ON batch_operation_items (operation_id);
 
 -- =============================
 -- 資源與拓撲
@@ -747,60 +745,6 @@ CREATE INDEX idx_topology_edges_source ON topology_edges (source_resource_id);
 -- =============================
 -- 資源批次作業與掃描
 -- =============================
-CREATE TABLE resource_batch_operations (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 操作
-    action VARCHAR(32) NOT NULL,
-    -- 狀態
-    status VARCHAR(32) NOT NULL DEFAULT 'pending',
-    -- 總數量
-    total_count INTEGER NOT NULL,
-    -- 已處理數量
-    processed_count INTEGER NOT NULL DEFAULT 0,
-    -- 成功次數
-    success_count INTEGER NOT NULL DEFAULT 0,
-    -- 失敗次數
-    failed_count INTEGER NOT NULL DEFAULT 0,
-    -- 請求者識別碼
-    requested_by UUID REFERENCES users(id),
-    -- 目標團隊識別碼
-    target_team_id UUID REFERENCES teams(id),
-    -- 目標狀態
-    target_status VARCHAR(32),
-    -- 標籤
-    tags TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
-    -- 原因
-    reason TEXT,
-    -- 負載
-    payload JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 完成時間
-    completed_at TIMESTAMPTZ,
-    CONSTRAINT chk_resource_batch_action CHECK (action IN ('delete','update_status','assign_team','add_tags','remove_tags')),
-    CONSTRAINT chk_resource_batch_status CHECK (status IN ('pending','running','completed','failed')),
-    CONSTRAINT chk_resource_batch_target_status CHECK (target_status IS NULL OR target_status IN ('healthy','warning','critical','offline'))
-);
-
-CREATE TABLE resource_batch_results (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 批次作業識別碼
-    operation_id UUID NOT NULL REFERENCES resource_batch_operations(id) ON DELETE CASCADE,
-    -- 資源識別碼
-    resource_id UUID REFERENCES resources(id) ON DELETE SET NULL,
-    -- 成功
-    success BOOLEAN NOT NULL,
-    -- 訊息
-    message TEXT,
-    -- 錯誤
-    error TEXT,
-    -- 處理時間
-    processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_resource_batch_results_operation ON resource_batch_results (operation_id);
-
 CREATE TABLE resource_scan_tasks (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1375,41 +1319,6 @@ CREATE TABLE tag_values (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX idx_tag_values_unique ON tag_values (tag_id, value);
-
-CREATE TABLE tag_category_metrics (
-    -- 分類
-    category VARCHAR(64) PRIMARY KEY,
-    -- 總計鍵值列表
-    total_keys INTEGER NOT NULL DEFAULT 0,
-    -- 必填鍵值列表
-    required_keys INTEGER NOT NULL DEFAULT 0,
-    -- 選擇性鍵值列表
-    optional_keys INTEGER NOT NULL DEFAULT 0,
-    -- 總計數值列表
-    total_values INTEGER NOT NULL DEFAULT 0,
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE tag_key_statistics (
-    -- 標籤識別碼
-    tag_id UUID PRIMARY KEY REFERENCES tag_definitions(id) ON DELETE CASCADE,
-    -- 總計數值列表
-    total_values INTEGER NOT NULL DEFAULT 0,
-    -- 必填值數量
-    required_value_count INTEGER NOT NULL DEFAULT 0,
-    -- 選填值數量
-    optional_value_count INTEGER NOT NULL DEFAULT 0,
-    -- 使用次數
-    usage_count INTEGER NOT NULL DEFAULT 0,
-    -- 最後使用時間
-    last_used_at TIMESTAMPTZ,
-    -- 熱門數值列表
-    top_values JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-CREATE INDEX idx_tag_key_statistics_usage ON tag_key_statistics (usage_count DESC);
 
 CREATE TABLE email_settings (
     -- 主鍵識別碼

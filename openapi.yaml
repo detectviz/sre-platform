@@ -697,14 +697,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventBatchStatus"
+                $ref: "#/components/schemas/BatchOperationStatus"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /events/batch/{batch_id}:
+  /events/batch/{operation_id}:
     parameters:
-      - name: batch_id
+      - name: operation_id
         in: path
         required: true
         description: 批次作業唯一識別碼。
@@ -721,7 +721,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventBatchStatus"
+                $ref: "#/components/schemas/BatchOperationStatus"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -1179,23 +1179,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /event-rules/{rule_id}/toggle:
-    post:
-      tags:
-        - 事件規則
-      summary: 切換事件規則啟用狀態
-      operationId: toggleEventRule
-      responses:
-        "200":
-          description: 規則狀態已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventRuleDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
   /event-rules/{rule_id}/test:
     post:
       tags:
@@ -1331,23 +1314,6 @@ paths:
       responses:
         "204":
           description: 靜音規則已刪除。
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /silence-rules/{silence_id}/toggle:
-    post:
-      tags:
-        - 靜音規則
-      summary: 切換靜音規則啟用狀態
-      operationId: toggleSilenceRule
-      responses:
-        "200":
-          description: 靜音規則狀態已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SilenceRuleDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -1707,7 +1673,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/BatchOperationResult"
+                $ref: "#/components/schemas/BatchOperationStatus"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -2419,29 +2385,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /automation/schedules/{schedule_id}/toggle:
-    post:
-      tags:
-        - 自動化
-      summary: 切換排程啟用狀態
-      operationId: toggleAutomationSchedule
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ToggleScheduleRequest"
-      responses:
-        "200":
-          description: 排程狀態已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AutomationScheduleDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
   /automation/executions:
     get:
       tags:
@@ -2889,7 +2832,7 @@ paths:
                           $ref: "#/components/schemas/AuditLogEntry"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notification/strategies:
+  /notification-config/strategies:
     get:
       tags:
         - 通知管理
@@ -2993,7 +2936,7 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notification/strategies/{strategy_id}:
+  /notification-config/strategies/{strategy_id}:
     parameters:
       - name: strategy_id
         in: path
@@ -3053,7 +2996,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification/strategies/{strategy_id}/test:
+  /notification-config/strategies/{strategy_id}/test:
     post:
       tags:
         - 通知管理
@@ -3076,7 +3019,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification/channels:
+  /notification-config/channels:
     get:
       tags:
         - 通知管理
@@ -3115,7 +3058,7 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notification/channels/{channel_id}:
+  /notification-config/channels/{channel_id}:
     parameters:
       - name: channel_id
         in: path
@@ -3175,7 +3118,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification/channels/{channel_id}/test:
+  /notification-config/channels/{channel_id}/test:
     post:
       tags:
         - 通知管理
@@ -3198,7 +3141,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification/history:
+  /notification-config/history:
     get:
       tags:
         - 通知管理
@@ -3287,7 +3230,7 @@ paths:
                           $ref: "#/components/schemas/NotificationHistoryRecord"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notification/history/{record_id}:
+  /notification-config/history/{record_id}:
     parameters:
       - name: record_id
         in: path
@@ -3333,7 +3276,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification/history/purge:
+  /notification-config/history/purge:
     post:
       tags:
         - 通知管理
@@ -3358,7 +3301,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-  /notification/history/resend:
+  /notification-config/history/resend:
     post:
       tags:
         - 通知管理
@@ -4060,7 +4003,7 @@ components:
         updated_at:
           type: string
           format: date-time
-    MetricTrendPoint:
+    TimeSeriesPoint:
       type: object
       required: [timestamp, value]
       properties:
@@ -4116,7 +4059,7 @@ components:
         trend:
           type: array
           items:
-            $ref: "#/components/schemas/MetricTrendPoint"
+            $ref: "#/components/schemas/TimeSeriesPoint"
         top_resources:
           type: array
           items:
@@ -4191,15 +4134,6 @@ components:
           $ref: "#/components/schemas/MetricTimeRange"
         compare_range:
           $ref: "#/components/schemas/MetricTimeRange"
-    MetricDataPoint:
-      type: object
-      required: [timestamp, value]
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-        value:
-          type: number
     MetricSeriesSummary:
       type: object
       required: [min, max, avg, last]
@@ -4239,7 +4173,7 @@ components:
         datapoints:
           type: array
           items:
-            $ref: "#/components/schemas/MetricDataPoint"
+            $ref: "#/components/schemas/TimeSeriesPoint"
         summary:
           $ref: "#/components/schemas/MetricSeriesSummary"
     MetricAnnotation:
@@ -4592,6 +4526,8 @@ components:
           type: string
         description:
           type: string
+        source:
+          type: string
         severity:
           type: string
           enum: [critical, warning, info]
@@ -4611,6 +4547,8 @@ components:
         trigger_threshold:
           type: string
         trigger_value:
+          type: string
+        unit:
           type: string
         trigger_time:
           type: string
@@ -4639,10 +4577,17 @@ components:
           format: date-time
         notes:
           type: string
+        source:
+          type: string
+        service_impact:
+          type: string
         tags:
           type: array
           items:
             type: string
+        metadata:
+          type: object
+          additionalProperties: true
     AssignEventRequest:
       type: object
       required: [assignee_id]
@@ -4713,63 +4658,6 @@ components:
                 const: add_comment
           then:
             required: [comment]
-    EventBatchResult:
-      type: object
-      required: [event_id, success]
-      properties:
-        event_id:
-          type: string
-        success:
-          type: boolean
-        message:
-          type: string
-        error:
-          type: string
-          nullable: true
-    EventBatchStatus:
-      type: object
-      required:
-        [batch_id, action, status, total_count, processed_count, success_count, failed_count, created_at, requested_by]
-      properties:
-        batch_id:
-          type: string
-        status:
-          type: string
-          enum: [pending, running, completed, failed]
-        action:
-          type: string
-          enum: [acknowledge, resolve, assign, add_comment]
-        requested_by:
-          type: string
-          description: 發起批次操作的使用者 ID。
-        assignee_id:
-          type: string
-          nullable: true
-        comment:
-          type: string
-          nullable: true
-        request_payload:
-          type: object
-          additionalProperties: true
-        total_count:
-          type: integer
-        processed_count:
-          type: integer
-        success_count:
-          type: integer
-        failed_count:
-          type: integer
-        created_at:
-          type: string
-          format: date-time
-        completed_at:
-          type: string
-          format: date-time
-          nullable: true
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/EventBatchResult"
     GenerateEventReportRequest:
       type: object
       required: [event_ids]
@@ -5365,7 +5253,7 @@ components:
         points:
           type: array
           items:
-            $ref: "#/components/schemas/CapacitySeriesPoint"
+            $ref: "#/components/schemas/TimeSeriesPoint"
     ResourceDetail:
       allOf:
         - $ref: "#/components/schemas/ResourceSummary"
@@ -5701,15 +5589,6 @@ components:
           type: number
         accuracy:
           type: number
-    CapacitySeriesPoint:
-      type: object
-      required: [timestamp, value]
-      properties:
-        timestamp:
-          type: string
-          format: date-time
-        value:
-          type: number
     CapacityForecast:
       type: object
       required: [metric, current_usage, forecast_usage, series]
@@ -5723,15 +5602,15 @@ components:
         series:
           type: array
           items:
-            $ref: "#/components/schemas/CapacitySeriesPoint"
+            $ref: "#/components/schemas/TimeSeriesPoint"
         best_case:
           type: array
           items:
-            $ref: "#/components/schemas/CapacitySeriesPoint"
+            $ref: "#/components/schemas/TimeSeriesPoint"
         worst_case:
           type: array
           items:
-            $ref: "#/components/schemas/CapacitySeriesPoint"
+            $ref: "#/components/schemas/TimeSeriesPoint"
     OptimizationSuggestion:
       type: object
       required: [title, impact, effort]
@@ -5840,24 +5719,7 @@ components:
         updated_at:
           type: string
           format: date-time
-    CreateAutomationScriptRequest:
-      type: object
-      required: [name, type, content]
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-          enum: [shell, python, ansible, terraform]
-        description:
-          type: string
-        content:
-          type: string
-        tags:
-          type: array
-          items:
-            type: string
-    UpdateAutomationScriptRequest:
+    AutomationScriptPayload:
       type: object
       properties:
         name:
@@ -5875,6 +5737,13 @@ components:
             type: string
         version:
           type: string
+    CreateAutomationScriptRequest:
+      allOf:
+        - $ref: "#/components/schemas/AutomationScriptPayload"
+        - type: object
+          required: [name, type, content]
+    UpdateAutomationScriptRequest:
+      $ref: "#/components/schemas/AutomationScriptPayload"
     AutomationScriptVersion:
       type: object
       required: [version_id, version, created_at]
@@ -5949,40 +5818,7 @@ components:
           type: string
         script_name:
           type: string
-    CreateAutomationScheduleRequest:
-      type: object
-      required: [name, script_id, type]
-      properties:
-        name:
-          type: string
-        script_id:
-          type: string
-        type:
-          type: string
-          enum: [one_time, recurring]
-        cron_expression:
-          type: string
-        timezone:
-          type: string
-        concurrency_policy:
-          type: string
-          enum: [allow, forbid]
-        retry_policy:
-          type: object
-          properties:
-            max_retries:
-              type: integer
-            interval_seconds:
-              type: integer
-        notify_on_success:
-          type: boolean
-        notify_on_failure:
-          type: boolean
-        channels:
-          type: array
-          items:
-            type: string
-    UpdateAutomationScheduleRequest:
+    AutomationSchedulePayload:
       type: object
       properties:
         name:
@@ -5998,7 +5834,7 @@ components:
           type: string
         status:
           type: string
-          enum: [enabled, disabled, running]
+          enum: [enabled, disabled]
         concurrency_policy:
           type: string
           enum: [allow, forbid]
@@ -6017,6 +5853,13 @@ components:
           type: array
           items:
             type: string
+    CreateAutomationScheduleRequest:
+      allOf:
+        - $ref: "#/components/schemas/AutomationSchedulePayload"
+        - type: object
+          required: [name, script_id, type]
+    UpdateAutomationScheduleRequest:
+      $ref: "#/components/schemas/AutomationSchedulePayload"
     AutomationScheduleDetail:
       allOf:
         - $ref: "#/components/schemas/AutomationScheduleSummary"
@@ -6045,11 +5888,6 @@ components:
               type: string
               format: date-time
               nullable: true
-    ToggleScheduleRequest:
-      type: object
-      properties:
-        enabled:
-          type: boolean
     AutomationExecutionSummary:
       type: object
       required: [execution_id, script_name, status, start_time]
@@ -6391,65 +6229,42 @@ components:
         priority:
           type: string
           enum: [high, medium, low]
+    NotificationStrategyPayload:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        priority:
+          type: string
+          enum: [high, medium, low]
+        trigger_condition:
+          type: string
+        severity_filters:
+          type: array
+          items:
+            type: string
+        recipients:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationRecipient"
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationChannelRef"
+        resource_filters:
+          type: object
+          additionalProperties: true
     CreateNotificationStrategyRequest:
-      type: object
-      required: [name, trigger_condition]
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        enabled:
-          type: boolean
-        priority:
-          type: string
-          enum: [high, medium, low]
-        trigger_condition:
-          type: string
-        severity_filters:
-          type: array
-          items:
-            type: string
-        recipients:
-          type: array
-          items:
-            $ref: "#/components/schemas/NotificationRecipient"
-        channels:
-          type: array
-          items:
-            $ref: "#/components/schemas/NotificationChannelRef"
-        resource_filters:
-          type: object
-          additionalProperties: true
+      allOf:
+        - $ref: "#/components/schemas/NotificationStrategyPayload"
+        - type: object
+          required: [name, trigger_condition]
     UpdateNotificationStrategyRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        description:
-          type: string
-        enabled:
-          type: boolean
-        priority:
-          type: string
-          enum: [high, medium, low]
-        trigger_condition:
-          type: string
-        severity_filters:
-          type: array
-          items:
-            type: string
-        recipients:
-          type: array
-          items:
-            $ref: "#/components/schemas/NotificationRecipient"
-        channels:
-          type: array
-          items:
-            $ref: "#/components/schemas/NotificationChannelRef"
-        resource_filters:
-          type: object
-          additionalProperties: true
+      $ref: "#/components/schemas/NotificationStrategyPayload"
     NotificationStrategyDetail:
       allOf:
         - $ref: "#/components/schemas/NotificationStrategySummary"
@@ -6523,54 +6338,30 @@ components:
         updated_at:
           type: string
           format: date-time
+    NotificationChannelPayload:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
+        description:
+          type: string
+        enabled:
+          type: boolean
+        template_key:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
     CreateNotificationChannelRequest:
-      type: object
-      required: [name, type]
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-          enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
-        description:
-          type: string
-        enabled:
-          type: boolean
-          default: true
-        template_key:
-          type: string
-        config:
-          type: object
-          additionalProperties: true
+      allOf:
+        - $ref: "#/components/schemas/NotificationChannelPayload"
+        - type: object
+          required: [name, type]
     UpdateNotificationChannelRequest:
-      type: object
-      properties:
-        name:
-          type: string
-        type:
-          type: string
-          enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
-        description:
-          type: string
-        enabled:
-          type: boolean
-        template_key:
-          type: string
-        config:
-          type: object
-          additionalProperties: true
-        status:
-          type: string
-          enum: [active, degraded, disabled]
-        last_test_result:
-          type: string
-          enum: [success, failed, pending]
-        last_test_message:
-          type: string
-        last_tested_at:
-          type: string
-          format: date-time
-          nullable: true
+      $ref: "#/components/schemas/NotificationChannelPayload"
     NotificationChannelDetail:
       allOf:
         - $ref: "#/components/schemas/NotificationChannelSummary"
@@ -7217,10 +7008,10 @@ components:
           type: array
           items:
             type: string
-        status:
+        target_status:
           type: string
           enum: [healthy, warning, critical, offline]
-        team_id:
+        target_team_id:
           type: string
         tags:
           type: array
@@ -7228,15 +7019,43 @@ components:
             type: string
         reason:
           type: string
-    BatchOperationResult:
+    BatchOperationItem:
       type: object
-      required: [batch_id, status, total_count]
+      required: [target_id, success]
       properties:
-        batch_id:
+        target_id:
+          type: string
+        success:
+          type: boolean
+        message:
+          type: string
+        error_code:
+          type: string
+          nullable: true
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+    BatchOperationStatus:
+      type: object
+      required:
+        [operation_id, target_type, action, status, total_count, processed_count, success_count, failed_count, created_at]
+      properties:
+        operation_id:
+          type: string
+        target_type:
+          type: string
+          enum: [event, resource]
+        action:
           type: string
         status:
           type: string
           enum: [pending, running, completed, failed]
+        requested_by:
+          type: string
+        context:
+          type: object
+          additionalProperties: true
         total_count:
           type: integer
         processed_count:
@@ -7245,10 +7064,6 @@ components:
           type: integer
         failed_count:
           type: integer
-        results:
-          type: array
-          items:
-            $ref: "#/components/schemas/BatchResourceResult"
         created_at:
           type: string
           format: date-time
@@ -7256,18 +7071,10 @@ components:
           type: string
           format: date-time
           nullable: true
-    BatchResourceResult:
-      type: object
-      required: [resource_id, success]
-      properties:
-        resource_id:
-          type: string
-        success:
-          type: boolean
-        message:
-          type: string
-        error:
-          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/BatchOperationItem"
     ScanRequest:
       type: object
       required: [scan_type, target]
