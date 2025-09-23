@@ -321,6 +321,8 @@ CREATE TABLE silence_rules (
     silence_type VARCHAR(32) NOT NULL,
     -- 適用範圍
     scope VARCHAR(32) NOT NULL,
+    -- 關聯事件識別碼 (快速靜音)
+    event_id UUID REFERENCES events(id) ON DELETE CASCADE,
     -- 開始時間
     starts_at TIMESTAMPTZ NOT NULL,
     -- 結束時間
@@ -348,7 +350,7 @@ CREATE TABLE silence_rules (
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_silence_rules_type CHECK (silence_type IN ('single','repeat','condition')),
-    CONSTRAINT chk_silence_rules_scope CHECK (scope IN ('global','resource','team','tag')),
+    CONSTRAINT chk_silence_rules_scope CHECK (scope IN ('global','resource','team','tag','event')),
     CONSTRAINT chk_silence_rules_repeat_freq CHECK (
         -- 重複頻率
         repeat_frequency IS NULL OR repeat_frequency IN ('daily','weekly','monthly')
@@ -585,15 +587,16 @@ ALTER TABLE events
 
 CREATE INDEX idx_events_resource ON events (resource_id);
 
-CREATE TABLE resource_labels (
+CREATE TABLE resource_tags (
     -- 資源識別碼
     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-    -- 標籤鍵值
-    label_key VARCHAR(128) NOT NULL,
-    -- 標籤數值
-    label_value VARCHAR(128) NOT NULL,
-    PRIMARY KEY (resource_id, label_key)
+    -- 標籤值識別碼
+    tag_value_id UUID NOT NULL REFERENCES tag_values(id) ON DELETE CASCADE,
+    -- 指派時間
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (resource_id, tag_value_id)
 );
+CREATE INDEX idx_resource_tags_value ON resource_tags (tag_value_id);
 
 CREATE TABLE resource_metrics (
     -- 主鍵識別碼
