@@ -308,7 +308,7 @@ const IncidentsPage: React.FC = () => {
                 },
               ]}
             />
-            <div style={{ padding: '24px' }}>
+            <div style={{ padding: '16px' }}>
               <p>事件規則管理功能開發中...</p>
             </div>
           </div>
@@ -334,7 +334,7 @@ const IncidentsPage: React.FC = () => {
                 },
               ]}
             />
-            <div style={{ padding: '24px' }}>
+            <div style={{ padding: '16px' }}>
               <p>靜音規則管理功能開發中...</p>
             </div>
           </div>

@@ -49,6 +49,7 @@ export const generateBreadcrumb = (
     if (currentPath === '/settings/profile') {
       processedPath = '/profile/personal'
     } else {
+      // 所有設定子頁面都映射到主設定頁面
       processedPath = '/settings'
     }
   }

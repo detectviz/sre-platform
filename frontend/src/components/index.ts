@@ -9,6 +9,7 @@ export { default as GlobalSearch } from './GlobalSearch'
 export { LazyRoute } from './LazyRoute'
 export { default as DataTablePage } from './DataTablePage'
 export { default as DataTablePageTemplate, ExampleListPage } from './DataTablePageTemplate'
+export { default as PageLayout } from './PageLayout'
 
 // 類型導出
 export type { FilterOption } from '../types/components'

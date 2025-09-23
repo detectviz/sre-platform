@@ -33,6 +33,7 @@ const pages = {
   DashboardView: () => import('../pages/DashboardViewPage'),
   Analyzing: () => import('../pages/AnalyzingPage'),
   Automation: () => import('../pages/AutomationPage'),
+  Settings: () => import('../pages/SettingsPage'), // 設定主頁面
   IdentitySettings: () => import('../pages/IdentitySettingsPage'),
   NotificationSettings: () => import('../pages/NotificationSettingsPage'),
   PlatformSettings: () => import('../pages/PlatformSettingsPage'),
@@ -42,6 +43,7 @@ const pages = {
 // 路由配置 - 扁平結構
 export const routes: RouteConfig[] = [
   { path: '/login', component: pages.Login(), title: '登入', description: '用戶登入頁面' },
+  { path: '/settings', component: pages.Settings(), title: '設定', description: '系統設定頁面' },
   { path: '/', component: pages.SREWarRoom(), title: 'SRE 戰情室', description: '即時監控和事件響應中心' },
   { path: '/incidents', component: pages.Incidents(), title: '事件管理' },
   { path: '/incidents/list', component: pages.Incidents(), title: '事件列表' },
@@ -72,6 +74,7 @@ export const routes: RouteConfig[] = [
   { path: '/settings/platform/tags', component: pages.PlatformSettings(), title: '平台設定' },
   { path: '/settings/platform/email', component: pages.PlatformSettings(), title: '郵件設定' },
   { path: '/settings/platform/auth', component: pages.PlatformSettings(), title: '認證設定' },
+  { path: '/settings/platform/layout', component: pages.PlatformSettings(), title: '版面管理' },
   { path: '/profile', component: pages.Profile(), title: '個人設定' },
   { path: '/profile/personal', component: pages.Profile(), title: '個人資料' },
   { path: '/profile/security', component: pages.Profile(), title: '安全設定' },
@@ -108,7 +111,7 @@ export const menuItems: MenuProps['items'] = [
     children: [
       { key: '/settings/identity/users', icon: icons.user, label: '身份與存取管理' },
       { key: '/settings/notifications/strategies', icon: icons.bell, label: '通知管理' },
-      { key: '/settings/platform/tags', icon: icons.setting, label: '平台設定' },
+      { key: '/settings/platform', icon: icons.setting, label: '平台設定' },
       { key: '/profile', icon: icons.user, label: '個人設定' },
     ]
   },
@@ -133,6 +136,14 @@ export const routePathMapping: Record<string, string> = {
 
   // 設定子頁面
   '/settings/identity/users': '/settings',
+  '/settings/identity/teams': '/settings',
+  '/settings/identity/roles': '/settings',
+  '/settings/identity/audit': '/settings',
   '/settings/notifications/strategies': '/settings',
-  '/settings/platform/tags': '/settings'
+  '/settings/notifications/channels': '/settings',
+  '/settings/notifications/history': '/settings',
+  '/settings/platform/tags': '/settings',
+  '/settings/platform/email': '/settings',
+  '/settings/platform/auth': '/settings',
+  '/settings/platform/layout': '/settings'
 }

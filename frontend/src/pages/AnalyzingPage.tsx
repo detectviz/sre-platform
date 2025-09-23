@@ -4,6 +4,7 @@ import { Typography, Space, Tabs, Table, Card, Progress, Alert, Button, Select, 
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
+import { PageLayout } from '../components/PageLayout'
 import {
   BarChartOutlined,
   LineChartOutlined,
@@ -488,38 +489,41 @@ const AnalyzingPage: React.FC = () => {
   ]
 
   return (
-    <div>
-      <PageHeader
-        title="分析中心"
-        subtitle="提供容量規劃、趨勢分析和風險預測的智能分析功能"
-      />
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 'var(--spacing-lg)',
-          marginBottom: 'var(--spacing-2xl)',
-        }}
-      >
-        {kpiData.map((item, index) => (
-          <ContextualKPICard
-            key={index}
-            title={item.title}
-            value={item.value}
-            description={item.description}
-            trend={item.trend}
-            status={item.status}
-          />
-        ))}
-      </div>
-
-      <Tabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        items={tabItems}
-      />
-    </div>
+    <PageLayout
+      header={
+        <PageHeader
+          title="分析中心"
+          subtitle="提供容量規劃、趨勢分析和風險預測的智能分析功能"
+        />
+      }
+      kpiCards={
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 'var(--spacing-lg)',
+          }}
+        >
+          {kpiData.map((item, index) => (
+            <ContextualKPICard
+              key={index}
+              title={item.title}
+              value={item.value}
+              description={item.description}
+              trend={item.trend}
+              status={item.status}
+            />
+          ))}
+        </div>
+      }
+      tabs={
+        <Tabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          items={tabItems}
+        />
+      }
+    />
   )
 }
 

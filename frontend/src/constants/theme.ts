@@ -87,6 +87,29 @@ export const COMMON_STYLES = {
     }
   },
 
+  // 頁面佈局間距
+  layout: {
+    // 頁面主要區域間距
+    sectionSpacing: 'var(--spacing-2xl)',  // KPI 卡片區域和主要內容之間的間距
+    contentSpacing: 'var(--spacing-lg)',   // 內容內部元素間距
+    toolbarSpacing: 'var(--spacing-lg)',   // 工具列和表格之間的間距
+    tabSpacing: 'var(--spacing-xl)',       // Tab 內容內部間距
+
+    // 頁面邊距
+    pagePadding: {
+      horizontal: 'var(--spacing-2xl)',
+      vertical: 'var(--spacing-lg)',
+    },
+
+    // 組件間距
+    componentSpacing: {
+      kpiCards: 'var(--spacing-2xl)',      // KPI 卡片區域底部間距
+      toolbar: 'var(--spacing-lg)',        // 工具列底部間距
+      table: 'var(--spacing-lg)',          // 表格底部間距
+      card: 'var(--spacing-lg)',           // 卡片間距
+    }
+  },
+
   // 按鈕樣式
   button: {
     height: {

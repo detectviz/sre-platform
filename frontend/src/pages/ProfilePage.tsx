@@ -94,7 +94,7 @@ const ProfilePage: React.FC = () => {
       label: '個人資料',
       icon: <UserOutlined />,
       children: (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '16px' }}>
           <PersonalInfoForm
             initialValues={personalInfoInitialValues}
             onSave={handlePersonalInfoSave}
@@ -107,7 +107,7 @@ const ProfilePage: React.FC = () => {
       label: '安全設定',
       icon: <SafetyOutlined />,
       children: (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '16px' }}>
           <SecuritySettings
             onPasswordChange={handlePasswordChange}
             onTwoFactorToggle={handleTwoFactorToggle}
@@ -121,7 +121,7 @@ const ProfilePage: React.FC = () => {
       label: '偏好設定',
       icon: <SettingOutlined />,
       children: (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '16px' }}>
           <PreferencesSettings
             initialValues={preferencesInitialValues}
             onSave={handlePreferencesSave}

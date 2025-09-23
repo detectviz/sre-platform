@@ -1,9 +1,10 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useTabs } from '../hooks'
-import { Typography, Space, Tabs, Table, Card, Button, Tag, Badge } from 'antd'
+import { Tabs, Table, Button, Tag, Badge, Space, Tooltip, Input } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
+import { PageLayout } from '../components/PageLayout'
 import {
   UserOutlined,
   TeamOutlined,
@@ -16,7 +17,6 @@ import {
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
 
-const { Title, Text } = Typography
 
 // 數據接口定義
 interface UserData {
@@ -69,19 +69,31 @@ const IdentitySettingsPage: React.FC = () => {
   })
 
   // 狀態管理
-  const [searchText, setSearchText] = useState('')
 
   // 工具列操作處理
   const handleRefresh = () => {
     console.log('刷新身份管理數據')
   }
 
-  const handleSearch = () => {
-    console.log('打開搜索篩選')
+  const handleSearch = (searchText: string) => {
+    console.log('搜尋:', searchText)
   }
 
   const handleExport = () => {
     console.log('導出身份管理報告')
+  }
+
+  // 新增操作處理
+  const handleAddUser = () => {
+    console.log('新增用戶')
+  }
+
+  const handleAddTeam = () => {
+    console.log('新增團隊')
+  }
+
+  const handleAddRole = () => {
+    console.log('新增角色')
   }
 
   // KPI 數據
@@ -160,30 +172,17 @@ const IdentitySettingsPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: UserData) => (
-        <Space>
-          <Button
-            size="small"
-            icon={<EyeOutlined />}
-            onClick={() => console.log('查看用戶', record.username)}
-          >
-            查看
-          </Button>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => console.log('編輯用戶', record.username)}
-          >
-            編輯
-          </Button>
-          <Button
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => console.log('刪除用戶', record.username)}
-          >
-            刪除
-          </Button>
+      render: () => (
+        <Space size="small">
+          <Tooltip title="查看詳情">
+            <Button type="text" size="small" icon={<EyeOutlined />} />
+          </Tooltip>
+          <Tooltip title="編輯">
+            <Button type="text" size="small" icon={<EditOutlined />} />
+          </Tooltip>
+          <Tooltip title="刪除">
+            <Button type="text" size="small" icon={<DeleteOutlined />} />
+          </Tooltip>
         </Space>
       ),
     },
@@ -231,24 +230,12 @@ const IdentitySettingsPage: React.FC = () => {
       title: '成員數',
       dataIndex: 'members',
       key: 'members',
-      render: (count: number) => (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--brand-primary)' }}>{count}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>成員</div>
-        </div>
-      ),
       sorter: (a, b) => a.members - b.members
     },
     {
       title: '訂閱者',
       dataIndex: 'subscribers',
       key: 'subscribers',
-      render: (count: number) => (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--brand-info)' }}>{count}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>訂閱者</div>
-        </div>
-      ),
       sorter: (a, b) => a.subscribers - b.subscribers
     },
     {
@@ -264,23 +251,17 @@ const IdentitySettingsPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: TeamData) => (
-        <Space>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => console.log('編輯團隊', record.name)}
-          >
-            編輯
-          </Button>
-          <Button
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => console.log('刪除團隊', record.name)}
-          >
-            刪除
-          </Button>
+      render: () => (
+        <Space size="small">
+          <Tooltip title="查看詳情">
+            <Button type="text" size="small" icon={<EyeOutlined />} />
+          </Tooltip>
+          <Tooltip title="編輯">
+            <Button type="text" size="small" icon={<EditOutlined />} />
+          </Tooltip>
+          <Tooltip title="刪除">
+            <Button type="text" size="small" icon={<DeleteOutlined />} />
+          </Tooltip>
         </Space>
       ),
     },
@@ -325,12 +306,6 @@ const IdentitySettingsPage: React.FC = () => {
       title: '人員數量',
       dataIndex: 'userCount',
       key: 'userCount',
-      render: (count: number) => (
-        <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--brand-success)' }}>{count}</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>人員</div>
-        </div>
-      ),
       sorter: (a, b) => a.userCount - b.userCount
     },
     {
@@ -346,23 +321,17 @@ const IdentitySettingsPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: RoleData) => (
-        <Space>
-          <Button
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => console.log('編輯角色', record.name)}
-          >
-            編輯
-          </Button>
-          <Button
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => console.log('刪除角色', record.name)}
-          >
-            刪除
-          </Button>
+      render: () => (
+        <Space size="small">
+          <Tooltip title="查看詳情">
+            <Button type="text" size="small" icon={<EyeOutlined />} />
+          </Tooltip>
+          <Tooltip title="編輯">
+            <Button type="text" size="small" icon={<EditOutlined />} />
+          </Tooltip>
+          <Tooltip title="刪除">
+            <Button type="text" size="small" icon={<DeleteOutlined />} />
+          </Tooltip>
         </Space>
       ),
     },
@@ -421,13 +390,10 @@ const IdentitySettingsPage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_: any, record: AuditData) => (
-        <Button
-          size="small"
-          onClick={() => console.log('查看審計日誌詳情', record.time)}
-        >
-          查看詳情
-        </Button>
+      render: () => (
+        <Tooltip title="查看詳情">
+          <Button type="text" size="small" icon={<EyeOutlined />} />
+        </Tooltip>
       ),
     },
   ]
@@ -471,20 +437,19 @@ const IdentitySettingsPage: React.FC = () => {
     label: '人員管理',
     icon: <UserOutlined />,
     children: (
-      <div style={{ padding: '24px 0' }}>
+      <div style={{ padding: '16px 0' }}>
         <ToolbarActions
           onRefresh={handleRefresh}
-          onSearch={handleSearch}
           onExport={handleExport}
           showRefresh={true}
-          showSearch={true}
           showExport={true}
           actions={[{
             key: 'add',
             label: '新增用戶',
             icon: <PlusOutlined />,
             type: 'primary',
-            onClick: () => console.log('新增用戶'),
+            onClick: handleAddUser,
+            tooltip: '新增用戶',
           }]}
         />
         <Table
@@ -506,20 +471,19 @@ const IdentitySettingsPage: React.FC = () => {
     label: '團隊管理',
     icon: <TeamOutlined />,
     children: (
-      <div style={{ padding: '24px 0' }}>
+      <div style={{ padding: '16px 0' }}>
         <ToolbarActions
           onRefresh={handleRefresh}
-          onSearch={handleSearch}
           onExport={handleExport}
           showRefresh={true}
-          showSearch={true}
           showExport={true}
           actions={[{
             key: 'add',
             label: '新增團隊',
             icon: <PlusOutlined />,
             type: 'primary',
-            onClick: () => console.log('新增團隊'),
+            onClick: handleAddTeam,
+            tooltip: '新增團隊',
           }]}
         />
         <Table
@@ -541,20 +505,19 @@ const IdentitySettingsPage: React.FC = () => {
     label: '角色管理',
     icon: <IdcardOutlined />,
     children: (
-      <div style={{ padding: '24px 0' }}>
+      <div style={{ padding: '16px 0' }}>
         <ToolbarActions
           onRefresh={handleRefresh}
-          onSearch={handleSearch}
           onExport={handleExport}
           showRefresh={true}
-          showSearch={true}
           showExport={true}
           actions={[{
             key: 'add',
             label: '新增角色',
             icon: <PlusOutlined />,
             type: 'primary',
-            onClick: () => console.log('新增角色'),
+            onClick: handleAddRole,
+            tooltip: '新增角色',
           }]}
         />
         <Table
@@ -576,13 +539,11 @@ const IdentitySettingsPage: React.FC = () => {
     label: '審計日誌',
     icon: <AuditOutlined />,
     children: (
-      <div style={{ padding: '24px 0' }}>
+      <div style={{ padding: '16px 0' }}>
         <ToolbarActions
           onRefresh={handleRefresh}
-          onSearch={handleSearch}
           onExport={handleExport}
           showRefresh={true}
-          showSearch={true}
           showExport={true}
         />
         <Table
@@ -607,41 +568,56 @@ const IdentitySettingsPage: React.FC = () => {
   ]
 
   return (
-    <div>
-      {/* 頁面標題 */}
-      <PageHeader
-        title="身份與存取管理"
-        subtitle="統一管理身份認證、存取權限和組織架構配置"
-      />
-
-      {/* KPI 卡片 */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 'var(--spacing-lg)',
-          marginBottom: 'var(--spacing-2xl)',
-        }}
-      >
-        {kpiData.map((item, index) => (
-          <ContextualKPICard
-            key={index}
-            title={item.title}
-            value={item.value}
-            description={item.description}
-            trend={item.trend}
-            status={item.status}
-          />
-        ))}
-      </div>
-
-      {/* Tabs 導航 */}
-      <Tabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        items={tabItems}
-      />
-    </div>
+    <PageLayout
+      header={
+        <PageHeader
+          title="身份與存取管理"
+          subtitle="統一管理身份認證、存取權限和組織架構配置"
+          extra={
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+              <Input.Search
+                placeholder="搜尋儀表板名稱..."
+                onSearch={handleSearch}
+                style={{ width: 320 }}
+                allowClear
+              />
+            </div>
+          }
+        />
+      }
+      kpiCards={
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 'var(--spacing-lg)',
+          }}
+        >
+          {kpiData.map((item, index) => (
+            <ContextualKPICard
+              key={index}
+              title={item.title}
+              value={item.value}
+              description={item.description}
+              trend={item.trend}
+              status={item.status}
+            />
+          ))}
+        </div>
+      }
+      tabs={
+        <Tabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          items={tabItems}
+        />
+      }
+      config={{
+        customSpacing: {
+          kpiCards: 'var(--spacing-lg)', // 減少 KPI 卡片和 Tabs 之間的間距
+        }
+      }}
+    />
   )
 }
 

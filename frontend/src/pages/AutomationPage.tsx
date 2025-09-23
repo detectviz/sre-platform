@@ -4,6 +4,7 @@ import { Space, Tabs, Table, Card, Button, Modal, Form, Input, Select, Switch, B
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
+import { PageLayout } from '../components/PageLayout'
 import {
   CodeOutlined,
   ScheduleOutlined,
@@ -514,39 +515,44 @@ const AutomationPage: React.FC = () => {
   ]
 
   return (
-    <div>
-      <PageHeader
-        title="自動化中心"
-        subtitle="統一管理自動化腳本、排程任務和執行日誌"
-      />
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 'var(--spacing-lg)',
-          marginBottom: 'var(--spacing-2xl)',
-        }}
-      >
-        {kpiData.map((item, index) => (
-          <ContextualKPICard
-            key={index}
-            title={item.title}
-            value={item.value}
-            description={item.description}
-            trend={item.trend}
-            status={item.status}
+    <>
+      <PageLayout
+        header={
+          <PageHeader
+            title="自動化中心"
+            subtitle="統一管理自動化腳本、排程任務和執行日誌"
           />
-        ))}
-      </div>
-
-      <Tabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        items={tabItems}
+        }
+        kpiCards={
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+              gap: 'var(--spacing-lg)',
+            }}
+          >
+            {kpiData.map((item, index) => (
+              <ContextualKPICard
+                key={index}
+                title={item.title}
+                value={item.value}
+                description={item.description}
+                trend={item.trend}
+                status={item.status}
+              />
+            ))}
+          </div>
+        }
+        tabs={
+          <Tabs
+            activeKey={activeTab}
+            onChange={handleTabChange}
+            items={tabItems}
+          />
+        }
       />
 
-      {/* 腳本編輯模態框 */}
+      {/* 模態框區域 */}
       <Modal
         title={selectedScript ? "編輯腳本" : "新增腳本"}
         open={isScriptModalVisible}
@@ -717,7 +723,185 @@ const AutomationPage: React.FC = () => {
           </div>
         </Card>
       </Modal>
-    </div>
+
+      {/* 腳本編輯模態框 */}
+      <Modal
+        title={selectedScript ? "編輯腳本" : "新增腳本"}
+        open={isScriptModalVisible}
+        onCancel={() => setIsScriptModalVisible(false)}
+        width={800}
+        footer={[
+          <Button key="cancel" onClick={() => setIsScriptModalVisible(false)}>
+            取消
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => setIsScriptModalVisible(false)}>
+            {selectedScript ? "更新" : "創建"}
+          </Button>
+        ]}
+      >
+        <Form layout="vertical">
+          <Form.Item label="腳本名稱" required>
+            <Input placeholder="輸入腳本名稱" />
+          </Form.Item>
+          <Form.Item label="腳本類型" required>
+            <Select placeholder="選擇腳本類型">
+              <Select.Option value="shell">Shell</Select.Option>
+              <Select.Option value="python">Python</Select.Option>
+              <Select.Option value="ansible">Ansible</Select.Option>
+              <Select.Option value="terraform">Terraform</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="描述">
+            <Input.TextArea placeholder="輸入腳本描述" rows={3} />
+          </Form.Item>
+          <Form.Item label="腳本內容" required>
+            <Input.TextArea placeholder="輸入腳本內容" rows={10} />
+          </Form.Item>
+          <Form.Item label="標籤">
+            <Input placeholder="輸入標籤，用逗號分隔" />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 排程配置模態框 */}
+      <Modal
+        title={selectedSchedule ? "編輯排程" : "新增排程"}
+        open={isScheduleModalVisible}
+        onCancel={() => setIsScheduleModalVisible(false)}
+        width={800}
+        footer={[
+          <Button key="cancel" onClick={() => setIsScheduleModalVisible(false)}>
+            取消
+          </Button>,
+          <Button key="submit" type="primary" onClick={() => setIsScheduleModalVisible(false)}>
+            {selectedSchedule ? "更新" : "創建"}
+          </Button>
+        ]}
+      >
+        <Form layout="vertical">
+          <Form.Item label="排程名稱" required>
+            <Input placeholder="輸入排程名稱" />
+          </Form.Item>
+          <Form.Item label="關聯腳本" required>
+            <Select placeholder="選擇要執行的腳本">
+              <Select.Option value="web-health-check">Web 服務器健康檢查</Select.Option>
+              <Select.Option value="log-rotation">日誌輪替</Select.Option>
+              <Select.Option value="backup">資料庫備份</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="觸發類型" required>
+            <Select placeholder="選擇觸發類型">
+              <Select.Option value="cron">Cron 表達式</Select.Option>
+              <Select.Option value="interval">時間間隔</Select.Option>
+              <Select.Option value="event">事件觸發</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="Cron 表達式" help="請使用標準 Cron 格式，例如: 0 2 * * *">
+            <Input placeholder="0 2 * * *" />
+          </Form.Item>
+          <Form.Item label="並發執行" help="是否允許同時執行多個實例">
+            <Switch checkedChildren="允許" unCheckedChildren="禁止" />
+          </Form.Item>
+          <Form.Item label="重試策略">
+            <Select placeholder="選擇重試策略">
+              <Select.Option value="none">不重試</Select.Option>
+              <Select.Option value="fixed">固定間隔重試</Select.Option>
+              <Select.Option value="exponential">指數退避重試</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item label="通知設定">
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <div style={{ marginBottom: '8px' }}>
+                  <Switch checkedChildren="開啟" unCheckedChildren="關閉" defaultChecked />
+                  <span style={{ marginLeft: '8px' }}>成功通知</span>
+                </div>
+                <div style={{ marginTop: '8px' }}>
+                  <Switch checkedChildren="開啟" unCheckedChildren="關閉" defaultChecked />
+                  <span style={{ marginLeft: '8px' }}>失敗通知</span>
+                </div>
+              </div>
+              <div>
+                <Select placeholder="選擇通知管道" style={{ width: '100%' }}>
+                  <Select.Option value="email">郵件</Select.Option>
+                  <Select.Option value="slack">Slack</Select.Option>
+                  <Select.Option value="webhook">Webhook</Select.Option>
+                </Select>
+              </div>
+            </div>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 執行日誌詳情模態框 */}
+      <Modal
+        title="執行日誌詳情"
+        open={isLogDetailModalVisible}
+        onCancel={() => setIsLogDetailModalVisible(false)}
+        width={900}
+        footer={[
+          <Button key="close" onClick={() => setIsLogDetailModalVisible(false)}>
+            關閉
+          </Button>
+        ]}
+      >
+        <div style={{ marginBottom: '16px' }}>
+          <Alert
+            message="執行失敗"
+            description="腳本執行過程中發生錯誤"
+            type="error"
+            showIcon
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+          <Card size="small" title="基本資訊">
+            <div><strong>腳本名稱：</strong>Web 服務器健康檢查</div>
+            <div><strong>執行時間：</strong>2025-09-18 14:30:25</div>
+            <div><strong>執行用戶：</strong>system</div>
+            <div><strong>執行主機：</strong>web-01</div>
+            <div><strong>執行狀態：</strong><Badge status="error" text="失敗" /></div>
+          </Card>
+
+          <Card size="small" title="執行參數">
+            <div><strong>參數1：</strong> --check-type=full</div>
+            <div><strong>參數2：</strong> --timeout=30</div>
+            <div><strong>參數3：</strong> --retry=3</div>
+            <div><strong>環境變數：</strong> NODE_ENV=production</div>
+          </Card>
+        </div>
+
+        <Card size="small" title="輸出內容" style={{ marginBottom: '16px' }}>
+          <div style={{
+            background: '#f5f5f5',
+            padding: '12px',
+            borderRadius: '4px',
+            fontFamily: 'monospace',
+            fontSize: '12px',
+            maxHeight: '200px',
+            overflow: 'auto'
+          }}>
+            [2025-09-18 14:30:25] 開始執行 Web 服務器健康檢查<br />
+            [2025-09-18 14:30:25] 檢查 HTTP 狀態碼...<br />
+            [2025-09-18 14:30:26] 收到回應: 500 Internal Server Error<br />
+            [2025-09-18 14:30:26] 檢查失敗，重試第 1 次...<br />
+            [2025-09-18 14:30:27] 收到回應: 500 Internal Server Error<br />
+            [2025-09-18 14:30:27] 檢查失敗，重試第 2 次...<br />
+            [2025-09-18 14:30:28] 收到回應: 500 Internal Server Error<br />
+            [2025-09-18 14:30:28] 檢查失敗，重試第 3 次...<br />
+            [2025-09-18 14:30:29] 收到回應: 500 Internal Server Error<br />
+            [2025-09-18 14:30:29] 執行失敗，達到最大重試次數
+          </div>
+        </Card>
+
+        <Card size="small" title="錯誤資訊">
+          <div><strong>錯誤類型：</strong> HTTP Status Error</div>
+          <div><strong>錯誤代碼：</strong> 500</div>
+          <div><strong>錯誤訊息：</strong> Internal Server Error</div>
+          <div><strong>影響文件：</strong> /var/log/system.log</div>
+        </Card>
+      </Modal>
+    </>
   )
 }
 

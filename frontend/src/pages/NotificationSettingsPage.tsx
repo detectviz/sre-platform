@@ -3,6 +3,7 @@ import { useTabs } from '../hooks'
 import { Typography, List, Space, Divider, Tabs } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
+import { PageLayout } from '../components/PageLayout'
 import {
   BellOutlined,
 } from '@ant-design/icons'
@@ -46,7 +47,7 @@ const NotificationSettingsPage: React.FC = () => {
       label: '通知策略',
       icon: <BellOutlined />,
       children: (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '16px' }}>
           <Space align="center" style={{ marginBottom: '16px' }}>
             <BellOutlined style={{ fontSize: '18px' }} />
             <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
@@ -96,7 +97,7 @@ const NotificationSettingsPage: React.FC = () => {
       label: '通知管道',
       icon: <BellOutlined />,
       children: (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '16px' }}>
           <Space align="center" style={{ marginBottom: '16px' }}>
             <BellOutlined style={{ fontSize: '18px' }} />
             <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
@@ -146,7 +147,7 @@ const NotificationSettingsPage: React.FC = () => {
       label: '通知歷史',
       icon: <BellOutlined />,
       children: (
-        <div style={{ padding: '24px' }}>
+        <div style={{ padding: '16px' }}>
           <Space align="center" style={{ marginBottom: '16px' }}>
             <BellOutlined style={{ fontSize: '18px' }} />
             <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
@@ -194,38 +195,41 @@ const NotificationSettingsPage: React.FC = () => {
   ]
 
   return (
-    <div>
-      <PageHeader
-        title="通知管理"
-        subtitle="提供統一的通知策略配置、管道管理和歷史記錄查詢功能"
-      />
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-          gap: 'var(--spacing-lg)',
-          marginBottom: 'var(--spacing-2xl)',
-        }}
-      >
-        {kpiData.map((item, index) => (
-          <ContextualKPICard
-            key={index}
-            title={item.title}
-            value={item.value}
-            description={item.description}
-            trend={item.trend}
-            status={item.status}
-          />
-        ))}
-      </div>
-
-      <Tabs
-        activeKey={activeTab}
-        onChange={handleTabChange}
-        items={tabItems}
-      />
-    </div>
+    <PageLayout
+      header={
+        <PageHeader
+          title="通知管理"
+          subtitle="提供統一的通知策略配置、管道管理和歷史記錄查詢功能"
+        />
+      }
+      kpiCards={
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+            gap: 'var(--spacing-lg)',
+          }}
+        >
+          {kpiData.map((item, index) => (
+            <ContextualKPICard
+              key={index}
+              title={item.title}
+              value={item.value}
+              description={item.description}
+              trend={item.trend}
+              status={item.status}
+            />
+          ))}
+        </div>
+      }
+      tabs={
+        <Tabs
+          activeKey={activeTab}
+          onChange={handleTabChange}
+          items={tabItems}
+        />
+      }
+    />
   )
 }
 

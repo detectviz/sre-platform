@@ -307,12 +307,12 @@ export const ToolbarActions: React.FC<ToolbarActionsProps> = ({
             )}
 
             {allActions.map((action) => (
-              <Tooltip key={action.key} title={action.tooltip}>
+              <Tooltip key={action.key} title={action.tooltip || action.label}>
                 <Button
                   className="toolbar-btn"
                   icon={action.icon}
                   onClick={action.onClick}
-                  type={action.type && ['primary', 'default', 'dashed', 'text', 'link'].includes(action.type) ? action.type as 'primary' | 'default' | 'dashed' | 'text' | 'link' : 'default'}
+                  type={action.type as 'primary' | 'default' | 'dashed' | 'text' | 'link'}
                   danger={action.danger}
                   disabled={action.disabled}
                   loading={action.loading}
@@ -392,12 +392,12 @@ export const ToolbarActions: React.FC<ToolbarActionsProps> = ({
 
             {/* 操作按鈕 */}
             {allActions.map((action) => (
-              <Tooltip key={action.key} title={action.tooltip}>
+              <Tooltip key={action.key} title={action.tooltip || action.label}>
                 <Button
                   className="toolbar-btn"
                   icon={action.icon}
                   onClick={action.onClick}
-                  type={action.type && ['primary', 'default', 'dashed', 'text', 'link'].includes(action.type) ? action.type as 'primary' | 'default' | 'dashed' | 'text' | 'link' : 'default'}
+                  type={action.type as 'primary' | 'default' | 'dashed' | 'text' | 'link'}
                   danger={action.danger}
                   disabled={action.disabled}
                   loading={action.loading}

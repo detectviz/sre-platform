@@ -217,20 +217,43 @@ span {
 button.ant-btn.toolbar-btn {
   height: 32px !important;
   border-radius: 6px !important;
-  background: transparent !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  color: rgba(255, 255, 255, 0.85) !important;
   padding: 0 12px !important;
 }
 
-.ant-btn.toolbar-btn:hover,
-button.ant-btn.toolbar-btn:hover,
-.ant-btn.toolbar-btn:focus,
-button.ant-btn.toolbar-btn:focus {
+/* Toolbar Primary Buttons - 主按鈕 */
+.ant-btn.toolbar-btn.ant-btn-primary,
+button.ant-btn.toolbar-btn.ant-btn-primary {
+  background: #1890ff !important;
+  border-color: #1890ff !important;
+  color: #fff !important;
+}
+
+.ant-btn.toolbar-btn.ant-btn-primary:hover,
+button.ant-btn.toolbar-btn.ant-btn-primary:hover,
+.ant-btn.toolbar-btn.ant-btn-primary:focus,
+button.ant-btn.toolbar-btn.ant-btn-primary:focus {
+  background: #40a9ff !important;
+  border-color: #40a9ff !important;
+  color: #fff !important;
+}
+
+/* Toolbar Default Buttons - 默認按鈕 */
+.ant-btn.toolbar-btn:not(.ant-btn-primary),
+button.ant-btn.toolbar-btn:not(.ant-btn-primary) {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+.ant-btn.toolbar-btn:not(.ant-btn-primary):hover,
+button.ant-btn.toolbar-btn:not(.ant-btn-primary):hover,
+.ant-btn.toolbar-btn:not(.ant-btn-primary):focus,
+button.ant-btn.toolbar-btn:not(.ant-btn-primary):focus {
   background: rgba(255, 255, 255, 0.05) !important;
   border-color: rgba(255, 255, 255, 0.3) !important;
   color: rgba(255, 255, 255, 0.95) !important;
 }
+
 
 .ant-btn.toolbar-btn--icon-only,
 button.ant-btn.toolbar-btn--icon-only {

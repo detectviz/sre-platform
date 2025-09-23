@@ -216,7 +216,7 @@ const DataTablePage = <T extends Record<string, any>>(props: DataTablePageProps<
           items={tabs.map(tab => ({
             ...tab,
             children: tab.children || (
-              <div style={{ padding: '24px 0' }}>
+              <div style={{ padding: '16px 0' }}>
                 <Table {...tableConfig} />
               </div>
             ),

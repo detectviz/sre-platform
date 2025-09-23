@@ -25,7 +25,7 @@ export const CategoryFilter: React.FC<CategoryFilterProps> = ({
   return (
     <div
       style={{
-        marginBottom: 'var(--spacing-xl)',
+        marginBottom: 'var(--spacing-lg)',
         display: 'flex',
         justifyContent: 'flex-start',
         ...style
