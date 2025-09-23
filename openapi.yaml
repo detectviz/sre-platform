@@ -824,35 +824,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EventTimelineEntry"
+              $ref: "#/components/schemas/CreateEventTimelineEntryRequest"
       responses:
         "201":
           description: 已新增事件歷程。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventTimelineEntry"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /events/{event_id}/comments:
-    post:
-      tags:
-        - 事件管理
-      summary: 新增事件評論
-      operationId: addEventComment
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddEventCommentRequest"
-      responses:
-        "201":
-          description: 已新增評論並同步至時間軸。
           content:
             application/json:
               schema:
@@ -1706,20 +1681,11 @@ paths:
       operationId: getDashboardSummary
       responses:
         "200":
-          description: 儀表板 KPI 資訊。
+          description: 儀表板 KPI 資訊，包含依類型統計。
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  total:
-                    type: integer
-                  published:
-                    type: integer
-                  featured:
-                    type: integer
-                  automated:
-                    type: integer
+                $ref: "#/components/schemas/DashboardSummaryMetrics"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /dashboards:
@@ -1741,6 +1707,11 @@ paths:
           in: query
           schema:
             type: string
+        - name: dashboard_type
+          in: query
+          description: 僅篩選特定類型的儀表板。
+          schema:
+            $ref: "#/components/schemas/DashboardType"
       responses:
         "200":
           description: 回傳儀表板列表。
@@ -1888,6 +1859,7 @@ paths:
       tags:
         - 儀表板
       summary: 獲取Grafana Dashboard iframe URL
+      description: 僅適用於 dashboard_type 為 grafana 的儀表板。
       operationId: getGrafanaDashboardUrl
       security:
         - bearerAuth: []
@@ -3593,6 +3565,86 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/widgets:
+    get:
+      tags:
+        - 平台設定
+      summary: 取得可用指標小工具清單
+      operationId: listLayoutWidgets
+      parameters:
+        - name: page_path
+          in: query
+          description: 僅回傳支援指定頁面的指標小工具。值需為平台定義的頁面路徑 (例如 `/events`)。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 可用指標小工具清單。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/LayoutWidgetDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/layouts:
+    get:
+      tags:
+        - 平台設定
+      summary: 取得頁面版面配置
+      operationId: getPageLayout
+      parameters:
+        - name: page_path
+          in: query
+          required: true
+          description: 指定要查詢的頁面路徑 (例如 `/events`)。
+          schema:
+            type: string
+        - name: scope_type
+          in: query
+          description: 指定查詢的版面層級，若省略則依序嘗試 user → role → global。
+          schema:
+            $ref: "#/components/schemas/LayoutScopeType"
+        - name: scope_id
+          in: query
+          description: 搭配 scope_type 使用的識別碼。global 範圍可省略。
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: 回傳實際套用的版面配置與回退鏈資訊。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LayoutResolutionResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    put:
+      tags:
+        - 平台設定
+      summary: 儲存頁面版面配置
+      operationId: savePageLayout
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavePageLayoutRequest"
+      responses:
+        "200":
+          description: 版面配置已儲存。回傳最新版本的資料。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PageLayoutRecord"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 components:
   parameters:
     PageParam:
@@ -4373,16 +4425,15 @@ components:
         metadata:
           type: object
           additionalProperties: true
-    AddEventCommentRequest:
+    CreateEventTimelineEntryRequest:
       type: object
-      required: [comment]
+      required: [entry_type, message]
       properties:
-        comment:
+        entry_type:
           type: string
-        visibility:
+          enum: [status_change, note, automation, notification]
+        message:
           type: string
-          enum: [internal, public]
-          default: internal
         metadata:
           type: object
           additionalProperties: true
@@ -4405,10 +4456,6 @@ components:
         resolved_at:
           type: string
           format: date-time
-        visibility:
-          type: string
-          enum: [internal, public]
-          description: 批次新增評論時的顯示範圍。
       allOf:
         - if:
             properties:
@@ -4607,6 +4654,14 @@ components:
       type: object
       required: [duration_hours]
       properties:
+        scope:
+          type: string
+          enum: [event, resource, team]
+          default: event
+        matchers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
         duration_hours:
           type: integer
           enum: [1, 2, 4, 8, 12, 24]
@@ -4763,14 +4818,14 @@ components:
             type: string
     SilenceMatcher:
       type: object
-      required: [key, value]
+      required: [matcher_key, matcher_value]
       properties:
-        key:
+        matcher_key:
           type: string
         operator:
           type: string
           enum: [equals, regex]
-        value:
+        matcher_value:
           type: string
     SilenceSchedule:
       type: object
@@ -4816,12 +4871,15 @@ components:
           enum: [single, repeat, condition]
         scope:
           type: string
-          enum: [global, resource, team, tag]
+          enum: [global, resource, team, tag, event]
         enabled:
           type: boolean
         created_at:
           type: string
           format: date-time
+        event_id:
+          type: string
+          nullable: true
     SilenceRuleDetail:
       allOf:
         - $ref: "#/components/schemas/SilenceRuleSummary"
@@ -4852,9 +4910,12 @@ components:
           enum: [single, repeat, condition]
         scope:
           type: string
-          enum: [global, resource, team, tag]
+          enum: [global, resource, team, tag, event]
         enabled:
           type: boolean
+        event_id:
+          type: string
+          nullable: true
         schedule:
           $ref: "#/components/schemas/SilenceSchedule"
         matchers:
@@ -4885,12 +4946,35 @@ components:
           type: integer
     ResourceTag:
       type: object
-      required: [key, value]
+      required: [tag_value_id, key, value]
       properties:
+        tag_id:
+          type: string
+        tag_value_id:
+          type: string
         key:
           type: string
         value:
           type: string
+        assigned_at:
+          type: string
+          format: date-time
+          nullable: true
+    ResourceTagAssignment:
+      type: object
+      required: [tag_value_id]
+      properties:
+        tag_value_id:
+          type: string
+        tag_id:
+          type: string
+          nullable: true
+        key:
+          type: string
+          nullable: true
+        value:
+          type: string
+          nullable: true
     ResourceSummary:
       type: object
       required:
@@ -4977,7 +5061,7 @@ components:
         tags:
           type: array
           items:
-            $ref: "#/components/schemas/ResourceTag"
+            $ref: "#/components/schemas/ResourceTagAssignment"
         group_ids:
           type: array
           description: 要加入的資源群組識別碼列表。
@@ -5013,7 +5097,7 @@ components:
         tags:
           type: array
           items:
-            $ref: "#/components/schemas/ResourceTag"
+            $ref: "#/components/schemas/ResourceTagAssignment"
         group_ids:
           type: array
           description: 更新後應屬於的資源群組識別碼列表。
@@ -5192,9 +5276,35 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/TopologyEdge"
+    DashboardType:
+      type: string
+      enum: [built_in, grafana]
+      description: 儀表板來源類型，built_in 代表平台內建，grafana 代表外部 Grafana 儀表板。
+    DashboardSummaryMetrics:
+      type: object
+      required: [total, built_in, grafana, published, featured, automated]
+      properties:
+        total:
+          type: integer
+          description: 儀表板總數。
+        built_in:
+          type: integer
+          description: 內建儀表板數量。
+        grafana:
+          type: integer
+          description: 連結至 Grafana 的儀表板數量。
+        published:
+          type: integer
+          description: 已發布的儀表板數量。
+        featured:
+          type: integer
+          description: 標記為精選的儀表板數量。
+        automated:
+          type: integer
+          description: 啟用自動化資料更新的儀表板數量。
     DashboardSummary:
       type: object
-      required: [dashboard_id, name, category, owner, status, updated_at]
+      required: [dashboard_id, name, category, owner, status, updated_at, dashboard_type]
       properties:
         dashboard_id:
           type: string
@@ -5204,6 +5314,16 @@ components:
           type: string
         category:
           type: string
+        dashboard_type:
+          $ref: "#/components/schemas/DashboardType"
+        grafana_dashboard_uid:
+          type: string
+          nullable: true
+          description: Grafana 儀表板的 UID，僅當 dashboard_type 為 grafana 時提供。
+        grafana_folder_uid:
+          type: string
+          nullable: true
+          description: Grafana 資料夾 UID，僅當 dashboard_type 為 grafana 時提供。
         owner:
           type: string
         tags:
@@ -5269,12 +5389,14 @@ components:
               type: integer
     CreateDashboardRequest:
       type: object
-      required: [name, category]
+      required: [name, category, dashboard_type]
       properties:
         name:
           type: string
         category:
           type: string
+        dashboard_type:
+          $ref: "#/components/schemas/DashboardType"
         description:
           type: string
         owner_id:
@@ -5287,6 +5409,19 @@ components:
           type: array
           items:
             type: string
+        grafana_dashboard_uid:
+          type: string
+          description: 連結 Grafana 儀表板時必填的 UID。
+        grafana_folder_uid:
+          type: string
+          description: Grafana 儀表板所在資料夾 UID。
+        grafana_url:
+          type: string
+          description: Grafana 儀表板的原始分享 URL。
+        grafana_embed_options:
+          type: object
+          additionalProperties: true
+          description: Grafana iframe 參數（例如 kiosk、refresh、var-*）。
         target_page_key:
           type: string
         layout:
@@ -5297,6 +5432,13 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/DashboardKPI"
+      allOf:
+        - if:
+            properties:
+              dashboard_type:
+                const: grafana
+          then:
+            required: [grafana_dashboard_uid]
     UpdateDashboardRequest:
       type: object
       properties:
@@ -5304,6 +5446,8 @@ components:
           type: string
         category:
           type: string
+        dashboard_type:
+          $ref: "#/components/schemas/DashboardType"
         description:
           type: string
         owner_id:
@@ -5316,6 +5460,15 @@ components:
           type: array
           items:
             type: string
+        grafana_dashboard_uid:
+          type: string
+        grafana_folder_uid:
+          type: string
+        grafana_url:
+          type: string
+        grafana_embed_options:
+          type: object
+          additionalProperties: true
         target_page_key:
           type: string
         layout:
@@ -5331,6 +5484,13 @@ components:
         status:
           type: string
           enum: [draft, published]
+      allOf:
+        - if:
+            properties:
+              dashboard_type:
+                const: grafana
+          then:
+            required: [grafana_dashboard_uid]
     DashboardDetail:
       allOf:
         - $ref: "#/components/schemas/DashboardSummary"
@@ -5354,6 +5514,15 @@ components:
               type: string
               format: date-time
               nullable: true
+            grafana_url:
+              type: string
+              nullable: true
+              description: Grafana 儀表板原始連結，僅於 dashboard_type 為 grafana 時提供。
+            grafana_embed_options:
+              type: object
+              nullable: true
+              description: Grafana 嵌入設定，例如時間範圍或 kiosk 模式參數。
+              additionalProperties: true
     CapacitySummary:
       type: object
       required: [total_datapoints, reports, processing_time, accuracy]
@@ -6546,6 +6715,143 @@ components:
         trace_id:
           type: string
           nullable: true
+    LayoutScopeType:
+      type: string
+      enum: [global, role, user]
+      description: 版面配置適用的層級。
+    LayoutWidgetDefinition:
+      type: object
+      required: [widget_id, name, supported_pages, data_api_endpoint]
+      properties:
+        widget_id:
+          type: string
+          description: 指標卡片的唯一識別碼。
+        name:
+          type: string
+          description: 顯示於 UI 的卡片名稱。
+        description:
+          type: string
+          description: 功能說明，於 tooltip 呈現。
+        supported_pages:
+          type: array
+          items:
+            type: string
+          description: 可放置此卡片的頁面路徑清單。
+        data_api_endpoint:
+          type: string
+          description: 前端抓取資料時呼叫的 API 路徑。
+        updated_at:
+          type: string
+          format: date-time
+          description: 資訊最後更新時間。
+    LayoutWidgetConfig:
+      type: object
+      required: [widget_id, order]
+      properties:
+        widget_id:
+          type: string
+          description: 對應的 widget_id。
+        order:
+          type: integer
+          minimum: 1
+          description: 顯示順序，1 為最左側。
+    LayoutFallbackEntry:
+      type: object
+      required: [scope_type]
+      properties:
+        scope_type:
+          $ref: "#/components/schemas/LayoutScopeType"
+        scope_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 命中的角色或使用者識別碼；global 範圍為空值。
+        matched:
+          type: boolean
+          description: 是否找到對應配置。
+        updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 該層級配置最後更新時間。
+    PageLayoutRecord:
+      type: object
+      required: [layout_id, page_path, scope_type, widgets, updated_at]
+      properties:
+        layout_id:
+          type: string
+          format: uuid
+          description: 版面配置主鍵識別碼。
+        page_path:
+          type: string
+          description: 套用此配置的頁面路徑。
+        scope_type:
+          $ref: "#/components/schemas/LayoutScopeType"
+        scope_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: 角色或使用者識別碼，global 範圍為空值。
+        widgets:
+          type: array
+          items:
+            $ref: "#/components/schemas/LayoutWidgetConfig"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        updated_by:
+          type: string
+          format: uuid
+          nullable: true
+          description: 最後修改此配置的使用者識別碼。
+    LayoutResolutionResponse:
+      type: object
+      required: [page_path, resolved_scope_type, widgets]
+      properties:
+        page_path:
+          type: string
+        resolved_scope_type:
+          $ref: "#/components/schemas/LayoutScopeType"
+        resolved_scope_id:
+          type: string
+          format: uuid
+          nullable: true
+        widgets:
+          type: array
+          items:
+            $ref: "#/components/schemas/LayoutWidgetConfig"
+        layout_record:
+          $ref: "#/components/schemas/PageLayoutRecord"
+          nullable: true
+        fallback_chain:
+          type: array
+          items:
+            $ref: "#/components/schemas/LayoutFallbackEntry"
+        updated_at:
+          type: string
+          format: date-time
+          description: 實際採用配置的最後更新時間。
+    SavePageLayoutRequest:
+      type: object
+      required: [page_path, scope_type, widgets]
+      properties:
+        page_path:
+          type: string
+        scope_type:
+          $ref: "#/components/schemas/LayoutScopeType"
+        scope_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: global 範圍可省略，role/user 範圍需提供。
+        widgets:
+          type: array
+          description: 按照顯示順序排列的指標卡片列表。
+          items:
+            $ref: "#/components/schemas/LayoutWidgetConfig"
     GrafanaDashboardUrl:
       type: object
       required: [url, embed_url, expires_at]

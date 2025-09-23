@@ -321,6 +321,8 @@ CREATE TABLE silence_rules (
     silence_type VARCHAR(32) NOT NULL,
     -- 適用範圍
     scope VARCHAR(32) NOT NULL,
+    -- 關聯事件識別碼 (快速靜音)
+    event_id UUID REFERENCES events(id) ON DELETE CASCADE,
     -- 開始時間
     starts_at TIMESTAMPTZ NOT NULL,
     -- 結束時間
@@ -348,7 +350,7 @@ CREATE TABLE silence_rules (
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_silence_rules_type CHECK (silence_type IN ('single','repeat','condition')),
-    CONSTRAINT chk_silence_rules_scope CHECK (scope IN ('global','resource','team','tag')),
+    CONSTRAINT chk_silence_rules_scope CHECK (scope IN ('global','resource','team','tag','event')),
     CONSTRAINT chk_silence_rules_repeat_freq CHECK (
         -- 重複頻率
         repeat_frequency IS NULL OR repeat_frequency IN ('daily','weekly','monthly')
@@ -585,15 +587,16 @@ ALTER TABLE events
 
 CREATE INDEX idx_events_resource ON events (resource_id);
 
-CREATE TABLE resource_labels (
+CREATE TABLE resource_tags (
     -- 資源識別碼
     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-    -- 標籤鍵值
-    label_key VARCHAR(128) NOT NULL,
-    -- 標籤數值
-    label_value VARCHAR(128) NOT NULL,
-    PRIMARY KEY (resource_id, label_key)
+    -- 標籤值識別碼
+    tag_value_id UUID NOT NULL REFERENCES tag_values(id) ON DELETE CASCADE,
+    -- 指派時間
+    assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (resource_id, tag_value_id)
 );
+CREATE INDEX idx_resource_tags_value ON resource_tags (tag_value_id);
 
 CREATE TABLE resource_metrics (
     -- 主鍵識別碼
@@ -814,6 +817,8 @@ CREATE TABLE dashboards (
     name VARCHAR(128) NOT NULL,
     -- 分類
     category VARCHAR(64) NOT NULL,
+    -- 儀表板類型
+    dashboard_type VARCHAR(16) NOT NULL DEFAULT 'built_in',
     -- 描述
     description TEXT,
     -- 擁有者識別碼
@@ -834,6 +839,14 @@ CREATE TABLE dashboards (
     tags TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
     -- 資料來源
     data_sources TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
+    -- Grafana 儀表板 UID
+    grafana_dashboard_uid VARCHAR(128),
+    -- Grafana 資料夾 UID
+    grafana_folder_uid VARCHAR(128),
+    -- Grafana 原始 URL
+    grafana_url VARCHAR(512),
+    -- Grafana 嵌入參數
+    grafana_embed_options JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 目標頁面鍵值
     target_page_key VARCHAR(64),
     -- 發布時間
@@ -842,10 +855,18 @@ CREATE TABLE dashboards (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_dashboards_status CHECK (status IN ('draft','published'))
+    CONSTRAINT chk_dashboards_status CHECK (status IN ('draft','published')),
+    CONSTRAINT chk_dashboards_type CHECK (dashboard_type IN ('built_in','grafana')),
+    CONSTRAINT chk_dashboards_embed_options CHECK (jsonb_typeof(grafana_embed_options) = 'object'),
+    CONSTRAINT chk_dashboards_grafana_fields CHECK (
+        (dashboard_type = 'grafana' AND grafana_dashboard_uid IS NOT NULL)
+        OR (dashboard_type = 'built_in' AND grafana_dashboard_uid IS NULL AND grafana_folder_uid IS NULL AND grafana_url IS NULL)
+    )
 );
 CREATE INDEX idx_dashboards_category ON dashboards (category);
 CREATE INDEX idx_dashboards_owner ON dashboards (owner_id);
+CREATE INDEX idx_dashboards_type ON dashboards (dashboard_type);
+CREATE UNIQUE INDEX idx_dashboards_grafana_uid ON dashboards (grafana_dashboard_uid) WHERE grafana_dashboard_uid IS NOT NULL;
 
 CREATE TABLE dashboard_widgets (
     -- 主鍵識別碼
@@ -1338,6 +1359,55 @@ CREATE TABLE auth_settings (
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE layout_widgets (
+    -- 小工具識別碼
+    widget_id VARCHAR(128) PRIMARY KEY,
+    -- 顯示名稱
+    name VARCHAR(128) NOT NULL,
+    -- 說明
+    description TEXT,
+    -- 支援頁面 (JSON 陣列)
+    supported_pages JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 資料來源 API
+    data_api_endpoint VARCHAR(512) NOT NULL,
+    -- 建立時間
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_layout_widgets_supported_pages CHECK (jsonb_typeof(supported_pages) = 'array')
+);
+CREATE INDEX idx_layout_widgets_supported_pages ON layout_widgets USING GIN (supported_pages);
+
+CREATE TABLE page_layouts (
+    -- 主鍵識別碼
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- 對應頁面路徑
+    page_path VARCHAR(256) NOT NULL,
+    -- 適用範圍
+    scope_type VARCHAR(16) NOT NULL,
+    -- 角色或使用者識別碼 (global 範圍為 NULL)
+    scope_id UUID,
+    -- 指標卡片配置
+    widgets_config JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 建立時間
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 更新者
+    updated_by UUID REFERENCES users(id),
+    CONSTRAINT chk_page_layouts_scope CHECK (scope_type IN ('global','role','user')),
+    CONSTRAINT chk_page_layouts_scope_id CHECK (
+        (scope_type = 'global' AND scope_id IS NULL) OR
+        (scope_type IN ('role','user') AND scope_id IS NOT NULL)
+    ),
+    CONSTRAINT chk_page_layouts_widgets_array CHECK (jsonb_typeof(widgets_config) = 'array')
+);
+CREATE INDEX idx_page_layouts_page ON page_layouts (page_path);
+CREATE INDEX idx_page_layouts_lookup ON page_layouts (page_path, scope_type, scope_id);
+CREATE UNIQUE INDEX idx_page_layouts_global ON page_layouts (page_path) WHERE scope_type = 'global';
+CREATE UNIQUE INDEX idx_page_layouts_role ON page_layouts (page_path, scope_id) WHERE scope_type = 'role';
+CREATE UNIQUE INDEX idx_page_layouts_user ON page_layouts (page_path, scope_id) WHERE scope_type = 'user';
 
 -- =============================
 -- 審計日誌
