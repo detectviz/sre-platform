@@ -3008,7 +3008,7 @@ paths:
           in: query
           schema:
             type: string
-            enum: [SUCCESS, FAILED, RETRYING]
+            enum: [SUCCESS, FAILED, RETRYING, QUEUED]
       responses:
         "200":
           description: 回傳通知歷史列表。
@@ -3963,6 +3963,10 @@ components:
         trigger_threshold:
           type: string
           nullable: true
+        assignee_id:
+          type: string
+          nullable: true
+          description: 事件目前的處理人員識別碼。
         assignee:
           type: string
           nullable: true
@@ -4219,8 +4223,6 @@ components:
         - $ref: "#/components/schemas/EventSummary"
         - type: object
           properties:
-            metric:
-              type: string
             trigger_value:
               type: string
               nullable: true
@@ -4428,12 +4430,47 @@ components:
               type: string
             automation:
               $ref: "#/components/schemas/AutomationSetting"
+    EventRulePayload:
+      type: object
+      required: [name, severity, condition_groups]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        default_priority:
+          type: string
+          enum: [P0, P1, P2, P3]
+        enabled:
+          type: boolean
+          default: true
+        automation_enabled:
+          type: boolean
+        labels:
+          type: array
+          items:
+            type: string
+        environments:
+          type: array
+          items:
+            type: string
+        condition_groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ConditionGroup"
+        title_template:
+          type: string
+        content_template:
+          type: string
+        automation:
+          $ref: "#/components/schemas/AutomationSetting"
     CreateEventRuleRequest:
-      allOf:
-        - $ref: "#/components/schemas/EventRuleDetail"
+      $ref: "#/components/schemas/EventRulePayload"
     UpdateEventRuleRequest:
-      allOf:
-        - $ref: "#/components/schemas/EventRuleDetail"
+      $ref: "#/components/schemas/EventRulePayload"
     TestEventRuleRequest:
       type: object
       properties:
@@ -4530,12 +4567,36 @@ components:
               type: boolean
             created_by:
               type: string
+    SilenceRulePayload:
+      type: object
+      required: [name, silence_type, scope, schedule, matchers]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        silence_type:
+          type: string
+          enum: [single, repeat, condition]
+        scope:
+          type: string
+          enum: [global, resource, team, tag]
+        enabled:
+          type: boolean
+        schedule:
+          $ref: "#/components/schemas/SilenceSchedule"
+        matchers:
+          type: array
+          items:
+            $ref: "#/components/schemas/SilenceMatcher"
+        notify_on_start:
+          type: boolean
+        notify_on_end:
+          type: boolean
     CreateSilenceRuleRequest:
-      allOf:
-        - $ref: "#/components/schemas/SilenceRuleDetail"
+      $ref: "#/components/schemas/SilenceRulePayload"
     UpdateSilenceRuleRequest:
-      allOf:
-        - $ref: "#/components/schemas/SilenceRuleDetail"
+      $ref: "#/components/schemas/SilenceRulePayload"
     ResourceSummaryMetrics:
       type: object
       required: [total_resources, healthy, warning, critical, groups]
@@ -4579,8 +4640,14 @@ components:
           type: string
         environment:
           type: string
+        team_id:
+          type: string
+          nullable: true
+          description: 資源所屬團隊的唯一識別碼。
         team:
           type: string
+          nullable: true
+          description: 顯示用的團隊名稱。
         os:
           type: string
         cpu_usage:
@@ -4617,8 +4684,12 @@ components:
           type: string
         environment:
           type: string
+        team_id:
+          type: string
+          description: 資源負責團隊的唯一識別碼。
         team:
           type: string
+          description: 顯示用途的團隊名稱，後端會依 team_id 優先處理。
         os:
           type: string
         tags:
@@ -4626,8 +4697,36 @@ components:
           items:
             $ref: "#/components/schemas/ResourceTag"
     UpdateResourceRequest:
-      allOf:
-        - $ref: "#/components/schemas/CreateResourceRequest"
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [healthy, warning, critical, offline]
+        type:
+          type: string
+          enum: [server, database, cache, gateway, service]
+        ip_address:
+          type: string
+        location:
+          type: string
+        environment:
+          type: string
+        team_id:
+          type: string
+        team:
+          type: string
+        os:
+          type: string
+        service_impact:
+          type: string
+        notes:
+          type: string
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceTag"
     ResourceMetric:
       type: object
       required: [metric, points]
@@ -4671,8 +4770,14 @@ components:
           type: string
         description:
           type: string
+        owner_team_id:
+          type: string
+          nullable: true
+          description: 群組擁有者團隊的唯一識別碼。
         owner_team:
           type: string
+          nullable: true
+          description: 顯示用途的團隊名稱。
         member_count:
           type: integer
         subscriber_count:
@@ -4715,8 +4820,12 @@ components:
           type: string
         description:
           type: string
+        owner_team_id:
+          type: string
+          description: 群組擁有者團隊的唯一識別碼。
         owner_team:
           type: string
+          description: 顯示用途的團隊名稱。
         resource_ids:
           type: array
           items:
@@ -4889,15 +4998,39 @@ components:
           items:
             $ref: "#/components/schemas/DashboardKPI"
     UpdateDashboardRequest:
-      allOf:
-        - $ref: "#/components/schemas/CreateDashboardRequest"
-        - type: object
-          properties:
-            is_default:
-              type: boolean
-            status:
-              type: string
-              enum: [draft, published]
+      type: object
+      properties:
+        name:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        owner_id:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        data_sources:
+          type: array
+          items:
+            type: string
+        target_page_key:
+          type: string
+        layout:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardWidget"
+        kpis:
+          type: array
+          items:
+            $ref: "#/components/schemas/DashboardKPI"
+        is_default:
+          type: boolean
+        status:
+          type: string
+          enum: [draft, published]
     DashboardDetail:
       allOf:
         - $ref: "#/components/schemas/DashboardSummary"
@@ -5090,12 +5223,23 @@ components:
           items:
             type: string
     UpdateAutomationScriptRequest:
-      allOf:
-        - $ref: "#/components/schemas/CreateAutomationScriptRequest"
-        - type: object
-          properties:
-            version:
-              type: string
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [shell, python, ansible, terraform]
+        description:
+          type: string
+        content:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        version:
+          type: string
     AutomationScriptVersion:
       type: object
       required: [version_id, version, created_at]
@@ -5204,8 +5348,40 @@ components:
           items:
             type: string
     UpdateAutomationScheduleRequest:
-      allOf:
-        - $ref: "#/components/schemas/CreateAutomationScheduleRequest"
+      type: object
+      properties:
+        name:
+          type: string
+        script_id:
+          type: string
+        type:
+          type: string
+          enum: [one_time, recurring]
+        cron_expression:
+          type: string
+        timezone:
+          type: string
+        status:
+          type: string
+          enum: [enabled, disabled, running]
+        concurrency_policy:
+          type: string
+          enum: [allow, forbid]
+        retry_policy:
+          type: object
+          properties:
+            max_retries:
+              type: integer
+            interval_seconds:
+              type: integer
+        notify_on_success:
+          type: boolean
+        notify_on_failure:
+          type: boolean
+        channels:
+          type: array
+          items:
+            type: string
     AutomationScheduleDetail:
       allOf:
         - $ref: "#/components/schemas/AutomationScheduleSummary"
@@ -5603,8 +5779,34 @@ components:
           type: object
           additionalProperties: true
     UpdateNotificationStrategyRequest:
-      allOf:
-        - $ref: "#/components/schemas/CreateNotificationStrategyRequest"
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        priority:
+          type: string
+          enum: [high, medium, low]
+        trigger_condition:
+          type: string
+        severity_filters:
+          type: array
+          items:
+            type: string
+        recipients:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationRecipient"
+        channels:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationChannelRef"
+        resource_filters:
+          type: object
+          additionalProperties: true
     NotificationStrategyDetail:
       allOf:
         - $ref: "#/components/schemas/NotificationStrategySummary"
@@ -5694,22 +5896,34 @@ components:
           type: object
           additionalProperties: true
     UpdateNotificationChannelRequest:
-      allOf:
-        - $ref: "#/components/schemas/CreateNotificationChannelRequest"
-        - type: object
-          properties:
-            status:
-              type: string
-              enum: [active, degraded, disabled]
-            last_test_result:
-              type: string
-              enum: [success, failed, pending]
-            last_test_message:
-              type: string
-            last_tested_at:
-              type: string
-              format: date-time
-              nullable: true
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
+        description:
+          type: string
+        enabled:
+          type: boolean
+        template_key:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        status:
+          type: string
+          enum: [active, degraded, disabled]
+        last_test_result:
+          type: string
+          enum: [success, failed, pending]
+        last_test_message:
+          type: string
+        last_tested_at:
+          type: string
+          format: date-time
+          nullable: true
     NotificationChannelDetail:
       allOf:
         - $ref: "#/components/schemas/NotificationChannelSummary"
@@ -5758,6 +5972,9 @@ components:
           type: string
         error_message:
           type: string
+        metadata:
+          type: object
+          additionalProperties: true
         recipients:
           type: array
           items:
@@ -5824,6 +6041,10 @@ components:
         note:
           type: string
           description: 重新發送原因或備註。
+        metadata:
+          type: object
+          additionalProperties: true
+          description: 自訂的排程參數或追蹤資訊。
     NotificationResendResponse:
       type: object
       required: [record_id, status, enqueued_at]
@@ -5832,7 +6053,7 @@ components:
           type: string
         status:
           type: string
-          enum: [queued, running, completed]
+          enum: [queued, running, completed, failed]
         enqueued_at:
           type: string
           format: date-time
@@ -5855,6 +6076,9 @@ components:
           type: boolean
         note:
           type: string
+        metadata:
+          type: object
+          additionalProperties: true
     NotificationBulkResendResponse:
       type: object
       required: [requested_count, accepted_count, rejected_count]
@@ -5912,6 +6136,9 @@ components:
           type: string
         error_message:
           type: string
+        metadata:
+          type: object
+          additionalProperties: true
     TagDefinition:
       type: object
       required: [tag_id, name, category]
@@ -6474,8 +6701,22 @@ components:
           format: date-time
           readOnly: true
     SystemSettingsRequest:
-      allOf:
-        - $ref: "#/components/schemas/SystemSettings"
+      type: object
+      properties:
+        maintenance_mode:
+          type: boolean
+        max_concurrent_scans:
+          type: integer
+        auto_discovery_enabled:
+          type: boolean
+        alert_integration_enabled:
+          type: boolean
+        retention_events_days:
+          type: integer
+        retention_logs_days:
+          type: integer
+        retention_metrics_days:
+          type: integer
     SystemDiagnostics:
       type: object
       properties:
