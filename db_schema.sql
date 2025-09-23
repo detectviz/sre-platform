@@ -18,10 +18,6 @@ CREATE TABLE users (
     avatar_url TEXT,
     -- 狀態
     status VARCHAR(32) NOT NULL DEFAULT 'active',
-    -- 語言
-    language VARCHAR(32) DEFAULT 'zh-TW',
-    -- 時區
-    timezone VARCHAR(64) DEFAULT 'Asia/Taipei',
     -- 最後登入時間
     last_login_at TIMESTAMPTZ,
     -- 建立時間
@@ -174,9 +170,9 @@ CREATE TABLE user_preferences (
     -- 預設頁面
     default_page VARCHAR(32) NOT NULL DEFAULT 'war_room',
     -- 語言
-    language VARCHAR(32) DEFAULT 'zh-TW',
+    language VARCHAR(32) NOT NULL DEFAULT 'zh-TW',
     -- 時區
-    timezone VARCHAR(64) DEFAULT 'Asia/Taipei',
+    timezone VARCHAR(64) NOT NULL DEFAULT 'Asia/Taipei',
     -- 通知偏好
     notification_preferences JSONB NOT NULL DEFAULT '{"email_notification":true,"slack_notification":false,"merge_notification":false}'::JSONB,
     -- 顯示選項
