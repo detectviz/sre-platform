@@ -1,16 +1,90 @@
-# SRE 平台 UI 界面文檔
+# **SRE 平台前端開發規格書 (SSOT)**
 
-本文檔詳細記錄 SRE 平台各個功能模塊的界面設計和操作流程。
+版本: 3.2
+最後更新: 2025-09-23
 
-## 1. 登入與基本功能
+## 📋 核心契約文件參考 (SSOT)
 
-### 1.1 登入頁面
+- **[openapi.yaml](openapi.yaml)** - API 規格唯一真實來源 (v3.0.0)
+- **[db_schema.sql](db_schema.sql)** - 數據庫架構唯一真實來源 (v3.0)
 
-#### 頁面概述
-登入頁面是平台的安全入口，提供用戶身份驗證功能。
+---
+
+## 1. 平台概述
+
+### 1.1 系統架構
+
+SRE 平台採用現代化的前端技術棧，提供完整的監控、事件管理、資源管理等功能。
+
+**技術棧**:
+- **前端**: React 18 + Ant Design 5.19.1 + ECharts 5.5.0
+- **狀態管理**: Redux RTK + RTK Query
+- **類型檢查**: TypeScript
+- **樣式系統**: CSS-in-JS + 設計標記系統
+
+### 1.4 目錄結構規範
+
+**前端目錄結構**:
+- `src/components`: 可重用的展示型元件
+- `src/features`: 功能模組相關檔案
+- `src/services`: API 客戶端 (RTK Query)
+- `src/store`: Redux store
+- `src/layouts`: 佈局元件
+- `src/pages`: 頁面級元件
+
+**組件設計原則**:
+- 容器與展示元件分離
+- 單一職責原則
+- 可複用性優先
+
+### 1.5 開發規範
+
+**國際化規範**:
+- 建立語言資源檔結構 (src/locales/zh-TW.json, src/locales/en-US.json)
+- 所有 UI 靜態文字都必須使用 i18n key
+- 提供語言切換器
+
+**可訪問性規範**:
+- 所有互動元件都必須可以透過 Tab 鍵聚焦
+- 為非語意化元件提供正確的 ARIA 角色和屬性
+- 為常用操作提供快捷鍵 (如 Ctrl+K 搜尋)
+
+**效能優化規範**:
+- 所有網路請求操作都必須有明確的 loading 狀態指示器
+- 複雜表單應實作自動儲存草稿至 sessionStorage
+- 所有大量數據列表都必須實作後端分頁
+
+### 1.2 基礎設施 API 端點
+
+**健康檢查端點**:
+- `GET /api/v1/healthz` - 應用程式健康檢查
+- `GET /api/v1/readyz` - 應用程式就緒檢查
+
+**指標端點**:
+- `GET /api/v1/metrics` - 系統指標數據
+- `GET /api/v1/metrics/definitions` - 指標定義列表
+- `POST /api/v1/metrics/query` - 多資源指標時序查詢
+
+> **注意**：這些端點主要由監控系統調用，前端通常不會直接使用。
+
+### 1.3 術語標準化
+
+為了確保文檔的一致性，定義以下核心術語：
+
+| 英文術語 | 標準中文譯名 | 說明 |
+|:---|:---|:---|
+| **Alert** | **告警** | 監控系統自動觸發的原始信號 |
+| **Incident** | **事件** | 由告警觸發或人工建立的處理工單 |
+| Resource | 資源 | 監控對象，如伺服器、服務 |
+| Group | 群組 | 資源的邏輯分組 |
+| Silence | 靜音規則 | 抑制告警/事件通知的規則 |
+
+---
+
+## 2. 登入與基本功能
 
 **檔案對應**
-- **前端實現**: `/frontend/src/pages/LoginPage.tsx` (待實現)
+- **前端實現**: `/frontend/src/pages/LoginPage.tsx` ✅ 已實現
 - **路由配置**: `/frontend/src/config/routes.ts`
 
 **界面元素**
@@ -76,8 +150,8 @@
 全局搜索欄位於系統頂部工具列，提供跨模塊的統一搜索功能，支援資源、事件、腳本等多種類型的搜索。
 
 **檔案對應**
-- **前端實現**: `/frontend/src/components/GlobalSearch.tsx` (待實現)
-- **組件依賴**: `/frontend/src/layouts/AppLayout.tsx`
+- **前端實現**: `/frontend/src/components/GlobalSearch.tsx` ✅ 已實現
+- **組件依賴**: `/frontend/src/layouts/AppLayout.tsx` ✅ 已整合
 
 **界面元素**
 
@@ -399,6 +473,10 @@
 
 #### 頁面概述  
 靜音規則頁面管理事件通知的靜音配置，避免重複警報。
+
+**檔案對應**
+- **前端實現**: `/frontend/src/pages/SilenceRulePage.tsx` ✅ 已實現
+- **路由配置**: `/frontend/src/config/routes.ts` (路徑: `/incidents/silence`)
 
 **界面元素**
 
@@ -1862,7 +1940,7 @@ AI 洞察頁面提供智能化的系統分析，包含風險預測、異常檢�
 ## 8. 個人設定
 
 **頁面概述**
-提供用戶個人資訊管理、偏好設定和安全配置功能，已統一更名為"個人設定"。
+提供用戶個人資訊管理、偏好設定和安全配置功能。
 
 **頁籤子頁面**
 1. 個人資訊 (PersonalInformationPage)
@@ -2048,20 +2126,20 @@ SRE 平台總共包含 **8 個核心功能模組**，每個模組都有明確的
 - **深色主題** - 完整的深色模式支援
 - **個性化配置** - 用戶可自訂預設頁面、主題和儀表板偏好
 
-### 9.2 平台頁面統計
+### 10.2 平台頁面統計
 
 SRE 平台共實現了 **32 個功能頁面**：
 
 **核心功能模組對應**
 1. 登入與導航 (4個頁面)
-   - 登入頁面 (LoginPage) - `/frontend/src/pages/LoginPage.tsx` (待實現)
-   - 使用者選單 (UserMenu) - `/frontend/src/components/UserMenu.tsx`
-   - 全局搜索欄 (GlobalSearch) - `/frontend/src/components/GlobalSearch.tsx` (待實現)
-   - 通知中心 (NotificationCenter) - `/frontend/src/components/NotificationCenter.tsx`
+   - 登入頁面 (LoginPage) - `/frontend/src/pages/LoginPage.tsx` ✅ 已實現
+   - 使用者選單 (UserMenu) - `/frontend/src/components/UserMenu.tsx` ✅ 已實現
+   - 全局搜索欄 (GlobalSearch) - `/frontend/src/components/GlobalSearch.tsx` ✅ 已實現
+   - 通知中心 (NotificationCenter) - `/frontend/src/components/NotificationCenter.tsx` ✅ 已實現
 2. 事件管理 (3個頁面)
-   - 事件列表 (EventListPage) - `/frontend/src/pages/IncidentsPage.tsx`
-   - 事件規則 (EventRulePage) - `/frontend/src/pages/EventRulePage.tsx`
-   - 靜音規則 (SilenceRulePage) - `/frontend/src/pages/SilenceRulePage.tsx`
+   - 事件列表 (EventListPage) - `/frontend/src/pages/IncidentsPage.tsx` ✅ 已實現
+   - 事件規則 (EventRulePage) - `/frontend/src/pages/EventRulePage.tsx` ✅ 已實現
+   - 靜音規則 (SilenceRulePage) - `/frontend/src/pages/SilenceRulePage.tsx` ✅ 已實現
 3. 資源管理 (3個頁面)
    - 資源列表 (ResourceListPage) - `/frontend/src/pages/ResourcesPage.tsx`
    - 資源群組 (ResourceGroupPage) - `/frontend/src/pages/ResourceGroupPage.tsx`
@@ -2098,21 +2176,7 @@ SRE 平台共實現了 **32 個功能頁面**：
    - 偏好設定 (PreferenceSettingsPage) - `/frontend/src/pages/ProfilePage.tsx`
 
 
-**最新更新 (2025-09-22)**
-- 📁 **檔案對應記錄**: 為所有功能模組添加前端實現檔案路徑對應
-- 🔄 **個人設定頁面**: 統一更名為"個人設定"，移除"設定"選項，"個人資料"直接導航至個人設定
-- 🔄 **儀表板管理**: DashboardListPage 改為 DashboardPage，實現完整的表格列表和分類篩選功能
-- 🔄 **首頁設定**: 支援任一儀表板作為預設首頁，不再固定為 SRE 戰情室
-- 🔄 **儀表板操作**: 新增"設定為首頁"功能，允許用戶選擇任意儀表板作為預設首頁
-- 🔄 **偏好設定**: 擴展預設頁面選項，包含所有可用的儀表板類型
-- 🔄 **路由結構**: 更新路由配置，支援 `/infrastructure` 和 `/warroom` 導航
-- 🔄 **使用者選單**: 移除"設定"選項，簡化導航結構
-- 🔄 **安全設定**: 更新為"安全設定"，移除未使用的"密碼安全"頁面
-- 📊 **平台頁面統計**: 詳細記錄 32 個功能頁面的前端實現檔案路徑
-- 📋 **儀表板類型說明**: 新增內建儀表板和 Grafana 儀表板的詳細說明和區分方式
-- 📊 **儀表板統計更新**: 更新總儀表板數至 25 個，包含 15 個內建儀表板和 10 個 Grafana 儀表板
-
-### 9.3 設計特點
+### 10.3 設計特點
 
 **統一設計系統**
 - 採用 Ant Design 5.19.1 作為基礎元件庫
@@ -2142,7 +2206,7 @@ SRE 平台共實現了 **32 個功能頁面**：
 - 即時預覽和測試功能
 - 直觀的操作反饋和狀態顯示
 
-### 9.4 使用指南
+### 10.4 使用指南
 
 **不同角色訪問路徑**
 
@@ -2177,192 +2241,7 @@ SRE 平台共實現了 **32 個功能頁面**：
 
 ---
 
-## 10. 資料庫 Schema 分析報告
-
-### 10.1 參數記錄完整性分析
-
-根據文檔記錄的 UI 參數，進行資料庫 Schema 設計的完整性分析：
-
-**完整性評估**
-- **事件管理**: 基本滿足 - 包含事件狀態、嚴重性、處理歷史等核心欄位
-- **資源管理**: 基本滿足 - 包含資源類型、狀態、配置資訊等
-- **通知系統**: 基本滿足 - 包含策略、管道、接收者等完整資訊
-- **用戶管理**: 基本滿足 - 包含用戶、團隊、角色等組織結構
-- **系統設定**: 需要補充 - 缺少資料類型和約束資訊
-
-**需要補充的資訊**
-1. **資料類型定義**: 各欄位的具體資料類型 (VARCHAR長度、DECIMAL精度等)
-2. **約束條件**: 主鍵、外鍵、唯一約束、檢查約束
-3. **索引策略**: 查詢效能優化的索引設計
-4. **業務規則**: 特定業務邏輯的約束條件
-
-### 10.2 建議的 Schema 補充記錄
-
-**events 表補充定義**
-```sql
-CREATE TABLE events (
-    id VARCHAR(36) PRIMARY KEY COMMENT '事件唯一標識',
-    title VARCHAR(200) NOT NULL COMMENT '事件標題',
-    description TEXT COMMENT '事件描述',
-    severity ENUM('critical', 'warning', 'info') NOT NULL COMMENT '嚴重性等級',
-    status ENUM('new', 'acknowledged', 'resolved', 'closed') NOT NULL COMMENT '事件狀態',
-    source VARCHAR(100) COMMENT '事件來源',
-    resource_id VARCHAR(36) COMMENT '關聯資源ID',
-    assignee_id VARCHAR(36) COMMENT '負責人ID',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '創建時間',
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新時間',
-    resolved_at TIMESTAMP NULL COMMENT '解決時間',
-    tags JSON COMMENT '標籤資訊',
-    metadata JSON COMMENT '額外元資料',
-    INDEX idx_status_created (status, created_at),
-    INDEX idx_resource (resource_id),
-    INDEX idx_assignee (assignee_id),
-    FULLTEXT idx_title_description (title, description)
-);
-```
-
-### 10.3 記錄完整性評估
-
-**UI 參數記錄覆蓋度**
-- 欄位名稱定義: 95% - 大部分欄位都有明確名稱
-- 關聯關係: 85% - 大部分外鍵關聯已識別
-- 約束條件: 60% - 需要補充具體約束規則
-- 資料類型: 40% - 缺少詳細類型規格
-- 索引需求: 50% - 需要分析查詢模式
-- 業務規則: 70% - 大部分業務邏輯已記錄
-
-**結論**: UI 參數記錄 **基本滿足** 資料庫 Schema 設計需求，但需要補充資料類型、約束條件和索引策略等詳細資訊。
-
-### 10.4 建議的補充記錄格式
-
-**詳細資料庫欄位定義範例**
-
-**events 表欄位規格**
-| 欄位名稱 | 資料類型 | 必填 | 預設值 | 描述 |
-|---------|---------|------|--------|------|
-| id | VARCHAR(36) | 是 | UUID() | 事件唯一標識，主鍵 |
-| title | VARCHAR(200) | 是 | NULL | 事件標題，支援全文搜索 |
-| description | TEXT | 否 | NULL | 事件詳細描述 |
-| severity | ENUM | 是 | 'info' | 嚴重性：critical/warning/info |
-| status | ENUM | 是 | 'new' | 狀態：new/acknowledged/resolved/closed |
-| source | VARCHAR(100) | 否 | NULL | 事件來源系統 |
-| resource_id | VARCHAR(36) | 否 | NULL | 外鍵，關聯資源表 |
-| assignee_id | VARCHAR(36) | 否 | NULL | 外鍵，關聯用戶表 |
-| created_at | TIMESTAMP | 是 | CURRENT_TIMESTAMP | 創建時間 |
-| updated_at | TIMESTAMP | 是 | CURRENT_TIMESTAMP | 更新時間，自動更新 |
-| resolved_at | TIMESTAMP | 否 | NULL | 解決時間 |
-| tags | JSON | 否 | NULL | 標籤資訊，JSON 格式存儲 |
-| metadata | JSON | 否 | NULL | 額外元資料 |
-
-**索引定義**
-```sql
--- 主鍵索引
-PRIMARY KEY (id),
--- 狀態和時間組合索引，支援狀態篩選和排序
-INDEX idx_status_created (status, created_at),
--- 資源關聯索引
-INDEX idx_resource (resource_id),
--- 負責人查詢索引
-INDEX idx_assignee (assignee_id),
--- 全文搜索索引
-FULLTEXT idx_title_description (title, description)
-```
-
-### 10.5 完整資料庫架構
-
-**核心表結構**
-
-**用戶和組織表**
-```sql
--- 用戶表
-CREATE TABLE users (
-    id VARCHAR(36) PRIMARY KEY,
-    username VARCHAR(50) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    display_name VARCHAR(100),
-    status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- 團隊表
-CREATE TABLE teams (
-    id VARCHAR(36) PRIMARY KEY,
-    name VARCHAR(100) UNIQUE NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- 用戶團隊關聯表
-CREATE TABLE user_teams (
-    user_id VARCHAR(36),
-    team_id VARCHAR(36),
-    role ENUM('member', 'admin') DEFAULT 'member',
-    joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (user_id, team_id),
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (team_id) REFERENCES teams(id)
-);
-```
-
-**事件相關表**
-```sql
--- 事件表
-CREATE TABLE events (
-    id VARCHAR(36) PRIMARY KEY,
-    title VARCHAR(200) NOT NULL,
-    description TEXT,
-    severity ENUM('critical', 'warning', 'info') NOT NULL,
-    status ENUM('new', 'acknowledged', 'resolved', 'closed') NOT NULL,
-    source VARCHAR(100),
-    resource_id VARCHAR(36),
-    assignee_id VARCHAR(36),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    resolved_at TIMESTAMP NULL,
-    tags JSON,
-    metadata JSON,
-    INDEX idx_status_created (status, created_at),
-    INDEX idx_resource (resource_id),
-    INDEX idx_assignee (assignee_id),
-    FULLTEXT idx_title_description (title, description)
-);
-
--- 事件處理歷史表
-CREATE TABLE event_history (
-    id VARCHAR(36) PRIMARY KEY,
-    event_id VARCHAR(36) NOT NULL,
-    action VARCHAR(50) NOT NULL,
-    user_id VARCHAR(36),
-    old_values JSON,
-    new_values JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (event_id) REFERENCES events(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-```
-
-### 10.6 資料庫設計總結
-
-**設計原則**
-1. **規範化設計**: 採用適當的資料庫規範化，減少資料冗餘
-2. **關聯完整性**: 定義清晰的主鍵和外鍵關聯
-3. **效能優化**: 基於查詢模式設計合適的索引
-4. **可擴展性**: JSON 欄位支援靈活的元資料存儲
-
-**核心特性**
-- **事件驅動**: 支援事件狀態流轉和歷史追蹤
-- **多租戶架構**: 用戶、團隊、角色的組織結構
-- **標籤系統**: 靈活的標籤分類和篩選
-- **通知整合**: 策略、管道、歷史記錄完整追蹤
-
-**技術棧**
-- **資料庫**: MySQL 8.0 / PostgreSQL 13+
-- **ORM**: 支援主流 ORM 框架
-- **索引策略**: 組合索引 + 全文搜索索引
-- **約束檢查**: 枚舉約束 + 自訂檢查約束
-
-### 9.7 完整頁面架構與 KPI 對應
+### 10.5 完整頁面架構與 KPI 對應
 
 **登入與導航**
 - 登入頁面 (LoginPage)
@@ -2459,9 +2338,7 @@ CREATE TABLE event_history (
 
 ---
 
-## 11. UI 元件架構分析
-
-### 11.1 Ant Design 元件使用情况
+### 10.6 Ant Design 元件使用情况
 
 **佈局元件 (Layout Components)**
 - Layout: 全域佈局框架
@@ -2518,7 +2395,7 @@ CREATE TABLE event_history (
 - Space: 間距容器
 - Divider: 分割線
 
-### 11.2 ECharts 圖表元件使用情况
+### 10.7 ECharts 圖表元件使用情况
 
 **圖表類型**
 - Line Chart: 折線圖，用於趨勢分析
@@ -2535,7 +2412,7 @@ CREATE TABLE event_history (
 - 系統健康度監控 (Heatmap)
 - 容量預測分析 (Area Chart)
 
-### 11.3 頁面元件使用统计
+### 10.8 頁面元件使用统计
 
 **元件使用頻率統計**
 
@@ -2562,7 +2439,7 @@ CREATE TABLE event_history (
 - Heatmap: 2個頁面
 - Area Chart: 1個頁面
 
-### 11.4 UI 架构设计特点
+### 10.9 UI 架構設計特點
 
 **元件化設計**
 - 採用統一的 ToolbarActions 元件
@@ -2588,7 +2465,7 @@ CREATE TABLE event_history (
 - 直觀的操作按鈕和狀態指示
 - 快速的頁面導航和切換
 
-### 11.5 技術棧總結
+### 10.10 技術棧總結
 
 **前端技術棧**
 - **React 18**: 主要的 UI 框架
@@ -2618,7 +2495,5 @@ CREATE TABLE event_history (
 - **useCallback 和 useMemo 優化渲染** - 避免不必要的重渲染
 - **圖表虛擬化渲染** - ECharts 組件效能優化
 - **按需載入和代碼分割** - 路由級別的 lazy loading
-- **CDN 資源加速載入** - 靜態資源優化
-- **檔案路徑規範** - 清晰的目錄結構便於維護和擴展
 
 ---

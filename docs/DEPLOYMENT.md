@@ -17,7 +17,6 @@
 所有部署配置必須符合以下契約規範：
 - **[../openapi.yaml](../openapi.yaml)** - API 服務端點和認證規範
 - **[../db_schema.sql](../db_schema.sql)** - 數據庫初始化和遷移腳本
-- **[../TODO.md](../TODO.md)** - 前端實作狀態和 Mock Server 配置
 
 ## 部署概述
 
@@ -1209,4 +1208,4 @@ docker exec -it sre_postgres psql -U sre_user -d sre_platform \
 
 ---
 
-*最後更新：2024年12月 | 版本：1.0*
+*最後更新：2025年9月 | 版本：1.0*

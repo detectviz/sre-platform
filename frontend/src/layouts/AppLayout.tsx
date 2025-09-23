@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Layout, Menu, Breadcrumb, Button, Input, Space, Typography } from 'antd'
 import {
   MenuFoldOutlined,
@@ -8,26 +8,21 @@ import {
 } from '@ant-design/icons'
 import type { MenuProps } from 'antd'
 import { NotificationCenter, UserMenu } from '../components'
+import GlobalSearch from '../components/GlobalSearch'
+
+const { Title } = Typography
+const { Header, Sider, Content } = Layout
 
 export interface BreadcrumbItem {
   title: string
   href?: string
 }
-
-const { Title } = Typography
-
-const { Header, Sider, Content } = Layout
 
 export interface MenuItem {
   key: string
   icon?: React.ReactNode
   label: string
   children?: MenuItem[]
-}
-
-export interface BreadcrumbItem {
-  title: string
-  href?: string
 }
 
 export interface AppLayoutProps {
@@ -44,6 +39,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   onMenuSelect,
 }) => {
   const [collapsed, setCollapsed] = useState(false)
+  const [searchVisible, setSearchVisible] = useState(false)
 
   const toggleCollapsed = () => setCollapsed((prev) => !prev)
 
@@ -51,6 +47,19 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
     console.log('📱 Menu clicked:', key)
     onMenuSelect?.(key)
   }
+
+  // 監聽 Ctrl+K 快捷鍵
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchVisible(true)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
 
   return (
     <Layout className="glass-layout" style={{ minHeight: '100vh', background: 'var(--bg-page)' }}>
@@ -120,12 +129,15 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
             <Input
               prefix={<SearchOutlined style={{ color: 'var(--text-tertiary)' }} />}
               placeholder="Search... (Ctrl+K)"
+              readOnly
               style={{
                 width: 260,
                 background: 'var(--bg-elevated)',
                 border: '1px solid var(--border-color)',
-                color: 'var(--text-primary)'
+                color: 'var(--text-primary)',
+                cursor: 'pointer'
               }}
+              onClick={() => setSearchVisible(true)}
             />
             <NotificationCenter />
             <UserMenu />
@@ -143,6 +155,11 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           {children}
         </Content>
       </Layout>
+
+      <GlobalSearch
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
+      />
     </Layout>
   )
 }

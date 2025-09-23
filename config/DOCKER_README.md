@@ -212,23 +212,3 @@ docker-compose down -v
 # 重新啟動
 docker-compose up -d
 ```
-
-### 獲取幫助
-
-如果遇到問題，請檢查：
-
-1. Docker 和 Docker Compose 版本
-2. 系統資源使用情況
-3. 網路連接狀態
-4. 服務特定的錯誤日誌
-
-## 📚 相關文件
-
-- [SRE Platform 架構說明](../docs/ARCHITECTURE.md)
-- [開發環境設置](../docs/DEV_GUIDE.md)
-- [API 參考文檔](../docs/API_REFERENCE.md)
-- [部署指南](../docs/ROADMAP.md)
-
-## 🤝 貢獻
-
-歡迎提交 Issue 和 Pull Request 來改進 Docker 環境配置！

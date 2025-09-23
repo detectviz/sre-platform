@@ -1,23 +1,14 @@
+// 基礎 UI 組件
 export { ContextualKPICard } from './ContextualKPICard'
 export { ToolbarActions, type FilterOption, type ToolbarAction, type ColumnOption } from './ToolbarActions'
 export { PageHeader } from './PageHeader'
 export { NotificationCenter } from './NotificationCenter'
 export { UserMenu } from './UserMenu'
 export { GrafanaDashboard } from './GrafanaDashboard'
+export { default as GlobalSearch } from './GlobalSearch'
+export { LazyRoute } from './LazyRoute'
 
-// Type exports for external use
+// 類型導出
 export type { FilterOption as FilterOptionType } from './ToolbarActions'
 export type { ToolbarAction as ToolbarActionType } from './ToolbarActions'
 export type { ColumnOption as ColumnOptionType } from './ToolbarActions'
-
-// Page components
-export { default as DashboardPage } from '../pages/DashboardPage'
-export { default as AnalyzingPage } from '../pages/AnalyzingPage'
-export { default as AutomationPage } from '../pages/AutomationPage'
-export { default as IdentitySettingsPage } from '../pages/IdentitySettingsPage'
-export { default as NotificationSettingsPage } from '../pages/NotificationSettingsPage'
-export { default as PlatformSettingsPage } from '../pages/PlatformSettingsPage'
-export { default as SREWarRoomPage } from '../pages/SREWarRoomPage'
-export { default as SREInfrastructureInsightPage } from '../pages/SREInfrastructureInsightPage'
-export { default as DashboardViewPage } from '../pages/DashboardViewPage'
-// Removed HomePage export as it's no longer used
