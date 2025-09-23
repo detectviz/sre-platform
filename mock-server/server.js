@@ -366,6 +366,146 @@ const topologyGraph = {
   ]
 };
 
+const metricDefinitions = [
+  {
+    metric_key: 'cpu_usage_percent',
+    display_name: 'CPU 使用率',
+    description: '節點 CPU 使用率平均值 (百分比)。',
+    unit: '%',
+    category: 'performance',
+    resource_scope: 'resource',
+    supported_aggregations: ['avg', 'p95', 'max'],
+    default_aggregation: 'avg',
+    warning_threshold: 70,
+    critical_threshold: 85,
+    tags: ['host', 'saturation'],
+    metadata: { source: 'prometheus', recommended_panels: ['war_room', 'resources_overview'] },
+    created_at: toISO(new Date(now.getTime() - 86400000 * 7)),
+    updated_at: toISO(new Date(now.getTime() - 3600000))
+  },
+  {
+    metric_key: 'memory_usage_percent',
+    display_name: '記憶體使用率',
+    description: '節點記憶體使用率平均值 (百分比)。',
+    unit: '%',
+    category: 'performance',
+    resource_scope: 'resource',
+    supported_aggregations: ['avg', 'p95', 'max'],
+    default_aggregation: 'avg',
+    warning_threshold: 75,
+    critical_threshold: 90,
+    tags: ['host', 'capacity'],
+    metadata: { source: 'prometheus', recommended_panels: ['resources_overview'] },
+    created_at: toISO(new Date(now.getTime() - 86400000 * 5)),
+    updated_at: toISO(new Date(now.getTime() - 5400000))
+  },
+  {
+    metric_key: 'http_error_rate_percent',
+    display_name: 'HTTP 錯誤率',
+    description: 'API 服務每分鐘錯誤率 (百分比)。',
+    unit: '%',
+    category: 'reliability',
+    resource_scope: 'resource',
+    supported_aggregations: ['avg', 'max', 'p95'],
+    default_aggregation: 'avg',
+    warning_threshold: 1,
+    critical_threshold: 3,
+    tags: ['service', 'availability'],
+    metadata: { source: 'prometheus', recommended_panels: ['war_room', 'incidents_overview'] },
+    created_at: toISO(new Date(now.getTime() - 86400000 * 3)),
+    updated_at: toISO(new Date(now.getTime() - 1800000))
+  }
+];
+
+const metricOverviewRecords = [
+  {
+    metric_key: 'cpu_usage_percent',
+    latest_value: 68.3,
+    status: 'warning',
+    change_rate: -0.06,
+    variance: 6,
+    top_resources: [
+      { resource_id: 'res-001', resource_name: 'web-01', resource_type: 'service', value: 82.1, status: 'warning', change_rate: 0.05 },
+      { resource_id: 'res-002', resource_name: 'rds-read-1', resource_type: 'database', value: 69.8, status: 'warning', change_rate: -0.02 }
+    ],
+    metadata: { panel: 'war_room', insight: 'API 節點 CPU 仍偏高' }
+  },
+  {
+    metric_key: 'memory_usage_percent',
+    latest_value: 63.4,
+    status: 'healthy',
+    change_rate: -0.03,
+    variance: 5,
+    top_resources: [
+      { resource_id: 'res-001', resource_name: 'web-01', resource_type: 'service', value: 66.9, status: 'healthy', change_rate: -0.04 },
+      { resource_id: 'res-002', resource_name: 'rds-read-1', resource_type: 'database', value: 71.2, status: 'warning', change_rate: 0.01 }
+    ],
+    metadata: { panel: 'resources_overview' }
+  },
+  {
+    metric_key: 'http_error_rate_percent',
+    latest_value: 2.7,
+    status: 'critical',
+    change_rate: 0.18,
+    variance: 1.2,
+    top_resources: [
+      { resource_id: 'svc-gateway', resource_name: '北區 Gateway', resource_type: 'service', value: 3.9, status: 'critical', change_rate: 0.22 },
+      { resource_id: 'res-001', resource_name: 'web-01', resource_type: 'service', value: 2.4, status: 'warning', change_rate: 0.12 }
+    ],
+    metadata: { panel: 'war_room', alert: '需優先處理 API 錯誤率' }
+  }
+];
+
+const metricSeriesSeeds = {
+  cpu_usage_percent: [
+    { resource_id: 'res-001', baseValue: 82, variance: 5.5, status: 'warning' },
+    { resource_id: 'res-002', baseValue: 68, variance: 4.2, status: 'warning' }
+  ],
+  memory_usage_percent: [
+    { resource_id: 'res-001', baseValue: 66, variance: 4.3, status: 'healthy' },
+    { resource_id: 'res-002', baseValue: 71, variance: 3.8, status: 'warning' }
+  ],
+  http_error_rate_percent: [
+    {
+      resource_id: 'svc-gateway',
+      resource_name: '北區 Gateway',
+      resource_type: 'service',
+      team_id: 'team-sre',
+      environment: 'production',
+      baseValue: 3.8,
+      variance: 1.4,
+      status: 'critical'
+    },
+    {
+      resource_id: 'svc-api',
+      resource_name: '交易 API',
+      resource_type: 'service',
+      team_id: 'team-sre',
+      environment: 'production',
+      baseValue: 2.1,
+      variance: 0.9,
+      status: 'warning'
+    }
+  ]
+};
+metricSeriesSeeds.default = [
+  { resource_id: 'res-001', baseValue: 60, variance: 4.5, status: 'healthy' }
+];
+
+const healthComponentsBase = [
+  { name: 'postgresql', status: 'ok', message: '資料庫連線正常', latency_ms: 12 },
+  { name: 'victoria-metrics', status: 'degraded', message: '查詢延遲 180ms，仍維持可用', latency_ms: 180 },
+  { name: 'redis-cluster', status: 'ok', message: '快取與佇列服務正常', latency_ms: 7 },
+  { name: 'grafana-webhook', status: 'ok', message: 'Grafana Webhook 轉發服務正常', latency_ms: 24 }
+];
+
+const readinessComponentsBase = [
+  { name: 'postgresql', dependency: 'postgresql', status: 'ok', message: '主要資料庫節點連線正常', latency_ms: 18 },
+  { name: 'victoria-metrics', dependency: 'victoria-metrics', status: 'degraded', message: '指標查詢延遲高於 SLA', latency_ms: 180 },
+  { name: 'redis-cluster', dependency: 'redis', status: 'ok', message: 'Redis 叢集已就緒', latency_ms: 9 },
+  { name: 'grafana-webhook', dependency: 'grafana', status: 'ok', message: '告警接收器 webhook 已完成啟動', latency_ms: 34 }
+];
+
 const dashboards = [
   {
     dashboard_id: 'dash-001',
@@ -1005,6 +1145,81 @@ const paginate = (items, req) => {
   };
 };
 
+const parseListParam = (value) => {
+  if (Array.isArray(value)) {
+    return value.filter((item) => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim());
+  }
+  if (typeof value !== 'string') return null;
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0);
+};
+
+const GRANULARITY_TO_MINUTES = {
+  '1m': 1,
+  '5m': 5,
+  '15m': 15,
+  '1h': 60,
+  '6h': 360,
+  '1d': 1440
+};
+
+const parseDurationToMinutes = (value, fallback = 5) => {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim();
+  if (GRANULARITY_TO_MINUTES[trimmed]) {
+    return GRANULARITY_TO_MINUTES[trimmed];
+  }
+  const match = trimmed.match(/^([0-9]+)([mhd])$/i);
+  if (!match) return fallback;
+  const amount = parseInt(match[1], 10);
+  if (!Number.isFinite(amount) || amount <= 0) return fallback;
+  const unit = match[2].toLowerCase();
+  switch (unit) {
+    case 'm':
+      return amount;
+    case 'h':
+      return amount * 60;
+    case 'd':
+      return amount * 1440;
+    default:
+      return fallback;
+  }
+};
+
+const buildTimeSeriesPoints = (pointCount, stepMinutes, baseValue, variance = 5, endDate = new Date()) => {
+  const baseTime = endDate instanceof Date && !Number.isNaN(endDate.getTime()) ? endDate.getTime() : Date.now();
+  const effectiveCount = Math.max(1, pointCount);
+  return Array.from({ length: effectiveCount }).map((_, index) => {
+    const offset = Math.sin(index / 2) * variance;
+    const value = Number(Math.max(0, baseValue + offset).toFixed(2));
+    const timestamp = toISO(new Date(baseTime - (effectiveCount - 1 - index) * stepMinutes * 60000));
+    return { timestamp, value };
+  });
+};
+
+const summarizePoints = (points) => {
+  if (!Array.isArray(points) || points.length === 0) {
+    const nowIso = toISO(new Date());
+    return { min: 0, max: 0, avg: 0, last: 0, last_timestamp: nowIso };
+  }
+  const values = points.map((point) => point.value);
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const sum = values.reduce((acc, val) => acc + val, 0);
+  const avg = Number((sum / values.length).toFixed(2));
+  const lastPoint = points[points.length - 1];
+  return { min, max, avg, last: lastPoint.value, last_timestamp: lastPoint.timestamp };
+};
+
+const parseDateOrDefault = (value, fallback) => {
+  const fallbackDate = fallback instanceof Date ? fallback : new Date(fallback);
+  if (!value) return new Date(fallbackDate);
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? new Date(fallbackDate) : parsed;
+};
+
 const normalizeTags = (tags) => {
   if (!Array.isArray(tags)) return [];
   return tags
@@ -1151,6 +1366,38 @@ const mapNotificationResendJob = (job) => ({
   metadata: job.metadata || {}
 });
 
+const buildSeedFromResource = (seed, index, metricKey) => {
+  const baseResource = resourceData.find((res) => res.resource_id === seed.resource_id);
+  let defaultValue = 60 + index * 5;
+  if (baseResource) {
+    if (metricKey === 'memory_usage_percent' && typeof baseResource.memory_usage === 'number') {
+      defaultValue = baseResource.memory_usage;
+    } else if (metricKey === 'cpu_usage_percent' && typeof baseResource.cpu_usage === 'number') {
+      defaultValue = baseResource.cpu_usage;
+    } else if (typeof baseResource.cpu_usage === 'number') {
+      defaultValue = baseResource.cpu_usage;
+    }
+  }
+  return {
+    resource_id: seed.resource_id,
+    resource_name: seed.resource_name || baseResource?.name || seed.resource_id,
+    resource_type: seed.resource_type || baseResource?.type || 'service',
+    team_id: seed.team_id || baseResource?.team_id || null,
+    environment: seed.environment || baseResource?.environment || null,
+    baseValue: seed.baseValue ?? defaultValue,
+    variance: seed.variance ?? 4 + index * 1.2,
+    status: seed.status || baseResource?.status || 'healthy'
+  };
+};
+
+const getMetricSeriesSeeds = (metricKey, resourceIds = []) => {
+  if (Array.isArray(resourceIds) && resourceIds.length > 0) {
+    return resourceIds.map((id, index) => buildSeedFromResource({ resource_id: id }, index, metricKey));
+  }
+  const seeds = metricSeriesSeeds[metricKey] || metricSeriesSeeds.default || [];
+  return seeds.map((seed, index) => buildSeedFromResource(seed, index, metricKey));
+};
+
 const getEventById = (id) => eventData.find((evt) => evt.event_id === id);
 const getEventRuleById = (id) => eventRules.find((rule) => rule.rule_id === id);
 const getSilenceRuleById = (id) => silenceRules.find((rule) => rule.silence_id === id);
@@ -1242,6 +1489,234 @@ app.get('/search', (req, res) => {
       { type: 'resource', label: '資源', results: resourceResults },
       { type: 'dashboard', label: '儀表板', results: dashboardResults }
     ]
+  });
+});
+
+app.get('/healthz', (req, res) => {
+  const nowTime = new Date();
+  const components = healthComponentsBase.map((component) => ({
+    ...component,
+    last_checked_at: toISO(nowTime)
+  }));
+  const status = components.some((component) => component.status === 'down')
+    ? 'down'
+    : components.some((component) => component.status === 'degraded')
+    ? 'degraded'
+    : 'ok';
+  res.json({
+    status,
+    checked_at: toISO(nowTime),
+    version: '3.0.0',
+    components,
+    notes: ['最近 15 分鐘內未觀察到新的系統錯誤。']
+  });
+});
+
+app.get('/readyz', (req, res) => {
+  const nowTime = new Date();
+  const components = readinessComponentsBase.map((component) => ({
+    ...component,
+    last_checked_at: toISO(nowTime)
+  }));
+  const pending = components.filter((component) => component.status !== 'ok').map((component) => component.name);
+  const status = components.some((component) => component.status === 'down')
+    ? 'down'
+    : pending.length > 0
+    ? 'degraded'
+    : 'ok';
+  res.json({
+    status,
+    checked_at: toISO(nowTime),
+    version: '3.0.0',
+    components,
+    pending_dependencies: pending,
+    notes:
+      pending.length > 0
+        ? ['部分依賴目前處於 degraded 狀態，請持續觀察。']
+        : ['所有依賴均已完成就緒檢查。']
+  });
+});
+
+app.get('/metrics', (req, res) => {
+  const requestedKeys = parseListParam(req.query.metric_keys);
+  const resourceType = typeof req.query.resource_type === 'string' ? req.query.resource_type.trim() : '';
+  const groupBy = parseListParam(req.query.group_by) || [];
+  const granularity = typeof req.query.granularity === 'string' && req.query.granularity.trim().length > 0
+    ? req.query.granularity.trim()
+    : '5m';
+  const stepMinutes = parseDurationToMinutes(granularity, 5);
+  const endTime = parseDateOrDefault(req.query.end_time, new Date());
+  let startTime = parseDateOrDefault(req.query.start_time, new Date(endTime.getTime() - stepMinutes * 60000 * 11));
+  if (startTime > endTime) {
+    startTime = new Date(endTime.getTime() - stepMinutes * 60000 * 11);
+  }
+  const totalMinutes = Math.max(stepMinutes, Math.round((endTime.getTime() - startTime.getTime()) / 60000));
+  const pointCount = Math.min(48, Math.max(6, Math.floor(totalMinutes / stepMinutes) || 12));
+
+  const filteredRecords = metricOverviewRecords.filter((record) => {
+    if (requestedKeys && requestedKeys.length > 0 && !requestedKeys.includes(record.metric_key)) {
+      return false;
+    }
+    if (resourceType) {
+      return record.top_resources.some((item) => item.resource_type === resourceType);
+    }
+    return true;
+  });
+
+  const metrics = filteredRecords.map((record) => {
+    const definition = metricDefinitions.find((def) => def.metric_key === record.metric_key);
+    const thresholds = definition
+      ? { warning: definition.warning_threshold ?? null, critical: definition.critical_threshold ?? null }
+      : { warning: null, critical: null };
+    const trend = buildTimeSeriesPoints(pointCount, stepMinutes, record.latest_value, record.variance, endTime);
+    return {
+      metric_key: record.metric_key,
+      display_name: definition?.display_name || record.metric_key,
+      unit: definition?.unit || '',
+      latest_value: Number(record.latest_value.toFixed(2)),
+      status: record.status,
+      change_rate: record.change_rate,
+      thresholds,
+      last_updated_at: toISO(endTime),
+      trend,
+      top_resources: record.top_resources.map((item) => ({ ...item })),
+      metadata: {
+        ...(definition?.metadata || {}),
+        ...(record.metadata || {}),
+        time_range: { start: toISO(startTime), end: toISO(endTime) },
+        group_by: groupBy
+      }
+    };
+  });
+
+  res.json({
+    generated_at: toISO(new Date()),
+    granularity,
+    metrics
+  });
+});
+
+app.get('/metrics/definitions', (req, res) => {
+  const { category, resource_scope: resourceScope } = req.query;
+  const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
+  let definitions = metricDefinitions;
+  if (category) {
+    definitions = definitions.filter((definition) => definition.category === category);
+  }
+  if (resourceScope) {
+    definitions = definitions.filter((definition) => definition.resource_scope === resourceScope);
+  }
+  if (keyword) {
+    definitions = definitions.filter((definition) => {
+      const desc = (definition.description || '').toLowerCase();
+      return (
+        definition.metric_key.toLowerCase().includes(keyword) ||
+        definition.display_name.toLowerCase().includes(keyword) ||
+        desc.includes(keyword)
+      );
+    });
+  }
+  res.json(paginate(definitions, req));
+});
+
+app.post('/metrics/query', (req, res) => {
+  const payload = req.body || {};
+  const definition = metricDefinitions.find((def) => def.metric_key === payload.metric_key);
+  if (!definition) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: '未知的指標鍵。' });
+  }
+
+  const requestedAggregations = Array.isArray(payload.aggregations)
+    ? payload.aggregations.filter((agg) => definition.supported_aggregations.includes(agg))
+    : [];
+  if (requestedAggregations.length === 0) {
+    requestedAggregations.push(definition.default_aggregation);
+  }
+
+  const rangePayload = payload.time_range || {};
+  const stepLabel = rangePayload.step || '5m';
+  const stepMinutes = parseDurationToMinutes(stepLabel, 5);
+  const endTime = parseDateOrDefault(rangePayload.end, new Date());
+  let startTime = parseDateOrDefault(rangePayload.start, new Date(endTime.getTime() - stepMinutes * 60000 * 23));
+  if (startTime > endTime) {
+    startTime = new Date(endTime.getTime() - stepMinutes * 60000 * 23);
+  }
+  const totalMinutes = Math.max(stepMinutes, Math.round((endTime.getTime() - startTime.getTime()) / 60000));
+  const pointCount = Math.min(96, Math.max(12, Math.floor(totalMinutes / stepMinutes) || 24));
+
+  const seeds = getMetricSeriesSeeds(definition.metric_key, payload.resource_ids);
+  const series = seeds.map((seed, index) => {
+    const datapoints = buildTimeSeriesPoints(pointCount, stepMinutes, seed.baseValue, seed.variance, endTime);
+    const summary = summarizePoints(datapoints);
+    const group = {};
+    if (seed.resource_type) group.resource_type = seed.resource_type;
+    if (seed.team_id) group.team_id = seed.team_id;
+    if (seed.environment) group.environment = seed.environment;
+    return {
+      series_id: `${definition.metric_key}-series-${index + 1}`,
+      metric_key: definition.metric_key,
+      resource_id: seed.resource_id,
+      resource_name: seed.resource_name,
+      group,
+      aggregation: requestedAggregations[0],
+      status: seed.status,
+      datapoints,
+      summary
+    };
+  });
+
+  const annotations =
+    definition.metric_key === 'http_error_rate_percent'
+      ? [
+          {
+            timestamp: toISO(new Date(endTime.getTime() - stepMinutes * 60000 * Math.min(pointCount - 1, 6))),
+            level: 'critical',
+            message: 'AI 建議：檢查 Gateway 節點錯誤率峰值',
+            source: 'ai-insight'
+          }
+        ]
+      : [
+          {
+            timestamp: toISO(new Date(endTime.getTime() - stepMinutes * 60000 * Math.min(pointCount - 1, 3))),
+            level: 'info',
+            message: '自動化調整完成：容量檢查通過',
+            source: 'automation'
+          }
+        ];
+
+  const requestedRange = {
+    start: toISO(startTime),
+    end: toISO(endTime),
+    step: stepLabel,
+    timezone: rangePayload.timezone || 'UTC'
+  };
+
+  let compareRange;
+  if (payload.compare_range) {
+    const comparePayload = payload.compare_range;
+    const compareEnd = parseDateOrDefault(comparePayload.end, new Date(startTime));
+    let compareStart = parseDateOrDefault(comparePayload.start, new Date(compareEnd.getTime() - stepMinutes * 60000 * pointCount));
+    if (compareStart > compareEnd) {
+      compareStart = new Date(compareEnd.getTime() - stepMinutes * 60000 * pointCount);
+    }
+    compareRange = {
+      start: toISO(compareStart),
+      end: toISO(compareEnd),
+      step: comparePayload.step || requestedRange.step,
+      timezone: comparePayload.timezone || requestedRange.timezone
+    };
+  }
+
+  res.json({
+    query_id: `metric-query-${Date.now()}`,
+    metric_key: definition.metric_key,
+    unit: definition.unit,
+    requested_range: requestedRange,
+    compare_range: compareRange,
+    aggregations: requestedAggregations,
+    generated_at: toISO(new Date()),
+    series,
+    annotations
   });
 });
 

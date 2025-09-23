@@ -378,6 +378,54 @@ CREATE TABLE resource_metrics (
 );
 CREATE INDEX idx_resource_metrics_resource ON resource_metrics (resource_id, metric, collected_at DESC);
 
+-- =============================
+-- 系統指標定義與快照
+-- =============================
+CREATE TABLE metric_definitions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    metric_key VARCHAR(128) NOT NULL UNIQUE,
+    display_name VARCHAR(128) NOT NULL,
+    description TEXT,
+    unit VARCHAR(32) NOT NULL,
+    category VARCHAR(32) NOT NULL,
+    resource_scope VARCHAR(32) NOT NULL,
+    supported_aggregations TEXT[] NOT NULL DEFAULT ARRAY['avg']::TEXT[],
+    default_aggregation VARCHAR(32) NOT NULL DEFAULT 'avg',
+    warning_threshold NUMERIC(14,4),
+    critical_threshold NUMERIC(14,4),
+    tags TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_metric_definitions_category CHECK (category IN ('performance','reliability','saturation','cost','custom')),
+    CONSTRAINT chk_metric_definitions_scope CHECK (resource_scope IN ('global','resource','resource_type','team')),
+    CONSTRAINT chk_metric_definitions_aggs CHECK (supported_aggregations <@ ARRAY['avg','max','min','sum','p95','p99']),
+    CONSTRAINT chk_metric_definitions_default CHECK (default_aggregation = ANY(supported_aggregations))
+);
+CREATE INDEX idx_metric_definitions_category ON metric_definitions (category);
+CREATE INDEX idx_metric_definitions_scope ON metric_definitions (resource_scope);
+
+CREATE TABLE system_metric_snapshots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    definition_id UUID NOT NULL REFERENCES metric_definitions(id) ON DELETE CASCADE,
+    collected_at TIMESTAMPTZ NOT NULL,
+    granularity VARCHAR(16) NOT NULL,
+    aggregation VARCHAR(32) NOT NULL,
+    value NUMERIC(14,4) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    change_rate NUMERIC(10,4),
+    comparison JSONB NOT NULL DEFAULT '{}'::JSONB,
+    trend JSONB NOT NULL DEFAULT '[]'::JSONB,
+    top_resources JSONB NOT NULL DEFAULT '[]'::JSONB,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_metric_snapshots_granularity CHECK (granularity IN ('1m','5m','15m','1h','6h','1d')),
+    CONSTRAINT chk_metric_snapshots_status CHECK (status IN ('healthy','warning','critical','unknown')),
+    CONSTRAINT chk_metric_snapshots_agg CHECK (aggregation IN ('avg','max','min','sum','p95','p99'))
+);
+CREATE INDEX idx_metric_snapshots_definition_time ON system_metric_snapshots (definition_id, collected_at DESC);
+CREATE INDEX idx_metric_snapshots_status ON system_metric_snapshots (status);
+
 CREATE TABLE resource_groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(128) NOT NULL UNIQUE,
