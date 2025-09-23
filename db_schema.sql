@@ -177,6 +177,7 @@ CREATE TABLE event_rules (
     name VARCHAR(128) NOT NULL UNIQUE,
     description TEXT,
     severity VARCHAR(32) NOT NULL,
+    default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
     enabled BOOLEAN NOT NULL DEFAULT TRUE,
     labels JSONB NOT NULL DEFAULT '[]'::JSONB,
     environments JSONB NOT NULL DEFAULT '[]'::JSONB,
@@ -189,7 +190,8 @@ CREATE TABLE event_rules (
     creator_id UUID REFERENCES users(id),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_event_rules_severity CHECK (severity IN ('critical','warning','info'))
+    CONSTRAINT chk_event_rules_severity CHECK (severity IN ('critical','warning','info')),
+    CONSTRAINT chk_event_rules_priority CHECK (default_priority IN ('P0','P1','P2','P3'))
 );
 CREATE INDEX idx_event_rules_enabled ON event_rules (enabled);
 
@@ -237,6 +239,7 @@ CREATE TABLE events (
     description TEXT,
     severity VARCHAR(32) NOT NULL,
     status VARCHAR(32) NOT NULL,
+    priority VARCHAR(8) NOT NULL DEFAULT 'P2',
     source VARCHAR(100),
     service_impact TEXT,
     resource_id UUID,
@@ -252,11 +255,13 @@ CREATE TABLE events (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_events_severity CHECK (severity IN ('critical','warning','info')),
-    CONSTRAINT chk_events_status CHECK (status IN ('new','acknowledged','in_progress','resolved','silenced'))
+    CONSTRAINT chk_events_status CHECK (status IN ('new','acknowledged','in_progress','resolved','silenced')),
+    CONSTRAINT chk_events_priority CHECK (priority IN ('P0','P1','P2','P3'))
 );
 CREATE INDEX idx_events_status ON events (status);
 CREATE INDEX idx_events_severity ON events (severity);
 CREATE INDEX idx_events_trigger_time ON events (trigger_time DESC);
+CREATE INDEX idx_events_priority ON events (priority);
 
 CREATE TABLE event_tags (
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
@@ -292,6 +297,38 @@ CREATE TABLE event_ai_analysis (
     confidence NUMERIC(5,2),
     generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE event_batch_operations (
+    batch_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    action VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    total_count INTEGER NOT NULL,
+    processed_count INTEGER NOT NULL DEFAULT 0,
+    success_count INTEGER NOT NULL DEFAULT 0,
+    failed_count INTEGER NOT NULL DEFAULT 0,
+    requested_by UUID NOT NULL REFERENCES users(id),
+    assignee_id UUID REFERENCES users(id),
+    comment TEXT,
+    request_payload JSONB NOT NULL DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    CONSTRAINT chk_event_batch_action CHECK (action IN ('acknowledge','resolve','assign','add_comment')),
+    CONSTRAINT chk_event_batch_status CHECK (status IN ('pending','running','completed','failed'))
+);
+CREATE INDEX idx_event_batch_status ON event_batch_operations (status);
+CREATE INDEX idx_event_batch_created_at ON event_batch_operations (created_at DESC);
+CREATE INDEX idx_event_batch_requested_by ON event_batch_operations (requested_by);
+
+CREATE TABLE event_batch_results (
+    result_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    batch_id UUID NOT NULL REFERENCES event_batch_operations(batch_id) ON DELETE CASCADE,
+    event_id UUID REFERENCES events(id) ON DELETE SET NULL,
+    success BOOLEAN NOT NULL,
+    message TEXT,
+    error_code VARCHAR(64),
+    processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_event_batch_results_batch ON event_batch_results (batch_id);
 
 -- =============================
 -- 資源與拓撲
