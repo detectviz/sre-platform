@@ -11,6 +11,7 @@ import {
 import type { ColumnsType } from 'antd/es/table'
 
 const { Search } = Input
+import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { CategoryFilter } from '../components/CategoryFilter'
 import { useCategories } from '../hooks/useCategories'
@@ -283,69 +284,30 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 'var(--spacing-2xl)',
-          paddingBottom: 'var(--spacing-lg)',
-          borderBottom: '1px solid var(--border-light)',
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <h2
-            style={{
-              margin: 0,
-              color: 'var(--text-primary)',
-              background: 'linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              fontSize: '24px',
-              fontWeight: 600,
-            }}
-          >
-            儀表板管理
-          </h2>
+      <PageHeader
+        title="儀表板管理"
+        subtitle="統一管理業務儀表板、SRE 戰情室和基礎設施洞察面板"
+        extra={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
+            <Search
+              placeholder="搜尋儀表板名稱..."
+              onSearch={handleSearch}
+              style={{ width: 320 }}
+              allowClear
+            />
 
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginTop: 'var(--spacing-xs)',
-          }}>
-            <p
-              style={{
-                fontSize: '14px',
-                color: 'var(--text-secondary)',
-                margin: 0,
-              }}
-            >
-              統一管理業務儀表板、SRE 戰情室和基礎設施洞察面板
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-md)' }}>
-              <Search
-                placeholder="搜尋儀表板名稱..."
-                onSearch={handleSearch}
-                style={{ width: 320 }}
-                allowClear
-              />
-
-              <Tooltip title="創建新的儀表板">
-                <Button
-                  type="primary"
-                  icon={<EditOutlined />}
-                  onClick={() => console.log('新增儀表板')}
-                >
-                  新增儀表板
-                </Button>
-              </Tooltip>
-            </div>
+            <Tooltip title="創建新的儀表板">
+              <Button
+                type="primary"
+                icon={<EditOutlined />}
+                onClick={() => console.log('新增儀表板')}
+              >
+                新增儀表板
+              </Button>
+            </Tooltip>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div
         style={{

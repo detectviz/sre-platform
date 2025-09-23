@@ -1,22 +1,9 @@
 import React, { useState } from 'react';
-import { Select, Switch, InputNumber, Space } from 'antd';
+import { Select, InputNumber, Space } from 'antd';
+import type { GrafanaDashboardProps } from '../types/components';
 
 const { Option } = Select;
 
-interface GrafanaDashboardProps {
-  dashboardUrl?: string;
-  height?: string;
-  title?: string;
-  showControls?: boolean;
-  orgId?: string;
-  panelId?: string;
-  viewPanel?: boolean;
-  autofitpanels?: boolean;
-  kiosk?: boolean;
-  from?: string;
-  to?: string;
-  timeRange?: string;
-}
 
 export const GrafanaDashboard: React.FC<GrafanaDashboardProps> = ({
   dashboardUrl = 'http://localhost:3000/d/aead3d54-423b-4a91-b91c-dbdf40d7fff5?orgId=1',
@@ -33,7 +20,12 @@ export const GrafanaDashboard: React.FC<GrafanaDashboardProps> = ({
   timeRange = 'Last 6 hours'
 }) => {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  const [kioskState, setKioskState] = useState(kiosk);
+  const [kioskState, setKioskState] = useState<'off' | 'kiosk' | 'tv'>(() => {
+    if (typeof kiosk === 'string') {
+      return kiosk as 'off' | 'kiosk' | 'tv';
+    }
+    return kiosk ? 'tv' : 'off';
+  });
   const [refresh, setRefresh] = useState<number | null>(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState(timeRange || 'Last 6 hours');
 
@@ -75,7 +67,9 @@ export const GrafanaDashboard: React.FC<GrafanaDashboardProps> = ({
     }
 
     // 添加kiosk模式
-    if (kioskState) {
+    if (kioskState === 'kiosk') {
+      params.append('kiosk', 'true');
+    } else if (kioskState === 'tv') {
       params.append('kiosk', 'tv');
     }
 
@@ -154,11 +148,16 @@ export const GrafanaDashboard: React.FC<GrafanaDashboardProps> = ({
 
             <div>
               <label style={{ marginRight: 'var(--spacing-xs)' }}>TV模式：</label>
-              <Switch
-                checked={kioskState}
+              <Select
+                value={kioskState}
                 onChange={setKioskState}
                 size="small"
-              />
+                style={{ width: 100 }}
+              >
+                <Option value="off">關閉</Option>
+                <Option value="kiosk">Kiosk</Option>
+                <Option value="tv">TV</Option>
+              </Select>
             </div>
 
             <div>

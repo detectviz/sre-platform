@@ -251,7 +251,6 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({ visible, onClose }) => {
                               <Text>{item.title}</Text>
                               <Tag
                                 color={getTypeLabel(item.type).color}
-                                size="small"
                               >
                                 {getTypeLabel(item.type).label}
                               </Tag>

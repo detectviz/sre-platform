@@ -1,57 +1,90 @@
-import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import { Typography, List, Space, Divider, Tabs } from 'antd'
+import React, { useState } from 'react'
+import { useTabs } from '../hooks'
+import { Typography, Space, Tabs, Table, Card, Button, Tag, Badge } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
+import { ToolbarActions } from '../components/ToolbarActions'
 import {
   UserOutlined,
   TeamOutlined,
   IdcardOutlined,
   AuditOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  EyeOutlined,
+  PlusOutlined,
 } from '@ant-design/icons'
+import type { ColumnsType } from 'antd/es/table'
 
 const { Title, Text } = Typography
 
+// 數據接口定義
+interface UserData {
+  key: string
+  username: string
+  name: string
+  email: string
+  teams: string[]
+  roles: string[]
+  lastLogin: string
+  status: string
+}
+
+interface TeamData {
+  key: string
+  name: string
+  description: string
+  owner: string
+  members: number
+  subscribers: number
+  status: string
+}
+
+interface RoleData {
+  key: string
+  name: string
+  description: string
+  permissions: string
+  userCount: number
+  status: string
+}
+
+interface AuditData {
+  key: string
+  time: string
+  user: string
+  action: string
+  targetType: string
+  targetId: string
+  result: string
+  ip: string
+}
+
 const IdentitySettingsPage: React.FC = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('users')
+  const { activeTab, handleTabChange } = useTabs('users', {
+    users: '/settings/identity/users',
+    teams: '/settings/identity/teams',
+    roles: '/settings/identity/roles',
+    audit: '/settings/identity/audit',
+  })
 
-  useEffect(() => {
-    const path = location.pathname
-    if (path === '/settings/identity/users' || path.endsWith('/settings/identity/users')) {
-      setActiveTab('users')
-    } else if (path === '/settings/identity/teams' || path.endsWith('/settings/identity/teams')) {
-      setActiveTab('teams')
-    } else if (path === '/settings/identity/roles' || path.endsWith('/settings/identity/roles')) {
-      setActiveTab('roles')
-    } else if (path === '/settings/identity/audit' || path.endsWith('/settings/identity/audit')) {
-      setActiveTab('audit')
-    } else {
-      setActiveTab('users')
-    }
-  }, [location.pathname])
+  // 狀態管理
+  const [searchText, setSearchText] = useState('')
 
-  const handleTabChange = (key: string) => {
-    setActiveTab(key)
-    switch (key) {
-      case 'users':
-        navigate('/settings/identity/users')
-        break
-      case 'teams':
-        navigate('/settings/identity/teams')
-        break
-      case 'roles':
-        navigate('/settings/identity/roles')
-        break
-      case 'audit':
-        navigate('/settings/identity/audit')
-        break
-      default:
-        navigate('/settings/identity/users')
-    }
+  // 工具列操作處理
+  const handleRefresh = () => {
+    console.log('刷新身份管理數據')
   }
 
+  const handleSearch = () => {
+    console.log('打開搜索篩選')
+  }
+
+  const handleExport = () => {
+    console.log('導出身份管理報告')
+  }
+
+  // KPI 數據
   const kpiData = [
     {
       title: '總人員數',
@@ -83,216 +116,505 @@ const IdentitySettingsPage: React.FC = () => {
     },
   ]
 
-  const tabItems = [
+  // 人員管理表格配置
+  const userColumns: ColumnsType<UserData> = [
+    { title: '用戶名稱', dataIndex: 'username', key: 'username', sorter: true },
+    { title: '姓名', dataIndex: 'name', key: 'name' },
+    { title: '電子郵件', dataIndex: 'email', key: 'email' },
     {
-      key: 'users',
-      label: '人員管理',
-      icon: <UserOutlined />,
-      children: (
-        <div style={{ padding: '24px' }}>
-          <Space align="center" style={{ marginBottom: '16px' }}>
-            <UserOutlined style={{ fontSize: '18px' }} />
-            <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
-              人員管理
-            </Title>
-          </Space>
-          <Text
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              display: 'block',
-              marginBottom: 'var(--spacing-lg)',
-            }}
-          >
-            管理系統用戶帳戶和權限
-          </Text>
-          <Divider style={{ margin: 'var(--spacing-md) 0', borderColor: 'var(--border-light)' }} />
-          <List
-            size="small"
-            dataSource={['新增用戶', '編輯用戶', '禁用用戶', '重置密碼', '用戶群組']}
-            renderItem={(item) => (
-              <List.Item
-                style={{
-                  padding: 'var(--spacing-sm) 0',
-                  border: 'none',
-                  color: 'var(--text-tertiary)',
-                  fontSize: '12px',
-                }}
-              >
-                <Space>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    background: 'var(--text-tertiary)',
-                  }} />
-                  {item}
-                </Space>
-              </List.Item>
-            )}
-          />
-        </div>
-      ),
-    },
-    {
+      title: '團隊',
+      dataIndex: 'teams',
       key: 'teams',
-      label: '團隊管理',
-      icon: <TeamOutlined />,
-      children: (
-        <div style={{ padding: '24px' }}>
-          <Space align="center" style={{ marginBottom: '16px' }}>
-            <TeamOutlined style={{ fontSize: '18px' }} />
-            <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
-              團隊管理
-            </Title>
-          </Space>
-          <Text
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              display: 'block',
-              marginBottom: 'var(--spacing-lg)',
-            }}
-          >
-            組織團隊結構和權限分組
-          </Text>
-          <Divider style={{ margin: 'var(--spacing-md) 0', borderColor: 'var(--border-light)' }} />
-          <List
-            size="small"
-            dataSource={['創建團隊', '團隊成員', '團隊權限', '團隊層級', '團隊統計']}
-            renderItem={(item) => (
-              <List.Item
-                style={{
-                  padding: 'var(--spacing-sm) 0',
-                  border: 'none',
-                  color: 'var(--text-tertiary)',
-                  fontSize: '12px',
-                }}
-              >
-                <Space>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    background: 'var(--text-tertiary)',
-                  }} />
-                  {item}
-                </Space>
-              </List.Item>
-            )}
-          />
-        </div>
-      ),
+      render: (teams: string[]) => teams.map((team: string) => (
+        <Badge key={team} size="small" style={{ marginRight: '4px' }}>
+          {team}
+        </Badge>
+      ))
     },
     {
+      title: '角色',
+      dataIndex: 'roles',
       key: 'roles',
-      label: '角色管理',
-      icon: <IdcardOutlined />,
-      children: (
-        <div style={{ padding: '24px' }}>
-          <Space align="center" style={{ marginBottom: '16px' }}>
-            <IdcardOutlined style={{ fontSize: '18px' }} />
-            <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
-              角色管理
-            </Title>
-          </Space>
-          <Text
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              display: 'block',
-              marginBottom: 'var(--spacing-lg)',
-            }}
-          >
-            定義系統角色和權限矩陣
-          </Text>
-          <Divider style={{ margin: 'var(--spacing-md) 0', borderColor: 'var(--border-light)' }} />
-          <List
-            size="small"
-            dataSource={['角色定義', '權限配置', '角色分配', '權限審核', '角色模板']}
-            renderItem={(item) => (
-              <List.Item
-                style={{
-                  padding: 'var(--spacing-sm) 0',
-                  border: 'none',
-                  color: 'var(--text-tertiary)',
-                  fontSize: '12px',
-                }}
-              >
-                <Space>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    background: 'var(--text-tertiary)',
-                  }} />
-                  {item}
-                </Space>
-              </List.Item>
-            )}
-          />
-        </div>
-      ),
+      render: (roles: string[]) => roles.map((role: string) => (
+        <Badge key={role} size="small" style={{ marginRight: '4px' }}>
+          {role}
+        </Badge>
+      ))
     },
     {
-      key: 'audit',
-      label: '審計日誌',
-      icon: <AuditOutlined />,
-      children: (
-        <div style={{ padding: '24px' }}>
-          <Space align="center" style={{ marginBottom: '16px' }}>
-            <AuditOutlined style={{ fontSize: '18px' }} />
-            <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
-              審計日誌
-            </Title>
-          </Space>
-          <Text
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              display: 'block',
-              marginBottom: 'var(--spacing-lg)',
-            }}
-          >
-            記錄系統操作和安全事件
-          </Text>
-          <Divider style={{ margin: 'var(--spacing-md) 0', borderColor: 'var(--border-light)' }} />
-          <List
+      title: '最後登入',
+      dataIndex: 'lastLogin',
+      key: 'lastLogin',
+      render: (time: string) => new Date(time).toLocaleString('zh-TW')
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'active' ? 'green' : 'red'}>
+          {status === 'active' ? '啟用' : '停用'}
+        </Tag>
+      )
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_: any, record: UserData) => (
+        <Space>
+          <Button
             size="small"
-            dataSource={['操作記錄', '安全事件', '登錄記錄', '權限變更', '系統警報']}
-            renderItem={(item) => (
-              <List.Item
-                style={{
-                  padding: 'var(--spacing-sm) 0',
-                  border: 'none',
-                  color: 'var(--text-tertiary)',
-                  fontSize: '12px',
-                }}
-              >
-                <Space>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    background: 'var(--text-tertiary)',
-                  }} />
-                  {item}
-                </Space>
-              </List.Item>
-            )}
-          />
-        </div>
+            icon={<EyeOutlined />}
+            onClick={() => console.log('查看用戶', record.username)}
+          >
+            查看
+          </Button>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => console.log('編輯用戶', record.username)}
+          >
+            編輯
+          </Button>
+          <Button
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => console.log('刪除用戶', record.username)}
+          >
+            刪除
+          </Button>
+        </Space>
       ),
     },
   ]
 
+  const userData: UserData[] = [
+    {
+      key: '1',
+      username: 'john.doe',
+      name: 'John Doe',
+      email: 'john.doe@company.com',
+      teams: ['SRE 團隊', '開發團隊'],
+      roles: ['SRE 工程師', '開發者'],
+      lastLogin: '2025-09-23 15:30:00',
+      status: 'active'
+    },
+    {
+      key: '2',
+      username: 'jane.smith',
+      name: 'Jane Smith',
+      email: 'jane.smith@company.com',
+      teams: ['平台團隊'],
+      roles: ['平台管理員'],
+      lastLogin: '2025-09-23 14:20:00',
+      status: 'active'
+    },
+    {
+      key: '3',
+      username: 'bob.wilson',
+      name: 'Bob Wilson',
+      email: 'bob.wilson@company.com',
+      teams: ['SRE 團隊'],
+      roles: ['SRE 工程師'],
+      lastLogin: '2025-09-22 16:45:00',
+      status: 'active'
+    },
+  ]
+
+  // 團隊管理表格配置
+  const teamColumns: ColumnsType<TeamData> = [
+    { title: '團隊名稱', dataIndex: 'name', key: 'name', sorter: true },
+    { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
+    { title: '負責人', dataIndex: 'owner', key: 'owner' },
+    {
+      title: '成員數',
+      dataIndex: 'members',
+      key: 'members',
+      render: (count: number) => (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--brand-primary)' }}>{count}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>成員</div>
+        </div>
+      ),
+      sorter: (a, b) => a.members - b.members
+    },
+    {
+      title: '訂閱者',
+      dataIndex: 'subscribers',
+      key: 'subscribers',
+      render: (count: number) => (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--brand-info)' }}>{count}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>訂閱者</div>
+        </div>
+      ),
+      sorter: (a, b) => a.subscribers - b.subscribers
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'active' ? 'green' : 'red'}>
+          {status === 'active' ? '啟用' : '停用'}
+        </Tag>
+      )
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_: any, record: TeamData) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => console.log('編輯團隊', record.name)}
+          >
+            編輯
+          </Button>
+          <Button
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => console.log('刪除團隊', record.name)}
+          >
+            刪除
+          </Button>
+        </Space>
+      ),
+    },
+  ]
+
+  const teamData: TeamData[] = [
+    {
+      key: '1',
+      name: 'SRE 團隊',
+      description: '負責系統可靠性工程',
+      owner: 'John Doe',
+      members: 12,
+      subscribers: 8,
+      status: 'active'
+    },
+    {
+      key: '2',
+      name: '開發團隊',
+      description: '負責應用程式開發',
+      owner: 'Jane Smith',
+      members: 15,
+      subscribers: 5,
+      status: 'active'
+    },
+    {
+      key: '3',
+      name: '平台團隊',
+      description: '負責平台架構和維護',
+      owner: 'Alice Johnson',
+      members: 8,
+      subscribers: 12,
+      status: 'active'
+    },
+  ]
+
+  // 角色管理表格配置
+  const roleColumns: ColumnsType<RoleData> = [
+    { title: '角色名稱', dataIndex: 'name', key: 'name', sorter: true },
+    { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true },
+    { title: '權限範圍', dataIndex: 'permissions', key: 'permissions', ellipsis: true },
+    {
+      title: '人員數量',
+      dataIndex: 'userCount',
+      key: 'userCount',
+      render: (count: number) => (
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '18px', fontWeight: 'bold', color: 'var(--brand-success)' }}>{count}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>人員</div>
+        </div>
+      ),
+      sorter: (a, b) => a.userCount - b.userCount
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'active' ? 'green' : 'red'}>
+          {status === 'active' ? '啟用' : '停用'}
+        </Tag>
+      )
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_: any, record: RoleData) => (
+        <Space>
+          <Button
+            size="small"
+            icon={<EditOutlined />}
+            onClick={() => console.log('編輯角色', record.name)}
+          >
+            編輯
+          </Button>
+          <Button
+            size="small"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => console.log('刪除角色', record.name)}
+          >
+            刪除
+          </Button>
+        </Space>
+      ),
+    },
+  ]
+
+  const roleData: RoleData[] = [
+    {
+      key: '1',
+      name: 'SRE 工程師',
+      description: '負責系統可靠性工程',
+      permissions: '事件管理、資源管理、儀表板查看',
+      userCount: 8,
+      status: 'active'
+    },
+    {
+      key: '2',
+      name: '平台管理員',
+      description: '負責平台配置和用戶管理',
+      permissions: '系統設定、用戶管理、角色管理',
+      userCount: 3,
+      status: 'active'
+    },
+    {
+      key: '3',
+      name: '開發者',
+      description: '負責應用程式開發',
+      permissions: '資源查看、事件查看',
+      userCount: 25,
+      status: 'active'
+    },
+  ]
+
+  // 審計日誌表格配置
+  const auditColumns: ColumnsType<AuditData> = [
+    {
+      title: '時間',
+      dataIndex: 'time',
+      key: 'time',
+      render: (time: string) => new Date(time).toLocaleString('zh-TW')
+    },
+    { title: '操作者', dataIndex: 'user', key: 'user' },
+    { title: '動作', dataIndex: 'action', key: 'action' },
+    { title: '資源類型', dataIndex: 'targetType', key: 'targetType' },
+    { title: '資源 ID', dataIndex: 'targetId', key: 'targetId' },
+    {
+      title: '結果',
+      dataIndex: 'result',
+      key: 'result',
+      render: (result: string) => (
+        <Tag color={result === 'success' ? 'green' : 'red'}>
+          {result === 'success' ? '成功' : '失敗'}
+        </Tag>
+      )
+    },
+    { title: 'IP 地址', dataIndex: 'ip', key: 'ip' },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_: any, record: AuditData) => (
+        <Button
+          size="small"
+          onClick={() => console.log('查看審計日誌詳情', record.time)}
+        >
+          查看詳情
+        </Button>
+      ),
+    },
+  ]
+
+  const auditData: AuditData[] = [
+    {
+      key: '1',
+      time: '2025-09-23 15:30:00',
+      user: 'John Doe',
+      action: '創建事件規則',
+      targetType: '事件規則',
+      targetId: 'rule-001',
+      result: 'success',
+      ip: '192.168.1.100'
+    },
+    {
+      key: '2',
+      time: '2025-09-23 14:20:00',
+      user: 'Jane Smith',
+      action: '更新用戶權限',
+      targetType: '用戶',
+      targetId: 'user-002',
+      result: 'success',
+      ip: '192.168.1.101'
+    },
+    {
+      key: '3',
+      time: '2025-09-23 13:45:00',
+      user: 'Bob Wilson',
+      action: '刪除資源',
+      targetType: '資源',
+      targetId: 'resource-003',
+      result: 'failure',
+      ip: '192.168.1.102'
+    },
+  ]
+
+  // 創建各個標籤頁的配置
+  const createUserManagementTab = () => ({
+    key: 'users',
+    label: '人員管理',
+    icon: <UserOutlined />,
+    children: (
+      <div style={{ padding: '24px 0' }}>
+        <ToolbarActions
+          onRefresh={handleRefresh}
+          onSearch={handleSearch}
+          onExport={handleExport}
+          showRefresh={true}
+          showSearch={true}
+          showExport={true}
+          actions={[{
+            key: 'add',
+            label: '新增用戶',
+            icon: <PlusOutlined />,
+            type: 'primary',
+            onClick: () => console.log('新增用戶'),
+          }]}
+        />
+        <Table
+          columns={userColumns}
+          dataSource={userData}
+          size="middle"
+          pagination={{
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+          }}
+        />
+      </div>
+    ),
+  })
+
+  const createTeamManagementTab = () => ({
+    key: 'teams',
+    label: '團隊管理',
+    icon: <TeamOutlined />,
+    children: (
+      <div style={{ padding: '24px 0' }}>
+        <ToolbarActions
+          onRefresh={handleRefresh}
+          onSearch={handleSearch}
+          onExport={handleExport}
+          showRefresh={true}
+          showSearch={true}
+          showExport={true}
+          actions={[{
+            key: 'add',
+            label: '新增團隊',
+            icon: <PlusOutlined />,
+            type: 'primary',
+            onClick: () => console.log('新增團隊'),
+          }]}
+        />
+        <Table
+          columns={teamColumns}
+          dataSource={teamData}
+          size="middle"
+          pagination={{
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+          }}
+        />
+      </div>
+    ),
+  })
+
+  const createRoleManagementTab = () => ({
+    key: 'roles',
+    label: '角色管理',
+    icon: <IdcardOutlined />,
+    children: (
+      <div style={{ padding: '24px 0' }}>
+        <ToolbarActions
+          onRefresh={handleRefresh}
+          onSearch={handleSearch}
+          onExport={handleExport}
+          showRefresh={true}
+          showSearch={true}
+          showExport={true}
+          actions={[{
+            key: 'add',
+            label: '新增角色',
+            icon: <PlusOutlined />,
+            type: 'primary',
+            onClick: () => console.log('新增角色'),
+          }]}
+        />
+        <Table
+          columns={roleColumns}
+          dataSource={roleData}
+          size="middle"
+          pagination={{
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+          }}
+        />
+      </div>
+    ),
+  })
+
+  const createAuditTab = () => ({
+    key: 'audit',
+    label: '審計日誌',
+    icon: <AuditOutlined />,
+    children: (
+      <div style={{ padding: '24px 0' }}>
+        <ToolbarActions
+          onRefresh={handleRefresh}
+          onSearch={handleSearch}
+          onExport={handleExport}
+          showRefresh={true}
+          showSearch={true}
+          showExport={true}
+        />
+        <Table
+          columns={auditColumns}
+          dataSource={auditData}
+          size="middle"
+          pagination={{
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+          }}
+        />
+      </div>
+    ),
+  })
+
+  const tabItems = [
+    createUserManagementTab(),
+    createTeamManagementTab(),
+    createRoleManagementTab(),
+    createAuditTab(),
+  ]
+
   return (
     <div>
+      {/* 頁面標題 */}
       <PageHeader
         title="身份與存取管理"
         subtitle="統一管理身份認證、存取權限和組織架構配置"
       />
 
+      {/* KPI 卡片 */}
       <div
         style={{
           display: 'grid',
@@ -313,6 +635,7 @@ const IdentitySettingsPage: React.FC = () => {
         ))}
       </div>
 
+      {/* Tabs 導航 */}
       <Tabs
         activeKey={activeTab}
         onChange={handleTabChange}

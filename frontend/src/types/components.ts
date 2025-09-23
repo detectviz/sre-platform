@@ -91,18 +91,18 @@ export interface ContextualKPICardProps {
 
 // Grafana 儀表板組件配置
 export interface GrafanaDashboardProps {
-  dashboardId: string
-  panelId?: string
-  theme?: 'light' | 'dark'
-  height?: number | string
-  width?: number | string
-  timeRange?: {
-    from: string
-    to: string
-  }
-  variables?: Record<string, string>
-  onLoad?: () => void
-  onError?: (error: Error) => void
+  dashboardUrl?: string;
+  height?: string;
+  title?: string;
+  showControls?: boolean;
+  orgId?: string;
+  panelId?: string;
+  viewPanel?: boolean;
+  autofitpanels?: boolean;
+  kiosk?: boolean | string;
+  from?: string;
+  to?: string;
+  timeRange?: string;
 }
 
 // 延遲路由組件配置

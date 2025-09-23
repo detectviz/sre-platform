@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Card, Form, Input, Button, Space, message, Switch, List, Typography } from 'antd'
+import { Form, Input, Button, Space, message, Switch, List, Typography } from 'antd'
 import {
   KeyOutlined,
   SafetyOutlined,
@@ -72,21 +72,18 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%' }}>
-      {/* 密碼更改 */}
-      <Card
-        title={
-          <Space>
-            <KeyOutlined />
-            <span>更改密碼</span>
-          </Space>
-        }
-        size="small"
+      <Form
+        form={passwordForm}
+        layout="vertical"
+        initialValues={{}}
+        style={{ maxWidth: 600 }}
       >
-        <Form
-          form={passwordForm}
-          layout="vertical"
-          style={{ maxWidth: 400 }}
-        >
+        {/* 密碼更改 */}
+        <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+          <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text-primary)' }}>
+            <KeyOutlined style={{ marginRight: 'var(--spacing-xs)' }} />
+            更改密碼
+          </h3>
           <Item
             label="目前密碼"
             name="oldPassword"
@@ -143,20 +140,14 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
               更新密碼
             </Button>
           </Item>
-        </Form>
-      </Card>
+        </div>
 
-      {/* 雙重驗證 */}
-      <Card
-        title={
-          <Space>
-            <SafetyOutlined />
-            <span>雙重驗證</span>
-          </Space>
-        }
-        size="small"
-      >
-        <Space direction="vertical" style={{ width: '100%' }}>
+        {/* 雙重驗證 */}
+        <div style={{ marginBottom: 'var(--spacing-xl)' }}>
+          <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text-primary)' }}>
+            <SafetyOutlined style={{ marginRight: 'var(--spacing-xs)' }} />
+            雙重驗證
+          </h3>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <Text strong>啟用雙重驗證</Text>
@@ -189,50 +180,46 @@ export const SecuritySettings: React.FC<SecuritySettingsProps> = ({
               </Space>
             </div>
           )}
-        </Space>
-      </Card>
+        </div>
 
-      {/* 安全活動日誌 */}
-      <Card
-        title={
-          <Space>
-            <SafetyOutlined />
-            <span>最近的安全活動</span>
-          </Space>
-        }
-        size="small"
-      >
-        <List
-          dataSource={securityEvents}
-          renderItem={(item) => (
-            <List.Item
-              style={{
-                padding: '12px 0',
-                borderBottom: '1px solid var(--border-light)'
-              }}
-            >
-              <div style={{ width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <div>
-                    <Text strong style={{
-                      color: item.status === 'success' ? 'var(--brand-success)' : 'var(--brand-danger)'
-                    }}>
-                      {item.action}
-                    </Text>
-                    <br />
+        {/* 安全活動日誌 */}
+        <div>
+          <h3 style={{ marginBottom: 'var(--spacing-md)', color: 'var(--text-primary)' }}>
+            <SafetyOutlined style={{ marginRight: 'var(--spacing-xs)' }} />
+            最近的安全活動
+          </h3>
+          <List
+            dataSource={securityEvents}
+            renderItem={(item) => (
+              <List.Item
+                style={{
+                  padding: '12px 0',
+                  borderBottom: '1px solid var(--border-light)'
+                }}
+              >
+                <div style={{ width: '100%' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                      <Text strong style={{
+                        color: item.status === 'success' ? 'var(--brand-success)' : 'var(--brand-danger)'
+                      }}>
+                        {item.action}
+                      </Text>
+                      <br />
+                      <Text type="secondary" style={{ fontSize: '12px' }}>
+                        {item.location} • {item.device}
+                      </Text>
+                    </div>
                     <Text type="secondary" style={{ fontSize: '12px' }}>
-                      {item.location} • {item.device}
+                      {item.time}
                     </Text>
                   </div>
-                  <Text type="secondary" style={{ fontSize: '12px' }}>
-                    {item.time}
-                  </Text>
                 </div>
-              </div>
-            </List.Item>
-          )}
-        />
-      </Card>
+              </List.Item>
+            )}
+          />
+        </div>
+      </Form>
     </Space>
   )
 }

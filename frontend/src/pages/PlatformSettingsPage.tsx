@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import React from 'react'
+import { useTabs } from '../hooks'
 import { Typography, List, Space, Divider, Tabs } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
@@ -12,39 +12,11 @@ import {
 const { Title, Text } = Typography
 
 const PlatformSettingsPage: React.FC = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('tags')
-
-  useEffect(() => {
-    const path = location.pathname
-    if (path === '/settings/platform/tags' || path.endsWith('/settings/platform/tags')) {
-      setActiveTab('tags')
-    } else if (path === '/settings/platform/email' || path.endsWith('/settings/platform/email')) {
-      setActiveTab('email')
-    } else if (path === '/settings/platform/auth' || path.endsWith('/settings/platform/auth')) {
-      setActiveTab('auth')
-    } else {
-      setActiveTab('tags')
-    }
-  }, [location.pathname])
-
-  const handleTabChange = (key: string) => {
-    setActiveTab(key)
-    switch (key) {
-      case 'tags':
-        navigate('/settings/platform/tags')
-        break
-      case 'email':
-        navigate('/settings/platform/email')
-        break
-      case 'auth':
-        navigate('/settings/platform/auth')
-        break
-      default:
-        navigate('/settings/platform/tags')
-    }
-  }
+  const { activeTab, handleTabChange } = useTabs('tags', {
+    tags: '/settings/platform/tags',
+    email: '/settings/platform/email',
+    auth: '/settings/platform/auth',
+  })
 
   const kpiData = [
     {

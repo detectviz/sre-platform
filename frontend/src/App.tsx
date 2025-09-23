@@ -1,5 +1,5 @@
-import { useMemo, Suspense } from 'react'
-import { App as AntdApp, Spin } from 'antd'
+import { useMemo } from 'react'
+import { App as AntdApp } from 'antd'
 import {
   Routes,
   Route,

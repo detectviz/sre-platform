@@ -69,13 +69,11 @@ export const filterDataByCategory = <T extends Record<string, any>>(
 
 // 分類按鈕樣式生成器
 export const getCategoryButtonStyle = (
-  categoryKey: string,
+  _categoryKey: string,
   isSelected: boolean,
   index: number,
   totalCount: number
 ) => {
-  const color = getCategoryColor(categoryKey)
-
   return {
     height: '36px',
     display: 'flex',

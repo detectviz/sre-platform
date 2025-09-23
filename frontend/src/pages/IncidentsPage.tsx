@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTabs } from '../hooks'
 import { Table, Tag, Space, Button, Tooltip, Tabs } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
@@ -15,7 +16,11 @@ import {
 } from '@ant-design/icons'
 
 const IncidentsPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('list')
+  const { activeTab, handleTabChange } = useTabs('list', {
+    list: '/incidents/list',
+    rules: '/incidents/rules',
+    silences: '/incidents/silence',
+  })
   const kpiData = [
     {
       title: '活躍事件',
@@ -389,7 +394,7 @@ const IncidentsPage: React.FC = () => {
 
       <Tabs
         activeKey={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
         items={tabItems}
       />
     </div>

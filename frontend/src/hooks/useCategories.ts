@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { generateCategories, filterDataByCategory, type CategoryConfig } from '../utils/category'
+import { generateCategories, filterDataByCategory } from '../utils/category'
 
 // 分類管理 Hook
 export const useCategories = <T extends Record<string, any>>(

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import React from 'react'
+import { useTabs } from '../hooks'
 import { Typography, List, Space, Divider, Tabs } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
@@ -10,39 +10,11 @@ import {
 const { Title, Text } = Typography
 
 const NotificationSettingsPage: React.FC = () => {
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState('strategies')
-
-  useEffect(() => {
-    const path = location.pathname
-    if (path === '/settings/notifications/strategies' || path.endsWith('/settings/notifications/strategies')) {
-      setActiveTab('strategies')
-    } else if (path === '/settings/notifications/channels' || path.endsWith('/settings/notifications/channels')) {
-      setActiveTab('channels')
-    } else if (path === '/settings/notifications/history' || path.endsWith('/settings/notifications/history')) {
-      setActiveTab('history')
-    } else {
-      setActiveTab('strategies')
-    }
-  }, [location.pathname])
-
-  const handleTabChange = (key: string) => {
-    setActiveTab(key)
-    switch (key) {
-      case 'strategies':
-        navigate('/settings/notifications/strategies')
-        break
-      case 'channels':
-        navigate('/settings/notifications/channels')
-        break
-      case 'history':
-        navigate('/settings/notifications/history')
-        break
-      default:
-        navigate('/settings/notifications/strategies')
-    }
-  }
+  const { activeTab, handleTabChange } = useTabs('strategies', {
+    strategies: '/settings/notifications/strategies',
+    channels: '/settings/notifications/channels',
+    history: '/settings/notifications/history',
+  })
 
   const kpiData = [
     {

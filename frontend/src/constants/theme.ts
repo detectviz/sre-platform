@@ -73,6 +73,20 @@ export const COMMON_STYLES = {
     modal: '0 8px 32px rgba(0, 0, 0, 0.25)',
   },
 
+  // 表格樣式
+  table: {
+    container: {
+      background: 'var(--bg-elevated)',
+      border: '1px solid var(--border-light)',
+      borderRadius: 'var(--radius-lg)',
+    },
+    pagination: {
+      showSizeChanger: true,
+      showQuickJumper: true,
+      showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
+    }
+  },
+
   // 按鈕樣式
   button: {
     height: {

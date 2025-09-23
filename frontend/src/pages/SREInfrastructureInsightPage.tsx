@@ -315,13 +315,15 @@ const SREInfrastructureInsightPage: React.FC = () => {
             columns={resourceColumns}
             dataSource={resourceData}
             size="small"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-light)',
+              borderRadius: 'var(--radius-lg)',
+            }}
             pagination={{
               showSizeChanger: true,
               showQuickJumper: true,
               showTotal: (total, range) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
-            }}
-            style={{
-              background: 'transparent',
             }}
           />
         </Card>

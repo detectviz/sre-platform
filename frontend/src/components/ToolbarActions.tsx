@@ -30,6 +30,7 @@ export interface ToolbarAction {
   disabled?: boolean
   loading?: boolean
   tooltip?: string
+  children?: React.ReactNode
 }
 
 export interface ColumnOption {
@@ -43,6 +44,8 @@ export interface ToolbarActionsProps {
   searchPlaceholder?: string
   onSearch?: (value: string) => void
   onRefresh?: () => void
+  onExport?: () => void
+  onAIAnalysis?: () => void
   showSearch?: boolean
   showRefresh?: boolean
   showExport?: boolean
@@ -65,6 +68,7 @@ export const ToolbarActions: React.FC<ToolbarActionsProps> = ({
   searchPlaceholder = '搜尋...',
   onSearch,
   onRefresh,
+  onExport,
   showSearch = false,
   showRefresh = false,
   showExport = true,
@@ -219,11 +223,11 @@ export const ToolbarActions: React.FC<ToolbarActionsProps> = ({
       onClick: () => { },
       tooltip: '搜尋篩選'
     }] : []),
-    ...(showExport ? [{
+    ...(showExport && onExport ? [{
       key: 'export',
       label: '匯出',
       icon: <DownloadOutlined />,
-      onClick: () => { },
+      onClick: onExport,
       tooltip: '匯出數據'
     }] : []),
     ...(showAdd ? [{

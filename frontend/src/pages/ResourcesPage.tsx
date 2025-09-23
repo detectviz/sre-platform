@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTabs } from '../hooks'
 import { Table, Tag, Progress, Space, Button, Tooltip, Tabs } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
@@ -15,7 +16,11 @@ import {
 } from '@ant-design/icons'
 
 const ResourcesPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('list')
+  const { activeTab, handleTabChange } = useTabs('list', {
+    list: '/resources/list',
+    groups: '/resources/groups',
+    topology: '/resources/topology',
+  })
   const kpiData = [
     {
       title: '總資源數',
@@ -446,7 +451,7 @@ const ResourcesPage: React.FC = () => {
 
       <Tabs
         activeKey={activeTab}
-        onChange={setActiveTab}
+        onChange={handleTabChange}
         items={tabItems}
       />
     </div>

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react'
-import { useLocation } from 'react-router-dom'
-import { Typography, Space, Tabs } from 'antd'
+import React from 'react'
+import { useTabs } from '../hooks'
+import { Tabs } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { PersonalInfoForm } from '../components/profile/PersonalInfoForm'
@@ -12,24 +12,13 @@ import {
   SettingOutlined,
 } from '@ant-design/icons'
 
-const { Title } = Typography
 
 const ProfilePage: React.FC = () => {
-  const location = useLocation()
-  const [activeTab, setActiveTab] = useState('personal')
-
-  useEffect(() => {
-    const path = location.pathname
-    if (path === '/profile' || path === '/profile/personal') {
-      setActiveTab('personal')
-    } else if (path === '/profile/security') {
-      setActiveTab('security')
-    } else if (path === '/profile/preferences') {
-      setActiveTab('preferences')
-    } else {
-      setActiveTab('personal')
-    }
-  }, [location.pathname])
+  const { activeTab, handleTabChange } = useTabs('personal', {
+    personal: '/profile/personal',
+    security: '/profile/security',
+    preferences: '/profile/preferences',
+  })
 
   // KPI 數據
   const kpiData = [
@@ -70,9 +59,6 @@ const ProfilePage: React.FC = () => {
     language: 'zh-TW',
     timezone: 'Asia/Taipei',
     dateFormat: 'YYYY/MM/DD',
-    desktopNotifications: true,
-    soundNotifications: false,
-    emailDigest: true,
     defaultPage: '/',
     refreshInterval: 60,
     autoSaveLayout: true
@@ -105,48 +91,42 @@ const ProfilePage: React.FC = () => {
   const tabItems = [
     {
       key: 'personal',
-      label: (
-        <span>
-          <UserOutlined />
-          個人資料
-        </span>
-      ),
+      label: '個人資料',
+      icon: <UserOutlined />,
       children: (
-        <PersonalInfoForm
-          initialValues={personalInfoInitialValues}
-          onSave={handlePersonalInfoSave}
-        />
+        <div style={{ padding: '24px' }}>
+          <PersonalInfoForm
+            initialValues={personalInfoInitialValues}
+            onSave={handlePersonalInfoSave}
+          />
+        </div>
       )
     },
     {
       key: 'security',
-      label: (
-        <span>
-          <SafetyOutlined />
-          安全設定
-        </span>
-      ),
+      label: '安全設定',
+      icon: <SafetyOutlined />,
       children: (
-        <SecuritySettings
-          onPasswordChange={handlePasswordChange}
-          onTwoFactorToggle={handleTwoFactorToggle}
-          twoFactorEnabled={true}
-        />
+        <div style={{ padding: '24px' }}>
+          <SecuritySettings
+            onPasswordChange={handlePasswordChange}
+            onTwoFactorToggle={handleTwoFactorToggle}
+            twoFactorEnabled={true}
+          />
+        </div>
       )
     },
     {
       key: 'preferences',
-      label: (
-        <span>
-          <SettingOutlined />
-          偏好設定
-        </span>
-      ),
+      label: '偏好設定',
+      icon: <SettingOutlined />,
       children: (
-        <PreferencesSettings
-          initialValues={preferencesInitialValues}
-          onSave={handlePreferencesSave}
-        />
+        <div style={{ padding: '24px' }}>
+          <PreferencesSettings
+            initialValues={preferencesInitialValues}
+            onSave={handlePreferencesSave}
+          />
+        </div>
       )
     }
   ]
@@ -155,7 +135,7 @@ const ProfilePage: React.FC = () => {
     <div>
       <PageHeader
         title="個人設定"
-        description="管理您的個人資料、安全設定和使用偏好"
+        subtitle="管理您的個人資料、安全設定和使用偏好"
       />
 
       {/* KPI 卡片 */}
@@ -179,22 +159,11 @@ const ProfilePage: React.FC = () => {
       </div>
 
       {/* 設定標籤頁 */}
-      <div style={{
-        background: 'var(--bg-elevated)',
-        border: '1px solid var(--border-light)',
-        borderRadius: 'var(--radius-lg)',
-        overflow: 'hidden'
-      }}>
-        <Tabs
-          activeKey={activeTab}
-          onChange={setActiveTab}
-          items={tabItems}
-          style={{
-            padding: 'var(--spacing-lg)',
-            minHeight: '500px'
-          }}
-        />
-      </div>
+      <Tabs
+        activeKey={activeTab}
+        onChange={handleTabChange}
+        items={tabItems}
+      />
     </div>
   )
 }
