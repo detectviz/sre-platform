@@ -359,6 +359,77 @@ CREATE TABLE topology_edges (
 CREATE INDEX idx_topology_edges_source ON topology_edges (source_resource_id);
 
 -- =============================
+-- 資源批次作業與掃描
+-- =============================
+CREATE TABLE resource_batch_operations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    action VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    total_count INTEGER NOT NULL,
+    processed_count INTEGER NOT NULL DEFAULT 0,
+    success_count INTEGER NOT NULL DEFAULT 0,
+    failed_count INTEGER NOT NULL DEFAULT 0,
+    requested_by UUID REFERENCES users(id),
+    target_team_id UUID REFERENCES teams(id),
+    target_status VARCHAR(32),
+    tags TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
+    reason TEXT,
+    payload JSONB NOT NULL DEFAULT '{}'::JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    completed_at TIMESTAMPTZ,
+    CONSTRAINT chk_resource_batch_action CHECK (action IN ('delete','update_status','assign_team','add_tags','remove_tags')),
+    CONSTRAINT chk_resource_batch_status CHECK (status IN ('pending','running','completed','failed')),
+    CONSTRAINT chk_resource_batch_target_status CHECK (target_status IS NULL OR target_status IN ('healthy','warning','critical','offline'))
+);
+
+CREATE TABLE resource_batch_results (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    operation_id UUID NOT NULL REFERENCES resource_batch_operations(id) ON DELETE CASCADE,
+    resource_id UUID REFERENCES resources(id) ON DELETE SET NULL,
+    success BOOLEAN NOT NULL,
+    message TEXT,
+    error TEXT,
+    processed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_resource_batch_results_operation ON resource_batch_results (operation_id);
+
+CREATE TABLE resource_scan_tasks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    scan_type VARCHAR(32) NOT NULL,
+    target VARCHAR(256) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'pending',
+    options JSONB NOT NULL DEFAULT '{}'::JSONB,
+    progress NUMERIC(5,2) NOT NULL DEFAULT 0,
+    results_count INTEGER NOT NULL DEFAULT 0,
+    created_by UUID REFERENCES users(id),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    started_at TIMESTAMPTZ,
+    completed_at TIMESTAMPTZ,
+    error_message TEXT,
+    CONSTRAINT chk_resource_scan_type CHECK (scan_type IN ('network','resources','infrastructure')),
+    CONSTRAINT chk_resource_scan_status CHECK (status IN ('pending','running','completed','failed'))
+);
+CREATE INDEX idx_resource_scan_status ON resource_scan_tasks (status);
+CREATE INDEX idx_resource_scan_created_at ON resource_scan_tasks (created_at DESC);
+
+CREATE TABLE resource_scan_results (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    task_id UUID NOT NULL REFERENCES resource_scan_tasks(id) ON DELETE CASCADE,
+    resource_id UUID,
+    name VARCHAR(128) NOT NULL,
+    type VARCHAR(32) NOT NULL,
+    status VARCHAR(32) NOT NULL,
+    ip_address INET,
+    location VARCHAR(128),
+    discovered_at TIMESTAMPTZ NOT NULL,
+    services JSONB NOT NULL DEFAULT '[]'::JSONB,
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    CONSTRAINT chk_resource_scan_result_type CHECK (type IN ('server','database','cache','gateway','service')),
+    CONSTRAINT chk_resource_scan_result_status CHECK (status IN ('healthy','warning','critical','offline'))
+);
+CREATE INDEX idx_resource_scan_results_task ON resource_scan_results (task_id);
+
+-- =============================
 -- 儀表板與分析
 -- =============================
 CREATE TABLE dashboards (
@@ -734,6 +805,19 @@ CREATE TABLE auth_settings (
     logout_url VARCHAR(512),
     scopes TEXT[] DEFAULT ARRAY['openid','profile','email'],
     user_sync BOOLEAN NOT NULL DEFAULT FALSE,
+    updated_by UUID REFERENCES users(id),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE system_settings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    maintenance_mode BOOLEAN NOT NULL DEFAULT FALSE,
+    max_concurrent_scans INTEGER NOT NULL DEFAULT 10,
+    auto_discovery_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    alert_integration_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    retention_events_days INTEGER NOT NULL DEFAULT 90,
+    retention_logs_days INTEGER NOT NULL DEFAULT 30,
+    retention_metrics_days INTEGER NOT NULL DEFAULT 365,
     updated_by UUID REFERENCES users(id),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

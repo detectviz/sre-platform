@@ -253,12 +253,12 @@ const silenceRules = [
     silence_id: 'slc-001',
     name: '週末維運靜音',
     description: '每週六 02:00-04:00 維運期間靜音。',
-    silence_type: 'recurring',
+    silence_type: 'repeat',
     scope: 'resource',
     enabled: true,
     created_at: toISO(new Date(now.getTime() - 86400000 * 5)),
     schedule: {
-      silence_type: 'recurring',
+      silence_type: 'repeat',
       starts_at: toISO('2025-01-18T02:00:00Z'),
       ends_at: toISO('2025-01-18T04:00:00Z'),
       timezone: 'Asia/Taipei',
@@ -290,6 +290,8 @@ const resourceData = [
     network_in_mbps: 125.4,
     network_out_mbps: 118.2,
     service_impact: '交易 API',
+    labels: ['env=production', 'tier=frontend'],
+    notes: '主要服務外部交易流量，需要高可用度。',
     last_event_count: 3,
     tags: ['production', 'web'],
     groups: ['grp-001'],
@@ -312,6 +314,8 @@ const resourceData = [
     network_in_mbps: 95.1,
     network_out_mbps: 90.4,
     service_impact: '讀取節點',
+    labels: ['env=production', 'role=read-replica'],
+    notes: '供應交易資料庫的讀取節點，需監控延遲。',
     last_event_count: 2,
     tags: ['database', 'production'],
     groups: ['grp-002'],
@@ -355,15 +359,19 @@ const dashboards = [
   {
     dashboard_id: 'dash-001',
     name: 'SRE 戰情室儀表板',
-    category: '精選',
+    category: '戰情室',
     owner: '事件指揮中心',
     owner_id: 'team-war-room',
     description: '跨團隊即時戰情看板，聚焦重大事件與 SLA 指標。',
-    featured: true,
-    published: true,
-    views: 345,
-    favorites: 58,
+    status: 'published',
+    is_featured: true,
     is_default: true,
+    viewer_count: 345,
+    favorite_count: 58,
+    panel_count: 12,
+    tags: ['戰情室', 'SLA', 'AI 預測'],
+    data_sources: ['prometheus', 'grafana', 'alertmanager'],
+    target_page_key: 'war_room',
     published_at: toISO(new Date(now.getTime() - 86400000)),
     updated_at: toISO(new Date(now.getTime() - 3600000)),
     layout: [
@@ -580,11 +588,15 @@ const iamTeams = [
     name: 'SRE 核心小組',
     description: '負責平台可靠性維運',
     owner: 'user-001',
-    members: 8,
-    subscribers: 12,
     created_at: toISO(new Date(now.getTime() - 2592000000)),
+    members: ['user-001', 'user-002'],
     member_ids: ['user-001', 'user-002'],
-    subscriber_ids: ['user-003', 'user-004']
+    subscribers: ['user-003', 'chn-001'],
+    subscriber_ids: ['user-003', 'chn-001'],
+    subscriber_details: [
+      { subscriber_id: 'user-003', subscriber_type: 'USER', display_name: '陳昱安' },
+      { subscriber_id: 'chn-001', subscriber_type: 'SLACK_CHANNEL', display_name: '#sre-alert' }
+    ]
   }
 ];
 
@@ -633,20 +645,28 @@ const notificationChannels = [
   {
     channel_id: 'chn-001',
     name: 'Slack #sre-alert',
-    type: 'slack',
+    type: 'Slack',
     status: 'active',
+    enabled: true,
     description: 'SRE 團隊 Slack 頻道',
     config: { webhook_url: 'https://hooks.slack.com/...', default_channel: '#sre-alert' },
+    template_key: 'critical-alert',
+    last_test_result: 'success',
+    last_test_message: '測試訊息成功送達 Slack',
     updated_at: toISO(new Date(now.getTime() - 3600000)),
     last_tested_at: toISO(new Date(now.getTime() - 7200000))
   },
   {
     channel_id: 'chn-002',
     name: 'Email oncall',
-    type: 'email',
+    type: 'Email',
     status: 'active',
+    enabled: true,
     description: 'On-call 信箱',
     config: { from: 'noreply@example.com' },
+    template_key: 'default',
+    last_test_result: 'failed',
+    last_test_message: 'SMTP 認證失敗，請檢查憑證',
     updated_at: toISO(new Date(now.getTime() - 10800000)),
     last_tested_at: toISO(new Date(now.getTime() - 86400000))
   }
@@ -667,8 +687,8 @@ const notificationStrategies = [
       { type: 'user', id: 'user-001' }
     ],
     channels: [
-      { channel_id: 'chn-001', channel_type: 'slack', template: 'critical-alert' },
-      { channel_id: 'chn-002', channel_type: 'email', template: 'default' }
+      { channel_id: 'chn-001', channel_type: 'Slack', template: 'critical-alert' },
+      { channel_id: 'chn-002', channel_type: 'Email', template: 'default' }
     ],
     resource_filters: {},
     created_at: toISO(new Date(now.getTime() - 259200000)),
@@ -714,6 +734,7 @@ const notificationResendJobs = [
     channel_id: 'chn-001',
     recipients: ['#sre-alert'],
     dry_run: false,
+    note: '手動確認通知已送達核心團隊',
     started_at: toISO(new Date(now.getTime() - 1750000)),
     completed_at: toISO(new Date(now.getTime() - 1700000)),
     result_message: '重新發送成功',
@@ -944,6 +965,41 @@ const toEventDetail = (event) => ({
   analysis: event.analysis
 });
 
+const getSilencesForResource = (resourceId) =>
+  silenceRules.filter((rule) =>
+    (rule.matchers || []).some((matcher) => matcher.key === 'resource_id' && matcher.value === resourceId)
+  );
+
+const buildResourceDetail = (resource) => ({
+  ...resource,
+  labels: resource.labels || [],
+  tags: resource.tags || [],
+  silences: getSilencesForResource(resource.resource_id)
+});
+
+const buildTeamDetail = (team) => {
+  if (!team) return null;
+  const subscriberDetails = Array.isArray(team.subscriber_details) ? team.subscriber_details : [];
+  const subscriberIds = Array.isArray(team.subscriber_ids)
+    ? team.subscriber_ids
+    : subscriberDetails.map((item) => item.subscriber_id);
+  const members = Array.isArray(team.members) ? team.members : [];
+  const memberIds = Array.isArray(team.member_ids) ? team.member_ids : members;
+
+  return {
+    team_id: team.team_id,
+    name: team.name,
+    description: team.description,
+    owner: team.owner,
+    members,
+    member_ids: memberIds,
+    subscriber_ids: subscriberIds,
+    subscribers: subscriberDetails,
+    subscriber_details: subscriberDetails,
+    created_at: team.created_at
+  };
+};
+
 const mapNotificationHistorySummary = (record) => ({
   record_id: record.record_id,
   sent_at: record.sent_at,
@@ -972,6 +1028,7 @@ const mapNotificationResendJob = (job) => ({
   channel_id: job.channel_id,
   recipients: job.recipients,
   dry_run: job.dry_run,
+  note: job.note || null,
   started_at: job.started_at || null,
   completed_at: job.completed_at || null,
   result_message: job.result_message || null,
@@ -1426,6 +1483,7 @@ app.get('/resources', (req, res) => {
     disk_usage: resItem.disk_usage,
     network_in_mbps: resItem.network_in_mbps,
     network_out_mbps: resItem.network_out_mbps,
+    service_impact: resItem.service_impact,
     tags: resItem.tags,
     last_event_count: resItem.last_event_count
   })), req));
@@ -1449,26 +1507,29 @@ app.post('/resources', (req, res) => {
     network_in_mbps: 0,
     network_out_mbps: 0,
     service_impact: payload.service_impact || null,
+    labels: payload.labels || [],
+    tags: payload.tags || [],
+    notes: payload.notes || null,
     last_event_count: 0,
-    tags: payload.labels || [],
     groups: [],
     created_at: toISO(new Date()),
     updated_at: toISO(new Date())
   };
-  res.status(201).json(resource);
+  resourceData.push(resource);
+  res.status(201).json(buildResourceDetail(resource));
 });
 
 app.get('/resources/:resource_id', (req, res) => {
   const resource = getResourceById(req.params.resource_id);
   if (!resource) return notFound(res, '找不到資源');
-  res.json(resource);
+  res.json(buildResourceDetail(resource));
 });
 
 app.patch('/resources/:resource_id', (req, res) => {
   const resource = getResourceById(req.params.resource_id);
   if (!resource) return notFound(res, '找不到資源');
   Object.assign(resource, req.body || {}, { updated_at: toISO(new Date()) });
-  res.json(resource);
+  res.json(buildResourceDetail(resource));
 });
 
 app.delete('/resources/:resource_id', (req, res) => {
@@ -1565,8 +1626,8 @@ app.get('/topology', (req, res) => {
 });
 
 app.get('/dashboards/summary', (req, res) => {
-  const published = dashboards.filter((dash) => dash.published).length;
-  const featured = dashboards.filter((dash) => dash.featured).length;
+  const published = dashboards.filter((dash) => dash.status === 'published').length;
+  const featured = dashboards.filter((dash) => dash.is_featured).length;
   const automated = 1;
   res.json({ total: dashboards.length, published, featured, automated });
 });
@@ -1577,10 +1638,15 @@ app.get('/dashboards', (req, res) => {
     name: dash.name,
     category: dash.category,
     owner: dash.owner,
-    featured: dash.featured,
-    published: dash.published,
-    views: dash.views,
-    favorites: dash.favorites,
+    status: dash.status,
+    is_featured: dash.is_featured,
+    is_default: dash.is_default,
+    viewer_count: dash.viewer_count,
+    favorite_count: dash.favorite_count,
+    panel_count: dash.panel_count,
+    tags: dash.tags,
+    data_sources: dash.data_sources,
+    target_page_key: dash.target_page_key,
     updated_at: dash.updated_at
   })), req));
 });
@@ -1594,16 +1660,21 @@ app.post('/dashboards', (req, res) => {
     owner: currentUser.display_name,
     owner_id: currentUser.user_id,
     description: payload.description || '',
-    featured: false,
-    published: false,
-    views: 0,
-    favorites: 0,
+    status: 'draft',
+    is_featured: false,
     is_default: false,
+    viewer_count: 0,
+    favorite_count: 0,
+    panel_count: (payload.layout || []).length,
+    tags: payload.tags || [],
+    data_sources: payload.data_sources || [],
+    target_page_key: payload.target_page_key || null,
     published_at: null,
     updated_at: toISO(new Date()),
     layout: payload.layout || [],
     kpis: payload.kpis || []
   };
+  dashboards.push(dash);
   res.status(201).json(dash);
 });
 
@@ -1617,6 +1688,7 @@ app.patch('/dashboards/:dashboard_id', (req, res) => {
   const dash = getDashboardById(req.params.dashboard_id);
   if (!dash) return notFound(res, '找不到儀表板');
   Object.assign(dash, req.body || {}, { updated_at: toISO(new Date()) });
+  dash.panel_count = Array.isArray(dash.layout) ? dash.layout.length : dash.panel_count;
   res.json(dash);
 });
 
@@ -1629,8 +1701,9 @@ app.delete('/dashboards/:dashboard_id', (req, res) => {
 app.post('/dashboards/:dashboard_id/publish', (req, res) => {
   const dash = getDashboardById(req.params.dashboard_id);
   if (!dash) return notFound(res, '找不到儀表板');
-  dash.published = req.body?.published ?? !dash.published;
-  dash.published_at = dash.published ? toISO(new Date()) : null;
+  const shouldPublish = req.body?.published ?? dash.status !== 'published';
+  dash.status = shouldPublish ? 'published' : 'draft';
+  dash.published_at = shouldPublish ? toISO(new Date()) : null;
   res.json(dash);
 });
 
@@ -1853,31 +1926,61 @@ app.get('/iam/teams', (req, res) => {
 
 app.post('/iam/teams', (req, res) => {
   const payload = req.body || {};
+  const memberIds = Array.isArray(payload.member_ids) ? payload.member_ids : [];
+  const subscriberDetails = Array.isArray(payload.subscribers) && payload.subscribers.every((item) => typeof item === 'object')
+    ? payload.subscribers
+    : [];
+  const subscriberIds = Array.isArray(payload.subscriber_ids) ? payload.subscriber_ids : subscriberDetails.map((item) => item.subscriber_id);
   const team = {
     team_id: `team-${Date.now()}`,
     name: payload.name || '新團隊',
     description: payload.description || '',
     owner: payload.owner_id || currentUser.user_id,
-    members: payload.member_ids ? payload.member_ids.length : 0,
-    subscribers: payload.subscriber_ids ? payload.subscriber_ids.length : 0,
     created_at: toISO(new Date()),
-    member_ids: payload.member_ids || [],
-    subscriber_ids: payload.subscriber_ids || []
+    member_ids: memberIds,
+    members: memberIds,
+    subscriber_ids: subscriberIds,
+    subscribers: subscriberIds,
+    subscriber_details: subscriberDetails
   };
-  res.status(201).json(team);
+  iamTeams.push(team);
+  res.status(201).json(buildTeamDetail(team));
 });
 
 app.get('/iam/teams/:team_id', (req, res) => {
   const team = getTeamById(req.params.team_id);
   if (!team) return notFound(res, '找不到團隊');
-  res.json(team);
+  res.json(buildTeamDetail(team));
 });
 
 app.patch('/iam/teams/:team_id', (req, res) => {
   const team = getTeamById(req.params.team_id);
   if (!team) return notFound(res, '找不到團隊');
-  Object.assign(team, req.body || {});
-  res.json(team);
+  const payload = req.body || {};
+  Object.assign(team, payload);
+
+  let subscriberDetails;
+  if (Array.isArray(payload.subscribers) && payload.subscribers.every((item) => typeof item === 'object')) {
+    subscriberDetails = payload.subscribers;
+  } else if (Array.isArray(payload.subscriber_details) && payload.subscriber_details.every((item) => typeof item === 'object')) {
+    subscriberDetails = payload.subscriber_details;
+  }
+
+  if (subscriberDetails) {
+    team.subscriber_details = subscriberDetails;
+    team.subscriber_ids = subscriberDetails.map((item) => item.subscriber_id);
+    team.subscribers = team.subscriber_ids;
+  } else if (Array.isArray(payload.subscriber_ids)) {
+    team.subscriber_ids = payload.subscriber_ids;
+    team.subscribers = payload.subscriber_ids;
+  }
+
+  if (Array.isArray(payload.member_ids)) {
+    team.member_ids = payload.member_ids;
+    team.members = payload.member_ids;
+  }
+
+  res.json(buildTeamDetail(team));
 });
 
 app.delete('/iam/teams/:team_id', (req, res) => {
@@ -1991,7 +2094,12 @@ app.get('/notification/channels', (req, res) => {
     channel_id: channel.channel_id,
     name: channel.name,
     type: channel.type,
+    enabled: channel.enabled,
     status: channel.status,
+    template_key: channel.template_key,
+    last_test_result: channel.last_test_result || 'pending',
+    last_test_message: channel.last_test_message || null,
+    last_tested_at: channel.last_tested_at || null,
     updated_at: channel.updated_at
   })));
 });
@@ -2001,13 +2109,18 @@ app.post('/notification/channels', (req, res) => {
   const channel = {
     channel_id: `chn-${Date.now()}`,
     name: payload.name || '新管道',
-    type: payload.type || 'email',
+    type: payload.type || 'Email',
     status: payload.status || 'active',
+    enabled: payload.enabled ?? true,
     description: payload.description || '',
     config: payload.config || {},
+    template_key: payload.template_key || null,
+    last_test_result: null,
+    last_test_message: null,
     updated_at: toISO(new Date()),
     last_tested_at: null
   };
+  notificationChannels.push(channel);
   res.status(201).json(channel);
 });
 
@@ -2015,6 +2128,8 @@ app.post('/notification/channels/:channel_id/test', (req, res) => {
   const channel = getNotificationChannelById(req.params.channel_id);
   if (!channel) return notFound(res, '找不到通知管道');
   channel.last_tested_at = toISO(new Date());
+  channel.last_test_result = 'success';
+  channel.last_test_message = '測試通知已發送';
   res.json({ status: 'success', message: '測試通知已發送' });
 });
 
@@ -2126,13 +2241,7 @@ app.post('/notification/history/resend', (req, res) => {
 });
 
 app.get('/settings/tags', (req, res) => {
-  res.json(tagDefinitions.map((tag) => ({
-    tag_id: tag.tag_id,
-    name: tag.name,
-    category: tag.category,
-    required: tag.required,
-    usage_count: tag.usage_count
-  })));
+  res.json(tagDefinitions);
 });
 
 app.get('/settings/tags/summary', (req, res) => {
@@ -2184,7 +2293,9 @@ app.post('/settings/tags/:tag_id/values', (req, res) => {
     value_id: `tag-value-${Date.now()}`,
     value: req.body?.value || 'new-value',
     description: req.body?.description || '',
-    is_default: req.body?.is_default ?? false
+    is_default: req.body?.is_default ?? false,
+    usage_count: 0,
+    last_synced_at: null
   };
   tag.values.push(value);
   res.status(201).json(value);
@@ -2285,11 +2396,10 @@ const systemSettings = {
   max_concurrent_scans: 10,
   auto_discovery_enabled: true,
   alert_integration_enabled: true,
-  retention_policy: {
-    events_days: 90,
-    logs_days: 30,
-    metrics_days: 365
-  },
+  retention_events_days: 90,
+  retention_logs_days: 30,
+  retention_metrics_days: 365,
+  updated_by: currentUser.user_id,
   updated_at: toISO(now)
 };
 
@@ -2362,7 +2472,32 @@ app.get('/admin/settings', (req, res) => {
 });
 
 app.post('/admin/settings', (req, res) => {
-  Object.assign(systemSettings, req.body, { updated_at: toISO(new Date()) });
+  const payload = req.body || {};
+  const flattened = { ...payload };
+
+  if (payload.retention_policy && typeof payload.retention_policy === 'object') {
+    const { events_days, logs_days, metrics_days } = payload.retention_policy;
+    if (events_days !== undefined) flattened.retention_events_days = events_days;
+    if (logs_days !== undefined) flattened.retention_logs_days = logs_days;
+    if (metrics_days !== undefined) flattened.retention_metrics_days = metrics_days;
+  }
+
+  [
+    'maintenance_mode',
+    'max_concurrent_scans',
+    'auto_discovery_enabled',
+    'alert_integration_enabled',
+    'retention_events_days',
+    'retention_logs_days',
+    'retention_metrics_days'
+  ].forEach((key) => {
+    if (flattened[key] !== undefined) {
+      systemSettings[key] = flattened[key];
+    }
+  });
+
+  systemSettings.updated_by = currentUser.user_id;
+  systemSettings.updated_at = toISO(new Date());
   res.json(systemSettings);
 });
 
@@ -2399,15 +2534,19 @@ app.post('/resources/batch', (req, res) => {
       operation.completed_at = toISO(new Date());
 
       // Mock results
-      operation.results = resource_ids.map(id => ({
-        resource_id: id,
-        success: Math.random() > 0.1, // 90% success rate
-        message: Math.random() > 0.1 ? 'Operation successful' : 'Resource not found'
-      }));
+      operation.results = resource_ids.map((id) => {
+        const success = Math.random() > 0.1;
+        return {
+          resource_id: id,
+          success,
+          message: success ? '操作已完成' : '操作失敗，請檢查資源狀態',
+          error: success ? null : 'Resource not found'
+        };
+      });
 
       operation.processed_count = operation.results.length;
-      operation.success_count = operation.results.filter(r => r.success).length;
-      operation.failed_count = operation.results.filter(r => !r.success).length;
+      operation.success_count = operation.results.filter((result) => result.success).length;
+      operation.failed_count = operation.results.filter((result) => !result.success).length;
 
       batchOperations.set(batchId, operation);
     }
@@ -2417,6 +2556,10 @@ app.post('/resources/batch', (req, res) => {
     batch_id: batchId,
     status: 'pending',
     total_count: resource_ids.length,
+    processed_count: 0,
+    success_count: 0,
+    failed_count: 0,
+    results: [],
     created_at: toISO(new Date())
   });
 });
