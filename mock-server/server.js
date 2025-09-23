@@ -286,7 +286,8 @@ const resourceData = [
     ip_address: '10.10.8.11',
     location: 'ap-southeast-1a',
     environment: 'production',
-    team: 'sre-core',
+    team_id: 'team-sre',
+    team: 'SRE 核心小組',
     os: 'Ubuntu 22.04',
     cpu_usage: 72.4,
     memory_usage: 68.1,
@@ -312,7 +313,8 @@ const resourceData = [
     ip_address: '10.10.12.21',
     location: 'ap-southeast-1b',
     environment: 'production',
-    team: 'db-team',
+    team_id: 'team-db',
+    team: '資料庫團隊',
     os: 'Amazon Linux 2023',
     cpu_usage: 64.8,
     memory_usage: 71.2,
@@ -337,7 +339,8 @@ const resourceGroups = [
     group_id: 'grp-001',
     name: '交易前台集群',
     description: 'Web 與 API 節點',
-    owner_team: 'sre-core',
+    owner_team_id: 'team-sre',
+    owner_team: 'SRE 核心小組',
     member_count: 1,
     subscriber_count: 4,
     status_summary: { healthy: 2, warning: 1, critical: 0 },
@@ -620,6 +623,16 @@ const iamUsers = [
     teams: ['ops'],
     roles: ['ops'],
     last_login: toISO(new Date(now.getTime() - 7200000))
+  },
+  {
+    user_id: 'user-003',
+    username: 'db.tsai',
+    name: '蔡敏豪',
+    email: 'db.tsai@example.com',
+    status: 'active',
+    teams: ['team-db'],
+    roles: ['db-admin'],
+    last_login: toISO(new Date(now.getTime() - 14400000))
   }
 ];
 
@@ -640,6 +653,18 @@ const iamTeams = [
       { subscriber_id: 'user-003', subscriber_type: 'USER', display_name: '陳昱安' },
       { subscriber_id: 'chn-001', subscriber_type: 'SLACK_CHANNEL', display_name: '#sre-alert' }
     ]
+  },
+  {
+    team_id: 'team-db',
+    name: '資料庫團隊',
+    description: '管理資料庫平台與效能',
+    owner: 'user-003',
+    created_at: toISO(new Date(now.getTime() - 3456000000)),
+    members: ['user-003'],
+    member_ids: ['user-003'],
+    subscribers: [],
+    subscriber_ids: [],
+    subscriber_details: []
   }
 ];
 
@@ -781,7 +806,8 @@ const notificationResendJobs = [
     started_at: toISO(new Date(now.getTime() - 1750000)),
     completed_at: toISO(new Date(now.getTime() - 1700000)),
     result_message: '重新發送成功',
-    error_message: null
+    error_message: null,
+    metadata: {}
   }
 ];
 
@@ -1018,6 +1044,7 @@ const mapEventSummary = (event) => ({
   service_impact: event.service_impact,
   rule_name: event.rule_name,
   trigger_threshold: event.trigger_threshold,
+  assignee_id: event.assignee_id || null,
   assignee: event.assignee,
   trigger_time: event.trigger_time,
   tags: event.tags || []
@@ -1099,6 +1126,7 @@ const mapNotificationHistorySummary = (record) => ({
   message: record.message,
   error_message: record.error_message,
   recipients: record.recipients,
+  metadata: record.metadata || {},
   retry_count: record.retry_count ?? Math.max((record.attempts?.length || 1) - 1, 0),
   duration_ms: record.duration_ms,
   resend_available: record.resend_available ?? false,
@@ -1119,7 +1147,8 @@ const mapNotificationResendJob = (job) => ({
   started_at: job.started_at || null,
   completed_at: job.completed_at || null,
   result_message: job.result_message || null,
-  error_message: job.error_message || null
+  error_message: job.error_message || null,
+  metadata: job.metadata || {}
 });
 
 const getEventById = (id) => eventData.find((evt) => evt.event_id === id);
@@ -1894,6 +1923,7 @@ app.get('/resources', (req, res) => {
     location: resItem.location,
     environment: resItem.environment,
     team: resItem.team,
+    team_id: resItem.team_id || null,
     os: resItem.os,
     cpu_usage: resItem.cpu_usage,
     memory_usage: resItem.memory_usage,
@@ -1916,7 +1946,10 @@ app.post('/resources', (req, res) => {
     ip_address: payload.ip_address || '10.0.0.1',
     location: payload.location || 'ap-southeast-1a',
     environment: payload.environment || 'production',
-    team: payload.team || null,
+    team_id: payload.team_id || null,
+    team:
+      payload.team ||
+      (payload.team_id ? getTeamById(payload.team_id)?.name || null : null),
     os: payload.os || 'Linux',
     cpu_usage: 0,
     memory_usage: 0,
@@ -1949,6 +1982,19 @@ app.patch('/resources/:resource_id', (req, res) => {
     resource.tags = normalizeTags(updates.tags ?? updates.labels);
     delete updates.tags;
     delete updates.labels;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'team_id')) {
+    resource.team_id = updates.team_id;
+    if (!Object.prototype.hasOwnProperty.call(updates, 'team')) {
+      resource.team = updates.team_id
+        ? getTeamById(updates.team_id)?.name || resource.team
+        : null;
+    }
+    delete updates.team_id;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'team')) {
+    resource.team = updates.team;
+    delete updates.team;
   }
   Object.assign(resource, updates, { updated_at: toISO(new Date()) });
   res.json(buildResourceDetail(resource));
@@ -1999,6 +2045,7 @@ app.get('/resource-groups', (req, res) => {
     group_id: grp.group_id,
     name: grp.name,
     description: grp.description,
+    owner_team_id: grp.owner_team_id || null,
     owner_team: grp.owner_team,
     member_count: grp.member_count,
     subscriber_count: grp.subscriber_count,
@@ -2013,7 +2060,10 @@ app.post('/resource-groups', (req, res) => {
     group_id: `grp-${Date.now()}`,
     name: payload.name || '新資源群組',
     description: payload.description || '',
-    owner_team: payload.owner_team || null,
+    owner_team_id: payload.owner_team_id || null,
+    owner_team:
+      payload.owner_team ||
+      (payload.owner_team_id ? getTeamById(payload.owner_team_id)?.name || null : null),
     member_count: payload.resource_ids ? payload.resource_ids.length : 0,
     subscriber_count: payload.subscriber_ids ? payload.subscriber_ids.length : 0,
     status_summary: { healthy: 0, warning: 0, critical: 0 },
@@ -2033,7 +2083,21 @@ app.get('/resource-groups/:group_id', (req, res) => {
 app.put('/resource-groups/:group_id', (req, res) => {
   const group = getResourceGroupById(req.params.group_id);
   if (!group) return notFound(res, '找不到資源群組');
-  Object.assign(group, req.body || {}, { updated_at: toISO(new Date()) });
+  const payload = req.body || {};
+  if (Object.prototype.hasOwnProperty.call(payload, 'owner_team_id')) {
+    group.owner_team_id = payload.owner_team_id;
+    if (!Object.prototype.hasOwnProperty.call(payload, 'owner_team')) {
+      group.owner_team = payload.owner_team_id
+        ? getTeamById(payload.owner_team_id)?.name || group.owner_team
+        : null;
+    }
+    delete payload.owner_team_id;
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'owner_team')) {
+    group.owner_team = payload.owner_team;
+    delete payload.owner_team;
+  }
+  Object.assign(group, payload, { updated_at: toISO(new Date()) });
   res.json(group);
 });
 
@@ -2621,7 +2685,8 @@ app.post('/notification/history/:record_id/resend', (req, res) => {
     dry_run: Boolean(req.body?.dry_run),
     note: req.body?.note || null,
     result_message: null,
-    error_message: null
+    error_message: null,
+    metadata: req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {}
   };
   notificationResendJobs.push(job);
   record.resend_count = (record.resend_count || 0) + 1;
@@ -2662,7 +2727,8 @@ app.post('/notification/history/resend', (req, res) => {
       dry_run: Boolean(req.body?.dry_run),
       note: req.body?.note || null,
       result_message: null,
-      error_message: null
+      error_message: null,
+      metadata: req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {}
     });
     record.resend_count = (record.resend_count || 0) + 1;
     record.last_resend_at = enqueuedAt;
