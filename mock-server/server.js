@@ -97,6 +97,7 @@ const eventData = [
     description: '交易 API P95 延遲持續高於 500ms。',
     severity: 'critical',
     status: 'in_progress',
+    priority: 'P0',
     resource_id: 'res-001',
     resource_name: 'web-01',
     service_impact: '客戶交易延遲，SLA 風險升高',
@@ -171,6 +172,7 @@ const eventData = [
     description: 'RDS 叢集讀取延遲偶發飆升。',
     severity: 'warning',
     status: 'acknowledged',
+    priority: 'P2',
     resource_id: 'res-002',
     resource_name: 'rds-read-1',
     service_impact: '延遲影響讀取性能',
@@ -197,6 +199,7 @@ const eventRules = [
     name: 'API 延遲監控',
     description: '監控交易 API 延遲，超過閾值即觸發事件。',
     severity: 'critical',
+    default_priority: 'P0',
     enabled: true,
     automation_enabled: true,
     creator: '林佳瑜',
@@ -224,6 +227,7 @@ const eventRules = [
     name: '資料庫延遲監控',
     description: '觀察資料庫連線與查詢延遲。',
     severity: 'warning',
+    default_priority: 'P2',
     enabled: true,
     automation_enabled: false,
     creator: '林佳瑜',
@@ -1008,6 +1012,7 @@ const mapEventSummary = (event) => ({
   description: event.description,
   severity: event.severity,
   status: event.status,
+  priority: event.priority || 'P2',
   resource_id: event.resource_id,
   resource_name: event.resource_name,
   service_impact: event.service_impact,
@@ -1029,6 +1034,24 @@ const toEventDetail = (event) => ({
   automation_executions: getAutomationExecutionsForEvent(event.event_id),
   analysis: event.analysis
 });
+
+const appendTimelineEntry = (event, entry) => {
+  if (!event) return null;
+  event.timeline = Array.isArray(event.timeline) ? event.timeline : [];
+  const uniqueSuffix = Math.random().toString(36).slice(2, 8);
+  const timestamp = Date.now();
+  const finalEntry = {
+    entry_id: entry.entry_id || `evt-${event.event_id}-tl-${timestamp}-${uniqueSuffix}`,
+    event_id: event.event_id,
+    entry_type: entry.entry_type || 'note',
+    message: entry.message,
+    created_by: entry.created_by || currentUser.display_name,
+    created_at: entry.created_at || toISO(new Date()),
+    metadata: entry.metadata || {}
+  };
+  event.timeline.push(finalEntry);
+  return finalEntry;
+};
 
 const getSilencesForResource = (resourceId) =>
   silenceRules.filter((rule) =>
@@ -1249,15 +1272,178 @@ app.get('/events', (req, res) => {
   res.json(paginate(items, req));
 });
 
+app.post('/events/batch', (req, res) => {
+  const {
+    action,
+    event_ids: eventIds,
+    assignee_id: assigneeId,
+    comment,
+    resolved_at: resolvedAt,
+    visibility
+  } = req.body || {};
+  const allowedActions = new Set(['acknowledge', 'resolve', 'assign', 'add_comment']);
+  if (!allowedActions.has(action)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'action 參數無效。' });
+  }
+  if (!Array.isArray(eventIds) || eventIds.length === 0) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'event_ids 至少需要一筆事件。' });
+  }
+  if (action === 'assign' && !assigneeId) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'assign 操作需提供 assignee_id。' });
+  }
+  if (action === 'add_comment' && !comment) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'add_comment 操作需提供 comment 內容。' });
+  }
+
+  const batchId = `evt-batch-${Date.now()}`;
+  const createdAt = toISO(new Date());
+  const requestedBy = currentUser.user_id;
+  const commentVisibility = visibility === 'public' ? 'public' : 'internal';
+  const requestPayload = {
+    action,
+    event_ids: eventIds,
+    ...(assigneeId ? { assignee_id: assigneeId } : {}),
+    ...(comment ? { comment } : {}),
+    ...(resolvedAt ? { resolved_at: resolvedAt } : {})
+  };
+  if (visibility || action === 'add_comment') {
+    requestPayload.visibility = commentVisibility;
+  }
+  const operation = {
+    batch_id: batchId,
+    status: 'pending',
+    action,
+    requested_by: requestedBy,
+    assignee_id: assigneeId || null,
+    comment: comment || null,
+    request_payload: requestPayload,
+    total_count: eventIds.length,
+    processed_count: 0,
+    success_count: 0,
+    failed_count: 0,
+    created_at: createdAt,
+    completed_at: null,
+    results: []
+  };
+  eventBatchOperations.set(batchId, operation);
+
+  setTimeout(() => {
+    const current = eventBatchOperations.get(batchId);
+    if (!current) return;
+    current.status = 'running';
+    eventBatchOperations.set(batchId, current);
+
+    const results = eventIds.map((id) => {
+      const event = getEventById(id);
+      if (!event) {
+        return { event_id: id, success: false, message: '找不到事件', error: 'NOT_FOUND' };
+      }
+      try {
+        if (action === 'acknowledge') {
+          event.status = 'acknowledged';
+          event.acknowledged_at = toISO(new Date());
+          event.updated_at = event.acknowledged_at;
+          appendTimelineEntry(event, {
+            entry_type: 'status_change',
+            message: '事件已確認處理',
+            metadata: { action: 'acknowledge' }
+          });
+        } else if (action === 'resolve') {
+          const resolvedTime = resolvedAt ? toISO(new Date(resolvedAt)) : toISO(new Date());
+          event.status = 'resolved';
+          event.resolved_at = resolvedTime;
+          event.updated_at = resolvedTime;
+          if (!event.acknowledged_at) {
+            event.acknowledged_at = resolvedTime;
+          }
+          appendTimelineEntry(event, {
+            entry_type: 'status_change',
+            message: '事件標記為已解決',
+            metadata: { action: 'resolve' }
+          });
+        } else if (action === 'assign') {
+          event.assignee_id = assigneeId;
+          event.assignee = iamUsers.find((user) => user.user_id === assigneeId)?.name || assigneeId;
+          if (event.status === 'new' || event.status === 'acknowledged') {
+            event.status = 'in_progress';
+          }
+          const updatedAt = toISO(new Date());
+          event.updated_at = updatedAt;
+          if (!event.acknowledged_at) {
+            event.acknowledged_at = updatedAt;
+          }
+          appendTimelineEntry(event, {
+            entry_type: 'status_change',
+            message: `事件指派給 ${event.assignee}`,
+            metadata: { action: 'assign' }
+          });
+          if (comment) {
+            appendTimelineEntry(event, {
+              entry_type: 'note',
+              message: comment,
+              metadata: { action: 'assign' }
+            });
+          }
+        } else if (action === 'add_comment') {
+          appendTimelineEntry(event, {
+            entry_type: 'note',
+            message: comment,
+            metadata: { action: 'add_comment', visibility: commentVisibility }
+          });
+          event.updated_at = toISO(new Date());
+        }
+        return { event_id: id, success: true, message: '操作完成' };
+      } catch (error) {
+        return { event_id: id, success: false, message: '操作失敗', error: 'INTERNAL_ERROR' };
+      }
+    });
+
+    current.results = results;
+    current.processed_count = results.length;
+    current.success_count = results.filter((result) => result.success).length;
+    current.failed_count = results.filter((result) => !result.success).length;
+    current.status = current.success_count === 0 ? 'failed' : 'completed';
+    current.completed_at = toISO(new Date());
+    eventBatchOperations.set(batchId, current);
+  }, 300);
+
+  res.status(202).json(operation);
+});
+
+app.get('/events/batch/:batch_id', (req, res) => {
+  const operation = eventBatchOperations.get(req.params.batch_id);
+  if (!operation) {
+    return notFound(res, '找不到批次處理作業');
+  }
+  res.json(operation);
+});
+
 app.post('/events', (req, res) => {
   const payload = req.body || {};
+  const nowIso = toISO(new Date());
+  const defaultPriority = eventRules.find((rule) => rule.rule_id === payload.rule_id)?.default_priority || 'P2';
+  const initialStatus = payload.status || 'new';
+  const acknowledgedAt =
+    typeof payload.acknowledged_at === 'string'
+      ? payload.acknowledged_at
+      : ['acknowledged', 'in_progress', 'resolved'].includes(initialStatus)
+        ? nowIso
+        : null;
+  const resolvedAt =
+    typeof payload.resolved_at === 'string'
+      ? payload.resolved_at
+      : initialStatus === 'resolved'
+        ? nowIso
+        : null;
+  const updatedAt = resolvedAt || acknowledgedAt || nowIso;
   const newEvent = {
     event_id: `evt-${Date.now()}`,
     event_key: payload.event_key || `INC-${Date.now()}`,
     summary: payload.summary || '新事件',
     description: payload.description || '',
     severity: payload.severity || 'warning',
-    status: payload.status || 'new',
+    status: initialStatus,
+    priority: payload.priority || defaultPriority,
     resource_id: payload.resource_id || null,
     resource_name: resourceData.find((r) => r.resource_id === payload.resource_id)?.name || null,
     service_impact: payload.service_impact || null,
@@ -1269,13 +1455,16 @@ app.post('/events', (req, res) => {
     trigger_time: payload.trigger_time || toISO(new Date()),
     assignee_id: payload.assignee_id || null,
     assignee: iamUsers.find((user) => user.user_id === payload.assignee_id)?.name || null,
-    acknowledged_at: null,
-    resolved_at: null,
+    acknowledged_at: acknowledgedAt,
+    resolved_at: resolvedAt,
     tags: payload.tags || [],
     timeline: [],
     related: [],
-    analysis: null
+    analysis: null,
+    created_at: nowIso,
+    updated_at: updatedAt
   };
+  eventData.unshift(newEvent);
   res.status(201).json(toEventDetail(newEvent));
 });
 
@@ -1289,12 +1478,14 @@ app.patch('/events/:event_id', (req, res) => {
   const event = getEventById(req.params.event_id);
   if (!event) return notFound(res, '找不到事件');
   Object.assign(event, req.body || {});
+  event.updated_at = toISO(new Date());
   res.json(toEventDetail(event));
 });
 
 app.delete('/events/:event_id', (req, res) => {
-  const event = getEventById(req.params.event_id);
-  if (!event) return notFound(res, '找不到事件');
+  const index = eventData.findIndex((evt) => evt.event_id === req.params.event_id);
+  if (index === -1) return notFound(res, '找不到事件');
+  eventData.splice(index, 1);
   res.status(204).end();
 });
 
@@ -1307,17 +1498,33 @@ app.get('/events/:event_id/timeline', (req, res) => {
 app.post('/events/:event_id/timeline', (req, res) => {
   const event = getEventById(req.params.event_id);
   if (!event) return notFound(res, '找不到事件');
-  const entry = {
-    entry_id: `evt-${req.params.event_id}-tl-${Date.now()}`,
-    event_id: req.params.event_id,
+  const entry = appendTimelineEntry(event, {
     entry_type: req.body?.entry_type || 'note',
     message: req.body?.message || '更新備註',
-    created_by: req.body?.created_by || currentUser.display_name,
-    created_at: toISO(new Date()),
+    created_by: req.body?.created_by,
     metadata: req.body?.metadata || {}
-  };
-  event.timeline = event.timeline || [];
-  event.timeline.push(entry);
+  });
+  event.updated_at = toISO(new Date());
+  res.status(201).json(entry);
+});
+
+app.post('/events/:event_id/comments', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  const comment = typeof req.body?.comment === 'string' ? req.body.comment.trim() : '';
+  if (!comment) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'comment 欄位為必填。' });
+  }
+  const entry = appendTimelineEntry(event, {
+    entry_type: 'note',
+    message: comment,
+    created_by: req.body?.created_by,
+    metadata: {
+      visibility: req.body?.visibility || 'internal',
+      ...(req.body?.metadata || {})
+    }
+  });
+  event.updated_at = toISO(new Date());
   res.status(201).json(entry);
 });
 
@@ -1330,10 +1537,77 @@ app.get('/events/:event_id/related', (req, res) => {
 app.post('/events/:event_id/acknowledge', (req, res) => {
   const event = getEventById(req.params.event_id);
   if (!event) return notFound(res, '找不到事件');
+  const assigneeId = req.body?.assignee_id || currentUser.user_id;
+  const note = typeof req.body?.note === 'string' ? req.body.note.trim() : '';
+  const acknowledgedAt = toISO(new Date());
   event.status = 'acknowledged';
-  event.assignee_id = req.body?.assignee_id || currentUser.user_id;
-  event.assignee = iamUsers.find((u) => u.user_id === event.assignee_id)?.name || currentUser.display_name;
-  event.acknowledged_at = toISO(new Date());
+  event.assignee_id = assigneeId;
+  event.assignee = iamUsers.find((u) => u.user_id === assigneeId)?.name || currentUser.display_name;
+  event.acknowledged_at = acknowledgedAt;
+  event.updated_at = acknowledgedAt;
+  appendTimelineEntry(event, {
+    entry_type: 'status_change',
+    message: '事件已確認處理',
+    metadata: { action: 'acknowledge' }
+  });
+  if (note) {
+    appendTimelineEntry(event, {
+      entry_type: 'note',
+      message: note,
+      metadata: { action: 'acknowledge' }
+    });
+  }
+  res.json(toEventDetail(event));
+});
+
+app.post('/events/:event_id/assign', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  const assigneeId = req.body?.assignee_id;
+  if (!assigneeId) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'assignee_id 欄位為必填。' });
+  }
+  event.assignee_id = assigneeId;
+  event.assignee = iamUsers.find((user) => user.user_id === assigneeId)?.name || assigneeId;
+  if (event.status === 'new' || event.status === 'acknowledged') {
+    event.status = 'in_progress';
+  }
+  const nowIso = toISO(new Date());
+  event.updated_at = nowIso;
+  appendTimelineEntry(event, {
+    entry_type: 'status_change',
+    message: `事件指派給 ${event.assignee}`,
+    metadata: { action: 'assign' }
+  });
+  if (req.body?.note) {
+    appendTimelineEntry(event, {
+      entry_type: 'note',
+      message: req.body.note,
+      metadata: { action: 'assign' }
+    });
+  }
+  res.json(toEventDetail(event));
+});
+
+app.post('/events/:event_id/resolve', (req, res) => {
+  const event = getEventById(req.params.event_id);
+  if (!event) return notFound(res, '找不到事件');
+  const resolvedAt = req.body?.resolved_at ? toISO(new Date(req.body.resolved_at)) : toISO(new Date());
+  event.status = 'resolved';
+  event.resolved_at = resolvedAt;
+  event.updated_at = resolvedAt;
+  if (req.body?.resolution_note) {
+    appendTimelineEntry(event, {
+      entry_type: 'note',
+      message: req.body.resolution_note,
+      metadata: { action: 'resolve' }
+    });
+  }
+  appendTimelineEntry(event, {
+    entry_type: 'status_change',
+    message: '事件標記為已解決',
+    metadata: { action: 'resolve' }
+  });
   res.json(toEventDetail(event));
 });
 
@@ -1395,6 +1669,82 @@ app.post('/events/:event_id/silence', (req, res) => {
   };
   res.status(201).json(silence);
 });
+
+app.post('/events/report', (req, res) => {
+  const { event_ids: eventIds, include_timeline: includeTimeline, title } = req.body || {};
+  if (!Array.isArray(eventIds) || eventIds.length === 0) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'event_ids 至少需要一筆事件。' });
+  }
+
+  const selectedEvents = eventIds
+    .map((id) => getEventById(id))
+    .filter((event) => Boolean(event));
+
+  if (selectedEvents.length === 0) {
+    return res.status(404).json({ code: 'NOT_FOUND', message: '找不到指定的事件。' });
+  }
+
+  const severityBreakdown = selectedEvents.reduce((acc, event) => {
+    acc[event.severity] = (acc[event.severity] || 0) + 1;
+    return acc;
+  }, {});
+
+  const priorityBreakdown = selectedEvents.reduce((acc, event) => {
+    const priority = event.priority || 'P2';
+    acc[priority] = (acc[priority] || 0) + 1;
+    return acc;
+  }, {});
+
+  const rootCauses = new Set();
+  const impacts = new Set();
+  const recommendations = [];
+  const timelineHighlights = includeTimeline
+    ? selectedEvents.map((event) => ({
+        event_id: event.event_id,
+        event_summary: event.summary,
+        items: (event.timeline || []).map((entry) => ({
+          entry_id: entry.entry_id,
+          event_id: entry.event_id,
+          entry_type: entry.entry_type,
+          message: entry.message,
+          created_by: entry.created_by,
+          created_at: entry.created_at,
+          metadata: entry.metadata || {}
+        }))
+      }))
+    : undefined;
+
+  selectedEvents.forEach((event) => {
+    if (event.analysis?.root_cause) {
+      rootCauses.add(event.analysis.root_cause);
+    }
+    if (event.analysis?.impact_analysis) {
+      impacts.add(event.analysis.impact_analysis);
+    }
+    if (Array.isArray(event.analysis?.recommendations)) {
+      recommendations.push(...event.analysis.recommendations);
+    }
+  });
+
+  const summary = `共 ${selectedEvents.length} 件事件，Critical ${severityBreakdown.critical || 0} 件、` +
+    `Warning ${severityBreakdown.warning || 0} 件，已完成彙總分析。`;
+
+  const report = {
+    report_id: `evt-report-${Date.now()}`,
+    generated_at: toISO(new Date()),
+    title: title || '事件彙總報告',
+    event_ids: eventIds,
+    severity_breakdown: severityBreakdown,
+    priority_breakdown: priorityBreakdown,
+    summary,
+    root_causes: Array.from(rootCauses),
+    impacts: Array.from(impacts),
+    recommendations,
+    ...(includeTimeline ? { timeline_highlights: timelineHighlights } : {})
+  };
+
+  res.json(report);
+});
 app.get('/event-rules/summary', (req, res) => {
   const enabled = eventRules.filter((rule) => rule.enabled).length;
   const automation = eventRules.filter((rule) => rule.automation?.enabled).length;
@@ -1409,6 +1759,7 @@ app.get('/event-rules', (req, res) => {
     severity: rule.severity,
     enabled: rule.enabled,
     automation_enabled: rule.automation_enabled,
+    default_priority: rule.default_priority || 'P2',
     creator: rule.creator,
     last_updated: rule.last_updated
   })), req));
@@ -1421,6 +1772,7 @@ app.post('/event-rules', (req, res) => {
     name: payload.name || '新事件規則',
     description: payload.description || '',
     severity: payload.severity || 'warning',
+    default_priority: payload.default_priority || 'P2',
     enabled: payload.enabled ?? true,
     automation_enabled: payload.automation?.enabled ?? false,
     creator: currentUser.display_name,
@@ -1432,6 +1784,7 @@ app.post('/event-rules', (req, res) => {
     content_template: payload.content_template || '',
     automation: payload.automation || { enabled: false, script_id: null, parameters: {} }
   };
+  eventRules.push(rule);
   res.status(201).json(rule);
 });
 
@@ -2549,6 +2902,7 @@ const systemHealth = {
 };
 
 // Batch operations
+const eventBatchOperations = new Map();
 const batchOperations = new Map();
 const scanTasks = new Map();
 

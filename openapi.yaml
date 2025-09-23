@@ -8,6 +8,66 @@ info:
 servers:
   - url: http://localhost:4000
     description: 本地 Mock 伺服器
+x-resource-status-rules:
+  cpu_usage:
+    healthy: "< 60%"
+    warning: "60% - 80%"
+    critical: ">= 80%"
+  memory_usage:
+    healthy: "< 70%"
+    warning: "70% - 90%"
+    critical: ">= 90%"
+  disk_usage:
+    healthy: "< 75%"
+    warning: "75% - 90%"
+    critical: ">= 90%"
+  network_latency_ms:
+    healthy: "< 150"
+    warning: "150 - 250"
+    critical: ">= 250"
+x-incident-lifecycle:
+  states:
+    new:
+      description: 新事件等待處理。
+      transitions:
+        acknowledge:
+          target: acknowledged
+          path: /events/{event_id}/acknowledge
+          method: POST
+        assign:
+          target: in_progress
+          path: /events/{event_id}/assign
+          method: POST
+        resolve:
+          target: resolved
+          path: /events/{event_id}/resolve
+          method: POST
+    acknowledged:
+      description: 事件已被接手。
+      transitions:
+        assign:
+          target: in_progress
+          path: /events/{event_id}/assign
+          method: POST
+        resolve:
+          target: resolved
+          path: /events/{event_id}/resolve
+          method: POST
+    in_progress:
+      description: 處理人正在處理事件。
+      transitions:
+        resolve:
+          target: resolved
+          path: /events/{event_id}/resolve
+          method: POST
+    resolved:
+      description: 事件已被解決。
+      transitions:
+        reopen:
+          target: in_progress
+          path: /events/{event_id}
+          method: PATCH
+          description: 將狀態更新為 in_progress。
 x-error-codes:
   - code: INVALID_REQUEST
     message: 請求參數驗證失敗，請確認輸入資料。
@@ -466,6 +526,55 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "409":
           $ref: "#/components/responses/Conflict"
+  /events/batch:
+    post:
+      tags:
+        - 事件管理
+      summary: 批次處理事件
+      operationId: batchEvents
+      security:
+        - bearerAuth: [team_member, team_manager, super_admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EventBatchRequest"
+      responses:
+        "202":
+          description: 已接受批次處理請求。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventBatchStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /events/batch/{batch_id}:
+    parameters:
+      - name: batch_id
+        in: path
+        required: true
+        description: 批次作業唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 事件管理
+      summary: 查詢事件批次處理狀態
+      operationId: getEventBatchStatus
+      responses:
+        "200":
+          description: 批次處理狀態與結果。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventBatchStatus"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /events/{event_id}:
     parameters:
       - name: event_id
@@ -572,6 +681,31 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /events/{event_id}/comments:
+    post:
+      tags:
+        - 事件管理
+      summary: 新增事件評論
+      operationId: addEventComment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddEventCommentRequest"
+      responses:
+        "201":
+          description: 已新增評論並同步至時間軸。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventTimelineEntry"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /events/{event_id}/related:
     get:
       tags:
@@ -613,6 +747,56 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /events/{event_id}/assign:
+    post:
+      tags:
+        - 事件管理
+      summary: 指派事件處理人員
+      operationId: assignEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignEventRequest"
+      responses:
+        "200":
+          description: 事件已更新指派資訊。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /events/{event_id}/resolve:
+    post:
+      tags:
+        - 事件管理
+      summary: 標記事件為已解決
+      operationId: resolveEvent
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResolveEventRequest"
+      responses:
+        "200":
+          description: 事件已更新為已解決狀態。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -669,6 +853,31 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/SilenceRuleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /events/report:
+    post:
+      tags:
+        - 事件管理
+      summary: 產生事件彙總報告
+      operationId: generateEventReport
+      security:
+        - bearerAuth: [team_member, team_manager, super_admin]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateEventReportRequest"
+      responses:
+        "200":
+          description: 回傳 AI 產生的事件彙總報告。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateEventReportResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -3714,7 +3923,7 @@ components:
     EventSummary:
       type: object
       required:
-        [event_id, summary, severity, status, resource_name, trigger_time]
+        [event_id, summary, severity, status, resource_name, trigger_time, priority]
       properties:
         event_id:
           type: string
@@ -3735,17 +3944,25 @@ components:
         status:
           type: string
           enum: [new, acknowledged, in_progress, resolved, silenced]
+        priority:
+          type: string
+          enum: [P0, P1, P2, P3]
+          description: 事件處理優先級，P0 為最高。
         resource_id:
           type: string
           nullable: true
         resource_name:
           type: string
+          nullable: true
         service_impact:
           type: string
+          nullable: true
         rule_name:
           type: string
+          nullable: true
         trigger_threshold:
           type: string
+          nullable: true
         assignee:
           type: string
           nullable: true
@@ -3770,6 +3987,10 @@ components:
         status:
           type: string
           enum: [new, acknowledged, in_progress, resolved, silenced]
+        priority:
+          type: string
+          enum: [P0, P1, P2, P3]
+          default: P2
         resource_id:
           type: string
         rule_id:
@@ -3796,6 +4017,9 @@ components:
           enum: [new, acknowledged, in_progress, resolved, silenced]
         assignee_id:
           type: string
+        priority:
+          type: string
+          enum: [P0, P1, P2, P3]
         acknowledged_at:
           type: string
           format: date-time
@@ -3808,6 +4032,188 @@ components:
           type: array
           items:
             type: string
+    AssignEventRequest:
+      type: object
+      required: [assignee_id]
+      properties:
+        assignee_id:
+          type: string
+        note:
+          type: string
+          description: 指派時額外附註說明。
+    ResolveEventRequest:
+      type: object
+      properties:
+        resolved_at:
+          type: string
+          format: date-time
+        resolution_note:
+          type: string
+        status:
+          type: string
+          enum: [resolved]
+          default: resolved
+    AddEventCommentRequest:
+      type: object
+      required: [comment]
+      properties:
+        comment:
+          type: string
+        visibility:
+          type: string
+          enum: [internal, public]
+          default: internal
+        metadata:
+          type: object
+          additionalProperties: true
+    EventBatchRequest:
+      type: object
+      required: [action, event_ids]
+      properties:
+        action:
+          type: string
+          enum: [acknowledge, resolve, assign, add_comment]
+        event_ids:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        assignee_id:
+          type: string
+        comment:
+          type: string
+        resolved_at:
+          type: string
+          format: date-time
+        visibility:
+          type: string
+          enum: [internal, public]
+          description: 批次新增評論時的顯示範圍。
+      allOf:
+        - if:
+            properties:
+              action:
+                const: assign
+          then:
+            required: [assignee_id]
+        - if:
+            properties:
+              action:
+                const: add_comment
+          then:
+            required: [comment]
+    EventBatchResult:
+      type: object
+      required: [event_id, success]
+      properties:
+        event_id:
+          type: string
+        success:
+          type: boolean
+        message:
+          type: string
+        error:
+          type: string
+          nullable: true
+    EventBatchStatus:
+      type: object
+      required:
+        [batch_id, action, status, total_count, processed_count, success_count, failed_count, created_at, requested_by]
+      properties:
+        batch_id:
+          type: string
+        status:
+          type: string
+          enum: [pending, running, completed, failed]
+        action:
+          type: string
+          enum: [acknowledge, resolve, assign, add_comment]
+        requested_by:
+          type: string
+          description: 發起批次操作的使用者 ID。
+        assignee_id:
+          type: string
+          nullable: true
+        comment:
+          type: string
+          nullable: true
+        request_payload:
+          type: object
+          additionalProperties: true
+        total_count:
+          type: integer
+        processed_count:
+          type: integer
+        success_count:
+          type: integer
+        failed_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventBatchResult"
+    GenerateEventReportRequest:
+      type: object
+      required: [event_ids]
+      properties:
+        event_ids:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        include_timeline:
+          type: boolean
+          default: false
+        title:
+          type: string
+    GenerateEventReportResponse:
+      type: object
+      required: [report_id, generated_at, summary, event_ids]
+      properties:
+        report_id:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+        title:
+          type: string
+        event_ids:
+          type: array
+          items:
+            type: string
+        severity_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        priority_breakdown:
+          type: object
+          additionalProperties:
+            type: integer
+        summary:
+          type: string
+        root_causes:
+          type: array
+          items:
+            type: string
+        impacts:
+          type: array
+          items:
+            type: string
+        recommendations:
+          type: array
+          items:
+            $ref: "#/components/schemas/AIInsightSuggestion"
+        timeline_highlights:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventReportTimelineHighlight"
     EventDetail:
       allOf:
         - $ref: "#/components/schemas/EventSummary"
@@ -3817,8 +4223,10 @@ components:
               type: string
             trigger_value:
               type: string
+              nullable: true
             unit:
               type: string
+              nullable: true
             acknowledged_at:
               type: string
               format: date-time
@@ -3841,6 +4249,18 @@ components:
                 $ref: "#/components/schemas/AutomationExecutionSummary"
             analysis:
               $ref: "#/components/schemas/EventAnalysisReport"
+    EventReportTimelineHighlight:
+      type: object
+      required: [event_id, event_summary, items]
+      properties:
+        event_id:
+          type: string
+        event_summary:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventTimelineEntry"
     EventTimelineEntry:
       type: object
       required: [entry_id, event_id, entry_type, message, created_at]
@@ -3937,6 +4357,10 @@ components:
           type: boolean
         automation_enabled:
           type: boolean
+        default_priority:
+          type: string
+          enum: [P0, P1, P2, P3]
+          description: 透過此規則產生事件時套用的預設優先級。
         creator:
           type: string
         last_updated:
