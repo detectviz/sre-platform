@@ -1,12 +1,13 @@
-import { useState, ReactNode } from 'react'
+import React, { useState, ReactNode } from 'react'
 import { Tabs, Table } from 'antd'
-import { ReloadOutlined, PlusOutlined } from '@ant-design/icons'
+import { PlusOutlined, SearchOutlined, ReloadOutlined } from '@ant-design/icons'
 import { PageHeader } from './PageHeader'
 import { ContextualKPICard } from './ContextualKPICard'
 import { ToolbarActions } from './ToolbarActions'
 import { CategoryFilter } from './CategoryFilter'
 import { UNIFIED_TABLE_STYLE } from './index'
 import type { ColumnsType } from 'antd/es/table'
+import type { ToolbarAction } from '../types/components'
 
 
 // KPI 數據接口
@@ -29,17 +30,7 @@ export interface TableAction {
   visible?: (record: any) => boolean
 }
 
-// 工具列操作接口
-export interface ToolbarAction {
-  key: string
-  label: string
-  icon: ReactNode
-  onClick?: () => void
-  type?: 'primary' | 'default' | 'dashed' | 'text' | 'link' | string
-  danger?: boolean
-  disabled?: boolean
-  loading?: boolean
-}
+// 工具列操作接口 - 已移至 types/components.ts
 
 // 頁面配置接口
 export interface DataTablePageConfig<T = any> {
@@ -168,20 +159,23 @@ const DataTablePage = <T extends Record<string, any>>(props: DataTablePageProps<
     ...(showRefresh ? [{
       key: 'refresh',
       label: '刷新',
-      icon: <ReloadOutlined />,
+      icon: React.createElement(ReloadOutlined),
       onClick: handleRefresh,
+      type: 'text' as const
     }] : []),
     ...(showSearch ? [{
       key: 'search',
       label: '搜索',
-      icon: <ReloadOutlined />,
+      icon: React.createElement(SearchOutlined),
       onClick: () => handleSearch(searchText),
+      type: 'text' as const
     }] : []),
     ...(showExport ? [{
       key: 'export',
       label: '導出',
-      icon: <ReloadOutlined />,
+      icon: React.createElement(ReloadOutlined),
       onClick: handleExport,
+      type: 'text' as const
     }] : []),
     ...(onAdd ? [{
       key: 'add',

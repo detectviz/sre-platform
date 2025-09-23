@@ -71,12 +71,13 @@ export interface ToolbarActionsProps {
 }
 
 // 工具列操作
+// 統一的工具列動作類型定義
 export interface ToolbarAction {
   key: string
   label: string
   icon: React.ReactNode
   onClick?: () => void
-  type?: 'primary' | 'default' | 'dashed' | 'text' | 'link'
+  type?: 'primary' | 'default' | 'dashed' | 'text' | 'link' | string
   danger?: boolean
   disabled?: boolean
   loading?: boolean

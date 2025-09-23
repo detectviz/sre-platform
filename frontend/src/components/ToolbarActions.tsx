@@ -8,6 +8,7 @@ import {
   FilterOutlined,
   EyeOutlined,
 } from '@ant-design/icons'
+import type { ToolbarAction } from '../types/components'
 
 const { Search } = Input
 const { Option } = Select
@@ -20,18 +21,7 @@ export interface FilterOption {
   onChange?: (value: string) => void
 }
 
-export interface ToolbarAction {
-  key: string
-  label: string
-  icon: React.ReactNode
-  onClick?: () => void
-  type?: 'primary' | 'default' | 'dashed' | 'text' | 'link' | string
-  danger?: boolean
-  disabled?: boolean
-  loading?: boolean
-  tooltip?: string
-  children?: React.ReactNode
-}
+// ToolbarAction 已移至 types/components.ts
 
 export interface ColumnOption {
   key: string

@@ -37,7 +37,8 @@ graph LR
 ```
 
 ### 智慧告警處理中樞
-- **Webhook作為AI整合點**：所有告警先經過平台再分發
+- **Webhook作為AI整合點**：Grafana 統一發送告警到平台，不直接通知用戶
+- **平台作為智能處理中樞**：所有告警先經過平台 AI 分析再智能分發
 - **AI Agent四大核心角色**：
   1. 智慧關聯與根因分析
   2. 動態產生處理預案
@@ -251,30 +252,38 @@ graph TB
     F --> G[違規報告]
 ```
 
-### 📨 通知歷史追蹤 (Notification History)
-**問題解決**: Grafana 通知是無狀態的，無法追蹤發送歷史。
+### 📨 智能告警處理與通知歷史追蹤 (Intelligent Alert Processing & Notification History)
+**問題解決**: Grafana 通知是無狀態的，且缺乏 AI 分析能力。
 
 **平台解決方案**:
-- **統一 Webhook 入口**: 平台作為 Grafana 與外部系統間的代理
-- **持久化記錄**: 儲存所有通知的完整生命週期
-- **可審計性**: 提供完整的通知發送歷史和狀態追蹤
+- **統一 Webhook 入口**: 平台作為 Grafana 告警的唯一接收點
+- **AI 智能分析**: 對每個告警進行根因分析和關聯分析
+- **智能通知分發**: 根據分析結果和業務策略智能決定通知方式
+- **持久化記錄**: 儲存告警處理的完整生命週期
+- **可審計性**: 提供完整的告警處理歷史和狀態追蹤
 
 ```mermaid
 sequenceDiagram
     participant G as Grafana
     participant P as 平台 Webhook
+    participant AI as AI Agent
     participant Q as 訊息佇列
     participant N as 通知處理器
     participant E as 外部服務 (Slack)
     participant DB as 歷史資料庫
 
-    G->>P: 1. 告警 Webhook
-    P->>Q: 2. 推送至佇列
-    P->>DB: 3. 記錄初始狀態
-    Q->>N: 4. 消費訊息
-    N->>E: 5. 轉發通知
-    E->>N: 6. 回應狀態
-    N->>DB: 7. 更新最終狀態
+    G->>P: 1. 統一發送告警 Webhook
+    P->>DB: 2. 記錄原始告警
+    P->>AI: 3. AI 分析處理
+    AI->>P: 4. 返回分析結果
+    P->>Q: 5. 推送智能處理後的訊息
+    Q->>N: 6. 消費訊息
+    N->>E: 7. 根據策略發送通知
+    E->>N: 8. 回應狀態
+    N->>DB: 9. 更新最終狀態
+
+    Note over G,P: Grafana 不直接通知，統一通過平台
+    Note over P,AI: 平台作為智能告警處理中樞
 ```
 
 ## 📐 詳細架構設計
@@ -503,16 +512,18 @@ https://github.com/grafana/grafana/blob/main/public/api-merged.json
 - 提供預警性監控能力
 - 支持更精細的容量規劃
 
-### 8. **告警管理完全委託給 Grafana**
+### 8. **告警執行委託給 Grafana，處理交由平台智能中樞**
 **決策內容**：
-- 本平台不再自行實作告警規則的判斷邏輯
-- 透過一組新的 API 來管理 Grafana 的告警規則與接觸點
-- 其資料結構會參考 Grafana 的官方 API
+- Grafana 負責告警規則評估和觸發，平台負責智能處理和分發
+- 平台提供友善的規則配置界面，同步到 Grafana 執行
+- Grafana 統一發送 Webhook 到平台，不直接通知用戶
+- 平台作為智能告警處理中樞，提供 AI 分析和複雜通知策略
 
 ** rationale**：
 - 專注於人員體驗而非重複造輪子
-- 利用 Grafana 成熟的告警引擎
-- 簡化平台複雜度，提升可靠性
+- 利用 Grafana 成熟的告警執行引擎
+- 通過統一 Webhook 實現 AI 智能分析
+- 提供比原生 Grafana 更強大的處理能力
 
 ### 9. **內部人員狀態管理 (Internal User Status)**
 **決策內容**：
@@ -534,7 +545,74 @@ https://github.com/grafana/grafana/blob/main/public/api-merged.json
 - **可恢復性**: 提供一個快速恢復被誤刪除數據的機制，增加系統的容錯能力。
 - **歷史追溯**: 即使資源被刪除，其歷史操作和關聯依然可以被追溯，滿足合規性與故障分析的需求。
 
+### 11. **數據庫架構一致性原則 (Database Architecture Consistency)**
+**決策內容**：
+- 數據庫表設計必須嚴格符合「統一管理層」架構理念
+- 禁止創建與外部系統功能重複的表格
+- 所有新增表格必須支持平台核心增值功能
+
+** rationale**：
+- **避免功能重複**: 防止與 Grafana、Keycloak 等外部系統產生功能衝突
+- **維護一致性**: 確保數據架構與系統架構決策保持同步
+- **降低複雜度**: 減少不必要的數據同步和維護負擔
+
+**具體規範**：
+- ❌ 禁止創建 `event_rules` 類型表格（告警管理委託給 Grafana）
+- ❌ 禁止創建 `auth_settings` 類型表格（認證管理委託給 Keycloak）
+- ✅ 鼓勵創建增值功能表格（如 `silence_rules`, `notification_history`, `tag_definitions`）
+
+### 12. **數據模型設計規範 (Data Model Design Standards)**
+**決策內容**：
+- 所有表格必須包含完整的約束檢查（CHECK constraints）
+- 時序數據表必須有合理的索引策略
+- 大數據量表必須考慮分區策略
+
+** rationale**：
+- **數據品質**: 通過約束確保數據一致性和完整性
+- **查詢性能**: 通過合理索引提升查詢效率
+- **擴展性**: 通過分區策略支持大規模數據存儲
+
+**設計模板**：
+```sql
+-- 標準表格設計模板
+CREATE TABLE example_table (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(128) NOT NULL,
+    status VARCHAR(32) NOT NULL DEFAULT 'active',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ, -- 軟刪除支持
+    CONSTRAINT chk_example_status CHECK (status IN ('active','inactive'))
+);
+
+-- 必要索引
+CREATE INDEX idx_example_status ON example_table (status);
+CREATE INDEX idx_example_created_at ON example_table (created_at DESC);
+```
+
 ---
+
+### 13. **審計日誌保留策略 (Audit Log Retention)**
+**決策內容**：
+- 透過資料庫函式 `cleanup_old_audit_logs(retention_interval INTERVAL)` 週期性清理超過保留期間的審計資料，預設保留兩年。
+
+** rationale**：
+- **合規與成本平衡**：確保審計資料滿足稽核需求的同時控制儲存成本，避免日誌無限制成長。
+- **自動化治理**：搭配排程服務即可週期觸發清理函式，減少人工維運成本。
+- **彈性保留**：函式保留參數化的保留期間，未來可依合規需求調整。
+
+## 📊 數據架構邊界說明 (Data Model Boundary Overview)
+
+### 事件與告警分工 (Event Processing vs Alerting)
+- **Grafana 告警規則**：負責告警條件評估、觸發判斷與基礎通知派送。
+- **SRE 平台事件**：聚焦於 AI 根因分析、跨事件關聯、值班處理追蹤與歷史報表。
+- **資料模型落實**：`events` 表新增 `event_source` 枚舉欄位與註解，強調僅承載增值處理，所有告警規則仍交由 Grafana 管理。
+- **快取支援**：新增 `event_rule_snapshots` 表記錄 Grafana 規則快取與同步狀態，提供精靈編輯時的離線回填資料，同時維持 Grafana 作為唯一真實來源。
+
+### 通知策略範圍 (Notification Strategy Scope)
+- **Grafana 通知**：專注於告警觸發後的標準聯絡點與 On-Call 流程。
+- **平台通知策略**：透過 `notification_strategies` 與 `notification_channels` 管理複雜業務規則、跨系統事件與多渠道路由。
+- **整體體驗**：統一管理層負責彙整狀態、追蹤歷史與提供精細化的接收條件，補足 Grafana 在商業流程上的不足。
 
 ## 📋 架構總結
 
@@ -544,11 +622,47 @@ SRE 平台的核心價值，在於提供了一個**統一、易用的管理介�
 
 **最終的架構如下：**
 
-1. **SRE 平台 (UI + Backend)**：作為**「總控制器」**。
-2. **呼叫 API**：您的後端透過 API 去設定和管理 Grafana 的：
-   * 告警規則 (Alert Rules)
-   * 通知策略 (Notification Policies) & 接觸點 (Contact Points)
-   * On-Call 排程 (On-Call Schedules)
-3. **Grafana**：作為**「核心執行引擎」**，負責實際的告警判斷、路由和 On-Call 查詢。
+### 🎯 核心架構組件
 
-這個架構可以讓您在享受 Grafana 強大能力的同時，又能提供給使用者一個完全客製化、無縫整合的平台體驗。
+1. **SRE 平台 (UI + Backend)**：作為**「統一管理層」**
+   - 提供統一的用戶界面和業務邏輯
+   - 實現三大核心增值功能
+   - 管理平台特有的數據和流程
+
+2. **外部系統整合**：通過 API 調用管理外部資源
+   - **Grafana**: 告警規則、通知策略、儀表板渲染
+   - **Keycloak**: 用戶認證、會話管理、身份提供商整合
+   - 其他監控工具: Prometheus、VictoriaMetrics 等
+
+3. **明確的系統邊界**：避免功能重複和架構衝突
+
+### ⚖️ 系統邊界原則總結
+
+#### Grafana 邊界 🚨
+```
+平台職責: 週期性靜音、通知歷史、告警關聯分析、自動化響應
+Grafana 職責: 告警規則引擎、告警評估、通知路由、儀表板渲染
+```
+
+#### Keycloak 邊界 🔐
+```
+平台職責: 用戶偏好、團隊管理、業務權限、平台通知
+Keycloak 職責: 用戶認證、密碼管理、SSO整合、身份協議
+```
+
+#### 數據庫設計原則 📊
+```
+✅ 允許: *_history, *_silence_*, *_tag_*, *_analysis 類型表格
+❌ 禁止: *_rules, *_auth_*, email_settings 類型表格
+```
+
+### 🎖️ 架構優勢
+
+這個架構設計實現了：
+- **避免重複造輪子**: 專注於平台增值功能
+- **清晰的職責分離**: 每個系統負責自己的專業領域
+- **統一的管理體驗**: 用戶通過單一界面管理所有資源
+- **高度可擴展性**: 通過 API 整合更多外部系統
+- **架構一致性**: 數據庫設計與系統架構決策保持同步
+
+**最終效果**: 在享受 Grafana、Keycloak 強大能力的同時，提供給使用者一個完全客製化、無縫整合的平台體驗，並通過三大增值功能提供超越原生工具的價值。

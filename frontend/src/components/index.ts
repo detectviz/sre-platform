@@ -11,23 +11,42 @@ export { default as DataTablePage } from './DataTablePage'
 export { default as DataTablePageTemplate, ExampleListPage } from './DataTablePageTemplate'
 export { default as PageLayout } from './PageLayout'
 
-// 增強的 PageLayout 組件
+// 佈局組件 - 統一使用命名導出
 export {
-  StandardPageLayout,
-  SimplePageLayout,
-  ToolbarPageLayout,
-  TabbedPageLayout,
-  TablePageLayout,
-  DashboardPageLayout,
-  FormPageLayout,
-  DetailPageLayout,
-  WizardPageLayout,
-  SplitPageLayout,
-  ResponsivePageLayout,
-  PageLoadingSkeleton,
-  PageErrorFallback,
-  createPageLayout
-} from './PageLayout'
+  BaseLayout,
+  LayoutLoadingSkeleton,
+  LayoutErrorFallback,
+  TableLayout,
+  FormLayout,
+  StandardLayout,
+  DashboardLayout,
+  DetailLayout,
+  LayoutPresets
+} from './layouts'
+export type {
+  BaseLayoutProps,
+  BaseLayoutConfig
+} from './layouts/BaseLayout'
+export type {
+  TableLayoutProps,
+  TableLayoutConfig
+} from './layouts/TableLayout'
+export type {
+  FormLayoutProps,
+  FormLayoutConfig
+} from './layouts/FormLayout'
+export type {
+  StandardLayoutProps,
+  StandardLayoutConfig
+} from './layouts/StandardLayout'
+export type {
+  DashboardLayoutProps,
+  DashboardLayoutConfig
+} from './layouts/DashboardLayout'
+export type {
+  DetailLayoutProps,
+  DetailLayoutConfig
+} from './layouts/DetailLayout'
 
 // 表單工廠組件
 export { FormFactory, FormBuilder, FormTemplates } from './forms/FormFactory'
@@ -66,7 +85,7 @@ export type PageMode = 'default' | 'table' | 'dashboard' | 'form' | 'detail' | '
 export type { FilterOption } from '../types/components'
 export type { ToolbarAction } from '../types/components'
 export type { ColumnOption } from '../types/components'
-export type { KPICardData, TableAction, ToolbarAction as ToolbarActionType, DataTablePageConfig } from './DataTablePage'
+export type { KPICardData, TableAction, DataTablePageConfig } from './DataTablePage'
 
 // PageLayout 相關類型
 export type {

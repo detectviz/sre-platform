@@ -1,6 +1,6 @@
 import React from 'react'
 import { Button, Space, Tooltip, Popconfirm } from 'antd'
-import { DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined } from '@ant-design/icons'
+import { DeleteOutlined, EditOutlined, EyeOutlined, MoreOutlined, ReloadOutlined, DownloadOutlined } from '@ant-design/icons'
 import { Dropdown, MenuProps } from 'antd'
 
 // 表格操作類型定義
@@ -18,45 +18,83 @@ export interface TableAction {
   }
 }
 
-// 預定義的常用操作
+// 預定義的常用操作配置
 export const COMMON_ACTIONS = {
-  VIEW: (onView: (record: any) => void): TableAction => ({
+  VIEW: {
     key: 'view',
     label: '查看詳情',
     icon: EyeOutlined,
-    onClick: onView,
-    type: 'text'
-  }),
+    type: 'text' as const
+  },
 
-  EDIT: (onEdit: (record: any) => void): TableAction => ({
+  EDIT: {
     key: 'edit',
     label: '編輯',
     icon: EditOutlined,
-    onClick: onEdit,
-    type: 'text'
-  }),
+    type: 'text' as const
+  },
 
-  DELETE: (onDelete: (record: any) => void, confirmTitle = '確定要刪除這項嗎？'): TableAction => ({
+  DELETE: {
     key: 'delete',
     label: '刪除',
     icon: DeleteOutlined,
-    onClick: onDelete,
-    type: 'text',
+    type: 'text' as const,
     danger: true,
     confirm: {
-      title: confirmTitle
+      title: '確定要刪除這項嗎？'
     }
-  }),
+  },
 
-  CUSTOM: (key: string, label: string, icon: React.ComponentType, onClick: (record: any) => void, options?: Partial<TableAction>): TableAction => ({
-    key,
-    label,
-    icon,
-    onClick,
-    type: 'text',
-    ...options
-  })
+  REFRESH: {
+    key: 'refresh',
+    label: '刷新',
+    icon: ReloadOutlined,
+    type: 'text' as const
+  },
+
+  EXPORT: {
+    key: 'export',
+    label: '導出',
+    icon: DownloadOutlined,
+    type: 'text' as const
+  }
 }
+
+// 創建操作的工具函數
+export const createAction = (
+  key: string,
+  label: string,
+  icon: React.ComponentType,
+  onClick: (record: any) => void,
+  options?: Partial<TableAction>
+): TableAction => ({
+  key,
+  label,
+  icon,
+  onClick,
+  type: 'text' as const,
+  ...options
+})
+
+// 創建帶確認的操作
+export const createConfirmAction = (
+  key: string,
+  label: string,
+  icon: React.ComponentType,
+  onClick: (record: any) => void,
+  confirmTitle = '確定要執行這項操作嗎？',
+  options?: Partial<TableAction>
+): TableAction => ({
+  key,
+  label,
+  icon,
+  onClick,
+  type: 'text' as const,
+  confirm: {
+    title: confirmTitle
+  },
+  ...options
+})
 
 // 創建操作列的工廠函數
 export const createActionColumn = <T = any>(
