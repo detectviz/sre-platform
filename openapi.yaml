@@ -1902,60 +1902,32 @@ paths:
           $ref: "#/components/responses/NotFound"
         "500":
           $ref: "#/components/responses/InternalError"
-  /analysis/capacity/summary:
+  /analysis/capacity:
     get:
       tags:
         - 分析中心
-      summary: 取得容量規劃摘要
-      operationId: getCapacitySummary
+      summary: 取得最新容量分析報告
+      operationId: getCapacityAnalysis
       parameters:
-        - name: range
+        - name: time_range
           in: query
           schema:
             type: string
             example: 30d
-      responses:
-        "200":
-          description: 容量使用摘要。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CapacitySummary"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-  /analysis/capacity/forecasts:
-    get:
-      tags:
-        - 分析中心
-      summary: 取得容量預測資料
-      operationId: getCapacityForecasts
-      parameters:
-        - name: range
-          in: query
-          schema:
-            type: string
-            example: 90d
+          description: 指定分析時間範圍 (例如 7d、30d)，預設回傳最近報告。
         - name: model
           in: query
           schema:
             type: string
             enum: [arima, prophet, lstm]
+          description: 選擇分析模型，若未指定則採用最新報告中的模型。
       responses:
         "200":
-          description: 預測趨勢與建議。
+          description: 包含容量摘要、預測序列與優化建議。
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  forecasts:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/CapacityForecast"
-                  suggestions:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/OptimizationSuggestion"
+                $ref: "#/components/schemas/CapacityAnalysisReport"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /analysis/resource-load:
@@ -1978,7 +1950,7 @@ paths:
             type: string
       responses:
         "200":
-          description: 回傳資源負載統計。
+          description: 回傳來源於 `resource_metrics` 彙總檢視的資源負載統計。
           content:
             application/json:
               schema:
@@ -5282,26 +5254,35 @@ components:
       description: 儀表板來源類型，built_in 代表平台內建，grafana 代表外部 Grafana 儀表板。
     DashboardSummaryMetrics:
       type: object
-      required: [total, built_in, grafana, published, featured, automated]
+      required: [totals, kpi_cards]
       properties:
-        total:
-          type: integer
-          description: 儀表板總數。
-        built_in:
-          type: integer
-          description: 內建儀表板數量。
-        grafana:
-          type: integer
-          description: 連結至 Grafana 的儀表板數量。
-        published:
-          type: integer
-          description: 已發布的儀表板數量。
-        featured:
-          type: integer
-          description: 標記為精選的儀表板數量。
-        automated:
-          type: integer
-          description: 啟用自動化資料更新的儀表板數量。
+        totals:
+          type: object
+          required: [total, built_in, grafana, published, featured, automated]
+          properties:
+            total:
+              type: integer
+              description: 儀表板總數。
+            built_in:
+              type: integer
+              description: 內建儀表板數量。
+            grafana:
+              type: integer
+              description: 連結至 Grafana 的儀表板數量。
+            published:
+              type: integer
+              description: 已發布的儀表板數量。
+            featured:
+              type: integer
+              description: 標記為精選的儀表板數量。
+            automated:
+              type: integer
+              description: 啟用自動化資料更新的儀表板數量。
+        kpi_cards:
+          type: array
+          description: 儀表板首頁顯示的 KPI 卡片集合 (如活躍用戶、戰情室數量)。
+          items:
+            $ref: "#/components/schemas/DashboardKPI"
     DashboardSummary:
       type: object
       required: [dashboard_id, name, category, owner, status, updated_at, dashboard_type]
@@ -5362,6 +5343,9 @@ components:
           type: string
         trend:
           type: number
+        category:
+          type: string
+          description: 代表的業務範疇 (例如 活躍用戶、SRE 戰情室)。
           nullable: true
     DashboardWidget:
       type: object
@@ -5525,16 +5509,29 @@ components:
               additionalProperties: true
     CapacitySummary:
       type: object
-      required: [total_datapoints, reports, processing_time, accuracy]
+      required: [total_datapoints, avg_utilization, peak_usage, headroom, forecast_horizon_days, accuracy]
       properties:
         total_datapoints:
           type: integer
-        reports:
-          type: integer
-        processing_time:
+          description: 納入分析的資料點總數。
+        avg_utilization:
           type: number
+          description: 指標平均使用率 (百分比)。
+        peak_usage:
+          type: number
+          description: 觀察期間的峰值使用率 (百分比)。
+        headroom:
+          type: number
+          description: 與預測需求相比的容量餘裕 (百分比)。
+        forecast_horizon_days:
+          type: integer
+          description: 預測涵蓋的天數。
+        processing_time_ms:
+          type: integer
+          description: 產生報告所需時間 (毫秒)。
         accuracy:
           type: number
+          description: 模型準確度 (0-1)。
     CapacityForecast:
       type: object
       required: [metric, current_usage, forecast_usage, series]
@@ -5571,6 +5568,30 @@ components:
           type: string
         cost_saving:
           type: number
+          description: "預估成本節省 (單位: USD)。"
+    CapacityAnalysisReport:
+      type: object
+      required: [report_id, generated_at, time_range, summary, forecasts, suggestions]
+      properties:
+        report_id:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+        time_range:
+          type: string
+        model:
+          type: string
+        summary:
+          $ref: "#/components/schemas/CapacitySummary"
+        forecasts:
+          type: array
+          items:
+            $ref: "#/components/schemas/CapacityForecast"
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/OptimizationSuggestion"
     ResourceLoadSummary:
       type: object
       required: [avg_cpu, avg_memory, avg_disk, avg_network]
@@ -5585,6 +5606,9 @@ components:
           type: number
         anomalies_detected:
           type: integer
+        granularity:
+          type: string
+          description: 此批摘要對應的彙總粒度。
     ResourceLoadRow:
       type: object
       required: [resource_id, resource_name, avg_cpu, avg_memory]
@@ -5593,6 +5617,13 @@ components:
           type: string
         resource_name:
           type: string
+        collected_at:
+          type: string
+          format: date-time
+          description: 對應 `resource_metrics` 中彙總資料的時間戳。
+        granularity:
+          type: string
+          description: 彙總粒度 (raw、1m、5m、1h、1d)。
         avg_cpu:
           type: number
         avg_memory:
@@ -5973,16 +6004,16 @@ components:
           type: string
         owner:
           type: string
-        members:
+        member_ids:
           type: array
           description: 成員識別碼列表。
           items:
             type: string
         subscribers:
           type: array
-          description: 訂閱者識別碼列表 (可包含人員與外部管道)。
+          description: 訂閱對象 (可包含人員與外部管道)。
           items:
-            type: string
+            $ref: "#/components/schemas/TeamSubscriber"
         created_at:
           type: string
           format: date-time
@@ -6000,10 +6031,6 @@ components:
           type: array
           items:
             type: string
-        subscriber_ids:
-          type: array
-          items:
-            type: string
         subscribers:
           type: array
           items:
@@ -6016,14 +6043,6 @@ components:
         - $ref: "#/components/schemas/TeamSummary"
         - type: object
           properties:
-            member_ids:
-              type: array
-              items:
-                type: string
-            subscriber_ids:
-              type: array
-              items:
-                type: string
             subscribers:
               type: array
               items:
