@@ -1246,6 +1246,31 @@ const normalizeTags = (tags) => {
 
 const cloneTags = (tags) => normalizeTags(tags).map(({ key, value }) => ({ key, value }));
 
+const normalizeGroupIds = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => (typeof item === 'string' ? item.trim() : ''))
+      .filter((item) => item.length > 0);
+  }
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item) => item.length > 0);
+  }
+  return [];
+};
+
+const buildResourceGroupRefs = (groupIds) =>
+  normalizeGroupIds(groupIds).map((groupId) => {
+    const group = getResourceGroupById(groupId);
+    return {
+      group_id: groupId,
+      group_name: group?.name || groupId
+    };
+  });
+
 const mapEventSummary = (event) => ({
   event_id: event.event_id,
   event_key: event.event_key,
@@ -1257,6 +1282,7 @@ const mapEventSummary = (event) => ({
   resource_id: event.resource_id,
   resource_name: event.resource_name,
   service_impact: event.service_impact,
+  rule_id: event.rule_id,
   rule_name: event.rule_name,
   trigger_threshold: event.trigger_threshold,
   assignee_id: event.assignee_id || null,
@@ -1303,6 +1329,7 @@ const getSilencesForResource = (resourceId) =>
 const buildResourceDetail = (resource) => ({
   ...resource,
   tags: cloneTags(resource.tags),
+  groups: buildResourceGroupRefs(resource.groups),
   silences: getSilencesForResource(resource.resource_id)
 });
 
@@ -2407,7 +2434,9 @@ app.get('/resources', (req, res) => {
     network_out_mbps: resItem.network_out_mbps,
     service_impact: resItem.service_impact,
     tags: cloneTags(resItem.tags),
-    last_event_count: resItem.last_event_count
+    last_event_count: resItem.last_event_count,
+    updated_at: resItem.updated_at,
+    groups: buildResourceGroupRefs(resItem.groups)
   })), req));
 });
 
@@ -2435,7 +2464,7 @@ app.post('/resources', (req, res) => {
     tags: normalizeTags(payload.tags ?? payload.labels),
     notes: payload.notes || null,
     last_event_count: 0,
-    groups: [],
+    groups: normalizeGroupIds(payload.group_ids),
     created_at: toISO(new Date()),
     updated_at: toISO(new Date())
   };
@@ -2457,6 +2486,10 @@ app.patch('/resources/:resource_id', (req, res) => {
     resource.tags = normalizeTags(updates.tags ?? updates.labels);
     delete updates.tags;
     delete updates.labels;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'group_ids')) {
+    resource.groups = normalizeGroupIds(updates.group_ids);
+    delete updates.group_ids;
   }
   if (Object.prototype.hasOwnProperty.call(updates, 'team_id')) {
     resource.team_id = updates.team_id;
