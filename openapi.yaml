@@ -6218,6 +6218,10 @@ components:
           enum: [user, team, role]
         id:
           type: string
+        display_name:
+          type: string
+          description: 對應接收者的顯示名稱，僅於回應中提供。
+          readOnly: true
     NotificationChannelRef:
       type: object
       required: [channel_id, channel_type]
@@ -6229,6 +6233,10 @@ components:
           enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
         template:
           type: string
+        channel_name:
+          type: string
+          description: 通知管道的顯示名稱，僅於回應中提供。
+          readOnly: true
     NotificationStrategySummary:
       type: object
       required: [strategy_id, name, status]
@@ -6321,6 +6329,10 @@ components:
               type: array
               items:
                 $ref: "#/components/schemas/NotificationChannelRef"
+            severity_filters:
+              type: array
+              items:
+                type: string
             resource_filters:
               type: object
               additionalProperties: true
