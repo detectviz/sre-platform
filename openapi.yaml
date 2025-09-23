@@ -4418,6 +4418,10 @@ components:
         resource_id:
           type: string
           nullable: true
+        rule_id:
+          type: string
+          nullable: true
+          description: 觸發該事件的事件規則唯一識別碼。
         resource_name:
           type: string
           nullable: true
@@ -5127,12 +5131,22 @@ components:
           type: number
         network_out_mbps:
           type: number
+        service_impact:
+          type: string
+          nullable: true
         tags:
           type: array
           items:
             $ref: "#/components/schemas/ResourceTag"
         last_event_count:
           type: integer
+        updated_at:
+          type: string
+          format: date-time
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceGroupRef"
     CreateResourceRequest:
       type: object
       required: [name, status, type, ip_address]
@@ -5163,6 +5177,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResourceTag"
+        group_ids:
+          type: array
+          description: 要加入的資源群組識別碼列表。
+          items:
+            type: string
     UpdateResourceRequest:
       type: object
       properties:
@@ -5194,6 +5213,11 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ResourceTag"
+        group_ids:
+          type: array
+          description: 更新後應屬於的資源群組識別碼列表。
+          items:
+            type: string
     ResourceMetric:
       type: object
       required: [metric, points]
@@ -5220,13 +5244,21 @@ components:
             groups:
               type: array
               items:
-                type: string
+                $ref: "#/components/schemas/ResourceGroupRef"
             notes:
               type: string
             silences:
               type: array
               items:
                 $ref: "#/components/schemas/SilenceRuleDetail"
+    ResourceGroupRef:
+      type: object
+      required: [group_id, group_name]
+      properties:
+        group_id:
+          type: string
+        group_name:
+          type: string
     ResourceGroupSummary:
       type: object
       required: [group_id, name, member_count, subscriber_count]
