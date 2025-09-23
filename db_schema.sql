@@ -360,6 +360,15 @@ CREATE INDEX idx_resources_status ON resources (status);
 CREATE INDEX idx_resources_type ON resources (type);
 CREATE INDEX idx_resources_team ON resources (team_id);
 
+-- 建立事件與資源的外鍵關聯，確保事件參照有效資源
+ALTER TABLE events
+    ADD CONSTRAINT fk_events_resources
+    FOREIGN KEY (resource_id)
+    REFERENCES resources(id)
+    ON DELETE SET NULL;
+
+CREATE INDEX idx_events_resource ON events (resource_id);
+
 CREATE TABLE resource_labels (
     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     label_key VARCHAR(128) NOT NULL,

@@ -1393,6 +1393,7 @@ const mapNotificationResendJob = (job) => ({
   metadata: job.metadata || {}
 });
 
+
 const buildSeedFromResource = (seed, index, metricKey) => {
   const baseResource = resourceData.find((res) => res.resource_id === seed.resource_id);
   let defaultValue = 60 + index * 5;
@@ -1441,6 +1442,76 @@ const getNotificationStrategyById = (id) => notificationStrategies.find((s) => s
 const getNotificationChannelById = (id) => notificationChannels.find((c) => c.channel_id === id);
 const getHistoryById = (id) => notificationHistory.find((h) => h.record_id === id);
 const getTagById = (id) => tagDefinitions.find((tag) => tag.tag_id === id);
+
+const resolveRecipientDisplayName = (recipient) => {
+  if (!recipient || !recipient.type || !recipient.id) {
+    return null;
+  }
+  if (recipient.type === 'user') {
+    const user = getIamUserById(recipient.id);
+    return user?.name || user?.display_name || null;
+  }
+  if (recipient.type === 'team') {
+    return getTeamById(recipient.id)?.name || null;
+  }
+  if (recipient.type === 'role') {
+    return getRoleById(recipient.id)?.name || null;
+  }
+  return null;
+};
+
+const enrichNotificationRecipient = (recipient) => {
+  if (!recipient || !recipient.type || !recipient.id) {
+    return null;
+  }
+  const displayName = recipient.display_name || resolveRecipientDisplayName(recipient) || recipient.id;
+  return {
+    type: recipient.type,
+    id: recipient.id,
+    display_name: displayName
+  };
+};
+
+const enrichNotificationChannelRef = (channelRef) => {
+  if (!channelRef || !channelRef.channel_id) {
+    return null;
+  }
+  const channel = getNotificationChannelById(channelRef.channel_id);
+  const channelType = channelRef.channel_type || channel?.type || 'Email';
+  const template = channelRef.template || channel?.template_key || null;
+  const channelName = channelRef.channel_name || channel?.name || channelRef.channel_id;
+  return {
+    channel_id: channelRef.channel_id,
+    channel_type: channelType,
+    template,
+    channel_name: channelName
+  };
+};
+
+const mapNotificationStrategyDetail = (strategy) => {
+  if (!strategy) {
+    return null;
+  }
+  const recipients = (strategy.recipients || [])
+    .map(enrichNotificationRecipient)
+    .filter((recipient) => recipient);
+  const channels = (strategy.channels || [])
+    .map(enrichNotificationChannelRef)
+    .filter((channel) => channel);
+  return {
+    strategy_id: strategy.strategy_id,
+    name: strategy.name,
+    description: strategy.description || '',
+    trigger_condition: strategy.trigger_condition || '',
+    channel_count: channels.length,
+    status: strategy.status || 'disabled',
+    priority: strategy.priority || 'medium',
+    severity_filters: strategy.severity_filters || [],
+    recipients,
+    channels,
+    resource_filters: strategy.resource_filters || {}
+  };
+};
 
 const notFound = (res, message = '查無資料') => res.status(404).json({ code: 'NOT_FOUND', message });
 
@@ -3051,9 +3122,9 @@ app.get('/notification/strategies', (req, res) => {
     strategy_id: strategy.strategy_id,
     name: strategy.name,
     trigger_condition: strategy.trigger_condition,
-    channel_count: strategy.channel_count,
-    status: strategy.status,
-    priority: strategy.priority
+    channel_count: (strategy.channels || []).length,
+    status: strategy.status || 'disabled',
+    priority: strategy.priority || 'medium'
   })), req));
 });
 
@@ -3064,28 +3135,40 @@ app.post('/notification/strategies', (req, res) => {
     name: payload.name || '新策略',
     description: payload.description || '',
     trigger_condition: payload.trigger_condition || 'true',
-    channel_count: payload.channels ? payload.channels.length : 0,
     status: payload.enabled ? 'enabled' : 'disabled',
     priority: payload.priority || 'medium',
     severity_filters: payload.severity_filters || [],
     recipients: payload.recipients || [],
     channels: payload.channels || [],
-    resource_filters: payload.resource_filters || {}
+    resource_filters: payload.resource_filters || {},
+    created_at: toISO(new Date()),
+    updated_at: toISO(new Date())
   };
-  res.status(201).json(strategy);
+  notificationStrategies.push(strategy);
+  res.status(201).json(mapNotificationStrategyDetail(strategy));
 });
 
 app.get('/notification/strategies/:strategy_id', (req, res) => {
   const strategy = getNotificationStrategyById(req.params.strategy_id);
   if (!strategy) return notFound(res, '找不到通知策略');
-  res.json(strategy);
+  res.json(mapNotificationStrategyDetail(strategy));
 });
 
 app.patch('/notification/strategies/:strategy_id', (req, res) => {
   const strategy = getNotificationStrategyById(req.params.strategy_id);
   if (!strategy) return notFound(res, '找不到通知策略');
-  Object.assign(strategy, req.body || {});
-  res.json(strategy);
+  const payload = req.body || {};
+  if (payload.name !== undefined) strategy.name = payload.name;
+  if (payload.description !== undefined) strategy.description = payload.description;
+  if (payload.trigger_condition !== undefined) strategy.trigger_condition = payload.trigger_condition;
+  if (payload.priority !== undefined) strategy.priority = payload.priority;
+  if (payload.severity_filters !== undefined) strategy.severity_filters = payload.severity_filters;
+  if (payload.recipients !== undefined) strategy.recipients = payload.recipients;
+  if (payload.channels !== undefined) strategy.channels = payload.channels;
+  if (payload.resource_filters !== undefined) strategy.resource_filters = payload.resource_filters;
+  if (payload.enabled !== undefined) strategy.status = payload.enabled ? 'enabled' : 'disabled';
+  strategy.updated_at = toISO(new Date());
+  res.json(mapNotificationStrategyDetail(strategy));
 });
 
 app.delete('/notification/strategies/:strategy_id', (req, res) => {
@@ -3097,7 +3180,12 @@ app.delete('/notification/strategies/:strategy_id', (req, res) => {
 app.post('/notification/strategies/:strategy_id/test', (req, res) => {
   const strategy = getNotificationStrategyById(req.params.strategy_id);
   if (!strategy) return notFound(res, '找不到通知策略');
-  res.json({ status: 'success', message: '已發送測試通知', details: { recipients: strategy.recipients } });
+  const detail = mapNotificationStrategyDetail(strategy);
+  res.json({
+    status: 'success',
+    message: '已發送測試通知',
+    details: { recipients: detail.recipients, channels: detail.channels }
+  });
 });
 
 app.get('/notification/channels', (req, res) => {
