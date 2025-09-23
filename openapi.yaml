@@ -86,6 +86,10 @@ tags:
     description: 登入與令牌管理。
   - name: 全局功能
     description: 全局搜尋與頂部摘要功能。
+  - name: 系統健康
+    description: 平台健康檢查與就緒狀態監控。
+  - name: 指標服務
+    description: 系統指標定義、彙總與時序查詢服務。
   - name: 通知中心
     description: 個人通知收取與管理。
   - name: 事件管理
@@ -287,6 +291,153 @@ paths:
                     type: array
                     items:
                       $ref: "#/components/schemas/GlobalSearchGroup"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /healthz:
+    get:
+      tags:
+        - 系統健康
+      summary: 服務健康檢查
+      operationId: getHealthStatus
+      responses:
+        "200":
+          description: 目前服務健康狀態。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthCheckStatus"
+  /readyz:
+    get:
+      tags:
+        - 系統健康
+      summary: 服務就緒檢查
+      operationId: getReadinessStatus
+      responses:
+        "200":
+          description: 服務依賴是否已就緒。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReadinessCheckStatus"
+  /metrics:
+    get:
+      tags:
+        - 指標服務
+      summary: 取得系統指標彙總
+      operationId: getMetricsOverview
+      parameters:
+        - name: metric_keys
+          in: query
+          description: 指定要返回的指標鍵 (以逗號分隔)。
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: resource_type
+          in: query
+          description: 限制回傳的資源類型。
+          schema:
+            type: string
+        - name: group_by
+          in: query
+          description: 依特定欄位分組 (以逗號分隔，如 team 或 environment)。
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+        - name: start_time
+          in: query
+          description: 查詢起始時間 (含)。
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          description: 查詢結束時間 (含)。
+          schema:
+            type: string
+            format: date-time
+        - name: granularity
+          in: query
+          description: 指標時間粒度，預設 5 分鐘。
+          schema:
+            type: string
+            enum: [1m, 5m, 15m, 1h, 6h, 1d]
+      responses:
+        "200":
+          description: 指標彙總資料。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricsOverviewResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /metrics/definitions:
+    get:
+      tags:
+        - 指標服務
+      summary: 取得指標定義列表
+      operationId: listMetricDefinitions
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - name: category
+          in: query
+          description: 依指標分類過濾。
+          schema:
+            type: string
+        - name: resource_scope
+          in: query
+          description: 依指標適用範圍過濾。
+          schema:
+            type: string
+            enum: [global, resource, resource_type, team]
+        - name: keyword
+          in: query
+          description: 依名稱或描述模糊搜尋。
+          schema:
+            type: string
+      responses:
+        "200":
+          description: 指標定義分頁列表。
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/MetricDefinition"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /metrics/query:
+    post:
+      tags:
+        - 指標服務
+      summary: 多資源指標時序查詢
+      operationId: queryMetrics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MetricQueryRequest"
+      responses:
+        "200":
+          description: 指標時序查詢結果。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricQueryResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /notifications/summary:
@@ -3683,6 +3834,322 @@ components:
           type: array
           items:
             description: 依實際回傳結構定義。
+    HealthComponentStatus:
+      type: object
+      required: [name, status]
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        message:
+          type: string
+        latency_ms:
+          type: integer
+        dependency:
+          type: string
+        last_checked_at:
+          type: string
+          format: date-time
+    HealthCheckStatus:
+      type: object
+      required: [status, checked_at]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded, down]
+        checked_at:
+          type: string
+          format: date-time
+        version:
+          type: string
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/HealthComponentStatus"
+        notes:
+          type: array
+          items:
+            type: string
+    ReadinessCheckStatus:
+      allOf:
+        - $ref: "#/components/schemas/HealthCheckStatus"
+        - type: object
+          properties:
+            pending_dependencies:
+              type: array
+              items:
+                type: string
+    MetricDefinition:
+      type: object
+      required: [metric_key, display_name, unit, category, resource_scope, supported_aggregations, default_aggregation]
+      properties:
+        metric_key:
+          type: string
+        display_name:
+          type: string
+        description:
+          type: string
+        unit:
+          type: string
+        category:
+          type: string
+          enum: [performance, reliability, saturation, cost, custom]
+        resource_scope:
+          type: string
+          enum: [global, resource, resource_type, team]
+        supported_aggregations:
+          type: array
+          items:
+            type: string
+            enum: [avg, max, min, sum, p95, p99]
+        default_aggregation:
+          type: string
+          enum: [avg, max, min, sum, p95, p99]
+        warning_threshold:
+          type: number
+        critical_threshold:
+          type: number
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+          additionalProperties: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    MetricTrendPoint:
+      type: object
+      required: [timestamp, value]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+    MetricTopResource:
+      type: object
+      required: [resource_id, resource_name, value, status]
+      properties:
+        resource_id:
+          type: string
+        resource_name:
+          type: string
+        resource_type:
+          type: string
+        value:
+          type: number
+        status:
+          type: string
+          enum: [healthy, warning, critical, unknown]
+        change_rate:
+          type: number
+    MetricOverview:
+      type: object
+      required: [metric_key, display_name, unit, latest_value, status, trend]
+      properties:
+        metric_key:
+          type: string
+        display_name:
+          type: string
+        unit:
+          type: string
+        latest_value:
+          type: number
+        status:
+          type: string
+          enum: [healthy, warning, critical, unknown]
+        change_rate:
+          type: number
+        thresholds:
+          type: object
+          properties:
+            warning:
+              type: number
+            critical:
+              type: number
+        last_updated_at:
+          type: string
+          format: date-time
+        trend:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricTrendPoint"
+        top_resources:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricTopResource"
+        metadata:
+          type: object
+          additionalProperties: true
+    MetricsOverviewResponse:
+      type: object
+      required: [generated_at, granularity, metrics]
+      properties:
+        generated_at:
+          type: string
+          format: date-time
+        granularity:
+          type: string
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricOverview"
+    MetricTimeRange:
+      type: object
+      required: [start, end, step]
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+        step:
+          type: string
+        timezone:
+          type: string
+    MetricQueryFilter:
+      type: object
+      required: [field, operator]
+      properties:
+        field:
+          type: string
+        operator:
+          type: string
+          enum: [equals, not_equals, regex, gt, gte, lt, lte]
+        value:
+          type: string
+    MetricQueryRequest:
+      type: object
+      required: [metric_key, time_range]
+      properties:
+        metric_key:
+          type: string
+        resource_ids:
+          type: array
+          items:
+            type: string
+        resource_type:
+          type: string
+        group_by:
+          type: array
+          items:
+            type: string
+        aggregations:
+          type: array
+          items:
+            type: string
+            enum: [avg, max, min, sum, p95, p99]
+        filters:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricQueryFilter"
+        time_range:
+          $ref: "#/components/schemas/MetricTimeRange"
+        compare_range:
+          $ref: "#/components/schemas/MetricTimeRange"
+    MetricDataPoint:
+      type: object
+      required: [timestamp, value]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+    MetricSeriesSummary:
+      type: object
+      required: [min, max, avg, last]
+      properties:
+        min:
+          type: number
+        max:
+          type: number
+        avg:
+          type: number
+        last:
+          type: number
+        last_timestamp:
+          type: string
+          format: date-time
+    MetricSeriesResult:
+      type: object
+      required: [series_id, metric_key, datapoints, summary]
+      properties:
+        series_id:
+          type: string
+        metric_key:
+          type: string
+        resource_id:
+          type: string
+        resource_name:
+          type: string
+        group:
+          type: object
+          additionalProperties: true
+        aggregation:
+          type: string
+          enum: [avg, max, min, sum, p95, p99]
+        status:
+          type: string
+          enum: [healthy, warning, critical, unknown]
+        datapoints:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricDataPoint"
+        summary:
+          $ref: "#/components/schemas/MetricSeriesSummary"
+    MetricAnnotation:
+      type: object
+      required: [timestamp, level, message]
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [info, warning, critical]
+        message:
+          type: string
+        source:
+          type: string
+    MetricQueryResponse:
+      type: object
+      required: [query_id, metric_key, unit, generated_at, series]
+      properties:
+        query_id:
+          type: string
+        metric_key:
+          type: string
+        unit:
+          type: string
+        requested_range:
+          $ref: "#/components/schemas/MetricTimeRange"
+        compare_range:
+          $ref: "#/components/schemas/MetricTimeRange"
+        aggregations:
+          type: array
+          items:
+            type: string
+            enum: [avg, max, min, sum, p95, p99]
+        generated_at:
+          type: string
+          format: date-time
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricSeriesResult"
+        annotations:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricAnnotation"
     LoginRequest:
       type: object
       required: [username, password]
