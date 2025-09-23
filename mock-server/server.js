@@ -23,6 +23,12 @@ const currentUser = {
 
 const userPreferences = {
   theme: 'auto',
+  default_landing: {
+    type: 'dashboard',
+    dashboard_id: 'dash-001',
+    dashboard_name: 'SRE 戰情室儀表板',
+    dashboard_type: 'built_in'
+  },
   default_page: 'war_room',
   language: 'zh-TW',
   timezone: 'Asia/Taipei',
@@ -35,6 +41,10 @@ const userPreferences = {
     animation: true,
     tooltips: true,
     compact_mode: false
+  },
+  dashboard_preferences: {
+    auto_refresh_interval_seconds: 300,
+    auto_save_layout: true
   }
 };
 
@@ -72,6 +82,7 @@ const notifications = [
     status: 'unread',
     created_at: toISO(now),
     read_at: null,
+    deleted_at: null,
     link_url: '/incidents/evt-001',
     actions: ['acknowledge', 'view']
   },
@@ -84,15 +95,17 @@ const notifications = [
     status: 'read',
     created_at: toISO(new Date(now.getTime() - 7200 * 1000)),
     read_at: toISO(new Date(now.getTime() - 3600 * 1000)),
+    deleted_at: null,
     link_url: '/analysis/capacity',
     actions: ['open-report']
   }
 ];
 
 const buildNotificationSummary = () => {
-  const total = notifications.length;
-  const unread = notifications.filter((item) => item.status === 'unread').length;
-  const bySeverity = notifications.reduce((acc, item) => {
+  const activeNotifications = notifications.filter((item) => !item.deleted_at);
+  const total = activeNotifications.length;
+  const unread = activeNotifications.filter((item) => item.status === 'unread').length;
+  const bySeverity = activeNotifications.reduce((acc, item) => {
     acc[item.severity] = (acc[item.severity] || 0) + 1;
     return acc;
   }, {});
@@ -2174,7 +2187,48 @@ app.get('/me', (req, res) => res.json(currentUser));
 app.get('/me/preferences', (req, res) => res.json(userPreferences));
 
 app.put('/me/preferences', (req, res) => {
-  Object.assign(userPreferences, req.body || {});
+  const payload = req.body || {};
+
+  ['theme', 'language', 'timezone', 'default_page'].forEach((key) => {
+    if (Object.prototype.hasOwnProperty.call(payload, key)) {
+      userPreferences[key] = payload[key];
+    }
+  });
+
+  if (payload.default_landing && typeof payload.default_landing === 'object') {
+    userPreferences.default_landing = {
+      ...userPreferences.default_landing,
+      ...payload.default_landing
+    };
+
+    if (userPreferences.default_landing.type === 'system_page' && userPreferences.default_landing.page_key) {
+      userPreferences.default_page = userPreferences.default_landing.page_key;
+    } else if (userPreferences.default_landing.type === 'dashboard') {
+      userPreferences.default_page = 'dashboards';
+    }
+  }
+
+  if (payload.notification_preferences && typeof payload.notification_preferences === 'object') {
+    userPreferences.notification_preferences = {
+      ...userPreferences.notification_preferences,
+      ...payload.notification_preferences
+    };
+  }
+
+  if (payload.display_options && typeof payload.display_options === 'object') {
+    userPreferences.display_options = {
+      ...userPreferences.display_options,
+      ...payload.display_options
+    };
+  }
+
+  if (payload.dashboard_preferences && typeof payload.dashboard_preferences === 'object') {
+    userPreferences.dashboard_preferences = {
+      ...userPreferences.dashboard_preferences,
+      ...payload.dashboard_preferences
+    };
+  }
+
   res.json(userPreferences);
 });
 
@@ -2458,7 +2512,10 @@ app.get('/notifications', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
   const filtered = notifications.filter(
-    (item) => matchesEnumFilter(item.status, statusFilter) && matchesEnumFilter(item.severity, severityFilter)
+    (item) =>
+      !item.deleted_at &&
+      matchesEnumFilter(item.status, statusFilter) &&
+      matchesEnumFilter(item.severity, severityFilter)
   );
   res.json(
     paginate(filtered, req, {
@@ -2484,7 +2541,7 @@ app.post('/notifications/read', (req, res) => {
   const updatedItems = [];
 
   notifications.forEach((item) => {
-    if (idsToMark.has(item.notification_id)) {
+    if (!item.deleted_at && idsToMark.has(item.notification_id)) {
       item.status = 'read';
       item.read_at = timestamp;
       updatedItems.push(item);
@@ -2494,6 +2551,37 @@ app.post('/notifications/read', (req, res) => {
   res.json({
     summary: buildNotificationSummary(),
     updated_items: updatedItems
+  });
+});
+
+app.post('/notifications/clear', (req, res) => {
+  const { notification_ids: notificationIds, clear_all_read: clearAllRead, clear_all: clearAll } = req.body || {};
+
+  let predicate;
+  if (clearAll === true) {
+    predicate = (item) => !item.deleted_at;
+  } else if (clearAllRead === true) {
+    predicate = (item) => !item.deleted_at && item.status === 'read';
+  } else if (Array.isArray(notificationIds) && notificationIds.length > 0) {
+    const idsToClear = new Set(notificationIds);
+    predicate = (item) => !item.deleted_at && idsToClear.has(item.notification_id);
+  } else {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: '請指定要清除的通知。' });
+  }
+
+  const clearedIds = [];
+  const timestamp = toISO(new Date());
+  notifications.forEach((item) => {
+    if (predicate(item)) {
+      item.deleted_at = timestamp;
+      clearedIds.push(item.notification_id);
+    }
+  });
+
+  res.json({
+    cleared_ids: clearedIds,
+    cleared_count: clearedIds.length,
+    summary: buildNotificationSummary()
   });
 });
 

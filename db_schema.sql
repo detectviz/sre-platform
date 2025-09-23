@@ -167,8 +167,12 @@ CREATE TABLE user_preferences (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
     -- 主題
     theme VARCHAR(16) NOT NULL DEFAULT 'auto',
-    -- 預設頁面
-    default_page VARCHAR(32) NOT NULL DEFAULT 'war_room',
+    -- 預設落地頁類型 (system_page 或 dashboard)
+    default_home_type VARCHAR(32) NOT NULL DEFAULT 'system_page',
+    -- 系統頁面鍵值 (僅當類型為 system_page 時使用)
+    default_home_page_key VARCHAR(64) DEFAULT 'war_room',
+    -- 預設儀表板識別碼 (僅當類型為 dashboard 時使用)
+    default_dashboard_id UUID REFERENCES dashboards(id) ON DELETE SET NULL,
     -- 語言
     language VARCHAR(32) NOT NULL DEFAULT 'zh-TW',
     -- 時區
@@ -177,11 +181,22 @@ CREATE TABLE user_preferences (
     notification_preferences JSONB NOT NULL DEFAULT '{"email_notification":true,"slack_notification":false,"merge_notification":false}'::JSONB,
     -- 顯示選項
     display_options JSONB NOT NULL DEFAULT '{"animation":true,"tooltips":true,"compact_mode":false}'::JSONB,
+    -- 儀表板偏好設定
+    dashboard_preferences JSONB NOT NULL DEFAULT '{"auto_refresh_interval_seconds":300,"auto_save_layout":true}'::JSONB,
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_user_preferences_theme CHECK (theme IN ('light','dark','auto')),
-    CONSTRAINT chk_user_preferences_default_page CHECK (default_page IN ('war_room','incidents','resources','dashboards'))
+    CONSTRAINT chk_user_preferences_home_type CHECK (default_home_type IN ('system_page','dashboard')),
+    CONSTRAINT chk_user_preferences_home_target CHECK (
+        (default_home_type = 'system_page' AND default_home_page_key IS NOT NULL AND default_dashboard_id IS NULL)
+        OR (default_home_type = 'dashboard' AND default_dashboard_id IS NOT NULL)
+    ),
+    CONSTRAINT chk_user_preferences_home_key CHECK (
+        default_home_type <> 'system_page'
+        OR default_home_page_key IN ('war_room','incidents','resources','analysis','automation','notifications','dashboards')
+    )
 );
+CREATE INDEX idx_user_preferences_dashboard ON user_preferences (default_dashboard_id);
 
 CREATE TABLE user_notifications (
     -- 主鍵識別碼
@@ -206,10 +221,13 @@ CREATE TABLE user_notifications (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 閱讀時間
     read_at TIMESTAMPTZ,
+    -- 清除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_user_notifications_severity CHECK (severity IN ('critical','warning','info','success')),
     CONSTRAINT chk_user_notifications_status CHECK (status IN ('unread','read'))
 );
 CREATE INDEX idx_user_notifications_user ON user_notifications (user_id, status, created_at DESC);
+CREATE INDEX idx_user_notifications_deleted ON user_notifications (user_id, deleted_at) WHERE deleted_at IS NOT NULL;
 
 -- =============================
 -- 自動化腳本 (供事件規則及排程引用)

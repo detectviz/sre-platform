@@ -525,6 +525,29 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /notifications/clear:
+    post:
+      tags:
+        - 通知中心
+      summary: 清除通知
+      operationId: clearNotifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationClearRequest"
+      responses:
+        "200":
+          description: 回傳清除結果與最新通知摘要。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationClearResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /events/summary:
     get:
       tags:
@@ -4009,14 +4032,17 @@ components:
           nullable: true
     UserPreference:
       type: object
-      required: [theme, default_page, language, timezone]
+      required: [theme, language, timezone]
       properties:
         theme:
           type: string
           enum: [light, dark, auto]
+        default_landing:
+          $ref: "#/components/schemas/DefaultLandingPreference"
         default_page:
           type: string
-          enum: [war_room, incidents, resources, dashboards]
+          description: 已淘汰欄位，僅為相容舊版前端而保留，請改用 `default_landing`。
+          deprecated: true
         language:
           type: string
         timezone:
@@ -4039,9 +4065,59 @@ components:
               type: boolean
             compact_mode:
               type: boolean
+        dashboard_preferences:
+          $ref: "#/components/schemas/DashboardPreferenceSettings"
     PreferenceUpdateRequest:
       allOf:
         - $ref: "#/components/schemas/UserPreference"
+    DefaultLandingPreference:
+      description: 設定使用者登入後的預設落地頁面，可選系統頁面或指定儀表板。
+      oneOf:
+        - $ref: "#/components/schemas/SystemPageLandingPreference"
+        - $ref: "#/components/schemas/DashboardLandingPreference"
+      discriminator:
+        propertyName: type
+        mapping:
+          system_page: '#/components/schemas/SystemPageLandingPreference'
+          dashboard: '#/components/schemas/DashboardLandingPreference'
+    SystemPageLandingPreference:
+      type: object
+      required: [type, page_key]
+      properties:
+        type:
+          type: string
+          const: system_page
+        page_key:
+          type: string
+          description: 系統內建頁面識別碼。
+          enum: [war_room, incidents, resources, analysis, automation, notifications, dashboards]
+    DashboardLandingPreference:
+      type: object
+      required: [type, dashboard_id]
+      properties:
+        type:
+          type: string
+          const: dashboard
+        dashboard_id:
+          type: string
+          format: uuid
+        dashboard_name:
+          type: string
+          description: 儀表板顯示名稱，供前端快取使用。
+        dashboard_type:
+          $ref: "#/components/schemas/DashboardType"
+    DashboardPreferenceSettings:
+      type: object
+      description: 儀表板相關偏好設定。
+      properties:
+        auto_refresh_interval_seconds:
+          type: integer
+          minimum: 0
+          description: 自動重新整理間隔秒數，0 代表停用自動刷新。
+        auto_save_layout:
+          type: boolean
+          description: 是否自動儲存儀表板布局變更。
+      additionalProperties: false
     SecurityLoginRecord:
       type: object
       required: [login_time, ip_address, device_info, status]
@@ -4132,6 +4208,11 @@ components:
           type: string
           format: date-time
           nullable: true
+        deleted_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: 通知被清除的時間，未被清除時為 NULL。
         link_url:
           type: string
           nullable: true
@@ -4173,6 +4254,49 @@ components:
         summary:
           $ref: "#/components/schemas/NotificationSummary"
           description: 最新的通知統計摘要。
+    NotificationClearRequest:
+      type: object
+      properties:
+        notification_ids:
+          type: array
+          description: 要清除的通知識別碼列表。
+          minItems: 1
+          items:
+            type: string
+        clear_all_read:
+          type: boolean
+          description: 清除所有已讀通知。
+        clear_all:
+          type: boolean
+          description: 清除所有通知（包含未讀）。
+      oneOf:
+        - required: [notification_ids]
+        - required: [clear_all_read]
+          properties:
+            clear_all_read:
+              const: true
+              type: boolean
+        - required: [clear_all]
+          properties:
+            clear_all:
+              const: true
+              type: boolean
+      additionalProperties: false
+    NotificationClearResponse:
+      type: object
+      required: [cleared_count, summary]
+      properties:
+        cleared_ids:
+          type: array
+          description: 本次被清除的通知識別碼列表。
+          items:
+            type: string
+        cleared_count:
+          type: integer
+          description: 成功清除的通知數量。
+        summary:
+          $ref: "#/components/schemas/NotificationSummary"
+          description: 清除操作後最新的通知統計摘要。
     EventSummaryMetrics:
       type: object
       required:
