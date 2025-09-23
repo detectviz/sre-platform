@@ -32,34 +32,40 @@ x-incident-lifecycle:
       transitions:
         acknowledge:
           target: acknowledged
-          path: /events/{event_id}/acknowledge
+          path: /events/{event_id}/actions
           method: POST
+          description: 傳入 action=acknowledge。
         assign:
           target: in_progress
-          path: /events/{event_id}/assign
+          path: /events/{event_id}/actions
           method: POST
+          description: 傳入 action=assign 並指定 assignee_id。
         resolve:
           target: resolved
-          path: /events/{event_id}/resolve
+          path: /events/{event_id}/actions
           method: POST
+          description: 傳入 action=resolve。
     acknowledged:
       description: 事件已被接手。
       transitions:
         assign:
           target: in_progress
-          path: /events/{event_id}/assign
+          path: /events/{event_id}/actions
           method: POST
+          description: 傳入 action=assign 並指定 assignee_id。
         resolve:
           target: resolved
-          path: /events/{event_id}/resolve
+          path: /events/{event_id}/actions
           method: POST
+          description: 傳入 action=resolve。
     in_progress:
       description: 處理人正在處理事件。
       transitions:
         resolve:
           target: resolved
-          path: /events/{event_id}/resolve
+          path: /events/{event_id}/actions
           method: POST
+          description: 傳入 action=resolve。
     resolved:
       description: 事件已被解決。
       transitions:
@@ -879,44 +885,21 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /events/{event_id}/acknowledge:
+  /events/{event_id}/actions:
     post:
       tags:
         - 事件管理
-      summary: 確認接手事件
-      operationId: acknowledgeEvent
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AcknowledgeEventRequest"
-      responses:
-        "200":
-          description: 事件已標記為接手。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /events/{event_id}/assign:
-    post:
-      tags:
-        - 事件管理
-      summary: 指派事件處理人員
-      operationId: assignEvent
+      summary: 對事件執行狀態操作
+      operationId: performEventAction
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/AssignEventRequest"
+              $ref: "#/components/schemas/EventActionRequest"
       responses:
         "200":
-          description: 事件已更新指派資訊。
+          description: 事件狀態已更新。
           content:
             application/json:
               schema:
@@ -925,33 +908,12 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
         "404":
           $ref: "#/components/responses/NotFound"
-  /events/{event_id}/resolve:
-    post:
-      tags:
-        - 事件管理
-      summary: 標記事件為已解決
-      operationId: resolveEvent
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ResolveEventRequest"
-      responses:
-        "200":
-          description: 事件已更新為已解決狀態。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventDetail"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
   /events/{event_id}/analysis:
     get:
       tags:
@@ -3204,11 +3166,6 @@ paths:
           description: 依策略名稱、管道標籤、接收者或訊息內容關鍵字模糊搜尋。
           schema:
             type: string
-        - name: resend_available
-          in: query
-          description: 僅顯示可重新發送的紀錄。
-          schema:
-            type: boolean
         - name: has_error
           in: query
           description: 僅顯示包含錯誤訊息的紀錄。
@@ -3254,28 +3211,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-    post:
-      tags:
-        - 通知管理
-      summary: 重新發送指定通知記錄
-      operationId: resendNotificationHistory
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NotificationResendRequest"
-      responses:
-        "202":
-          description: 已接受重新發送請求。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationResendResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
   /notification-config/history/purge:
     post:
       tags:
@@ -3301,35 +3236,36 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "403":
           $ref: "#/components/responses/Forbidden"
-  /notification-config/history/resend:
-    post:
-      tags:
-        - 通知管理
-      summary: 批量重新發送通知記錄
-      operationId: bulkResendNotificationHistory
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NotificationBulkResendRequest"
-      responses:
-        "202":
-          description: 已排入批次重新發送工作。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationBulkResendResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /settings/tags:
     get:
       tags:
         - 平台設定
       summary: 取得標籤類型列表
       operationId: listTagDefinitions
+      parameters:
+        - name: search
+          in: query
+          description: 依標籤名稱或標籤值關鍵字模糊搜尋。
+          schema:
+            type: string
+        - name: category
+          in: query
+          description: 篩選特定分類的標籤。
+          schema:
+            type: string
+        - name: include_values
+          in: query
+          description: 是否一併載入標籤值清單，預設僅回傳標籤鍵資訊。
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          description: 限制回傳的標籤類型數量，提供前端自動完成時使用。
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
       responses:
         "200":
           description: 回傳標籤類型。
@@ -3657,157 +3593,6 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /tags/keys:
-    get:
-      tags:
-        - 標籤服務
-      summary: 取得可用的標籤鍵清單
-      operationId: listTagKeys
-      parameters:
-        - name: category
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 依分類過濾標籤鍵。
-        - name: keyword
-          in: query
-          required: false
-          schema:
-            type: string
-          description: 關鍵字搜尋標籤鍵或描述。
-      responses:
-        "200":
-          description: 標籤鍵列表。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagKeyListResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-  /tags/{tag_key}/values:
-    parameters:
-      - name: tag_key
-        in: path
-        required: true
-        description: 標籤鍵名稱。
-        schema:
-          type: string
-    get:
-      tags:
-        - 標籤服務
-      summary: 取得指定標籤鍵的常用值
-      operationId: listTagValuesByKey
-      parameters:
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 200
-          description: 限制返回的標籤值數量，預設為 50。
-      responses:
-        "200":
-          description: 標籤值列表。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TagValueListResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /admin/settings:
-    get:
-      tags:
-        - 平台設定
-      summary: 獲取系統設定
-      operationId: getSystemSettings
-      security:
-        - bearerAuth: [super_admin]
-      responses:
-        "200":
-          description: 系統設定資訊。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemSettings"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalError"
-    post:
-      tags:
-        - 平台設定
-      summary: 更新系統設定
-      operationId: updateSystemSettings
-      security:
-        - bearerAuth: [super_admin]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/SystemSettingsRequest"
-      responses:
-        "200":
-          description: 系統設定已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemSettings"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalError"
-  /admin/diagnostics:
-    get:
-      tags:
-        - 系統管理
-      summary: 獲取系統診斷資訊
-      operationId: getSystemDiagnostics
-      security:
-        - bearerAuth: [super_admin]
-      responses:
-        "200":
-          description: 系統診斷資訊。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemDiagnostics"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalError"
-  /admin/diagnostics/health:
-    get:
-      tags:
-        - 系統管理
-      summary: 獲取系統健康檢查
-      operationId: getSystemHealth
-      security:
-        - bearerAuth: [super_admin]
-      responses:
-        "200":
-          description: 系統健康狀態。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SystemHealth"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
-        "500":
-          $ref: "#/components/responses/InternalError"
 components:
   parameters:
     PageParam:
@@ -4588,27 +4373,6 @@ components:
         metadata:
           type: object
           additionalProperties: true
-    AssignEventRequest:
-      type: object
-      required: [assignee_id]
-      properties:
-        assignee_id:
-          type: string
-        note:
-          type: string
-          description: 指派時額外附註說明。
-    ResolveEventRequest:
-      type: object
-      properties:
-        resolved_at:
-          type: string
-          format: date-time
-        resolution_note:
-          type: string
-        status:
-          type: string
-          enum: [resolved]
-          default: resolved
     AddEventCommentRequest:
       type: object
       required: [comment]
@@ -4798,13 +4562,26 @@ components:
         trigger_time:
           type: string
           format: date-time
-    AcknowledgeEventRequest:
+    EventActionRequest:
       type: object
+      required: [action]
       properties:
+        action:
+          type: string
+          enum: [acknowledge, assign, resolve]
         assignee_id:
           type: string
+          description: 當 action 為 assign 或 acknowledge 時可指定接手人。
         note:
           type: string
+          description: 操作備註。
+        resolved_at:
+          type: string
+          format: date-time
+          description: 當 action 為 resolve 時可覆寫結束時間。
+        resolution_note:
+          type: string
+          description: 當 action 為 resolve 時填寫的結案說明。
     EventAnalysisReport:
       type: object
       required: [event_id, generated_at, root_cause, confidence]
@@ -6213,7 +5990,7 @@ components:
           readOnly: true
     NotificationStrategySummary:
       type: object
-      required: [strategy_id, name, status]
+      required: [strategy_id, name, enabled]
       properties:
         strategy_id:
           type: string
@@ -6223,9 +6000,8 @@ components:
           type: string
         channel_count:
           type: integer
-        status:
-          type: string
-          enum: [enabled, disabled]
+        enabled:
+          type: boolean
         priority:
           type: string
           enum: [high, medium, low]
@@ -6423,14 +6199,6 @@ components:
           type: integer
         duration_ms:
           type: integer
-        resend_available:
-          type: boolean
-        resend_count:
-          type: integer
-        last_resend_at:
-          type: string
-          format: date-time
-          nullable: true
         actor:
           type: string
     NotificationHistoryDetail:
@@ -6460,47 +6228,6 @@ components:
             metadata:
               type: object
               additionalProperties: true
-            resend_jobs:
-              type: array
-              items:
-                $ref: "#/components/schemas/NotificationResendJob"
-    NotificationResendRequest:
-      type: object
-      properties:
-        channel_id:
-          type: string
-          description: 指定重新發送時要使用的通知管道，若省略則使用原始管道。
-        recipients:
-          type: array
-          items:
-            type: string
-          description: 覆寫原始通知的收件者清單。
-        dry_run:
-          type: boolean
-          description: 若為 true，僅驗證設定不實際送出通知。
-        note:
-          type: string
-          description: 重新發送原因或備註。
-        metadata:
-          type: object
-          additionalProperties: true
-          description: 自訂的排程參數或追蹤資訊。
-    NotificationResendResponse:
-      type: object
-      required: [record_id, status, enqueued_at]
-      properties:
-        record_id:
-          type: string
-        status:
-          type: string
-          enum: [queued, running, completed, failed]
-        enqueued_at:
-          type: string
-          format: date-time
-        job_id:
-          type: string
-        message:
-          type: string
     NotificationHistoryPurgeRequest:
       type: object
       required: [before]
@@ -6550,84 +6277,6 @@ components:
           type: boolean
         message:
           type: string
-    NotificationBulkResendRequest:
-      type: object
-      required: [record_ids]
-      properties:
-        record_ids:
-          type: array
-          items:
-            type: string
-          minItems: 1
-        channel_id:
-          type: string
-        dry_run:
-          type: boolean
-        note:
-          type: string
-        metadata:
-          type: object
-          additionalProperties: true
-    NotificationBulkResendResponse:
-      type: object
-      required: [requested_count, accepted_count, rejected_count]
-      properties:
-        requested_count:
-          type: integer
-        accepted_count:
-          type: integer
-        rejected_count:
-          type: integer
-        rejected_records:
-          type: array
-          items:
-            type: object
-            properties:
-              record_id:
-                type: string
-              reason:
-                type: string
-        batch_id:
-          type: string
-    NotificationResendJob:
-      type: object
-      required: [job_id, status, requested_at]
-      properties:
-        job_id:
-          type: string
-        status:
-          type: string
-          enum: [queued, running, completed, failed]
-        requested_at:
-          type: string
-          format: date-time
-        requested_by:
-          type: string
-        channel_id:
-          type: string
-        recipients:
-          type: array
-          items:
-            type: string
-        dry_run:
-          type: boolean
-        note:
-          type: string
-        started_at:
-          type: string
-          format: date-time
-          nullable: true
-        completed_at:
-          type: string
-          format: date-time
-          nullable: true
-        result_message:
-          type: string
-        error_message:
-          type: string
-        metadata:
-          type: object
-          additionalProperties: true
     TagDefinition:
       type: object
       required: [tag_id, name, category]
@@ -6747,66 +6396,6 @@ components:
           type: integer
         required:
           type: boolean
-    TagKeyListResponse:
-      type: object
-      required: [items, total]
-      properties:
-        total:
-          type: integer
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/TagKeyOption"
-    TagKeyOption:
-      type: object
-      required: [tag_key]
-      properties:
-        tag_key:
-          type: string
-        display_name:
-          type: string
-        description:
-          type: string
-        categories:
-          type: array
-          items:
-            type: string
-        usage_count:
-          type: integer
-        required:
-          type: boolean
-        last_updated_at:
-          type: string
-          format: date-time
-          nullable: true
-    TagValueListResponse:
-      type: object
-      required: [tag_key, items]
-      properties:
-        tag_key:
-          type: string
-        total:
-          type: integer
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/TagValueOption"
-    TagValueOption:
-      type: object
-      required: [value]
-      properties:
-        value:
-          type: string
-        description:
-          type: string
-        usage_count:
-          type: integer
-        is_default:
-          type: boolean
-        last_seen_at:
-          type: string
-          format: date-time
-          nullable: true
     EmailSettings:
       type: object
       required: [smtp_host, smtp_port, sender_email, encryption]
@@ -6982,21 +6571,6 @@ components:
             refresh:
               type: integer
               description: 刷新間隔（秒）
-    GrafanaEmbedSettings:
-      type: object
-      properties:
-        allow_fullscreen:
-          type: boolean
-          default: true
-        allow_transparency:
-          type: boolean
-          default: false
-        height:
-          type: string
-          default: "600px"
-        width:
-          type: string
-          default: "100%"
     BatchResourceRequest:
       type: object
       required: [action, resource_ids]
@@ -7165,151 +6739,3 @@ components:
                 type: string
               version:
                 type: string
-    SystemSettings:
-      type: object
-      required:
-        - maintenance_mode
-        - max_concurrent_scans
-        - auto_discovery_enabled
-        - alert_integration_enabled
-        - retention_events_days
-        - retention_logs_days
-        - retention_metrics_days
-      properties:
-        maintenance_mode:
-          type: boolean
-          default: false
-        max_concurrent_scans:
-          type: integer
-          default: 10
-        auto_discovery_enabled:
-          type: boolean
-          default: true
-        alert_integration_enabled:
-          type: boolean
-          default: true
-        retention_events_days:
-          type: integer
-          default: 90
-        retention_logs_days:
-          type: integer
-          default: 30
-        retention_metrics_days:
-          type: integer
-          default: 365
-        updated_by:
-          type: string
-          nullable: true
-          readOnly: true
-        updated_at:
-          type: string
-          format: date-time
-          readOnly: true
-    SystemSettingsRequest:
-      type: object
-      properties:
-        maintenance_mode:
-          type: boolean
-        max_concurrent_scans:
-          type: integer
-        auto_discovery_enabled:
-          type: boolean
-        alert_integration_enabled:
-          type: boolean
-        retention_events_days:
-          type: integer
-        retention_logs_days:
-          type: integer
-        retention_metrics_days:
-          type: integer
-    SystemDiagnostics:
-      type: object
-      properties:
-        platform:
-          type: object
-          properties:
-            version:
-              type: string
-            uptime:
-              type: string
-            memory_usage:
-              type: number
-            cpu_usage:
-              type: number
-            disk_usage:
-              type: number
-        database:
-          type: object
-          properties:
-            connection_status:
-              type: string
-              enum: [healthy, degraded, failed]
-            pool_size:
-              type: integer
-            active_connections:
-              type: integer
-            query_time:
-              type: number
-        cache:
-          type: object
-          properties:
-            status:
-              type: string
-              enum: [healthy, degraded, failed]
-            memory_used:
-              type: number
-            hit_rate:
-              type: number
-        services:
-          type: object
-          properties:
-            notification_service:
-              type: string
-              enum: [running, stopped, degraded]
-            automation_service:
-              type: string
-              enum: [running, stopped, degraded]
-            ai_service:
-              type: string
-              enum: [running, stopped, degraded]
-        external_integrations:
-          type: object
-          properties:
-            grafana:
-              type: string
-              enum: [connected, disconnected, degraded]
-            keycloak:
-              type: string
-              enum: [connected, disconnected, degraded]
-        generated_at:
-          type: string
-          format: date-time
-    SystemHealth:
-      type: object
-      properties:
-        overall_status:
-          type: string
-          enum: [healthy, warning, critical]
-        checks:
-          type: array
-          items:
-            $ref: "#/components/schemas/HealthCheck"
-        generated_at:
-          type: string
-          format: date-time
-    HealthCheck:
-      type: object
-      required: [name, status, message]
-      properties:
-        name:
-          type: string
-        status:
-          type: string
-          enum: [pass, warn, fail]
-        message:
-          type: string
-        duration_ms:
-          type: integer
-        last_checked:
-          type: string
-          format: date-time

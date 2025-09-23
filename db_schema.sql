@@ -1219,12 +1219,6 @@ CREATE TABLE notification_history (
     attempts JSONB NOT NULL DEFAULT '[]'::JSONB,
     -- 相關事件識別碼
     related_event_id UUID REFERENCES events(id),
-    -- 重寄次數
-    resend_count INTEGER NOT NULL DEFAULT 0,
-    -- 重寄可用
-    resend_available BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 最後重寄時間
-    last_resend_at TIMESTAMPTZ,
     -- 最後狀態變更時間
     last_status_change_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_notification_history_status CHECK (status IN ('SUCCESS','FAILED','RETRYING','QUEUED')),
@@ -1232,46 +1226,10 @@ CREATE TABLE notification_history (
 );
 CREATE INDEX idx_notification_history_sent_at ON notification_history (sent_at DESC);
 CREATE INDEX idx_notification_history_status ON notification_history (status);
-CREATE INDEX idx_notification_history_last_resend ON notification_history (last_resend_at DESC);
 CREATE INDEX idx_notification_history_channel_type ON notification_history (channel_type);
 CREATE INDEX idx_notification_history_channel_id ON notification_history (channel_id);
 CREATE INDEX idx_notification_history_strategy ON notification_history (strategy_id);
 CREATE INDEX idx_notification_history_event ON notification_history (related_event_id);
-
-CREATE TABLE notification_resend_jobs (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 通知歷程識別碼
-    notification_history_id UUID NOT NULL REFERENCES notification_history(id) ON DELETE CASCADE,
-    -- 請求者識別碼
-    requested_by UUID REFERENCES users(id),
-    -- 狀態
-    status VARCHAR(32) NOT NULL,
-    -- 通知通道識別碼
-    channel_id UUID REFERENCES notification_channels(id) ON DELETE SET NULL,
-    -- 收件者列表
-    recipients TEXT[] DEFAULT ARRAY[]::TEXT[],
-    -- 預演執行
-    dry_run BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 備註
-    note TEXT,
-    -- 請求時間
-    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 開始時間
-    started_at TIMESTAMPTZ,
-    -- 完成時間
-    completed_at TIMESTAMPTZ,
-    -- 結果訊息
-    result_message TEXT,
-    -- 錯誤訊息
-    error_message TEXT,
-    -- 中繼資料
-    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
-    CONSTRAINT chk_notification_resend_status CHECK (status IN ('queued','running','completed','failed'))
-);
-CREATE INDEX idx_notification_resend_jobs_history ON notification_resend_jobs (notification_history_id);
-CREATE INDEX idx_notification_resend_jobs_requested_at ON notification_resend_jobs (requested_at DESC);
-CREATE INDEX idx_notification_resend_jobs_status ON notification_resend_jobs (status);
 
 -- =============================
 -- 平台設定與整合
@@ -1346,35 +1304,6 @@ CREATE TABLE email_settings (
     CONSTRAINT chk_email_settings_encryption CHECK (encryption IN ('none','tls','ssl'))
 );
 
-CREATE TABLE email_test_history (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 觸發者識別碼
-    triggered_by UUID REFERENCES users(id),
-    -- 狀態
-    status VARCHAR(32) NOT NULL,
-    -- 收件者
-    recipient VARCHAR(256) NOT NULL,
-    -- 範本鍵值
-    template_key VARCHAR(128),
-    -- 主旨覆寫
-    subject_override TEXT,
-    -- 內文覆寫
-    body_override TEXT,
-    -- 持續時間毫秒
-    duration_ms INTEGER,
-    -- 回應訊息
-    response_message TEXT,
-    -- 錯誤訊息
-    error_message TEXT,
-    -- 中繼資料
-    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 執行時間
-    executed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_email_test_history_status CHECK (status IN ('queued','success','failed'))
-);
-CREATE INDEX idx_email_test_history_executed_at ON email_test_history (executed_at DESC);
-
 CREATE TABLE auth_settings (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -1404,29 +1333,6 @@ CREATE TABLE auth_settings (
     scopes TEXT[] DEFAULT ARRAY['openid','profile','email'],
     -- 使用者同步
     user_sync BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 更新者識別碼
-    updated_by UUID REFERENCES users(id),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE system_settings (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 維護模式
-    maintenance_mode BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 最大同時掃描
-    max_concurrent_scans INTEGER NOT NULL DEFAULT 10,
-    -- 自動探索啟用
-    auto_discovery_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 警報整合啟用
-    alert_integration_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 保留事件天數
-    retention_events_days INTEGER NOT NULL DEFAULT 90,
-    -- 保留日誌天數
-    retention_logs_days INTEGER NOT NULL DEFAULT 30,
-    -- 保留指標天數
-    retention_metrics_days INTEGER NOT NULL DEFAULT 365,
     -- 更新者識別碼
     updated_by UUID REFERENCES users(id),
     -- 更新時間
