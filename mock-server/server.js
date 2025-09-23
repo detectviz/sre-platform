@@ -89,6 +89,16 @@ const notifications = [
   }
 ];
 
+const buildNotificationSummary = () => {
+  const total = notifications.length;
+  const unread = notifications.filter((item) => item.status === 'unread').length;
+  const bySeverity = notifications.reduce((acc, item) => {
+    acc[item.severity] = (acc[item.severity] || 0) + 1;
+    return acc;
+  }, {});
+  return { total, unread, by_severity: bySeverity, last_updated_at: toISO(new Date()) };
+};
+
 const eventData = [
   {
     event_id: 'evt-001',
@@ -551,9 +561,12 @@ const dashboards = [
 
 const capacitySummary = {
   total_datapoints: 12847,
-  reports: 3,
-  processing_time: 2.3,
-  accuracy: 97.8
+  avg_utilization: 68.2,
+  peak_usage: 91.4,
+  headroom: 18.6,
+  forecast_horizon_days: 30,
+  processing_time_ms: 2350,
+  accuracy: 0.978
 };
 
 const capacityForecasts = [
@@ -587,6 +600,25 @@ const capacitySuggestions = [
     cost_saving: 1200
   }
 ];
+
+const buildCapacityAnalysisReport = ({ timeRange, model } = {}) => {
+  const resolvedTimeRange = typeof timeRange === 'string' && timeRange.trim().length > 0 ? timeRange.trim() : '30d';
+  const resolvedModel = typeof model === 'string' && model.trim().length > 0 ? model.trim() : 'prophet';
+  return {
+    report_id: `capacity-${resolvedTimeRange}-${resolvedModel}`,
+    generated_at: toISO(new Date()),
+    time_range: resolvedTimeRange,
+    model: resolvedModel,
+    summary: { ...capacitySummary },
+    forecasts: capacityForecasts.map((forecast) => ({
+      ...forecast,
+      series: Array.isArray(forecast.series) ? forecast.series.map((point) => ({ ...point })) : [],
+      best_case: Array.isArray(forecast.best_case) ? forecast.best_case.map((point) => ({ ...point })) : [],
+      worst_case: Array.isArray(forecast.worst_case) ? forecast.worst_case.map((point) => ({ ...point })) : []
+    })),
+    suggestions: capacitySuggestions.map((item) => ({ ...item }))
+  };
+};
 
 const resourceLoadSummary = {
   avg_cpu: 58.4,
@@ -1179,6 +1211,187 @@ const authSettings = {
   updated_at: toISO(new Date(now.getTime() - 7200000))
 };
 
+const layoutWidgets = [
+  {
+    widget_id: 'widget-incidents-summary',
+    name: '事件指標概覽',
+    description: '統整活躍事件、確認率與自動化處理成效。',
+    supported_pages: ['/events', '/war-room'],
+    data_api_endpoint: '/events/summary',
+    updated_at: toISO(new Date(now.getTime() - 15 * 60000))
+  },
+  {
+    widget_id: 'widget-resource-health',
+    name: '資源健康度',
+    description: '顯示近 24 小時內資源狀態與健康分佈。',
+    supported_pages: ['/resources', '/events'],
+    data_api_endpoint: '/resources/summary',
+    updated_at: toISO(new Date(now.getTime() - 30 * 60000))
+  },
+  {
+    widget_id: 'widget-automation-progress',
+    name: '自動化執行狀態',
+    description: '追蹤最近的自動化排程與腳本執行情況。',
+    supported_pages: ['/automation', '/war-room'],
+    data_api_endpoint: '/automation/executions',
+    updated_at: toISO(new Date(now.getTime() - 45 * 60000))
+  },
+  {
+    widget_id: 'widget-ai-insights',
+    name: 'AI 洞察摘要',
+    description: '呈現最新的 AI 風險預測與建議摘要。',
+    supported_pages: ['/analysis', '/war-room'],
+    data_api_endpoint: '/analysis/ai-insights',
+    updated_at: toISO(new Date(now.getTime() - 20 * 60000))
+  }
+];
+
+const pageLayouts = [
+  {
+    layout_id: 'layout-global-events',
+    page_path: '/events',
+    scope_type: 'global',
+    scope_id: null,
+    widgets: [
+      { widget_id: 'widget-incidents-summary', order: 1 },
+      { widget_id: 'widget-resource-health', order: 2 }
+    ],
+    created_at: toISO(new Date(now.getTime() - 86400000)),
+    updated_at: toISO(new Date(now.getTime() - 3600000)),
+    updated_by: 'user-001'
+  },
+  {
+    layout_id: 'layout-role-war-room',
+    page_path: '/war-room',
+    scope_type: 'role',
+    scope_id: 'role-sre',
+    widgets: [
+      { widget_id: 'widget-incidents-summary', order: 1 },
+      { widget_id: 'widget-automation-progress', order: 2 }
+    ],
+    created_at: toISO(new Date(now.getTime() - 172800000)),
+    updated_at: toISO(new Date(now.getTime() - 7200000)),
+    updated_by: 'user-001'
+  },
+  {
+    layout_id: 'layout-user-war-room',
+    page_path: '/war-room',
+    scope_type: 'user',
+    scope_id: currentUser.user_id,
+    widgets: [
+      { widget_id: 'widget-incidents-summary', order: 1 },
+      { widget_id: 'widget-ai-insights', order: 2 }
+    ],
+    created_at: toISO(new Date(now.getTime() - 6048000)),
+    updated_at: toISO(now),
+    updated_by: currentUser.user_id
+  }
+];
+
+const allowedLayoutScopeTypes = new Set(['global', 'role', 'user']);
+
+const mapLayoutWidgetDefinition = (widget) => ({
+  widget_id: widget.widget_id,
+  name: widget.name,
+  description: widget.description || '',
+  supported_pages: Array.isArray(widget.supported_pages) ? [...widget.supported_pages] : [],
+  data_api_endpoint: widget.data_api_endpoint,
+  updated_at: widget.updated_at
+});
+
+const getRoleScopeCandidates = (pagePath, preferredScopeId) => {
+  const candidates = new Set();
+  if (preferredScopeId) {
+    candidates.add(preferredScopeId);
+  }
+  if (Array.isArray(currentUser.roles)) {
+    currentUser.roles.forEach((roleId) => {
+      if (typeof roleId === 'string' && roleId.trim().length > 0) {
+        candidates.add(roleId);
+        if (!roleId.startsWith('role-')) {
+          candidates.add(`role-${roleId}`);
+        }
+      }
+    });
+  }
+  pageLayouts
+    .filter((layout) => layout.page_path === pagePath && layout.scope_type === 'role')
+    .forEach((layout) => {
+      if (layout.scope_id) {
+        candidates.add(layout.scope_id);
+      }
+    });
+  return Array.from(candidates);
+};
+
+const findLayoutRecord = (pagePath, scopeType, scopeId) =>
+  pageLayouts.find((layout) => {
+    if (layout.page_path !== pagePath) return false;
+    if (layout.scope_type !== scopeType) return false;
+    if (scopeType === 'global') return true;
+    return layout.scope_id === scopeId;
+  }) || null;
+
+const buildLayoutSearchOrder = (pagePath, { scopeType, scopeId } = {}) => {
+  const candidates = [];
+  const seen = new Set();
+  const addCandidate = (type, id) => {
+    const normalizedId = type === 'global' ? null : id;
+    const key = `${type}:${normalizedId ?? 'null'}`;
+    if (seen.has(key)) return;
+    seen.add(key);
+    candidates.push({ scope_type: type, scope_id: normalizedId });
+  };
+
+  if (scopeType === 'user') {
+    addCandidate('user', scopeId || currentUser.user_id);
+    getRoleScopeCandidates(pagePath).forEach((roleId) => addCandidate('role', roleId));
+    addCandidate('global', null);
+    return candidates;
+  }
+
+  if (scopeType === 'role') {
+    const roles = getRoleScopeCandidates(pagePath, scopeId);
+    roles.forEach((roleId) => addCandidate('role', roleId));
+    addCandidate('global', null);
+    return candidates;
+  }
+
+  if (scopeType === 'global') {
+    addCandidate('global', null);
+    return candidates;
+  }
+
+  const defaultUserId = scopeId || currentUser.user_id;
+  addCandidate('user', defaultUserId);
+  getRoleScopeCandidates(pagePath).forEach((roleId) => addCandidate('role', roleId));
+  addCandidate('global', null);
+  return candidates;
+};
+
+const resolveLayoutForRequest = (pagePath, { scopeType, scopeId } = {}) => {
+  const searchOrder = buildLayoutSearchOrder(pagePath, { scopeType, scopeId });
+  let matchedRecord = null;
+  const fallbackChain = searchOrder.map(({ scope_type, scope_id }) => {
+    const record = findLayoutRecord(pagePath, scope_type, scope_id);
+    if (!matchedRecord && record) {
+      matchedRecord = record;
+    }
+    return {
+      scope_type,
+      scope_id: scope_type === 'global' ? null : scope_id,
+      matched: Boolean(record),
+      updated_at: record?.updated_at ?? null
+    };
+  });
+
+  if (!fallbackChain.some((entry) => entry.scope_type === 'global')) {
+    fallbackChain.push({ scope_type: 'global', scope_id: null, matched: false, updated_at: null });
+  }
+
+  return { record: matchedRecord, fallback_chain: fallbackChain };
+};
+
 const parseListParam = (value) => {
   if (Array.isArray(value)) {
     return value.filter((item) => typeof item === 'string' && item.trim().length > 0).map((item) => item.trim());
@@ -1644,6 +1857,294 @@ const mapNotificationStrategyDetail = (strategy) => {
   };
 };
 
+const normalizeEventActionPayload = (payload = {}) => {
+  const normalized = { ...payload };
+
+  if (typeof normalized.note === 'string') {
+    const trimmedNote = normalized.note.trim();
+    if (trimmedNote) {
+      normalized.note = trimmedNote;
+      if (!normalized.comment) {
+        normalized.comment = trimmedNote;
+      }
+    } else {
+      delete normalized.note;
+    }
+  }
+
+  if (typeof normalized.comment === 'string') {
+    const trimmedComment = normalized.comment.trim();
+    if (trimmedComment) {
+      normalized.comment = trimmedComment;
+    } else {
+      delete normalized.comment;
+    }
+  }
+
+  if (typeof normalized.resolution_note === 'string') {
+    const trimmedResolution = normalized.resolution_note.trim();
+    if (trimmedResolution) {
+      normalized.resolution_note = trimmedResolution;
+    } else {
+      delete normalized.resolution_note;
+    }
+  }
+
+  if (typeof normalized.assignee_id === 'string') {
+    const trimmedAssignee = normalized.assignee_id.trim();
+    normalized.assignee_id = trimmedAssignee || normalized.assignee_id;
+  }
+
+  return normalized;
+};
+
+const validateBatchAction = (targetType, action, payload) => {
+  if (targetType === 'event') {
+    const allowed = new Set(['acknowledge', 'resolve', 'assign', 'add_comment']);
+    if (!allowed.has(action)) {
+      return 'action 參數無效。';
+    }
+    if (action === 'assign' && !payload.assignee_id) {
+      return 'assign 操作需提供 assignee_id。';
+    }
+    if (action === 'resolve' && payload.resolved_at && Number.isNaN(Date.parse(payload.resolved_at))) {
+      return 'resolved_at 時間格式不正確。';
+    }
+    if (action === 'add_comment' && (!payload.comment || !String(payload.comment).trim())) {
+      return 'add_comment 操作需提供 comment。';
+    }
+  } else {
+    const allowed = new Set(['delete', 'update_status', 'assign_team', 'add_tags', 'remove_tags']);
+    if (!allowed.has(action)) {
+      return 'action 參數無效。';
+    }
+    if (action === 'update_status' && !payload.target_status) {
+      return 'update_status 操作需提供 target_status。';
+    }
+    if (action === 'assign_team' && !payload.target_team_id) {
+      return 'assign_team 操作需提供 target_team_id。';
+    }
+    if ((action === 'add_tags' || action === 'remove_tags') && (!Array.isArray(payload.tags) || payload.tags.length === 0)) {
+      return '需提供 tags 列表。';
+    }
+  }
+  return null;
+};
+
+const buildBatchContext = (targetType, payload) => {
+  const context = {};
+  if (targetType === 'event') {
+    const normalized = normalizeEventActionPayload(payload);
+    if (normalized.assignee_id) context.assignee_id = normalized.assignee_id;
+    if (normalized.comment) context.comment = normalized.comment;
+    if (normalized.note) context.note = normalized.note;
+    if (normalized.resolved_at) context.resolved_at = normalized.resolved_at;
+    if (normalized.resolution_note) context.resolution_note = normalized.resolution_note;
+  } else {
+    if (payload.target_status) context.target_status = payload.target_status;
+    if (payload.target_team_id) context.target_team_id = payload.target_team_id;
+    if (Array.isArray(payload.tags)) context.tags = payload.tags;
+    if (payload.reason) context.reason = payload.reason;
+  }
+  return context;
+};
+
+const parseTagString = (tag) => {
+  if (typeof tag !== 'string') return null;
+  const [key, ...rest] = tag.split(':');
+  const normalizedKey = key?.trim();
+  if (!normalizedKey) {
+    return null;
+  }
+  const value = rest.join(':').trim();
+  return { key: normalizedKey, value };
+};
+
+const applyEventBatchAction = (event, action, payload) => {
+  const nowIso = toISO(new Date());
+  if (action === 'acknowledge') {
+    event.status = 'acknowledged';
+    const assigneeId = payload.assignee_id || event.assignee_id || currentUser.user_id;
+    event.assignee_id = assigneeId;
+    event.assignee = getIamUserById(assigneeId)?.name || event.assignee || currentUser.display_name;
+    event.acknowledged_at = nowIso;
+    event.updated_at = nowIso;
+    appendTimelineEntry(event, {
+      entry_type: 'status_change',
+      message: '事件已確認處理',
+      metadata: { action: 'acknowledge' }
+    });
+    if (payload.comment) {
+      appendTimelineEntry(event, {
+        entry_type: 'note',
+        message: payload.comment,
+        metadata: { action: 'acknowledge' }
+      });
+    }
+    return { success: true, message: '事件已確認' };
+  }
+
+  if (action === 'assign') {
+    const assigneeId = payload.assignee_id;
+    event.assignee_id = assigneeId;
+    event.assignee = getIamUserById(assigneeId)?.name || assigneeId;
+    if (event.status === 'new' || event.status === 'acknowledged') {
+      event.status = 'in_progress';
+    }
+    event.updated_at = nowIso;
+    if (!event.acknowledged_at) {
+      event.acknowledged_at = nowIso;
+    }
+    appendTimelineEntry(event, {
+      entry_type: 'status_change',
+      message: `事件指派給 ${event.assignee}`,
+      metadata: { action: 'assign' }
+    });
+    if (payload.comment) {
+      appendTimelineEntry(event, {
+        entry_type: 'note',
+        message: payload.comment,
+        metadata: { action: 'assign' }
+      });
+    }
+    return { success: true, message: '事件已指派' };
+  }
+
+  if (action === 'resolve') {
+    const resolvedAt = payload.resolved_at ? toISO(new Date(payload.resolved_at)) : nowIso;
+    event.status = 'resolved';
+    event.resolved_at = resolvedAt;
+    event.updated_at = resolvedAt;
+    if (!event.acknowledged_at) {
+      event.acknowledged_at = resolvedAt;
+    }
+    appendTimelineEntry(event, {
+      entry_type: 'status_change',
+      message: '事件標記為已解決',
+      metadata: { action: 'resolve' }
+    });
+    if (payload.resolution_note) {
+      appendTimelineEntry(event, {
+        entry_type: 'note',
+        message: payload.resolution_note,
+        metadata: { action: 'resolve' }
+      });
+    }
+    return { success: true, message: '事件已解決' };
+  }
+
+  if (action === 'add_comment') {
+    appendTimelineEntry(event, {
+      entry_type: 'note',
+      message: payload.comment,
+      metadata: { action: 'add_comment' }
+    });
+    event.updated_at = nowIso;
+    return { success: true, message: '已新增備註' };
+  }
+
+  return { success: false, message: '不支援的操作', error_code: 'INVALID_ACTION' };
+};
+
+const applyResourceBatchAction = (resourceId, action, payload) => {
+  const index = resourceData.findIndex((item) => item.resource_id === resourceId);
+  if (index === -1) {
+    return { success: false, message: '找不到資源', error_code: 'NOT_FOUND' };
+  }
+  const resource = resourceData[index];
+  const nowIso = toISO(new Date());
+
+  if (action === 'delete') {
+    resourceData.splice(index, 1);
+    return { success: true, message: '資源已刪除' };
+  }
+
+  if (action === 'update_status') {
+    resource.status = payload.target_status;
+    resource.updated_at = nowIso;
+    return { success: true, message: `資源狀態更新為 ${payload.target_status}` };
+  }
+
+  if (action === 'assign_team') {
+    resource.team_id = payload.target_team_id;
+    resource.team = getTeamById(payload.target_team_id)?.name || resource.team || payload.target_team_id;
+    resource.updated_at = nowIso;
+    return { success: true, message: '資源已重新指派團隊' };
+  }
+
+  if (action === 'add_tags') {
+    const existing = Array.isArray(resource.tags) ? resource.tags : [];
+    const additions = payload.tags.map(parseTagString).filter((tag) => tag && tag.key);
+    additions.forEach((tag) => {
+      if (!existing.some((item) => item.key === tag.key && item.value === tag.value)) {
+        existing.push(tag);
+      }
+    });
+    resource.tags = existing;
+    resource.updated_at = nowIso;
+    return { success: true, message: '標籤已新增' };
+  }
+
+  if (action === 'remove_tags') {
+    const removals = payload.tags.map(parseTagString).filter((tag) => tag && tag.key);
+    const before = resource.tags?.length || 0;
+    resource.tags = (resource.tags || []).filter(
+      (tag) => !removals.some((remove) => remove.key === tag.key && remove.value === tag.value)
+    );
+    const removed = before - (resource.tags?.length || 0);
+    resource.updated_at = nowIso;
+    return { success: true, message: `已移除 ${removed} 個標籤` };
+  }
+
+  return { success: false, message: '不支援的操作', error_code: 'INVALID_ACTION' };
+};
+
+const processBatchOperation = (operationId, payload, ids) => {
+  const operation = batchOperations.get(operationId);
+  if (!operation) {
+    return;
+  }
+  operation.status = 'running';
+  batchOperations.set(operationId, operation);
+
+  const actionPayload =
+    operation.target_type === 'event' ? normalizeEventActionPayload(payload) : payload;
+
+  const results = ids.map((id) => {
+    if (operation.target_type === 'event') {
+      const event = getEventById(id);
+      if (!event) {
+        return { target_id: id, success: false, message: '找不到事件', error_code: 'NOT_FOUND' };
+      }
+      const result = applyEventBatchAction(event, operation.action, actionPayload);
+      return {
+        target_id: id,
+        success: result.success,
+        message: result.message,
+        error_code: result.error_code || null,
+        processed_at: toISO(new Date())
+      };
+    }
+
+    const resourceResult = applyResourceBatchAction(id, operation.action, payload);
+    return {
+      target_id: id,
+      success: resourceResult.success,
+      message: resourceResult.message,
+      error_code: resourceResult.error_code || null,
+      processed_at: toISO(new Date())
+    };
+  });
+
+  operation.items = results;
+  operation.processed_count = results.length;
+  operation.success_count = results.filter((item) => item.success).length;
+  operation.failed_count = results.filter((item) => !item.success).length;
+  operation.status = operation.success_count === results.length ? 'completed' : operation.success_count === 0 ? 'failed' : 'completed';
+  operation.completed_at = toISO(new Date());
+  batchOperations.set(operationId, operation);
+};
+
 const notFound = (res, message = '查無資料') => res.status(404).json({ code: 'NOT_FOUND', message });
 
 app.post('/auth/login', (req, res) => {
@@ -1950,13 +2451,7 @@ app.post('/metrics/query', (req, res) => {
 });
 
 app.get('/notifications/summary', (req, res) => {
-  const total = notifications.length;
-  const unread = notifications.filter((item) => item.status === 'unread').length;
-  const bySeverity = notifications.reduce((acc, item) => {
-    acc[item.severity] = (acc[item.severity] || 0) + 1;
-    return acc;
-  }, {});
-  res.json({ total, unread, by_severity: bySeverity, last_updated_at: toISO(now) });
+  res.json(buildNotificationSummary());
 });
 
 app.get('/notifications', (req, res) => {
@@ -1974,29 +2469,31 @@ app.get('/notifications', (req, res) => {
   );
 });
 
-app.post('/notifications/:notification_id/read', (req, res) => {
-  const notification = notifications.find((item) => item.notification_id === req.params.notification_id);
-  if (!notification) {
-    return notFound(res, '找不到通知');
+app.post('/notifications/read', (req, res) => {
+  const { notification_ids: notificationIds, mark_all: markAll, read_at: readAt } = req.body || {};
+  const shouldMarkAll = markAll === true;
+  if (!shouldMarkAll && (!Array.isArray(notificationIds) || notificationIds.length === 0)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'notification_ids 至少需要一筆識別碼。' });
   }
-  notification.status = 'read';
-  notification.read_at = req.body?.read_at || toISO(new Date());
-  res.json(notification);
-});
 
-app.post('/notifications/mark-all-read', (req, res) => {
+  const idsToMark = shouldMarkAll
+    ? new Set(notifications.map((item) => item.notification_id))
+    : new Set(notificationIds);
+
+  const timestamp = readAt && !Number.isNaN(Date.parse(readAt)) ? toISO(new Date(readAt)) : toISO(new Date());
+  const updatedItems = [];
+
   notifications.forEach((item) => {
-    item.status = 'read';
-    item.read_at = toISO(new Date());
+    if (idsToMark.has(item.notification_id)) {
+      item.status = 'read';
+      item.read_at = timestamp;
+      updatedItems.push(item);
+    }
   });
+
   res.json({
-    total: notifications.length,
-    unread: 0,
-    by_severity: notifications.reduce((acc, item) => {
-      acc[item.severity] = (acc[item.severity] || 0) + 1;
-      return acc;
-    }, {}),
-    last_updated_at: toISO(new Date())
+    summary: buildNotificationSummary(),
+    updated_items: updatedItems
   });
 });
 
@@ -2083,146 +2580,52 @@ app.get('/events', (req, res) => {
   );
 });
 
-app.post('/events/batch', (req, res) => {
-  const {
-    action,
-    event_ids: eventIds,
-    assignee_id: assigneeId,
-    comment,
-    resolved_at: resolvedAt,
-    visibility
-  } = req.body || {};
-  const allowedActions = new Set(['acknowledge', 'resolve', 'assign', 'add_comment']);
-  if (!allowedActions.has(action)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'action 參數無效。' });
-  }
-  if (!Array.isArray(eventIds) || eventIds.length === 0) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'event_ids 至少需要一筆事件。' });
-  }
-  if (action === 'assign' && !assigneeId) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'assign 操作需提供 assignee_id。' });
-  }
-  if (action === 'add_comment' && !comment) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'add_comment 操作需提供 comment 內容。' });
+app.post('/batch-operations', (req, res) => {
+  const payload = req.body || {};
+  const targetType = payload.target_type;
+  const action = payload.action;
+  const normalizedPayload = targetType === 'event' ? normalizeEventActionPayload(payload) : payload;
+  if (!['event', 'resource'].includes(targetType)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'target_type 參數無效。' });
   }
 
-  const batchId = `evt-batch-${Date.now()}`;
-  const createdAt = toISO(new Date());
-  const requestedBy = currentUser.user_id;
-  const commentVisibility = visibility === 'public' ? 'public' : 'internal';
-  const requestPayload = {
-    action,
-    event_ids: eventIds,
-    ...(assigneeId ? { assignee_id: assigneeId } : {}),
-    ...(comment ? { comment } : {}),
-    ...(resolvedAt ? { resolved_at: resolvedAt } : {})
-  };
-  if (visibility || action === 'add_comment') {
-    requestPayload.visibility = commentVisibility;
+  const ids = targetType === 'event' ? payload.event_ids : payload.resource_ids;
+  if (!Array.isArray(ids) || ids.length === 0) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: '缺少批次處理目標識別碼。' });
   }
+
+  const validationError = validateBatchAction(targetType, action, normalizedPayload);
+  if (validationError) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: validationError });
+  }
+
+  const operationId = `batch-${Date.now()}`;
+  const createdAt = toISO(new Date());
   const operation = {
-    batch_id: batchId,
-    status: 'pending',
+    operation_id: operationId,
+    target_type: targetType,
     action,
-    requested_by: requestedBy,
-    assignee_id: assigneeId || null,
-    comment: comment || null,
-    request_payload: requestPayload,
-    total_count: eventIds.length,
+    status: 'pending',
+    requested_by: currentUser.user_id,
+    total_count: ids.length,
     processed_count: 0,
     success_count: 0,
     failed_count: 0,
     created_at: createdAt,
     completed_at: null,
-    results: []
+    context: buildBatchContext(targetType, normalizedPayload),
+    items: []
   };
-  eventBatchOperations.set(batchId, operation);
 
-  setTimeout(() => {
-    const current = eventBatchOperations.get(batchId);
-    if (!current) return;
-    current.status = 'running';
-    eventBatchOperations.set(batchId, current);
+  batchOperations.set(operationId, operation);
 
-    const results = eventIds.map((id) => {
-      const event = getEventById(id);
-      if (!event) {
-        return { event_id: id, success: false, message: '找不到事件', error: 'NOT_FOUND' };
-      }
-      try {
-        if (action === 'acknowledge') {
-          event.status = 'acknowledged';
-          event.acknowledged_at = toISO(new Date());
-          event.updated_at = event.acknowledged_at;
-          appendTimelineEntry(event, {
-            entry_type: 'status_change',
-            message: '事件已確認處理',
-            metadata: { action: 'acknowledge' }
-          });
-        } else if (action === 'resolve') {
-          const resolvedTime = resolvedAt ? toISO(new Date(resolvedAt)) : toISO(new Date());
-          event.status = 'resolved';
-          event.resolved_at = resolvedTime;
-          event.updated_at = resolvedTime;
-          if (!event.acknowledged_at) {
-            event.acknowledged_at = resolvedTime;
-          }
-          appendTimelineEntry(event, {
-            entry_type: 'status_change',
-            message: '事件標記為已解決',
-            metadata: { action: 'resolve' }
-          });
-        } else if (action === 'assign') {
-          event.assignee_id = assigneeId;
-          event.assignee = iamUsers.find((user) => user.user_id === assigneeId)?.name || assigneeId;
-          if (event.status === 'new' || event.status === 'acknowledged') {
-            event.status = 'in_progress';
-          }
-          const updatedAt = toISO(new Date());
-          event.updated_at = updatedAt;
-          if (!event.acknowledged_at) {
-            event.acknowledged_at = updatedAt;
-          }
-          appendTimelineEntry(event, {
-            entry_type: 'status_change',
-            message: `事件指派給 ${event.assignee}`,
-            metadata: { action: 'assign' }
-          });
-          if (comment) {
-            appendTimelineEntry(event, {
-              entry_type: 'note',
-              message: comment,
-              metadata: { action: 'assign' }
-            });
-          }
-        } else if (action === 'add_comment') {
-          appendTimelineEntry(event, {
-            entry_type: 'note',
-            message: comment,
-            metadata: { action: 'add_comment', visibility: commentVisibility }
-          });
-          event.updated_at = toISO(new Date());
-        }
-        return { event_id: id, success: true, message: '操作完成' };
-      } catch (error) {
-        return { event_id: id, success: false, message: '操作失敗', error: 'INTERNAL_ERROR' };
-      }
-    });
-
-    current.results = results;
-    current.processed_count = results.length;
-    current.success_count = results.filter((result) => result.success).length;
-    current.failed_count = results.filter((result) => !result.success).length;
-    current.status = current.success_count === 0 ? 'failed' : 'completed';
-    current.completed_at = toISO(new Date());
-    eventBatchOperations.set(batchId, current);
-  }, 300);
+  setTimeout(() => processBatchOperation(operationId, normalizedPayload, ids), 200);
 
   res.status(202).json(operation);
 });
 
-app.get('/events/batch/:batch_id', (req, res) => {
-  const operation = eventBatchOperations.get(req.params.batch_id);
+app.get('/batch-operations/:operation_id', (req, res) => {
+  const operation = batchOperations.get(req.params.operation_id);
   if (!operation) {
     return notFound(res, '找不到批次處理作業');
   }
@@ -2319,107 +2722,35 @@ app.post('/events/:event_id/timeline', (req, res) => {
   res.status(201).json(entry);
 });
 
-app.post('/events/:event_id/comments', (req, res) => {
+app.post('/events/:event_id/actions', (req, res) => {
   const event = getEventById(req.params.event_id);
   if (!event) return notFound(res, '找不到事件');
-  const comment = typeof req.body?.comment === 'string' ? req.body.comment.trim() : '';
-  if (!comment) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'comment 欄位為必填。' });
+
+  const payload = normalizeEventActionPayload(req.body || {});
+  const action = typeof payload.action === 'string' ? payload.action.trim() : payload.action;
+  const allowedActions = new Set(['acknowledge', 'assign', 'resolve']);
+  if (!allowedActions.has(action)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'action 參數無效。' });
   }
-  const entry = appendTimelineEntry(event, {
-    entry_type: 'note',
-    message: comment,
-    created_by: req.body?.created_by,
-    metadata: {
-      visibility: req.body?.visibility || 'internal',
-      ...(req.body?.metadata || {})
-    }
-  });
-  event.updated_at = toISO(new Date());
-  res.status(201).json(entry);
+
+  payload.action = action;
+  const validationError = validateBatchAction('event', action, payload);
+  if (validationError) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: validationError });
+  }
+
+  const result = applyEventBatchAction(event, action, payload);
+  if (!result.success) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: result.message, error_code: result.error_code });
+  }
+
+  res.json(toEventDetail(event));
 });
 
 app.get('/events/:event_id/related', (req, res) => {
   const event = getEventById(req.params.event_id);
   if (!event) return notFound(res, '找不到事件');
   res.json({ items: event.related || [] });
-});
-
-app.post('/events/:event_id/acknowledge', (req, res) => {
-  const event = getEventById(req.params.event_id);
-  if (!event) return notFound(res, '找不到事件');
-  const assigneeId = req.body?.assignee_id || currentUser.user_id;
-  const note = typeof req.body?.note === 'string' ? req.body.note.trim() : '';
-  const acknowledgedAt = toISO(new Date());
-  event.status = 'acknowledged';
-  event.assignee_id = assigneeId;
-  event.assignee = iamUsers.find((u) => u.user_id === assigneeId)?.name || currentUser.display_name;
-  event.acknowledged_at = acknowledgedAt;
-  event.updated_at = acknowledgedAt;
-  appendTimelineEntry(event, {
-    entry_type: 'status_change',
-    message: '事件已確認處理',
-    metadata: { action: 'acknowledge' }
-  });
-  if (note) {
-    appendTimelineEntry(event, {
-      entry_type: 'note',
-      message: note,
-      metadata: { action: 'acknowledge' }
-    });
-  }
-  res.json(toEventDetail(event));
-});
-
-app.post('/events/:event_id/assign', (req, res) => {
-  const event = getEventById(req.params.event_id);
-  if (!event) return notFound(res, '找不到事件');
-  const assigneeId = req.body?.assignee_id;
-  if (!assigneeId) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'assignee_id 欄位為必填。' });
-  }
-  event.assignee_id = assigneeId;
-  event.assignee = iamUsers.find((user) => user.user_id === assigneeId)?.name || assigneeId;
-  if (event.status === 'new' || event.status === 'acknowledged') {
-    event.status = 'in_progress';
-  }
-  const nowIso = toISO(new Date());
-  event.updated_at = nowIso;
-  appendTimelineEntry(event, {
-    entry_type: 'status_change',
-    message: `事件指派給 ${event.assignee}`,
-    metadata: { action: 'assign' }
-  });
-  if (req.body?.note) {
-    appendTimelineEntry(event, {
-      entry_type: 'note',
-      message: req.body.note,
-      metadata: { action: 'assign' }
-    });
-  }
-  res.json(toEventDetail(event));
-});
-
-app.post('/events/:event_id/resolve', (req, res) => {
-  const event = getEventById(req.params.event_id);
-  if (!event) return notFound(res, '找不到事件');
-  const resolvedAt = req.body?.resolved_at ? toISO(new Date(req.body.resolved_at)) : toISO(new Date());
-  event.status = 'resolved';
-  event.resolved_at = resolvedAt;
-  event.updated_at = resolvedAt;
-  if (req.body?.resolution_note) {
-    appendTimelineEntry(event, {
-      entry_type: 'note',
-      message: req.body.resolution_note,
-      metadata: { action: 'resolve' }
-    });
-  }
-  appendTimelineEntry(event, {
-    entry_type: 'status_change',
-    message: '事件標記為已解決',
-    metadata: { action: 'resolve' }
-  });
-  res.json(toEventDetail(event));
 });
 
 app.get('/events/:event_id/analysis', (req, res) => {
@@ -2717,13 +3048,6 @@ app.delete('/silence-rules/:silence_id', (req, res) => {
   const rule = getSilenceRuleById(req.params.silence_id);
   if (!rule) return notFound(res, '找不到靜音規則');
   res.status(204).end();
-});
-
-app.post('/silence-rules/:silence_id/toggle', (req, res) => {
-  const rule = getSilenceRuleById(req.params.silence_id);
-  if (!rule) return notFound(res, '找不到靜音規則');
-  rule.enabled = !rule.enabled;
-  res.json(rule);
 });
 
 app.get('/resources/summary', (req, res) => {
@@ -3078,30 +3402,9 @@ app.delete('/dashboards/:dashboard_id', (req, res) => {
   res.status(204).end();
 });
 
-app.post('/dashboards/:dashboard_id/publish', (req, res) => {
-  const dash = getDashboardById(req.params.dashboard_id);
-  if (!dash) return notFound(res, '找不到儀表板');
-  const shouldPublish = req.body?.published ?? dash.status !== 'published';
-  dash.status = shouldPublish ? 'published' : 'draft';
-  dash.published_at = shouldPublish ? toISO(new Date()) : null;
-  res.json(dash);
-});
-
-app.post('/dashboards/:dashboard_id/default', (req, res) => {
-  const dash = getDashboardById(req.params.dashboard_id);
-  if (!dash) return notFound(res, '找不到儀表板');
-  dashboards.forEach((item) => {
-    item.is_default = item.dashboard_id === dash.dashboard_id;
-  });
-  dash.is_default = true;
-  res.json(dash);
-});
-app.get('/analysis/capacity/summary', (req, res) => {
-  res.json(capacitySummary);
-});
-
-app.get('/analysis/capacity/forecasts', (req, res) => {
-  res.json({ forecasts: capacityForecasts, suggestions: capacitySuggestions });
+app.get('/analysis/capacity', (req, res) => {
+  const report = buildCapacityAnalysisReport({ timeRange: req.query?.time_range, model: req.query?.model });
+  res.json(report);
 });
 
 app.get('/analysis/resource-load', (req, res) => {
@@ -3508,7 +3811,7 @@ app.get('/iam/audit-logs', (req, res) => {
   res.json(paginate(auditLogs, req));
 });
 
-app.get('/notification/strategies', (req, res) => {
+app.get('/notification-config/strategies', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const priorityFilter = createLowercaseSet(parseListParam(req.query.priority));
   const channelTypeFilter = createLowercaseSet(parseListParam(req.query.channel_types ?? req.query.channel_type));
@@ -3581,7 +3884,7 @@ app.get('/notification/strategies', (req, res) => {
   );
 });
 
-app.post('/notification/strategies', (req, res) => {
+app.post('/notification-config/strategies', (req, res) => {
   const payload = req.body || {};
   const strategy = {
     strategy_id: `str-${Date.now()}`,
@@ -3601,13 +3904,13 @@ app.post('/notification/strategies', (req, res) => {
   res.status(201).json(mapNotificationStrategyDetail(strategy));
 });
 
-app.get('/notification/strategies/:strategy_id', (req, res) => {
+app.get('/notification-config/strategies/:strategy_id', (req, res) => {
   const strategy = getNotificationStrategyById(req.params.strategy_id);
   if (!strategy) return notFound(res, '找不到通知策略');
   res.json(mapNotificationStrategyDetail(strategy));
 });
 
-app.patch('/notification/strategies/:strategy_id', (req, res) => {
+app.patch('/notification-config/strategies/:strategy_id', (req, res) => {
   const strategy = getNotificationStrategyById(req.params.strategy_id);
   if (!strategy) return notFound(res, '找不到通知策略');
   const payload = req.body || {};
@@ -3624,13 +3927,13 @@ app.patch('/notification/strategies/:strategy_id', (req, res) => {
   res.json(mapNotificationStrategyDetail(strategy));
 });
 
-app.delete('/notification/strategies/:strategy_id', (req, res) => {
+app.delete('/notification-config/strategies/:strategy_id', (req, res) => {
   const strategy = getNotificationStrategyById(req.params.strategy_id);
   if (!strategy) return notFound(res, '找不到通知策略');
   res.status(204).end();
 });
 
-app.post('/notification/strategies/:strategy_id/test', (req, res) => {
+app.post('/notification-config/strategies/:strategy_id/test', (req, res) => {
   const strategy = getNotificationStrategyById(req.params.strategy_id);
   if (!strategy) return notFound(res, '找不到通知策略');
   const detail = mapNotificationStrategyDetail(strategy);
@@ -3641,7 +3944,7 @@ app.post('/notification/strategies/:strategy_id/test', (req, res) => {
   });
 });
 
-app.get('/notification/channels', (req, res) => {
+app.get('/notification-config/channels', (req, res) => {
   res.json(notificationChannels.map((channel) => ({
     channel_id: channel.channel_id,
     name: channel.name,
@@ -3656,7 +3959,7 @@ app.get('/notification/channels', (req, res) => {
   })));
 });
 
-app.post('/notification/channels', (req, res) => {
+app.post('/notification-config/channels', (req, res) => {
   const payload = req.body || {};
   const channel = {
     channel_id: `chn-${Date.now()}`,
@@ -3676,7 +3979,7 @@ app.post('/notification/channels', (req, res) => {
   res.status(201).json(channel);
 });
 
-app.post('/notification/channels/:channel_id/test', (req, res) => {
+app.post('/notification-config/channels/:channel_id/test', (req, res) => {
   const channel = getNotificationChannelById(req.params.channel_id);
   if (!channel) return notFound(res, '找不到通知管道');
   channel.last_tested_at = toISO(new Date());
@@ -3685,26 +3988,26 @@ app.post('/notification/channels/:channel_id/test', (req, res) => {
   res.json({ status: 'success', message: '測試通知已發送' });
 });
 
-app.get('/notification/channels/:channel_id', (req, res) => {
+app.get('/notification-config/channels/:channel_id', (req, res) => {
   const channel = getNotificationChannelById(req.params.channel_id);
   if (!channel) return notFound(res, '找不到通知管道');
   res.json(channel);
 });
 
-app.patch('/notification/channels/:channel_id', (req, res) => {
+app.patch('/notification-config/channels/:channel_id', (req, res) => {
   const channel = getNotificationChannelById(req.params.channel_id);
   if (!channel) return notFound(res, '找不到通知管道');
   Object.assign(channel, req.body || {}, { updated_at: toISO(new Date()) });
   res.json(channel);
 });
 
-app.delete('/notification/channels/:channel_id', (req, res) => {
+app.delete('/notification-config/channels/:channel_id', (req, res) => {
   const channel = getNotificationChannelById(req.params.channel_id);
   if (!channel) return notFound(res, '找不到通知管道');
   res.status(204).end();
 });
 
-app.get('/notification/history', (req, res) => {
+app.get('/notification-config/history', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const channelTypeFilter = createLowercaseSet(parseListParam(req.query.channel_types ?? req.query.channel_type));
   const channelIdFilter = createLowercaseSet(parseListParam(req.query.channel_ids ?? req.query.channel_id));
@@ -3767,7 +4070,7 @@ app.get('/notification/history', (req, res) => {
   );
 });
 
-app.get('/notification/history/:record_id', (req, res) => {
+app.get('/notification-config/history/:record_id', (req, res) => {
   const record = getHistoryById(req.params.record_id);
   if (!record) return notFound(res, '找不到通知紀錄');
   const resendJobs = notificationResendJobs
@@ -3776,7 +4079,7 @@ app.get('/notification/history/:record_id', (req, res) => {
   res.json({ ...record, resend_jobs: resendJobs });
 });
 
-app.post('/notification/history/purge', (req, res) => {
+app.post('/notification-config/history/purge', (req, res) => {
   const payload = req.body || {};
   const before = parseDateSafe(payload.before);
   if (!before) {
@@ -3836,80 +4139,127 @@ app.post('/notification/history/purge', (req, res) => {
   });
 });
 
-app.post('/notification/history/:record_id/resend', (req, res) => {
-  const record = getHistoryById(req.params.record_id);
-  if (!record) return notFound(res, '找不到通知紀錄');
-  const jobId = `job-${Date.now()}`;
-  const enqueuedAt = toISO(new Date());
-  const job = {
-    job_id: jobId,
-    notification_history_id: record.record_id,
-    status: 'queued',
-    requested_at: enqueuedAt,
-    requested_by: currentUser.display_name,
-    channel_id: req.body?.channel_id || record.channel_id || null,
-    recipients: req.body?.recipients || record.recipients,
-    dry_run: Boolean(req.body?.dry_run),
-    note: req.body?.note || null,
-    result_message: null,
-    error_message: null,
-    metadata: req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {}
-  };
-  notificationResendJobs.push(job);
-  record.resend_count = (record.resend_count || 0) + 1;
-  record.last_resend_at = enqueuedAt;
-  record.resend_available = true;
-  res.status(202).json({
-    record_id: record.record_id,
-    status: 'queued',
-    enqueued_at: enqueuedAt,
-    job_id: jobId,
-    message: '重新發送已排入佇列'
+app.get('/settings/widgets', (req, res) => {
+  const pagePath = typeof req.query.page_path === 'string' ? req.query.page_path.trim() : '';
+  const items = layoutWidgets.filter((widget) => {
+    if (!pagePath) return true;
+    const supported = Array.isArray(widget.supported_pages) ? widget.supported_pages : [];
+    return supported.includes(pagePath);
+  });
+  res.json(items.map(mapLayoutWidgetDefinition));
+});
+
+app.get('/settings/layouts', (req, res) => {
+  const pagePath = typeof req.query.page_path === 'string' ? req.query.page_path.trim() : '';
+  if (!pagePath) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'page_path 參數為必填。' });
+  }
+
+  const scopeTypeRaw = typeof req.query.scope_type === 'string' ? req.query.scope_type.trim().toLowerCase() : null;
+  const scopeType = scopeTypeRaw && scopeTypeRaw.length > 0 ? scopeTypeRaw : null;
+  if (scopeType && !allowedLayoutScopeTypes.has(scopeType)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope_type 參數無效。' });
+  }
+
+  const scopeIdRaw = typeof req.query.scope_id === 'string' ? req.query.scope_id.trim() : null;
+  if ((scopeType === 'user' || scopeType === 'role') && (!scopeIdRaw || scopeIdRaw.length === 0)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope_id 參數為必填。' });
+  }
+
+  const resolution = resolveLayoutForRequest(pagePath, {
+    scopeType,
+    scopeId: scopeType === 'global' ? null : scopeIdRaw
+  });
+
+  const matchedEntry = resolution.fallback_chain.find((entry) => entry.matched) || null;
+  const matchedRecord = resolution.record;
+  const layoutRecord =
+    matchedRecord === null
+      ? null
+      : {
+          ...matchedRecord,
+          widgets: matchedRecord.widgets.map((widget) => ({ ...widget }))
+        };
+
+  res.json({
+    page_path: pagePath,
+    resolved_scope_type: matchedEntry?.scope_type ?? 'global',
+    resolved_scope_id: matchedEntry?.scope_id ?? null,
+    widgets: matchedRecord ? matchedRecord.widgets.map((widget) => ({ ...widget })) : [],
+    layout_record: layoutRecord,
+    fallback_chain: resolution.fallback_chain,
+    updated_at: matchedRecord?.updated_at ?? null
   });
 });
 
-app.post('/notification/history/resend', (req, res) => {
-  const recordIds = Array.isArray(req.body?.record_ids) ? req.body.record_ids : [];
-  if (!recordIds.length) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'record_ids 至少需要一筆資料' });
+app.put('/settings/layouts', (req, res) => {
+  const payload = req.body || {};
+  const pagePath = typeof payload.page_path === 'string' ? payload.page_path.trim() : '';
+  const scopeTypeRaw = typeof payload.scope_type === 'string' ? payload.scope_type.trim().toLowerCase() : '';
+  if (!pagePath) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'page_path 參數為必填。' });
   }
-  let accepted = 0;
-  const rejected = [];
-  const enqueuedAt = toISO(new Date());
-  recordIds.forEach((id) => {
-    const record = getHistoryById(id);
-    if (!record) {
-      rejected.push({ record_id: id, reason: 'NOT_FOUND' });
-      return;
-    }
-    const jobId = `job-${Date.now()}-${Math.random().toString(16).slice(2, 6)}`;
-    notificationResendJobs.push({
-      job_id: jobId,
-      notification_history_id: record.record_id,
-      status: 'queued',
-      requested_at: enqueuedAt,
-      requested_by: currentUser.display_name,
-      channel_id: req.body?.channel_id || record.channel_id || null,
-      recipients: record.recipients,
-      dry_run: Boolean(req.body?.dry_run),
-      note: req.body?.note || null,
-      result_message: null,
-      error_message: null,
-      metadata: req.body?.metadata && typeof req.body.metadata === 'object' ? req.body.metadata : {}
-    });
-    record.resend_count = (record.resend_count || 0) + 1;
-    record.last_resend_at = enqueuedAt;
-    record.resend_available = true;
-    accepted += 1;
-  });
+  if (!allowedLayoutScopeTypes.has(scopeTypeRaw)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope_type 參數無效。' });
+  }
 
-  res.status(202).json({
-    requested_count: recordIds.length,
-    accepted_count: accepted,
-    rejected_count: rejected.length,
-    rejected_records: rejected,
-    batch_id: `batch-${Date.now()}`
-  });
+  let scopeId = null;
+  if (scopeTypeRaw === 'user' || scopeTypeRaw === 'role') {
+    if (typeof payload.scope_id !== 'string' || payload.scope_id.trim().length === 0) {
+      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope_id 參數為必填。' });
+    }
+    scopeId = payload.scope_id.trim();
+  }
+
+  if (!Array.isArray(payload.widgets)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'widgets 參數必須為陣列。' });
+  }
+
+  const catalog = new Set(layoutWidgets.map((widget) => widget.widget_id));
+  const widgetIdSet = new Set();
+  const sanitizedWidgets = [];
+  for (const item of payload.widgets) {
+    if (!item || typeof item.widget_id !== 'string' || item.widget_id.trim().length === 0) {
+      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'widget_id 為必填欄位。' });
+    }
+    const widgetId = item.widget_id.trim();
+    if (!catalog.has(widgetId)) {
+      return res.status(400).json({ code: 'INVALID_REQUEST', message: `未知的 widget_id: ${widgetId}` });
+    }
+    if (widgetIdSet.has(widgetId)) {
+      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'widgets 不可包含重複的 widget_id。' });
+    }
+    const order = Number(item.order);
+    if (!Number.isInteger(order) || order < 1) {
+      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'order 必須為大於 0 的整數。' });
+    }
+    widgetIdSet.add(widgetId);
+    sanitizedWidgets.push({ widget_id: widgetId, order });
+  }
+
+  sanitizedWidgets.sort((a, b) => a.order - b.order);
+
+  let record = findLayoutRecord(pagePath, scopeTypeRaw, scopeId);
+  const timestamp = toISO(new Date());
+  if (record) {
+    record.widgets = sanitizedWidgets;
+    record.updated_at = timestamp;
+    record.updated_by = currentUser.user_id;
+  } else {
+    record = {
+      layout_id: `layout-${Date.now().toString(16)}-${Math.random().toString(16).slice(2, 6)}`,
+      page_path: pagePath,
+      scope_type: scopeTypeRaw,
+      scope_id: scopeTypeRaw === 'global' ? null : scopeId,
+      widgets: sanitizedWidgets,
+      created_at: timestamp,
+      updated_at: timestamp,
+      updated_by: currentUser.user_id
+    };
+    pageLayouts.push(record);
+  }
+
+  res.json({ ...record, widgets: record.widgets.map((widget) => ({ ...widget })) });
 });
 
 app.get('/settings/tags', (req, res) => {
@@ -3988,37 +4338,6 @@ app.delete('/settings/tags/:tag_id/values/:value_id', (req, res) => {
   const value = tag.values.find((item) => item.value_id === req.params.value_id);
   if (!value) return notFound(res, '找不到標籤值');
   res.status(204).end();
-});
-
-app.get('/tags/keys', (req, res) => {
-  const keyword = (req.query.keyword || '').toLowerCase();
-  const category = req.query.category;
-  let items = tagKeyOptions;
-  if (category) {
-    items = items.filter((item) => item.categories.includes(category));
-  }
-  if (keyword) {
-    items = items.filter(
-      (item) =>
-        item.tag_key.toLowerCase().includes(keyword) ||
-        (item.display_name || '').toLowerCase().includes(keyword) ||
-        (item.description || '').toLowerCase().includes(keyword)
-    );
-  }
-  res.json({ total: items.length, items });
-});
-
-app.get('/tags/:tag_key/values', (req, res) => {
-  const tagKey = req.params.tag_key;
-  const values = tagValueCatalog[tagKey];
-  if (!values) {
-    return notFound(res, '找不到標籤鍵');
-  }
-  const limit = Math.min(
-    Math.max(parseInt(req.query.limit, 10) || values.length, 1),
-    values.length
-  );
-  res.json({ tag_key: tagKey, total: values.length, items: values.slice(0, limit) });
 });
 
 app.get('/settings/email', (req, res) => res.json(emailSettings));
@@ -4135,107 +4454,8 @@ const systemHealth = {
 };
 
 // Batch operations
-const eventBatchOperations = new Map();
 const batchOperations = new Map();
 const scanTasks = new Map();
-
-// Admin endpoints
-app.get('/admin/settings', (req, res) => {
-  res.json(systemSettings);
-});
-
-app.post('/admin/settings', (req, res) => {
-  const payload = req.body || {};
-  const flattened = { ...payload };
-
-  if (payload.retention_policy && typeof payload.retention_policy === 'object') {
-    const { events_days, logs_days, metrics_days } = payload.retention_policy;
-    if (events_days !== undefined) flattened.retention_events_days = events_days;
-    if (logs_days !== undefined) flattened.retention_logs_days = logs_days;
-    if (metrics_days !== undefined) flattened.retention_metrics_days = metrics_days;
-  }
-
-  [
-    'maintenance_mode',
-    'max_concurrent_scans',
-    'auto_discovery_enabled',
-    'alert_integration_enabled',
-    'retention_events_days',
-    'retention_logs_days',
-    'retention_metrics_days'
-  ].forEach((key) => {
-    if (flattened[key] !== undefined) {
-      systemSettings[key] = flattened[key];
-    }
-  });
-
-  systemSettings.updated_by = currentUser.user_id;
-  systemSettings.updated_at = toISO(new Date());
-  res.json(systemSettings);
-});
-
-app.get('/admin/diagnostics', (req, res) => {
-  res.json(systemDiagnostics);
-});
-
-app.get('/admin/diagnostics/health', (req, res) => {
-  res.json(systemHealth);
-});
-
-// Resource batch operations
-app.post('/resources/batch', (req, res) => {
-  const { action, resource_ids, status, team_id, tags, reason } = req.body;
-  const batchId = `batch-${Date.now()}`;
-
-  batchOperations.set(batchId, {
-    batch_id: batchId,
-    status: 'pending',
-    total_count: resource_ids.length,
-    processed_count: 0,
-    success_count: 0,
-    failed_count: 0,
-    results: [],
-    created_at: toISO(new Date()),
-    completed_at: null
-  });
-
-  // Simulate async processing
-  setTimeout(() => {
-    const operation = batchOperations.get(batchId);
-    if (operation) {
-      operation.status = 'completed';
-      operation.completed_at = toISO(new Date());
-
-      // Mock results
-      operation.results = resource_ids.map((id) => {
-        const success = Math.random() > 0.1;
-        return {
-          resource_id: id,
-          success,
-          message: success ? '操作已完成' : '操作失敗，請檢查資源狀態',
-          error: success ? null : 'Resource not found'
-        };
-      });
-
-      operation.processed_count = operation.results.length;
-      operation.success_count = operation.results.filter((result) => result.success).length;
-      operation.failed_count = operation.results.filter((result) => !result.success).length;
-
-      batchOperations.set(batchId, operation);
-    }
-  }, 2000);
-
-  res.status(202).json({
-    batch_id: batchId,
-    status: 'pending',
-    total_count: resource_ids.length,
-    processed_count: 0,
-    success_count: 0,
-    failed_count: 0,
-    results: [],
-    created_at: toISO(new Date())
-  });
-});
 
 // Resource scanning
 app.post('/resources/scan', (req, res) => {

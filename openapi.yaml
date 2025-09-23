@@ -4154,9 +4154,6 @@ components:
         read_at:
           type: string
           format: date-time
-        action:
-          type: string
-          description: 執行的快速操作名稱。
       oneOf:
         - required: [notification_ids]
         - required: [mark_all]
