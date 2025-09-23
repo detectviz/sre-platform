@@ -603,18 +603,73 @@ CREATE TABLE resource_metrics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     -- 資源識別碼
     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-    -- 指標
-    metric VARCHAR(64) NOT NULL,
+    -- 指標鍵值 (例如 cpu.utilization、memory.utilization)
+    metric_key VARCHAR(128) NOT NULL,
     -- 單位
     unit VARCHAR(16),
     -- 收集時間
     collected_at TIMESTAMPTZ NOT NULL,
+    -- 數據粒度 (raw、1m、5m、1h、1d)
+    granularity VARCHAR(16) NOT NULL DEFAULT 'raw',
+    -- 彙總統計 (raw、avg、max、min、p95、p99、sum、count)
+    statistic VARCHAR(16) NOT NULL DEFAULT 'raw',
     -- 數值
     value NUMERIC(12,4) NOT NULL,
+    -- 額外維度 (如資料中心、節點)
+    dimensions JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_resource_metrics_granularity CHECK (granularity IN ('raw','1m','5m','1h','1d')),
+    CONSTRAINT chk_resource_metrics_statistic CHECK (statistic IN ('raw','avg','max','min','p95','p99','sum','count'))
 );
-CREATE INDEX idx_resource_metrics_resource ON resource_metrics (resource_id, metric, collected_at DESC);
+CREATE INDEX idx_resource_metrics_resource ON resource_metrics (resource_id, metric_key, granularity, collected_at DESC);
+CREATE INDEX idx_resource_metrics_metric ON resource_metrics (metric_key, statistic, granularity, collected_at DESC);
+
+-- 建立資源負載分析所需的彙整檢視，提供單一來源的寬表結果
+CREATE VIEW resource_load_rollups AS
+SELECT
+    resource_id,
+    collected_at,
+    granularity,
+    COALESCE(
+        MAX(value) FILTER (WHERE metric_key = 'cpu.utilization' AND statistic IN ('avg', 'raw')),
+        0
+    )::NUMERIC(5,2) AS avg_cpu,
+    COALESCE(
+        MAX(value) FILTER (WHERE metric_key = 'memory.utilization' AND statistic IN ('avg', 'raw')),
+        0
+    )::NUMERIC(5,2) AS avg_memory,
+    COALESCE(
+        MAX(value) FILTER (WHERE metric_key = 'disk.read_mbps' AND statistic IN ('avg', 'raw')),
+        0
+    )::NUMERIC(10,2) AS disk_read,
+    COALESCE(
+        MAX(value) FILTER (WHERE metric_key = 'disk.write_mbps' AND statistic IN ('avg', 'raw')),
+        0
+    )::NUMERIC(10,2) AS disk_write,
+    COALESCE(
+        MAX(value) FILTER (WHERE metric_key = 'network.in_mbps' AND statistic IN ('avg', 'raw')),
+        0
+    )::NUMERIC(10,2) AS net_in,
+    COALESCE(
+        MAX(value) FILTER (WHERE metric_key = 'network.out_mbps' AND statistic IN ('avg', 'raw')),
+        0
+    )::NUMERIC(10,2) AS net_out,
+    COALESCE(
+        MAX(value) FILTER (WHERE metric_key = 'anomaly.count' AND statistic IN ('count', 'sum')),
+        0
+    )::INTEGER AS anomaly_count
+FROM resource_metrics
+WHERE metric_key IN (
+    'cpu.utilization',
+    'memory.utilization',
+    'disk.read_mbps',
+    'disk.write_mbps',
+    'network.in_mbps',
+    'network.out_mbps',
+    'anomaly.count'
+)
+GROUP BY resource_id, collected_at, granularity;
 
 -- =============================
 -- 系統指標定義與快照
@@ -900,83 +955,37 @@ CREATE TABLE dashboard_kpis (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE capacity_reports (
+CREATE TABLE capacity_analysis_reports (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     -- 時間範圍
     time_range VARCHAR(32) NOT NULL,
-    -- 模型
-    model VARCHAR(32),
+    -- 採用模型
+    model VARCHAR(64),
     -- 產生時間
     generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 總計資料點
     total_datapoints INTEGER NOT NULL,
-    -- 處理時間
-    processing_time NUMERIC(10,2),
+    -- 平均使用率 (% )
+    avg_utilization NUMERIC(5,2),
+    -- 峰值使用率 (% )
+    peak_usage NUMERIC(5,2),
+    -- 容量餘裕 (% )
+    headroom NUMERIC(5,2),
+    -- 預測天數
+    forecast_horizon_days INTEGER,
+    -- 處理時間 (毫秒)
+    processing_time_ms INTEGER,
     -- 準確度
-    accuracy NUMERIC(5,2)
+    accuracy NUMERIC(5,2),
+    -- 預測序列集合
+    forecasts JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 優化建議列表
+    suggestions JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 其他補充資料
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB
 );
-
-CREATE TABLE capacity_forecasts (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 報表識別碼
-    report_id UUID NOT NULL REFERENCES capacity_reports(id) ON DELETE CASCADE,
-    -- 指標
-    metric VARCHAR(64) NOT NULL,
-    -- 目前使用量
-    current_usage NUMERIC(10,2),
-    -- 預測使用量
-    forecast_usage NUMERIC(10,2),
-    -- 序列
-    series JSONB NOT NULL,
-    -- 最佳案例
-    best_case JSONB,
-    -- 最差案例
-    worst_case JSONB
-);
-CREATE INDEX idx_capacity_forecasts_report ON capacity_forecasts (report_id);
-
-CREATE TABLE capacity_suggestions (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 報表識別碼
-    report_id UUID NOT NULL REFERENCES capacity_reports(id) ON DELETE CASCADE,
-    -- 標題
-    title VARCHAR(256) NOT NULL,
-    -- 影響
-    impact VARCHAR(64),
-    -- 投入量
-    effort VARCHAR(64),
-    -- 成本節省
-    cost_saving NUMERIC(12,2),
-    -- 描述
-    description TEXT
-);
-
-CREATE TABLE resource_load_snapshots (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 收集時間
-    collected_at TIMESTAMPTZ NOT NULL,
-    -- 資源識別碼
-    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-    -- 平均CPU
-    avg_cpu NUMERIC(5,2),
-    -- 平均記憶體
-    avg_memory NUMERIC(5,2),
-    -- 磁碟閱讀
-    disk_read NUMERIC(10,2),
-    -- 磁碟寫入
-    disk_write NUMERIC(10,2),
-    -- 網路
-    net_in NUMERIC(10,2),
-    -- 網路輸出
-    net_out NUMERIC(10,2),
-    -- 異常次數
-    anomaly_count INTEGER DEFAULT 0
-);
-CREATE INDEX idx_resource_load_resource ON resource_load_snapshots (resource_id, collected_at DESC);
+CREATE INDEX idx_capacity_analysis_reports_generated ON capacity_analysis_reports (generated_at DESC);
 
 CREATE TABLE ai_insight_reports (
     -- 主鍵識別碼
