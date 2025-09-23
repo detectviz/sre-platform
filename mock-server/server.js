@@ -3252,6 +3252,7 @@ app.post('/event-rules', (req, res) => {
 
   const rule = {
     rule_uid: `rule-${Date.now()}`,
+
     name: payload.name || template?.name || '新事件規則',
     description: payload.description || template?.description || '',
     severity: payload.severity || template?.severity || 'warning',

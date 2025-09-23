@@ -1042,6 +1042,7 @@ paths:
         - 事件規則
       summary: 取得事件規則列表
       operationId: listEventRules
+
       description: 從 Grafana Alerting 取得告警規則快取，並合併平台擴充的自動化設定資訊；若同步失敗則回傳快取資料並於 sync_status 標示。
       parameters:
         - $ref: "#/components/parameters/PageParam"

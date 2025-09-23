@@ -405,6 +405,7 @@ CREATE INDEX idx_events_rule_uid ON events (grafana_rule_uid);
 CREATE INDEX idx_events_source_status_time ON events (event_source, status, trigger_time DESC);
 COMMENT ON TABLE events IS '事件增值處理資料表，專注於 AI 分析、關聯分析與處理追蹤，不承載告警規則管理邏輯。';
 
+
 CREATE TABLE event_tags (
     -- 事件識別碼
     event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,

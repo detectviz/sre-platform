@@ -88,7 +88,7 @@ export interface Incident extends BaseEntity {
   priority: Priority
   resource_id?: string
   resource_name: string
-  rule_id?: string
+  rule_uid?: string
   rule_name: string
   trigger_time: string
   resolve_time?: string
