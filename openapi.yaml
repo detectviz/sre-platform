@@ -2898,11 +2898,63 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
+          description: 依啟用狀態篩選策略，可傳入單一值或逗號分隔多個值。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [enabled, disabled]
+        - name: priority
+          in: query
+          description: 依策略優先級篩選，可逗號分隔多個值。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [high, medium, low]
+        - name: channel_types
+          in: query
+          description: 依通知管道類型篩選策略。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
+        - name: channel_id
+          in: query
+          description: 指定通知管道識別碼以篩選策略。
           schema:
             type: string
-            enum: [enabled, disabled]
+        - name: severity
+          in: query
+          description: 依策略支援的嚴重程度篩選，可逗號分隔多個值。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: recipient_type
+          in: query
+          description: 依接收者類型篩選 (user/team/role)。
+          schema:
+            type: string
+            enum: [user, team, role]
+        - name: keyword
+          in: query
+          description: 依策略名稱、描述或觸發條件關鍵字模糊搜尋。
+          schema:
+            type: string
       responses:
         "200":
           description: 回傳通知策略列表。
@@ -3155,11 +3207,70 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/SortByParam"
+        - $ref: "#/components/parameters/SortOrderParam"
         - name: status
           in: query
+          description: 依通知狀態篩選，可使用逗號分隔多個值。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [SUCCESS, FAILED, RETRYING, QUEUED]
+        - name: channel_types
+          in: query
+          description: 依通知管道類型篩選，可一次指定多個值。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
+        - name: channel_id
+          in: query
+          description: 指定通知管道識別碼以篩選紀錄。
           schema:
             type: string
-            enum: [SUCCESS, FAILED, RETRYING, QUEUED]
+        - name: strategy_id
+          in: query
+          description: 指定通知策略識別碼以篩選紀錄。
+          schema:
+            type: string
+        - name: event_id
+          in: query
+          description: 篩選與特定事件關聯的通知。
+          schema:
+            type: string
+        - name: start_time
+          in: query
+          description: 篩選在此時間（含）之後發送的紀錄。
+          schema:
+            type: string
+            format: date-time
+        - name: end_time
+          in: query
+          description: 篩選在此時間（含）之前發送的紀錄。
+          schema:
+            type: string
+            format: date-time
+        - name: keyword
+          in: query
+          description: 依策略名稱、管道標籤、接收者或訊息內容關鍵字模糊搜尋。
+          schema:
+            type: string
+        - name: resend_available
+          in: query
+          description: 僅顯示可重新發送的紀錄。
+          schema:
+            type: boolean
+        - name: has_error
+          in: query
+          description: 僅顯示包含錯誤訊息的紀錄。
+          schema:
+            type: boolean
       responses:
         "200":
           description: 回傳通知歷史列表。
@@ -3222,6 +3333,31 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /notification/history/purge:
+    post:
+      tags:
+        - 通知管理
+      summary: 清除舊的通知歷史紀錄
+      operationId: purgeNotificationHistory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationHistoryPurgeRequest"
+      responses:
+        "200":
+          description: 已完成通知歷史清理作業。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationHistoryPurgeResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
   /notification/history/resend:
     post:
       tags:
@@ -6483,6 +6619,8 @@ components:
           type: string
         error_message:
           type: string
+        related_event_id:
+          type: string
         metadata:
           type: object
           additionalProperties: true
@@ -6570,6 +6708,55 @@ components:
           format: date-time
         job_id:
           type: string
+        message:
+          type: string
+    NotificationHistoryPurgeRequest:
+      type: object
+      required: [before]
+      properties:
+        before:
+          type: string
+          format: date-time
+          description: 清除發送時間早於此時間戳的通知紀錄。
+        status:
+          type: array
+          description: 指定要清除的通知狀態，預設為全部。
+          items:
+            type: string
+            enum: [SUCCESS, FAILED, RETRYING, QUEUED]
+        channel_types:
+          type: array
+          description: 限定要清除的通知管道類型。
+          items:
+            type: string
+            enum: [Email, Slack, PagerDuty, Webhook, Teams, "LINE Notify", SMS]
+        strategy_ids:
+          type: array
+          description: 僅清除屬於這些策略的紀錄。
+          items:
+            type: string
+        channel_ids:
+          type: array
+          description: 僅清除指定通知管道的紀錄。
+          items:
+            type: string
+        dry_run:
+          type: boolean
+          description: 若為 true，僅回報將被刪除的筆數不實際刪除。
+        max_records:
+          type: integer
+          minimum: 1
+          description: 限制此次清除的最大筆數。
+    NotificationHistoryPurgeResult:
+      type: object
+      required: [matched_count, deleted_count, dry_run]
+      properties:
+        matched_count:
+          type: integer
+        deleted_count:
+          type: integer
+        dry_run:
+          type: boolean
         message:
           type: string
     NotificationBulkResendRequest:

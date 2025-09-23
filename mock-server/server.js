@@ -651,6 +651,10 @@ const automationScripts = [
     tags: ['autoscale', 'web'],
     last_execution_status: 'success',
     last_execution_at: toISO(new Date(now.getTime() - 3600000)),
+    created_at: toISO(new Date(now.getTime() - 86400000 * 14)),
+    created_by: 'user-001',
+    updated_at: toISO(new Date(now.getTime() - 3600000)),
+    updated_by: 'user-001',
     content: '#!/bin/bash\\necho "scale"',
     versions: [
       {
@@ -929,6 +933,32 @@ const notificationHistory = [
     resend_available: true,
     last_resend_at: toISO(new Date(now.getTime() - 1800000)),
     actor: '林佳瑜'
+  },
+  {
+    record_id: 'hist-002',
+    sent_at: toISO(new Date(now.getTime() - 7200000)),
+    strategy_id: 'str-001',
+    strategy_name: 'Critical 事件通知',
+    channel_type: 'Email',
+    channel_label: 'ops@example.com',
+    channel_id: 'chn-002',
+    recipients: ['ops@example.com'],
+    status: 'FAILED',
+    duration_ms: 2480,
+    alert_title: '資料庫連線逾時',
+    message: '通知 Email 失敗，等待人工重試',
+    raw_payload: { event_id: 'evt-004', rule: '資料庫健康檢查' },
+    metadata: { provider: 'smtp', request_id: 'req-456' },
+    attempts: [
+      { sent_at: toISO(new Date(now.getTime() - 7200000)), status: 'FAILED', response: 'SMTP timeout' },
+      { sent_at: toISO(new Date(now.getTime() - 7100000)), status: 'RETRYING', response: 'SMTP queued' }
+    ],
+    error_message: 'SMTP timeout',
+    related_event_id: 'evt-004',
+    resend_count: 0,
+    resend_available: true,
+    last_resend_at: null,
+    actor: '系統'
   }
 ];
 
@@ -948,6 +978,22 @@ const notificationResendJobs = [
     result_message: '重新發送成功',
     error_message: null,
     metadata: {}
+  },
+  {
+    job_id: 'job-002',
+    notification_history_id: 'hist-002',
+    status: 'failed',
+    requested_at: toISO(new Date(now.getTime() - 3500000)),
+    requested_by: '系統',
+    channel_id: 'chn-002',
+    recipients: ['ops@example.com'],
+    dry_run: false,
+    note: '系統自動重試',
+    started_at: toISO(new Date(now.getTime() - 3480000)),
+    completed_at: toISO(new Date(now.getTime() - 3460000)),
+    result_message: 'SMTP 服務無回應',
+    error_message: '連線逾時',
+    metadata: { attempt: 2 }
   }
 ];
 
@@ -1132,18 +1178,6 @@ const authSettings = {
   user_sync: true,
   updated_at: toISO(new Date(now.getTime() - 7200000))
 };
-const paginate = (items, req) => {
-  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-  const pageSize = Math.min(Math.max(parseInt(req.query.page_size, 10) || 20, 1), 100);
-  const start = (page - 1) * pageSize;
-  const paged = items.slice(start, start + pageSize);
-  return {
-    page,
-    page_size: pageSize,
-    total: items.length,
-    items: paged
-  };
-};
 
 const parseListParam = (value) => {
   if (Array.isArray(value)) {
@@ -1154,6 +1188,101 @@ const parseListParam = (value) => {
     .split(',')
     .map((item) => item.trim())
     .filter((item) => item.length > 0);
+};
+
+const parseBooleanParam = (value) => {
+  if (value === undefined || value === null) return null;
+  const normalized = String(value).trim().toLowerCase();
+  if (['true', '1', 'yes', 'y'].includes(normalized)) return true;
+  if (['false', '0', 'no', 'n'].includes(normalized)) return false;
+  return null;
+};
+
+const createLowercaseSet = (input) => {
+  if (!input || (Array.isArray(input) && input.length === 0)) return null;
+  const values = Array.isArray(input) ? input : [input];
+  const normalized = values
+    .map((value) => (value === undefined || value === null ? '' : String(value).trim()))
+    .filter((value) => value.length > 0)
+    .map((value) => value.toLowerCase());
+  return normalized.length > 0 ? new Set(normalized) : null;
+};
+
+const matchesEnumFilter = (value, filterSet) => {
+  if (!filterSet) return true;
+  if (value === undefined || value === null) return false;
+  return filterSet.has(String(value).toLowerCase());
+};
+
+const parseDateSafe = (value) => {
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const toComparable = (value) => {
+  if (value === null || value === undefined) return null;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === 'number') return value;
+  if (typeof value === 'boolean') return value ? 1 : 0;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const isoMatch = Date.parse(trimmed);
+    if (!Number.isNaN(isoMatch) && trimmed.includes('-')) {
+      return isoMatch;
+    }
+    const numeric = Number(trimmed);
+    if (!Number.isNaN(numeric)) {
+      return numeric;
+    }
+    return trimmed.toLowerCase();
+  }
+  return value;
+};
+
+const defaultSortComparator = (a, b, sortBy, sortOrder) => {
+  const valA = toComparable(a?.[sortBy]);
+  const valB = toComparable(b?.[sortBy]);
+  if (valA === null && valB === null) return 0;
+  if (valA === null) return sortOrder === 'desc' ? -1 : 1;
+  if (valB === null) return sortOrder === 'desc' ? 1 : -1;
+  if (valA < valB) return sortOrder === 'desc' ? 1 : -1;
+  if (valA > valB) return sortOrder === 'desc' ? -1 : 1;
+  return 0;
+};
+
+const paginate = (items, req, options = {}) => {
+  const data = Array.isArray(items) ? [...items] : [];
+  const sortByParam =
+    typeof req.query.sort_by === 'string' && req.query.sort_by.trim().length > 0
+      ? req.query.sort_by.trim()
+      : options.defaultSortKey || null;
+  const rawSortOrder =
+    typeof req.query.sort_order === 'string' && req.query.sort_order.trim().length > 0
+      ? req.query.sort_order.trim().toLowerCase()
+      : options.defaultSortOrder || 'asc';
+  const sortOrder = rawSortOrder === 'desc' ? 'desc' : 'asc';
+  const allowedSortFields = options.allowedSortFields;
+
+  if (
+    sortByParam &&
+    (!Array.isArray(allowedSortFields) || allowedSortFields.length === 0 || allowedSortFields.includes(sortByParam))
+  ) {
+    const sorter = typeof options.customSort === 'function' ? options.customSort : defaultSortComparator;
+    data.sort((a, b) => sorter(a, b, sortByParam, sortOrder));
+  }
+
+  const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+  const pageSize = Math.min(Math.max(parseInt(req.query.page_size, 10) || 20, 1), options.maxPageSize || 100);
+  const start = (page - 1) * pageSize;
+  const paged = data.slice(start, start + pageSize);
+  return {
+    page,
+    page_size: pageSize,
+    total: data.length,
+    items: paged
+  };
 };
 
 const GRANULARITY_TO_MINUTES = {
@@ -1362,6 +1491,7 @@ const mapNotificationHistorySummary = (record) => ({
   status: record.status,
   channel_type: record.channel_type,
   channel_label: record.channel_label,
+  channel_id: record.channel_id || null,
   strategy_name: record.strategy_name,
   strategy_id: record.strategy_id,
   alert_title: record.alert_title,
@@ -1374,7 +1504,8 @@ const mapNotificationHistorySummary = (record) => ({
   resend_available: record.resend_available ?? false,
   resend_count: record.resend_count ?? 0,
   last_resend_at: record.last_resend_at ?? null,
-  actor: record.actor ?? null
+  actor: record.actor ?? null,
+  related_event_id: record.related_event_id || null
 });
 
 const mapNotificationResendJob = (job) => ({
@@ -1829,7 +1960,18 @@ app.get('/notifications/summary', (req, res) => {
 });
 
 app.get('/notifications', (req, res) => {
-  res.json(paginate(notifications, req));
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
+  const filtered = notifications.filter(
+    (item) => matchesEnumFilter(item.status, statusFilter) && matchesEnumFilter(item.severity, severityFilter)
+  );
+  res.json(
+    paginate(filtered, req, {
+      allowedSortFields: ['created_at', 'severity', 'title'],
+      defaultSortKey: 'created_at',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.post('/notifications/:notification_id/read', (req, res) => {
@@ -1870,8 +2012,75 @@ app.get('/events/summary', (req, res) => {
 });
 
 app.get('/events', (req, res) => {
-  const items = eventData.map(mapEventSummary);
-  res.json(paginate(items, req));
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
+  const resourceIds = parseListParam(req.query.resource_id);
+  const ruleIds = parseListParam(req.query.rule_id);
+  const assigneeIds = parseListParam(req.query.assignee_id);
+  const tagFiltersRaw = parseListParam(req.query.tags);
+  const tagFilters = Array.isArray(tagFiltersRaw)
+    ? tagFiltersRaw.map((tag) => tag.toLowerCase())
+    : null;
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const resourceNameKeyword = (req.query.resource_name || '').trim().toLowerCase();
+  const ruleNameKeyword = (req.query.rule_name || '').trim().toLowerCase();
+  const resourceTypeFilter = (req.query.resource_type || '').trim().toLowerCase();
+  const startTime = parseDateSafe(req.query.start_time);
+  const endTime = parseDateSafe(req.query.end_time);
+
+  const filtered = eventData.filter((event) => {
+    if (!matchesEnumFilter(event.status, statusFilter)) return false;
+    if (!matchesEnumFilter(event.severity, severityFilter)) return false;
+    if (resourceIds && resourceIds.length > 0 && !resourceIds.includes(event.resource_id)) return false;
+    if (ruleIds && ruleIds.length > 0 && !ruleIds.includes(event.rule_id)) return false;
+    if (assigneeIds && assigneeIds.length > 0 && !assigneeIds.includes(event.assignee_id)) return false;
+
+    const eventTime = parseDateSafe(event.trigger_time);
+    if (startTime && !eventTime) return false;
+    if (endTime && !eventTime) return false;
+    if (startTime && eventTime && eventTime < startTime) return false;
+    if (endTime && eventTime && eventTime > endTime) return false;
+
+    if (keyword) {
+      const combinedText = `${event.event_id || ''} ${event.event_key || ''} ${event.summary || ''} ${
+        event.description || ''
+      }`.toLowerCase();
+      if (!combinedText.includes(keyword)) return false;
+    }
+
+    if (resourceNameKeyword) {
+      const resourceName = (event.resource_name || '').toLowerCase();
+      if (!resourceName.includes(resourceNameKeyword)) return false;
+    }
+
+    if (resourceTypeFilter) {
+      const resource = event.resource_id ? getResourceById(event.resource_id) : null;
+      if (!resource || String(resource.type || '').toLowerCase() !== resourceTypeFilter) return false;
+    }
+
+    if (ruleNameKeyword) {
+      const rule = event.rule_id ? getEventRuleById(event.rule_id) : null;
+      const ruleText = `${event.rule_name || ''} ${rule?.name || ''}`.toLowerCase();
+      if (!ruleText.includes(ruleNameKeyword)) return false;
+    }
+
+    if (tagFilters && tagFilters.length > 0) {
+      const eventTags = Array.isArray(event.tags) ? event.tags.map((tag) => String(tag).toLowerCase()) : [];
+      const hasAllTags = tagFilters.every((tag) => eventTags.includes(tag));
+      if (!hasAllTags) return false;
+    }
+
+    return true;
+  });
+
+  const items = filtered.map(mapEventSummary);
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['trigger_time', 'severity', 'status', 'priority', 'summary'],
+      defaultSortKey: 'trigger_time',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.post('/events/batch', (req, res) => {
@@ -2354,7 +2563,21 @@ app.get('/event-rules/summary', (req, res) => {
 });
 
 app.get('/event-rules', (req, res) => {
-  res.json(paginate(eventRules.map((rule) => ({
+  const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
+  const enabledFilter = parseBooleanParam(req.query.enabled);
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+
+  const filtered = eventRules.filter((rule) => {
+    if (!matchesEnumFilter(rule.severity, severityFilter)) return false;
+    if (enabledFilter !== null && Boolean(rule.enabled) !== enabledFilter) return false;
+    if (keyword) {
+      const text = `${rule.name || ''} ${rule.description || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
+  });
+
+  const items = filtered.map((rule) => ({
     rule_id: rule.rule_id,
     name: rule.name,
     description: rule.description,
@@ -2364,7 +2587,15 @@ app.get('/event-rules', (req, res) => {
     default_priority: rule.default_priority || 'P2',
     creator: rule.creator,
     last_updated: rule.last_updated
-  })), req));
+  }));
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['name', 'severity', 'last_updated', 'default_priority'],
+      defaultSortKey: 'last_updated',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.post('/event-rules', (req, res) => {
@@ -2423,7 +2654,15 @@ app.post('/event-rules/:rule_id/test', (req, res) => {
 });
 
 app.get('/silence-rules', (req, res) => {
-  res.json(paginate(silenceRules.map((rule) => ({
+  const typeFilter = createLowercaseSet(parseListParam(req.query.silence_type));
+  const enabledFilter = parseBooleanParam(req.query.enabled);
+  const filtered = silenceRules.filter((rule) => {
+    if (!matchesEnumFilter(rule.silence_type, typeFilter)) return false;
+    if (enabledFilter !== null && Boolean(rule.enabled) !== enabledFilter) return false;
+    return true;
+  });
+
+  const items = filtered.map((rule) => ({
     silence_id: rule.silence_id,
     name: rule.name,
     description: rule.description,
@@ -2431,7 +2670,15 @@ app.get('/silence-rules', (req, res) => {
     scope: rule.scope,
     enabled: rule.enabled,
     created_at: rule.created_at
-  })), req));
+  }));
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['name', 'silence_type', 'created_at'],
+      defaultSortKey: 'created_at',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.post('/silence-rules', (req, res) => {
@@ -2487,7 +2734,36 @@ app.get('/resources/summary', (req, res) => {
 });
 
 app.get('/resources', (req, res) => {
-  res.json(paginate(resourceData.map((resItem) => ({
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const typeFilter = createLowercaseSet(parseListParam(req.query.type));
+  const environmentFilter = createLowercaseSet(parseListParam(req.query.environment));
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+
+  const filtered = resourceData.filter((resource) => {
+    if (!matchesEnumFilter(resource.status, statusFilter)) return false;
+    if (!matchesEnumFilter(resource.type, typeFilter)) return false;
+    if (!matchesEnumFilter(resource.environment, environmentFilter)) return false;
+    if (keyword) {
+      const tagTexts = normalizeTags(resource.tags).map((tag) => `${tag.key}:${tag.value}`.toLowerCase());
+      const searchFields = [
+        resource.resource_id,
+        resource.name,
+        resource.ip_address,
+        resource.location,
+        resource.environment,
+        resource.team,
+        resource.service_impact,
+        ...(tagTexts || [])
+      ]
+        .filter((value) => typeof value === 'string' && value.length > 0)
+        .map((value) => value.toLowerCase());
+      const match = searchFields.some((text) => text.includes(keyword));
+      if (!match) return false;
+    }
+    return true;
+  });
+
+  const items = filtered.map((resItem) => ({
     resource_id: resItem.resource_id,
     name: resItem.name,
     status: resItem.status,
@@ -2508,7 +2784,15 @@ app.get('/resources', (req, res) => {
     last_event_count: resItem.last_event_count,
     updated_at: resItem.updated_at,
     groups: buildResourceGroupRefs(resItem.groups)
-  })), req));
+  }));
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['updated_at', 'cpu_usage', 'memory_usage', 'name', 'status'],
+      defaultSortKey: 'updated_at',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.post('/resources', (req, res) => {
@@ -2620,7 +2904,14 @@ app.get('/resources/:resource_id/events', (req, res) => {
 });
 
 app.get('/resource-groups', (req, res) => {
-  res.json(paginate(resourceGroups.map((grp) => ({
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const filtered = resourceGroups.filter((group) => {
+    if (!keyword) return true;
+    const text = `${group.name || ''} ${group.description || ''}`.toLowerCase();
+    return text.includes(keyword);
+  });
+
+  const items = filtered.map((grp) => ({
     group_id: grp.group_id,
     name: grp.name,
     description: grp.description,
@@ -2630,7 +2921,15 @@ app.get('/resource-groups', (req, res) => {
     subscriber_count: grp.subscriber_count,
     status_summary: grp.status_summary,
     created_at: grp.created_at
-  })), req));
+  }));
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['name', 'created_at', 'member_count', 'subscriber_count'],
+      defaultSortKey: 'name',
+      defaultSortOrder: 'asc'
+    })
+  );
 });
 
 app.post('/resource-groups', (req, res) => {
@@ -2698,7 +2997,15 @@ app.get('/dashboards/summary', (req, res) => {
 });
 
 app.get('/dashboards', (req, res) => {
-  res.json(paginate(dashboards.map((dash) => ({
+  const category = (req.query.category || '').trim().toLowerCase();
+  const ownerId = (req.query.owner_id || '').trim().toLowerCase();
+  const filtered = dashboards.filter((dash) => {
+    if (category && String(dash.category || '').toLowerCase() !== category) return false;
+    if (ownerId && String(dash.owner_id || '').toLowerCase() !== ownerId) return false;
+    return true;
+  });
+
+  const items = filtered.map((dash) => ({
     dashboard_id: dash.dashboard_id,
     name: dash.name,
     category: dash.category,
@@ -2713,7 +3020,15 @@ app.get('/dashboards', (req, res) => {
     data_sources: dash.data_sources,
     target_page_key: dash.target_page_key,
     updated_at: dash.updated_at
-  })), req));
+  }));
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['updated_at', 'viewer_count', 'favorite_count', 'name'],
+      defaultSortKey: 'updated_at',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.post('/dashboards', (req, res) => {
@@ -2804,7 +3119,18 @@ app.get('/analysis/ai-insights/:report_id', (req, res) => {
 });
 
 app.get('/automation/scripts', (req, res) => {
-  res.json(paginate(automationScripts.map((script) => ({
+  const typeFilter = createLowercaseSet(parseListParam(req.query.type));
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const filtered = automationScripts.filter((script) => {
+    if (!matchesEnumFilter(script.type, typeFilter)) return false;
+    if (keyword) {
+      const text = `${script.name || ''} ${script.description || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
+  });
+
+  const items = filtered.map((script) => ({
     script_id: script.script_id,
     name: script.name,
     type: script.type,
@@ -2812,8 +3138,17 @@ app.get('/automation/scripts', (req, res) => {
     version: script.version,
     tags: script.tags,
     last_execution_status: script.last_execution_status,
-    last_execution_at: script.last_execution_at
-  })), req));
+    last_execution_at: script.last_execution_at,
+    updated_at: script.updated_at || script.last_execution_at
+  }));
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['updated_at', 'last_execution_at', 'name', 'type', 'last_execution_status'],
+      defaultSortKey: 'updated_at',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.post('/automation/scripts', (req, res) => {
@@ -2864,7 +3199,9 @@ app.get('/automation/scripts/:script_id/versions', (req, res) => {
 });
 
 app.get('/automation/schedules', (req, res) => {
-  res.json(paginate(automationSchedules.map((sch) => ({
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const filtered = automationSchedules.filter((sch) => matchesEnumFilter(sch.status, statusFilter));
+  const items = filtered.map((sch) => ({
     schedule_id: sch.schedule_id,
     name: sch.name,
     type: sch.type,
@@ -2873,7 +3210,15 @@ app.get('/automation/schedules', (req, res) => {
     next_run_time: sch.next_run_time,
     script_id: sch.script_id,
     script_name: sch.script_name
-  })), req));
+  }));
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['next_run_time', 'name', 'status', 'cron_expression'],
+      defaultSortKey: 'next_run_time',
+      defaultSortOrder: 'asc'
+    })
+  );
 });
 
 app.post('/automation/schedules', (req, res) => {
@@ -2924,7 +3269,21 @@ app.post('/automation/schedules/:schedule_id/toggle', (req, res) => {
 });
 
 app.get('/automation/executions', (req, res) => {
-  res.json(paginate(automationExecutions, req));
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const scriptIds = parseListParam(req.query.script_id);
+  const filtered = automationExecutions.filter((execution) => {
+    if (!matchesEnumFilter(execution.status, statusFilter)) return false;
+    if (scriptIds && scriptIds.length > 0 && !scriptIds.includes(execution.script_id)) return false;
+    return true;
+  });
+
+  res.json(
+    paginate(filtered, req, {
+      allowedSortFields: ['start_time', 'status', 'duration_ms'],
+      defaultSortKey: 'start_time',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.get('/automation/executions/:execution_id', (req, res) => {
@@ -2963,7 +3322,24 @@ app.post('/iam/invitations', (req, res) => {
 });
 
 app.get('/iam/users', (req, res) => {
-  res.json(paginate(iamUsers, req));
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const filtered = iamUsers.filter((user) => {
+    if (!matchesEnumFilter(user.status, statusFilter)) return false;
+    if (keyword) {
+      const text = `${user.name || ''} ${user.username || ''} ${user.email || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
+  });
+
+  res.json(
+    paginate(filtered, req, {
+      allowedSortFields: ['name', 'username', 'status', 'last_login'],
+      defaultSortKey: 'name',
+      defaultSortOrder: 'asc'
+    })
+  );
 });
 
 app.get('/iam/users/:user_id', (req, res) => {
@@ -2995,7 +3371,14 @@ app.delete('/iam/users/:user_id', (req, res) => {
 });
 
 app.get('/iam/teams', (req, res) => {
-  res.json(paginate(iamTeams.map((team) => ({
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const filtered = iamTeams.filter((team) => {
+    if (!keyword) return true;
+    const text = `${team.name || ''} ${team.description || ''}`.toLowerCase();
+    return text.includes(keyword);
+  });
+
+  const items = filtered.map((team) => ({
     team_id: team.team_id,
     name: team.name,
     description: team.description,
@@ -3003,7 +3386,15 @@ app.get('/iam/teams', (req, res) => {
     members: team.members,
     subscribers: team.subscribers,
     created_at: team.created_at
-  })), req));
+  }));
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['name', 'created_at', 'team_id'],
+      defaultSortKey: 'name',
+      defaultSortOrder: 'asc'
+    })
+  );
 });
 
 app.post('/iam/teams', (req, res) => {
@@ -3118,14 +3509,76 @@ app.get('/iam/audit-logs', (req, res) => {
 });
 
 app.get('/notification/strategies', (req, res) => {
-  res.json(paginate(notificationStrategies.map((strategy) => ({
-    strategy_id: strategy.strategy_id,
-    name: strategy.name,
-    trigger_condition: strategy.trigger_condition,
-    channel_count: (strategy.channels || []).length,
-    status: strategy.status || 'disabled',
-    priority: strategy.priority || 'medium'
-  })), req));
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const priorityFilter = createLowercaseSet(parseListParam(req.query.priority));
+  const channelTypeFilter = createLowercaseSet(parseListParam(req.query.channel_types ?? req.query.channel_type));
+  const channelIdFilter = createLowercaseSet(parseListParam(req.query.channel_ids ?? req.query.channel_id));
+  const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
+  const recipientTypeFilter = createLowercaseSet(
+    parseListParam(req.query.recipient_types ?? req.query.recipient_type)
+  );
+  const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
+
+  const filtered = notificationStrategies.filter((strategy) => {
+    const statusValue = strategy.status || 'disabled';
+    if (!matchesEnumFilter(statusValue, statusFilter)) return false;
+
+    const priorityValue = strategy.priority || 'medium';
+    if (!matchesEnumFilter(priorityValue, priorityFilter)) return false;
+
+    const channels = Array.isArray(strategy.channels) ? strategy.channels : [];
+    if (channelTypeFilter) {
+      const hasChannelType = channels.some((channel) => matchesEnumFilter(channel.channel_type, channelTypeFilter));
+      if (!hasChannelType) return false;
+    }
+
+    if (channelIdFilter) {
+      const hasChannelId = channels.some((channel) => matchesEnumFilter(channel.channel_id, channelIdFilter));
+      if (!hasChannelId) return false;
+    }
+
+    if (severityFilter) {
+      const severities = Array.isArray(strategy.severity_filters) ? strategy.severity_filters : [];
+      const hasSeverity = severities.some((severity) => matchesEnumFilter(severity, severityFilter));
+      if (!hasSeverity) return false;
+    }
+
+    if (recipientTypeFilter) {
+      const recipients = Array.isArray(strategy.recipients) ? strategy.recipients : [];
+      const hasRecipient = recipients.some((recipient) => matchesEnumFilter(recipient.type, recipientTypeFilter));
+      if (!hasRecipient) return false;
+    }
+
+    if (keyword) {
+      const haystack = [strategy.name, strategy.description, strategy.trigger_condition]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      if (!haystack.includes(keyword)) return false;
+    }
+
+    return true;
+  });
+
+  const items = filtered.map((strategy) => {
+    const channels = Array.isArray(strategy.channels) ? strategy.channels : [];
+    return {
+      strategy_id: strategy.strategy_id,
+      name: strategy.name,
+      trigger_condition: strategy.trigger_condition,
+      channel_count: channels.length,
+      status: strategy.status || 'disabled',
+      priority: strategy.priority || 'medium'
+    };
+  });
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['name', 'status', 'priority', 'channel_count'],
+      defaultSortKey: 'name',
+      defaultSortOrder: 'asc'
+    })
+  );
 });
 
 app.post('/notification/strategies', (req, res) => {
@@ -3252,8 +3705,66 @@ app.delete('/notification/channels/:channel_id', (req, res) => {
 });
 
 app.get('/notification/history', (req, res) => {
-  const items = notificationHistory.map(mapNotificationHistorySummary);
-  res.json(paginate(items, req));
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const channelTypeFilter = createLowercaseSet(parseListParam(req.query.channel_types ?? req.query.channel_type));
+  const channelIdFilter = createLowercaseSet(parseListParam(req.query.channel_ids ?? req.query.channel_id));
+  const strategyIdFilter = createLowercaseSet(parseListParam(req.query.strategy_ids ?? req.query.strategy_id));
+  const eventIdFilter = createLowercaseSet(parseListParam(req.query.event_ids ?? req.query.event_id));
+  const resendAvailableFilter = parseBooleanParam(req.query.resend_available);
+  const hasErrorFilter = parseBooleanParam(req.query.has_error);
+  const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
+  const startTime = parseDateSafe(req.query.start_time);
+  const endTime = parseDateSafe(req.query.end_time);
+
+  const items = notificationHistory
+    .filter((record) => {
+      if (!matchesEnumFilter(record.status, statusFilter)) return false;
+      if (!matchesEnumFilter(record.channel_type, channelTypeFilter)) return false;
+      if (!matchesEnumFilter(record.channel_id, channelIdFilter)) return false;
+      if (!matchesEnumFilter(record.strategy_id, strategyIdFilter)) return false;
+      if (!matchesEnumFilter(record.related_event_id, eventIdFilter)) return false;
+
+      if (resendAvailableFilter !== null) {
+        const available = Boolean(record.resend_available);
+        if (available !== resendAvailableFilter) return false;
+      }
+
+      if (hasErrorFilter !== null) {
+        const hasError = Boolean(record.error_message);
+        if (hasError !== hasErrorFilter) return false;
+      }
+
+      const sentAt = parseDateSafe(record.sent_at);
+      if (startTime && (!sentAt || sentAt < startTime)) return false;
+      if (endTime && (!sentAt || sentAt > endTime)) return false;
+
+      if (keyword) {
+        const haystack = [
+          record.strategy_name,
+          record.strategy_id,
+          record.channel_label,
+          record.channel_type,
+          record.alert_title,
+          record.message,
+          ...(Array.isArray(record.recipients) ? record.recipients : [])
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        if (!haystack.includes(keyword)) return false;
+      }
+
+      return true;
+    })
+    .map(mapNotificationHistorySummary);
+
+  res.json(
+    paginate(items, req, {
+      allowedSortFields: ['sent_at', 'status', 'channel_type', 'duration_ms', 'resend_count'],
+      defaultSortKey: 'sent_at',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.get('/notification/history/:record_id', (req, res) => {
@@ -3263,6 +3774,66 @@ app.get('/notification/history/:record_id', (req, res) => {
     .filter((job) => job.notification_history_id === record.record_id)
     .map(mapNotificationResendJob);
   res.json({ ...record, resend_jobs: resendJobs });
+});
+
+app.post('/notification/history/purge', (req, res) => {
+  const payload = req.body || {};
+  const before = parseDateSafe(payload.before);
+  if (!before) {
+    return res
+      .status(400)
+      .json({ code: 'INVALID_REQUEST', message: 'before 必須為有效的 ISO 8601 時間字串' });
+  }
+
+  const statusFilter = createLowercaseSet(parseListParam(payload.status));
+  const channelTypeFilter = createLowercaseSet(parseListParam(payload.channel_types));
+  const strategyIdFilter = createLowercaseSet(parseListParam(payload.strategy_ids));
+  const channelIdFilter = createLowercaseSet(parseListParam(payload.channel_ids));
+  const dryRunFlag = parseBooleanParam(payload.dry_run);
+  const isDryRun = dryRunFlag === null ? false : dryRunFlag;
+  const maxRecordsInput = Number(payload.max_records);
+  const maxRecords = Number.isFinite(maxRecordsInput) && maxRecordsInput > 0 ? Math.floor(maxRecordsInput) : null;
+
+  const matchedRecords = notificationHistory
+    .filter((record) => {
+      const sentAt = parseDateSafe(record.sent_at);
+      if (!sentAt || !(sentAt < before)) return false;
+      if (!matchesEnumFilter(record.status, statusFilter)) return false;
+      if (!matchesEnumFilter(record.channel_type, channelTypeFilter)) return false;
+      if (!matchesEnumFilter(record.strategy_id, strategyIdFilter)) return false;
+      if (!matchesEnumFilter(record.channel_id, channelIdFilter)) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      const left = parseDateSafe(a.sent_at)?.getTime() ?? 0;
+      const right = parseDateSafe(b.sent_at)?.getTime() ?? 0;
+      return left - right;
+    });
+
+  const limitedRecords = maxRecords ? matchedRecords.slice(0, maxRecords) : matchedRecords;
+  const matchedIds = new Set(limitedRecords.map((item) => item.record_id));
+
+  if (!isDryRun && matchedIds.size > 0) {
+    for (let i = notificationHistory.length - 1; i >= 0; i -= 1) {
+      if (matchedIds.has(notificationHistory[i].record_id)) {
+        notificationHistory.splice(i, 1);
+      }
+    }
+    for (let i = notificationResendJobs.length - 1; i >= 0; i -= 1) {
+      if (matchedIds.has(notificationResendJobs[i].notification_history_id)) {
+        notificationResendJobs.splice(i, 1);
+      }
+    }
+  }
+
+  res.json({
+    matched_count: matchedRecords.length,
+    deleted_count: isDryRun ? 0 : matchedIds.size,
+    dry_run: isDryRun,
+    message: isDryRun
+      ? 'Dry run 完成，未刪除任何通知紀錄'
+      : `已刪除 ${matchedIds.size} 筆通知紀錄`
+  });
 });
 
 app.post('/notification/history/:record_id/resend', (req, res) => {
