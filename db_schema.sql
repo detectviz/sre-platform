@@ -539,6 +539,10 @@ CREATE TABLE event_rule_configs (
     content_template TEXT,
     -- Grafana 規則 UID
     grafana_rule_uid VARCHAR(64) UNIQUE,
+    -- Grafana 原始定義快取
+    grafana_definition JSONB NOT NULL DEFAULT '{}'::JSONB,
+    -- Grafana 額外中繼資訊 (建立者、最後更新時間等)
+    grafana_metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 同步狀態
     sync_status VARCHAR(16) NOT NULL DEFAULT 'fresh',
     -- 最近同步時間
@@ -575,36 +579,7 @@ CREATE INDEX idx_event_rule_configs_severity ON event_rule_configs (severity);
 CREATE INDEX idx_event_rule_configs_grafana_uid ON event_rule_configs (grafana_rule_uid);
 CREATE INDEX idx_event_rule_configs_updated_at ON event_rule_configs (updated_at DESC);
 CREATE INDEX idx_event_rule_configs_automation_script ON event_rule_configs (automation_script_id);
-COMMENT ON TABLE event_rule_configs IS '儲存事件規則在平台側的完整配置與監控對象摘要，作為多步驟精靈的唯一資料來源。';
-
-CREATE TABLE event_rule_snapshots (
-    -- Grafana 規則 UID
-    grafana_rule_uid VARCHAR(64) PRIMARY KEY,
-    -- 平台規則配置識別碼
-    rule_config_id UUID REFERENCES event_rule_configs(id) ON DELETE SET NULL,
-    -- 快取的完整規則定義 (Grafana JSON 結構)
-    raw_definition JSONB NOT NULL,
-    -- 額外補充資訊 (建立者、最後更新時間等)
-    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 與 Grafana 最新同步時間
-    last_synced_at TIMESTAMPTZ,
-    -- 同步狀態 (fresh: 已同步、stale: 使用快取、failed: 同步失敗)
-    sync_status VARCHAR(16) NOT NULL DEFAULT 'fresh',
-    -- 同步結果補充訊息
-    sync_message TEXT,
-    -- 最近更新操作者
-    updated_by UUID REFERENCES users(id),
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 最近更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_event_rule_snapshot_status CHECK (sync_status IN ('fresh','stale','failed')),
-    CONSTRAINT chk_event_rule_snapshot_metadata CHECK (jsonb_typeof(metadata) = 'object')
-);
-CREATE INDEX idx_event_rule_snapshots_status ON event_rule_snapshots (sync_status);
-CREATE INDEX idx_event_rule_snapshots_synced_at ON event_rule_snapshots (last_synced_at DESC);
-CREATE INDEX idx_event_rule_snapshots_rule_config ON event_rule_snapshots (rule_config_id);
-COMMENT ON TABLE event_rule_snapshots IS '快取 Grafana 告警規則的最新設定與建立者／最後更新時間，以支援離線檢視與編輯時的表單回填。';
+COMMENT ON TABLE event_rule_configs IS '儲存事件規則在平台側的完整配置與監控對象摘要，並快取 Grafana 定義以支援離線編輯。';
 
 CREATE TABLE batch_operations (
     -- 主鍵識別碼
