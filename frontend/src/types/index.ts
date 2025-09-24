@@ -143,4 +143,4 @@ export type {
 // 表格操作相關類型
 export type {
   TableAction as TableActionType
-} from '../utils/tableActions'
+} from '../components/table/tableActions'

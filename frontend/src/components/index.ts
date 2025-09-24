@@ -51,8 +51,13 @@ export type {
 // 表單工廠組件
 export { FormFactory, FormBuilder, FormTemplates } from './forms/FormFactory'
 
-// 工具函數
-export { createActionColumn, COMMON_ACTIONS } from '../utils/tableActions'
+// 表格相關組件和工具
+export {
+  createActionColumn,
+  COMMON_ACTIONS,
+  TABLE_ACTION_PRESETS,
+  TABLE_STYLE_PRESETS
+} from './table'
 
 // 常量配置
 export {

@@ -1,16 +1,15 @@
 import React from 'react'
 import { useTabs } from '../hooks'
-import { Typography, Space, Tabs, Table, Tag, Button } from 'antd'
+import { Tabs, Table, Tag, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
 import { PageLayout } from '../components/PageLayout'
+import { createActionColumn, COMMON_ACTIONS } from '../components/table'
 import {
   BellOutlined,
   PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
 } from '@ant-design/icons'
 
 
@@ -179,32 +178,10 @@ const NotificationSettingsPage: React.FC = () => {
       key: 'lastTriggered',
       width: 150,
     },
-    {
-      title: '操作',
-      key: 'action',
-      width: 120,
-      render: (_: any, record: any) => (
-        <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            編輯
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-          >
-            刪除
-          </Button>
-        </Space>
-      ),
-    },
+    createActionColumn([
+      { ...COMMON_ACTIONS.EDIT, onClick: handleEdit },
+      { ...COMMON_ACTIONS.DELETE, onClick: handleDelete },
+    ]),
   ]
 
   const channelColumns: ColumnsType = [
@@ -254,31 +231,10 @@ const NotificationSettingsPage: React.FC = () => {
       key: 'lastTest',
       width: 150,
     },
-    {
-      title: '操作',
-      key: 'action',
-      width: 120,
-      render: (_: any, record: any) => (
-        <Space>
-          <Button
-            type="link"
-            size="small"
-            icon={<EditOutlined />}
-            onClick={() => handleEdit(record)}
-          >
-            編輯
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            icon={<DeleteOutlined />}
-            onClick={() => handleDelete(record)}
-          >
-            刪除
-          </Button>
-        </Space>
-      ),
-    },
+    createActionColumn([
+      { ...COMMON_ACTIONS.EDIT, onClick: handleEdit },
+      { ...COMMON_ACTIONS.DELETE, onClick: handleDelete },
+    ]),
   ]
 
   const historyColumns: ColumnsType = [

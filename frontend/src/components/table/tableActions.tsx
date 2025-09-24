@@ -16,6 +16,7 @@ export interface TableAction {
     title: string
     description?: string
   }
+  showLabel?: boolean
 }
 
 // 預定義的常用操作配置
@@ -42,7 +43,8 @@ export const COMMON_ACTIONS = {
     danger: true,
     confirm: {
       title: '確定要刪除這項嗎？'
-    }
+    },
+    showLabel: false
   },
 
   REFRESH: {
@@ -159,7 +161,7 @@ const ActionButtons = <T = any>({ actions, record, showMore = true, maxActions =
           cancelText="取消"
         >
           <Button {...buttonProps}>
-            {action.label}
+            {action.showLabel !== false ? action.label : null}
           </Button>
         </Popconfirm>
       )
@@ -167,7 +169,9 @@ const ActionButtons = <T = any>({ actions, record, showMore = true, maxActions =
 
     return (
       <Tooltip key={action.key} title={action.label}>
-        <Button {...buttonProps} />
+        <Button {...buttonProps}>
+          {action.showLabel !== false ? action.label : null}
+        </Button>
       </Tooltip>
     )
   }

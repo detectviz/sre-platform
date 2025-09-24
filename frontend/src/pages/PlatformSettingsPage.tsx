@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { useTabs } from '../hooks'
-import { Typography, List, Space, Tabs, Alert, Button, Modal, Table, Tag } from 'antd'
+import { Typography, List, Tabs, Alert, Button, Modal, Table, Tag, Space } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
+import { createActionColumn, COMMON_ACTIONS } from '../components/table'
 import {
   TagsOutlined,
   MailOutlined,
@@ -251,29 +252,10 @@ const PlatformSettingsPage: React.FC = () => {
       dataIndex: 'createdAt',
       key: 'createdAt',
     },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            onClick={() => handleEdit(record)}
-          >
-            編輯
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            danger
-            onClick={() => handleDelete(record)}
-          >
-            刪除
-          </Button>
-        </Space>
-      ),
-    },
+    createActionColumn([
+      { ...COMMON_ACTIONS.EDIT, onClick: handleEdit },
+      { ...COMMON_ACTIONS.DELETE, onClick: handleDelete },
+    ]),
   ]
 
   const emailColumns: ColumnsType = [
@@ -326,28 +308,22 @@ const PlatformSettingsPage: React.FC = () => {
         </Tag>
       ),
     },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            onClick={() => handleEdit(record)}
-          >
-            測試
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => handleEdit(record)}
-          >
-            配置
-          </Button>
-        </Space>
-      ),
-    },
+    createActionColumn([
+      {
+        key: 'test',
+        label: '測試',
+        icon: <EditOutlined />,
+        type: 'text' as const,
+        onClick: handleEdit,
+      },
+      {
+        key: 'config',
+        label: '配置',
+        icon: <EditOutlined />,
+        type: 'text' as const,
+        onClick: handleEdit,
+      },
+    ]),
   ]
 
   const authColumns: ColumnsType = [
@@ -397,28 +373,22 @@ const PlatformSettingsPage: React.FC = () => {
         </Tag>
       ),
     },
-    {
-      title: '操作',
-      key: 'action',
-      render: (_, record) => (
-        <Space size="small">
-          <Button
-            type="link"
-            size="small"
-            onClick={() => handleEdit(record)}
-          >
-            同步
-          </Button>
-          <Button
-            type="link"
-            size="small"
-            onClick={() => handleEdit(record)}
-          >
-            配置
-          </Button>
-        </Space>
-      ),
-    },
+    createActionColumn([
+      {
+        key: 'sync',
+        label: '同步',
+        icon: <EditOutlined />,
+        type: 'text' as const,
+        onClick: handleEdit,
+      },
+      {
+        key: 'config',
+        label: '配置',
+        icon: <EditOutlined />,
+        type: 'text' as const,
+        onClick: handleEdit,
+      },
+    ]),
   ]
 
   const kpiData = [
@@ -1111,8 +1081,10 @@ const PlatformSettingsPage: React.FC = () => {
               onClick={() => {
                 if (availableWidgets.length > 0) {
                   const newWidget = availableWidgets[0]
-                  setSelectedWidgets([...selectedWidgets, newWidget])
-                  setAvailableWidgets(availableWidgets.filter(w => w !== newWidget))
+                  if (newWidget) {
+                    setSelectedWidgets([...selectedWidgets, newWidget])
+                    setAvailableWidgets(availableWidgets.filter(w => w !== newWidget))
+                  }
                 }
               }}
               disabled={availableWidgets.length === 0}
@@ -1122,8 +1094,10 @@ const PlatformSettingsPage: React.FC = () => {
               onClick={() => {
                 if (selectedWidgets.length > 0) {
                   const lastWidget = selectedWidgets[selectedWidgets.length - 1]
-                  setSelectedWidgets(selectedWidgets.filter(w => w !== lastWidget))
-                  setAvailableWidgets([...availableWidgets, lastWidget])
+                  if (lastWidget) {
+                    setSelectedWidgets(selectedWidgets.filter(w => w !== lastWidget))
+                    setAvailableWidgets([...availableWidgets, lastWidget])
+                  }
                 }
               }}
               disabled={selectedWidgets.length === 0}
@@ -1167,9 +1141,12 @@ const PlatformSettingsPage: React.FC = () => {
                           if (index > 0) {
                             const newSelected: string[] = [...selectedWidgets]
                             const temp = newSelected[index - 1]
-                            newSelected[index - 1] = newSelected[index]
-                            newSelected[index] = temp
-                            setSelectedWidgets(newSelected)
+                            const currentItem = newSelected[index]
+                            if (temp && currentItem) {
+                              newSelected[index - 1] = currentItem
+                              newSelected[index] = temp
+                              setSelectedWidgets(newSelected)
+                            }
                           }
                         }}
                         disabled={index === 0}
@@ -1182,9 +1159,12 @@ const PlatformSettingsPage: React.FC = () => {
                           if (index < selectedWidgets.length - 1) {
                             const newSelected: string[] = [...selectedWidgets]
                             const temp = newSelected[index]
-                            newSelected[index] = newSelected[index + 1]
-                            newSelected[index + 1] = temp
-                            setSelectedWidgets(newSelected)
+                            const nextItem = newSelected[index + 1]
+                            if (temp && nextItem) {
+                              newSelected[index] = nextItem
+                              newSelected[index + 1] = temp
+                              setSelectedWidgets(newSelected)
+                            }
                           }
                         }}
                         disabled={index === selectedWidgets.length - 1}

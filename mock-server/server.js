@@ -2492,8 +2492,8 @@ const buildTopologyGraph = ({
     if (groupFilter) {
       const nodeGroupIds = Array.isArray(node.group_ids)
         ? node.group_ids
-            .map((value) => (value === undefined || value === null ? '' : String(value).trim().toLowerCase()))
-            .filter((value) => value.length > 0)
+          .map((value) => (value === undefined || value === null ? '' : String(value).trim().toLowerCase()))
+          .filter((value) => value.length > 0)
         : [];
       if (!nodeGroupIds.some((value) => groupFilter.has(value))) return false;
     }
@@ -2501,13 +2501,13 @@ const buildTopologyGraph = ({
     if (tagFilter) {
       const nodeTagIds = Array.isArray(node.tags)
         ? node.tags
-            .map((tag) => {
-              if (!tag) return null;
-              const rawValue =
-                tag.tag_value_id || (tag.key ? `${tag.key}:${tag.value ?? ''}` : null);
-              return rawValue ? String(rawValue).toLowerCase() : null;
-            })
-            .filter((value) => value && value.length > 0)
+          .map((tag) => {
+            if (!tag) return null;
+            const rawValue =
+              tag.tag_value_id || (tag.key ? `${tag.key}:${tag.value ?? ''}` : null);
+            return rawValue ? String(rawValue).toLowerCase() : null;
+          })
+          .filter((value) => value && value.length > 0)
         : [];
       if (!nodeTagIds.some((value) => tagFilter.has(value))) return false;
     }
@@ -2518,13 +2518,13 @@ const buildTopologyGraph = ({
   const includedNodeIds = new Set(filteredNodes.map((node) => node.id));
   const edges = Array.isArray(topologyConfig.edges)
     ? topologyConfig.edges
-        .map((edgeConfig) => buildTopologyEdge(edgeConfig))
-        .filter(
-          (edge) =>
-            edge &&
-            includedNodeIds.has(edge.source) &&
-            includedNodeIds.has(edge.target)
-        )
+      .map((edgeConfig) => buildTopologyEdge(edgeConfig))
+      .filter(
+        (edge) =>
+          edge &&
+          includedNodeIds.has(edge.source) &&
+          includedNodeIds.has(edge.target)
+      )
     : [];
 
   return { nodes: filteredNodes, edges };

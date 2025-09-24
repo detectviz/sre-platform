@@ -1,6 +1,21 @@
 /**
- * 佈局組件統一導出
- * 提供簡化的佈局 API
+ * @fileoverview 佈局組件統一導出模塊
+ * 提供簡化的佈局 API，支持多種頁面佈局模式
+ *
+ * @example
+ * ```typescript
+ * import { StandardLayout, LayoutPresets } from '@/components/layouts'
+ *
+ * function MyPage() {
+ *   return (
+ *     <StandardLayout
+ *       header={<PageHeader title="頁面標題" />}
+ *       content={<MyContent />}
+ *       config={LayoutPresets.list}
+ *     />
+ *   )
+ * }
+ * ```
  */
 
 // 重新導出 PageMode 類型

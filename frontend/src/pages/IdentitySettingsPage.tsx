@@ -1,18 +1,16 @@
 import React from 'react'
 import { useTabs } from '../hooks'
-import { Tabs, Table, Button, Tag, Badge, Space, Tooltip, Input } from 'antd'
+import { Tabs, Table, Tag, Badge, Input } from 'antd'
 import { PageHeader } from '../components/PageHeader'
 import { ContextualKPICard } from '../components/ContextualKPICard'
 import { ToolbarActions } from '../components/ToolbarActions'
 import { PageLayout } from '../components/PageLayout'
+import { createActionColumn, COMMON_ACTIONS } from '../components/table'
 import {
   UserOutlined,
   TeamOutlined,
   IdcardOutlined,
   AuditOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  EyeOutlined,
   PlusOutlined,
 } from '@ant-design/icons'
 import type { ColumnsType } from 'antd/es/table'
@@ -96,6 +94,21 @@ const IdentitySettingsPage: React.FC = () => {
     console.log('新增角色')
   }
 
+  // 編輯操作處理
+  const handleEdit = (record: any) => {
+    console.log('編輯記錄:', record)
+  }
+
+  // 刪除操作處理
+  const handleDelete = (record: any) => {
+    console.log('刪除記錄:', record)
+  }
+
+  // 查看詳情操作處理
+  const handleView = (record: any) => {
+    console.log('查看詳情:', record)
+  }
+
   // KPI 數據
   const kpiData = [
     {
@@ -169,23 +182,11 @@ const IdentitySettingsPage: React.FC = () => {
         </Tag>
       )
     },
-    {
-      title: '操作',
-      key: 'action',
-      render: () => (
-        <Space size="small">
-          <Tooltip title="查看詳情">
-            <Button type="text" size="small" icon={<EyeOutlined />} />
-          </Tooltip>
-          <Tooltip title="編輯">
-            <Button type="text" size="small" icon={<EditOutlined />} />
-          </Tooltip>
-          <Tooltip title="刪除">
-            <Button type="text" size="small" icon={<DeleteOutlined />} />
-          </Tooltip>
-        </Space>
-      ),
-    },
+    createActionColumn([
+      { ...COMMON_ACTIONS.VIEW, onClick: handleView },
+      { ...COMMON_ACTIONS.EDIT, onClick: handleEdit },
+      { ...COMMON_ACTIONS.DELETE, onClick: handleDelete },
+    ]),
   ]
 
   const userData: UserData[] = [
@@ -248,23 +249,11 @@ const IdentitySettingsPage: React.FC = () => {
         </Tag>
       )
     },
-    {
-      title: '操作',
-      key: 'action',
-      render: () => (
-        <Space size="small">
-          <Tooltip title="查看詳情">
-            <Button type="text" size="small" icon={<EyeOutlined />} />
-          </Tooltip>
-          <Tooltip title="編輯">
-            <Button type="text" size="small" icon={<EditOutlined />} />
-          </Tooltip>
-          <Tooltip title="刪除">
-            <Button type="text" size="small" icon={<DeleteOutlined />} />
-          </Tooltip>
-        </Space>
-      ),
-    },
+    createActionColumn([
+      { ...COMMON_ACTIONS.VIEW, onClick: handleView },
+      { ...COMMON_ACTIONS.EDIT, onClick: handleEdit },
+      { ...COMMON_ACTIONS.DELETE, onClick: handleDelete },
+    ]),
   ]
 
   const teamData: TeamData[] = [
@@ -318,23 +307,11 @@ const IdentitySettingsPage: React.FC = () => {
         </Tag>
       )
     },
-    {
-      title: '操作',
-      key: 'action',
-      render: () => (
-        <Space size="small">
-          <Tooltip title="查看詳情">
-            <Button type="text" size="small" icon={<EyeOutlined />} />
-          </Tooltip>
-          <Tooltip title="編輯">
-            <Button type="text" size="small" icon={<EditOutlined />} />
-          </Tooltip>
-          <Tooltip title="刪除">
-            <Button type="text" size="small" icon={<DeleteOutlined />} />
-          </Tooltip>
-        </Space>
-      ),
-    },
+    createActionColumn([
+      { ...COMMON_ACTIONS.VIEW, onClick: handleView },
+      { ...COMMON_ACTIONS.EDIT, onClick: handleEdit },
+      { ...COMMON_ACTIONS.DELETE, onClick: handleDelete },
+    ]),
   ]
 
   const roleData: RoleData[] = [
@@ -387,15 +364,9 @@ const IdentitySettingsPage: React.FC = () => {
       )
     },
     { title: 'IP 地址', dataIndex: 'ip', key: 'ip' },
-    {
-      title: '操作',
-      key: 'action',
-      render: () => (
-        <Tooltip title="查看詳情">
-          <Button type="text" size="small" icon={<EyeOutlined />} />
-        </Tooltip>
-      ),
-    },
+    createActionColumn([
+      { ...COMMON_ACTIONS.VIEW, onClick: handleView },
+    ]),
   ]
 
   const auditData: AuditData[] = [

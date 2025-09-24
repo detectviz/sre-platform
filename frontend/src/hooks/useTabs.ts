@@ -70,7 +70,9 @@ export const useTabs = (defaultTab: string, routeMapping: Record<string, string>
     } else if (tabRoutes[key] && tabRoutes[key].length > 0) {
       // 其次使用 tabRoutes 的第一個路由
       const targetRoute = tabRoutes[key][0]
-      navigate(targetRoute)
+      if (targetRoute) {
+        navigate(targetRoute)
+      }
     }
   }
 

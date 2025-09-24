@@ -181,8 +181,8 @@ export const ToolbarActions: React.FC<ToolbarActionsProps> = ({
             {filter.label}:
           </div>
           <Select
-            value={filter.value || filter.options[0]?.value}
-            onChange={filter.onChange}
+            value={filter.value ?? filter.options[0]?.value ?? null}
+            onChange={filter.onChange!}
             style={{ width: '100%' }}
             size="middle"
             placeholder={`選擇${filter.label}`}
@@ -304,8 +304,8 @@ export const ToolbarActions: React.FC<ToolbarActionsProps> = ({
                   onClick={action.onClick}
                   type={action.type as 'primary' | 'default' | 'dashed' | 'text' | 'link'}
                   danger={action.danger}
-                  disabled={action.disabled}
-                  loading={action.loading}
+                  disabled={action.disabled!}
+                  loading={action.loading!}
                   size="middle"
                 >
                   {action.label}
@@ -389,8 +389,8 @@ export const ToolbarActions: React.FC<ToolbarActionsProps> = ({
                   onClick={action.onClick}
                   type={action.type as 'primary' | 'default' | 'dashed' | 'text' | 'link'}
                   danger={action.danger}
-                  disabled={action.disabled}
-                  loading={action.loading}
+                  disabled={action.disabled!}
+                  loading={action.loading!}
                   size="middle"
                 >
                   {action.label}

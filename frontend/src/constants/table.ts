@@ -3,6 +3,8 @@
  * 解決分頁配置和表格樣式重複問題
  */
 
+import type { TableAction } from '../components/table/tableActions'
+
 // 統一的分頁配置
 export const DEFAULT_PAGINATION = {
   showSizeChanger: true,
@@ -39,16 +41,8 @@ export const DEFAULT_SEARCH_PROPS = {
   enterButton: '搜索',
 }
 
-// 表格操作類型定義
-export interface TableAction {
-  key: string
-  label: string
-  icon: React.ComponentType
-  onClick: (record: any) => void
-  type?: 'primary' | 'default' | 'dashed' | 'text' | 'link'
-  danger?: boolean
-  disabled?: (record: any) => boolean
-}
+// 表格操作類型定義 - 從 tableActions 模塊導出
+export type { TableAction } from '../components/table/tableActions'
 
 // 表格列配置類型
 export interface TableColumn<T = any> {
