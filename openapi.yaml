@@ -4797,6 +4797,31 @@ components:
           type: string
         notify_on_end:
           type: boolean
+    ResourceFilter:
+      type: object
+      required: [type, key, operator]
+      properties:
+        type:
+          type: string
+          description: 篩選條件類型，tag 代表資源標籤，resource 代表單一資源，resource_group 代表資源群組。
+          enum: [tag, resource, resource_group, service]
+        key:
+          type: string
+          description: 當 type=tag 時表示標籤鍵值；其餘情境用於標識欄位名稱。
+        operator:
+          type: string
+          description: 條件運算子。
+          enum: [equals, not_equals, regex, in, not_in]
+        value:
+          type: string
+          nullable: true
+          description: 單一條件值，當 values 有多個值時可為空。
+        values:
+          type: array
+          items:
+            type: string
+          nullable: true
+          description: 多選條件值，適用於 in/not_in 運算子。
     EventRuleTemplate:
       type: object
       required: [template_key, name, severity, default_priority, condition_groups]
@@ -4821,6 +4846,13 @@ components:
           type: array
           items:
             type: string
+        default_target_summary:
+          type: string
+          description: 預設監控對象摘要文字，協助清單與預覽顯示。
+        default_resource_filters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceFilter"
         condition_groups:
           type: array
           items:
@@ -4839,7 +4871,7 @@ components:
       enum: [fresh, stale, failed]
     EventRuleSummary:
       type: object
-      required: [rule_uid, name, severity, enabled, creator, last_updated, sync_status]
+      required: [rule_uid, name, severity, enabled, creator, last_updated, sync_status, target]
       properties:
         rule_uid:
           type: string
@@ -4863,6 +4895,9 @@ components:
           type: string
           nullable: true
           description: 若規則來自快速套用範本，回傳範本鍵值以利顯示。
+        target:
+          type: string
+          description: 監控對象摘要文字，供事件規則列表顯示使用。
         creator:
           type: string
           description: 規則建立者，若 Grafana 暫不可用則使用快取的建立者資訊。
@@ -4932,6 +4967,13 @@ components:
               type: array
               items:
                 type: string
+            target:
+              type: string
+              description: 監控對象摘要文字，供表單預覽使用。
+            resource_filters:
+              type: array
+              items:
+                $ref: "#/components/schemas/ResourceFilter"
             condition_groups:
               type: array
               items:
@@ -4964,6 +5006,13 @@ components:
           default: true
         automation_enabled:
           type: boolean
+        target:
+          type: string
+          description: 監控對象摘要文字，若省略則依據 resource_filters 自動生成。
+        resource_filters:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceFilter"
         labels:
           type: array
           items:
