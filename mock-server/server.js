@@ -72,10 +72,10 @@ const buildEventRule = (rule) => {
   const automation =
     rule.automation && typeof rule.automation === 'object'
       ? {
-          enabled: Boolean(rule.automation.enabled),
-          script_id: rule.automation.script_id || null,
-          parameters: rule.automation.parameters || {}
-        }
+        enabled: Boolean(rule.automation.enabled),
+        script_id: rule.automation.script_id || null,
+        parameters: rule.automation.parameters || {}
+      }
       : { enabled: false, script_id: null, parameters: {} };
   const automationEnabled =
     typeof rule.automation_enabled === 'boolean' ? rule.automation_enabled : automation.enabled;
@@ -2604,8 +2604,8 @@ app.get('/healthz', (req, res) => {
   const status = components.some((component) => component.status === 'down')
     ? 'down'
     : components.some((component) => component.status === 'degraded')
-    ? 'degraded'
-    : 'ok';
+      ? 'degraded'
+      : 'ok';
   res.json({
     status,
     checked_at: toISO(nowTime),
@@ -2625,8 +2625,8 @@ app.get('/readyz', (req, res) => {
   const status = components.some((component) => component.status === 'down')
     ? 'down'
     : pending.length > 0
-    ? 'degraded'
-    : 'ok';
+      ? 'degraded'
+      : 'ok';
   res.json({
     status,
     checked_at: toISO(nowTime),
@@ -2771,21 +2771,21 @@ app.post('/metrics/query', (req, res) => {
   const annotations =
     definition.metric_key === 'http_error_rate_percent'
       ? [
-          {
-            timestamp: toISO(new Date(endTime.getTime() - stepMinutes * 60000 * Math.min(pointCount - 1, 6))),
-            level: 'critical',
-            message: 'AI 建議：檢查 Gateway 節點錯誤率峰值',
-            source: 'ai-insight'
-          }
-        ]
+        {
+          timestamp: toISO(new Date(endTime.getTime() - stepMinutes * 60000 * Math.min(pointCount - 1, 6))),
+          level: 'critical',
+          message: 'AI 建議：檢查 Gateway 節點錯誤率峰值',
+          source: 'ai-insight'
+        }
+      ]
       : [
-          {
-            timestamp: toISO(new Date(endTime.getTime() - stepMinutes * 60000 * Math.min(pointCount - 1, 3))),
-            level: 'info',
-            message: '自動化調整完成：容量檢查通過',
-            source: 'automation'
-          }
-        ];
+        {
+          timestamp: toISO(new Date(endTime.getTime() - stepMinutes * 60000 * Math.min(pointCount - 1, 3))),
+          level: 'info',
+          message: '自動化調整完成：容量檢查通過',
+          source: 'automation'
+        }
+      ];
 
   const requestedRange = {
     start: toISO(startTime),
@@ -2946,9 +2946,8 @@ app.get('/events', (req, res) => {
     if (endTime && eventTime && eventTime > endTime) return false;
 
     if (keyword) {
-      const combinedText = `${event.event_id || ''} ${event.event_key || ''} ${event.summary || ''} ${
-        event.description || ''
-      }`.toLowerCase();
+      const combinedText = `${event.event_id || ''} ${event.event_key || ''} ${event.summary || ''} ${event.description || ''
+        }`.toLowerCase();
       if (!combinedText.includes(keyword)) return false;
     }
 
@@ -3266,18 +3265,18 @@ app.post('/events/report', (req, res) => {
   const recommendations = [];
   const timelineHighlights = includeTimeline
     ? selectedEvents.map((event) => ({
-        event_id: event.event_id,
-        event_summary: event.summary,
-        items: (event.timeline || []).map((entry) => ({
-          entry_id: entry.entry_id,
-          event_id: entry.event_id,
-          entry_type: entry.entry_type,
-          message: entry.message,
-          created_by: entry.created_by,
-          created_at: entry.created_at,
-          metadata: entry.metadata || {}
-        }))
+      event_id: event.event_id,
+      event_summary: event.summary,
+      items: (event.timeline || []).map((entry) => ({
+        entry_id: entry.entry_id,
+        event_id: entry.event_id,
+        entry_type: entry.entry_type,
+        message: entry.message,
+        created_by: entry.created_by,
+        created_at: entry.created_at,
+        metadata: entry.metadata || {}
       }))
+    }))
     : undefined;
 
   selectedEvents.forEach((event) => {
@@ -4772,9 +4771,9 @@ app.get('/settings/layouts', (req, res) => {
     matchedRecord === null
       ? null
       : {
-          ...matchedRecord,
-          widgets: matchedRecord.widgets.map((widget) => ({ ...widget }))
-        };
+        ...matchedRecord,
+        widgets: matchedRecord.widgets.map((widget) => ({ ...widget }))
+      };
 
   res.json({
     page_path: pagePath,
