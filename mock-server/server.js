@@ -812,6 +812,7 @@ const dashboards = [
   {
     dashboard_id: 'dash-001',
     name: 'SRE 戰情室儀表板',
+    dashboard_type: 'built_in',
     category: '戰情室',
     owner: '事件指揮中心',
     owner_id: 'team-war-room',
@@ -4349,10 +4350,24 @@ app.get('/topology', (req, res) => {
 });
 
 app.get('/dashboards/summary', (req, res) => {
-  const published = dashboards.filter((dash) => dash.status === 'published').length;
-  const featured = dashboards.filter((dash) => dash.is_featured).length;
-  const automated = 1;
-  res.json({ total: dashboards.length, published, featured, automated });
+  const totals = {
+    total: dashboards.length,
+    built_in: dashboards.filter((d) => d.dashboard_type === 'built_in').length,
+    grafana: dashboards.filter((d) => d.dashboard_type === 'grafana').length,
+    published: dashboards.filter((d) => d.status === 'published').length,
+    featured: dashboards.filter((d) => d.is_featured).length,
+    automated: dashboards.filter((d) => d.target_page_key).length,
+    active_users: 156
+  };
+
+  const kpis = [
+    { label: '總儀表板數', value: `${totals.total}`, trend: 4 },
+    { label: '活躍用戶', value: `${totals.active_users}`, trend: 12.5 },
+    { label: 'SRE 戰情室', value: `${dashboards.filter((d) => d.category === '戰情室').length}`, trend: 0 },
+    { label: '基礎設施洞察', value: `${dashboards.filter((d) => d.category === '基礎設施洞察').length}`, trend: 2 }
+  ];
+
+  res.json({ totals, kpi_cards: kpis });
 });
 
 app.get('/dashboards', (req, res) => {
@@ -4750,6 +4765,8 @@ app.post('/iam/invitations', (req, res) => {
     invitation_id: `inv-${Date.now()}`,
     email,
     name: typeof payload.name === 'string' && payload.name.trim().length > 0 ? payload.name.trim() : null,
+    team_ids: payload.team_ids || [],
+    role_ids: payload.role_ids || [],
     status: 'invitation_sent',
     invited_by: currentUser.user_id,
     invited_by_name: currentUser.display_name,

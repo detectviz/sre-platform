@@ -5574,11 +5574,14 @@ components:
       properties:
         totals:
           type: object
-          required: [total, built_in, grafana, published, featured, automated]
+          required: [total, built_in, grafana, published, featured, automated, active_users]
           properties:
             total:
               type: integer
               description: 儀表板總數。
+            active_users:
+              type: integer
+              description: 本月活躍使用者數量。
             built_in:
               type: integer
               description: 內建儀表板數量。
@@ -6304,6 +6307,18 @@ components:
           format: email
         name:
           type: string
+        team_ids:
+          type: array
+          description: 預先指派的團隊識別碼列表。
+          items:
+            type: string
+            format: uuid
+        role_ids:
+          type: array
+          description: 預先指派的角色識別碼列表。
+          items:
+            type: string
+            format: uuid
     IAMInvitationResponse:
       type: object
       required: [invitation_id, status, email, invited_at, last_sent_at]

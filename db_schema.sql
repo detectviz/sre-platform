@@ -86,6 +86,10 @@ CREATE TABLE user_invitations (
     email VARCHAR(256) NOT NULL,
     -- 名稱
     name VARCHAR(128),
+    -- 預指派團隊
+    team_ids UUID[] NOT NULL DEFAULT '{}'::UUID[],
+    -- 預指派角色
+    role_ids UUID[] NOT NULL DEFAULT '{}'::UUID[],
     -- 狀態
     status VARCHAR(32) NOT NULL DEFAULT 'invitation_sent',
     -- 邀請者識別碼
@@ -985,8 +989,6 @@ CREATE TABLE dashboards (
     owner_id UUID REFERENCES users(id),
     -- 狀態
     status VARCHAR(32) NOT NULL DEFAULT 'draft',
-    -- 是否預設
-    is_default BOOLEAN NOT NULL DEFAULT FALSE,
     -- 是否精選
     is_featured BOOLEAN NOT NULL DEFAULT FALSE,
     -- 觀看者數量
