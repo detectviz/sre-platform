@@ -441,54 +441,31 @@ paths:
                           $ref: "#/components/schemas/NotificationItem"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notifications/read:
+  /notifications/bulk:
     post:
       tags:
         - 通知中心
-      summary: 標記通知為已讀
-      operationId: readNotifications
+      summary: 批次更新或清除通知
+      operationId: bulkUpdateNotifications
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationReadRequest"
+              $ref: "#/components/schemas/NotificationBulkActionRequest"
       responses:
         "200":
-          description: 回傳更新後的通知條目與摘要。
+          description: 回傳批次操作結果與最新通知摘要。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationReadResponse"
+                $ref: "#/components/schemas/NotificationBulkActionResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notifications/clear:
-    post:
-      tags:
-        - 通知中心
-      summary: 清除通知
-      operationId: clearNotifications
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NotificationClearRequest"
-      responses:
-        "200":
-          description: 回傳清除結果與最新通知摘要。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationClearResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /events/summary:
     get:
       tags:
@@ -4111,6 +4088,53 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetricAnnotation"
+    RoleReference:
+      type: object
+      required: [role_id, name]
+      properties:
+        role_id:
+          type: string
+        name:
+          type: string
+    TeamReference:
+      type: object
+      required: [team_id, name]
+      properties:
+        team_id:
+          type: string
+        name:
+          type: string
+    UserProfile:
+      type: object
+      required: [user_id, username, display_name, email, status, roles, teams]
+      properties:
+        user_id:
+          type: string
+        username:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, disabled]
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleReference"
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamReference"
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
     UserPreference:
       type: object
       required: [theme, language, timezone]
@@ -4301,75 +4325,48 @@ components:
           type: array
           items:
             type: string
-    NotificationReadRequest:
+    NotificationBulkActionRequest:
       type: object
+      required: [action]
       properties:
+        action:
+          type: string
+          enum: [mark_read, clear]
+          description: 指定要進行的批次操作類型。
+        target:
+          type: string
+          enum: [selected, all, read]
+          default: selected
+          description: 操作目標範圍；read 代表針對所有已讀通知執行動作。
         notification_ids:
           type: array
-          description: 要標記為已讀的通知識別碼列表。
+          description: 當 target=selected 時需提供的通知識別碼列表。
           minItems: 1
           items:
             type: string
-        mark_all:
-          type: boolean
-          description: 將所有通知標記為已讀。
-        read_at:
+        effective_at:
           type: string
           format: date-time
-      oneOf:
-        - required: [notification_ids]
-        - required: [mark_all]
-          properties:
-            mark_all:
-              const: true
-              type: boolean
-    NotificationReadResponse:
+          description: 標記為已讀時使用的時間戳，未提供則以伺服器時間為準。
+      allOf:
+        - if:
+            properties:
+              target:
+                const: selected
+          then:
+            required: [notification_ids]
+    NotificationBulkActionResponse:
       type: object
       required: [summary]
       properties:
         updated_items:
           type: array
-          description: 本次更新後的通知條目。
+          description: 標記為已讀後更新的通知條目。僅 action=mark_read 時會回傳。
           items:
             $ref: "#/components/schemas/NotificationItem"
-        summary:
-          $ref: "#/components/schemas/NotificationSummary"
-          description: 最新的通知統計摘要。
-    NotificationClearRequest:
-      type: object
-      properties:
-        notification_ids:
-          type: array
-          description: 要清除的通知識別碼列表。
-          minItems: 1
-          items:
-            type: string
-        clear_all_read:
-          type: boolean
-          description: 清除所有已讀通知。
-        clear_all:
-          type: boolean
-          description: 清除所有通知（包含未讀）。
-      oneOf:
-        - required: [notification_ids]
-        - required: [clear_all_read]
-          properties:
-            clear_all_read:
-              const: true
-              type: boolean
-        - required: [clear_all]
-          properties:
-            clear_all:
-              const: true
-              type: boolean
-      additionalProperties: false
-    NotificationClearResponse:
-      type: object
-      required: [cleared_count, summary]
-      properties:
         cleared_ids:
           type: array
-          description: 本次被清除的通知識別碼列表。
+          description: 成功清除的通知識別碼列表。僅 action=clear 時會回傳。
           items:
             type: string
         cleared_count:
@@ -4377,7 +4374,7 @@ components:
           description: 成功清除的通知數量。
         summary:
           $ref: "#/components/schemas/NotificationSummary"
-          description: 清除操作後最新的通知統計摘要。
+          description: 最新的通知統計摘要。
     EventSummaryMetrics:
       type: object
       required:
