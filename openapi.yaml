@@ -441,54 +441,31 @@ paths:
                           $ref: "#/components/schemas/NotificationItem"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notifications/read:
+  /notifications/bulk:
     post:
       tags:
         - 通知中心
-      summary: 標記通知為已讀
-      operationId: readNotifications
+      summary: 批次更新或清除通知
+      operationId: bulkUpdateNotifications
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/NotificationReadRequest"
+              $ref: "#/components/schemas/NotificationBulkActionRequest"
       responses:
         "200":
-          description: 回傳更新後的通知條目與摘要。
+          description: 回傳批次操作結果與最新通知摘要。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotificationReadResponse"
+                $ref: "#/components/schemas/NotificationBulkActionResponse"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notifications/clear:
-    post:
-      tags:
-        - 通知中心
-      summary: 清除通知
-      operationId: clearNotifications
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NotificationClearRequest"
-      responses:
-        "200":
-          description: 回傳清除結果與最新通知摘要。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationClearResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /events/summary:
     get:
       tags:
@@ -3614,62 +3591,6 @@ paths:
                 $ref: "#/components/schemas/AuthSettings"
         "401":
           $ref: "#/components/responses/Unauthorized"
-    put:
-      tags:
-        - 平台設定
-      summary: （已棄用）更新身份驗證設定
-      operationId: updateAuthSettings
-      deprecated: true
-      description: |-
-        設定改由 Keycloak 等身份供應商集中管理，此端點僅保留向後相容性並將變更轉交外部系統。
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AuthSettingsRequest"
-      responses:
-        "200":
-          description: 身份驗證設定已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthSettings"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-  /settings/auth/test:
-    post:
-      tags:
-        - 平台設定
-      summary: （已棄用）測試身份驗證設定連線
-      operationId: testAuthSettings
-      deprecated: true
-      description: 身份驗證測試請改於外部身份供應商執行，此端點僅回報既有設定的健康狀態。
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AuthTestRequest"
-      responses:
-        "200":
-          description: 測試結果摘要。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthTestResult"
-        "202":
-          description: 測試請求已排入背景工作。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthTestResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /settings/widgets:
     get:
       tags:
@@ -4167,6 +4088,53 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetricAnnotation"
+    RoleReference:
+      type: object
+      required: [role_id, name]
+      properties:
+        role_id:
+          type: string
+        name:
+          type: string
+    TeamReference:
+      type: object
+      required: [team_id, name]
+      properties:
+        team_id:
+          type: string
+        name:
+          type: string
+    UserProfile:
+      type: object
+      required: [user_id, username, display_name, email, status, roles, teams]
+      properties:
+        user_id:
+          type: string
+        username:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+          format: email
+        avatar_url:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [active, disabled]
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoleReference"
+        teams:
+          type: array
+          items:
+            $ref: "#/components/schemas/TeamReference"
+        last_login_at:
+          type: string
+          format: date-time
+          nullable: true
     UserPreference:
       type: object
       required: [theme, language, timezone]
@@ -4357,75 +4325,48 @@ components:
           type: array
           items:
             type: string
-    NotificationReadRequest:
+    NotificationBulkActionRequest:
       type: object
+      required: [action]
       properties:
+        action:
+          type: string
+          enum: [mark_read, clear]
+          description: 指定要進行的批次操作類型。
+        target:
+          type: string
+          enum: [selected, all, read]
+          default: selected
+          description: 操作目標範圍；read 代表針對所有已讀通知執行動作。
         notification_ids:
           type: array
-          description: 要標記為已讀的通知識別碼列表。
+          description: 當 target=selected 時需提供的通知識別碼列表。
           minItems: 1
           items:
             type: string
-        mark_all:
-          type: boolean
-          description: 將所有通知標記為已讀。
-        read_at:
+        effective_at:
           type: string
           format: date-time
-      oneOf:
-        - required: [notification_ids]
-        - required: [mark_all]
-          properties:
-            mark_all:
-              const: true
-              type: boolean
-    NotificationReadResponse:
+          description: 標記為已讀時使用的時間戳，未提供則以伺服器時間為準。
+      allOf:
+        - if:
+            properties:
+              target:
+                const: selected
+          then:
+            required: [notification_ids]
+    NotificationBulkActionResponse:
       type: object
       required: [summary]
       properties:
         updated_items:
           type: array
-          description: 本次更新後的通知條目。
+          description: 標記為已讀後更新的通知條目。僅 action=mark_read 時會回傳。
           items:
             $ref: "#/components/schemas/NotificationItem"
-        summary:
-          $ref: "#/components/schemas/NotificationSummary"
-          description: 最新的通知統計摘要。
-    NotificationClearRequest:
-      type: object
-      properties:
-        notification_ids:
-          type: array
-          description: 要清除的通知識別碼列表。
-          minItems: 1
-          items:
-            type: string
-        clear_all_read:
-          type: boolean
-          description: 清除所有已讀通知。
-        clear_all:
-          type: boolean
-          description: 清除所有通知（包含未讀）。
-      oneOf:
-        - required: [notification_ids]
-        - required: [clear_all_read]
-          properties:
-            clear_all_read:
-              const: true
-              type: boolean
-        - required: [clear_all]
-          properties:
-            clear_all:
-              const: true
-              type: boolean
-      additionalProperties: false
-    NotificationClearResponse:
-      type: object
-      required: [cleared_count, summary]
-      properties:
         cleared_ids:
           type: array
-          description: 本次被清除的通知識別碼列表。
+          description: 成功清除的通知識別碼列表。僅 action=clear 時會回傳。
           items:
             type: string
         cleared_count:
@@ -4433,7 +4374,7 @@ components:
           description: 成功清除的通知數量。
         summary:
           $ref: "#/components/schemas/NotificationSummary"
-          description: 清除操作後最新的通知統計摘要。
+          description: 最新的通知統計摘要。
     EventSummaryMetrics:
       type: object
       required:
@@ -5022,10 +4963,18 @@ components:
                 $ref: "#/components/schemas/ConditionGroup"
             title_template:
               type: string
-            content_template:
-              type: string
-            automation:
-              $ref: "#/components/schemas/AutomationSetting"
+              content_template:
+                type: string
+              grafana_definition:
+                type: object
+                description: 快取的 Grafana 告警規則定義 JSON，當前端離線編輯時提供表單回填資料。
+                additionalProperties: true
+              grafana_metadata:
+                type: object
+                description: Grafana 定義的補充資訊（建立者、最後同步時間等）。
+                additionalProperties: true
+              automation:
+                $ref: "#/components/schemas/AutomationSetting"
     EventRulePayload:
       type: object
       required: [name, severity, condition_groups]
@@ -6524,37 +6473,44 @@ components:
           type: string
           format: email
           nullable: true
-    NotificationDeliveryRecipient:
-      type: object
-      required: [recipient_type, identifier]
-      properties:
-        recipient_type:
-          type: string
-          enum: [user, team, role, channel, external]
-        identifier:
-          type: string
-        display_name:
-          type: string
-        contact:
-          type: string
-        delivery_status:
-          type: string
-          enum: [delivered, pending, failed, unknown]
-        delivery_status_message:
-          type: string
-    NotificationRecipient:
-      type: object
-      required: [type, id]
-      properties:
-        type:
-          type: string
-          enum: [user, team, role]
-        id:
-          type: string
-        display_name:
-          type: string
-          description: 對應接收者的顯示名稱，僅於回應中提供。
-          readOnly: true
+      NotificationRecipientBase:
+        type: object
+        required: [type, id]
+        properties:
+          type:
+            type: string
+          id:
+            type: string
+          display_name:
+            type: string
+            nullable: true
+      NotificationDeliveryRecipient:
+        allOf:
+          - $ref: "#/components/schemas/NotificationRecipientBase"
+          - type: object
+            properties:
+              type:
+                type: string
+                enum: [user, team, role, channel, external]
+              contact:
+                type: string
+              delivery_status:
+                type: string
+                enum: [delivered, pending, failed, unknown]
+              delivery_status_message:
+                type: string
+      NotificationRecipient:
+        allOf:
+          - $ref: "#/components/schemas/NotificationRecipientBase"
+          - type: object
+            properties:
+              type:
+                type: string
+                enum: [user, team, role]
+              display_name:
+                type: string
+                description: 對應接收者的顯示名稱，僅於回應中提供。
+                readOnly: true
     NotificationChannelRef:
       type: object
       required: [channel_id, channel_type]
@@ -7199,92 +7155,55 @@ components:
             type: string
         preview_url:
           type: string
-    AuthSettings:
-      type: object
-      required: [provider, oidc_enabled, client_id, auth_url, token_url]
-      properties:
-        provider:
-          type: string
-        oidc_enabled:
-          type: boolean
-        managed_by:
-          type: string
-          enum: [keycloak, custom]
-          description: 指示設定由哪個外部系統維護。
-        read_only:
-          type: boolean
-          description: 為 true 時代表設定僅提供查詢資訊。
-        realm:
-          type: string
-        client_id:
-          type: string
-        client_secret_hint:
-          type: string
-        auth_url:
-          type: string
-        token_url:
-          type: string
-        userinfo_url:
-          type: string
-        redirect_uri:
-          type: string
-        logout_url:
-          type: string
-        scopes:
-          type: array
-          items:
+      AuthSettings:
+        type: object
+        required: [provider, oidc_enabled, managed_by, read_only]
+        properties:
+          provider:
             type: string
-        user_sync:
-          type: boolean
-        updated_at:
-          type: string
-          format: date-time
-    AuthSettingsRequest:
-      allOf:
-        - $ref: "#/components/schemas/AuthSettings"
-        - type: object
-          properties:
-            client_secret:
+          oidc_enabled:
+            type: boolean
+          managed_by:
+            type: string
+            enum: [keycloak, custom]
+            description: 指示設定由哪個外部系統維護。
+          read_only:
+            type: boolean
+            description: 為 true 時代表設定僅提供查詢資訊。
+          realm:
+            type: string
+            nullable: true
+          client_id:
+            type: string
+            nullable: true
+          client_secret_hint:
+            type: string
+            nullable: true
+          auth_url:
+            type: string
+            nullable: true
+          token_url:
+            type: string
+            nullable: true
+          userinfo_url:
+            type: string
+            nullable: true
+          redirect_uri:
+            type: string
+            nullable: true
+          logout_url:
+            type: string
+            nullable: true
+          scopes:
+            type: array
+            items:
               type: string
-              format: password
-    AuthTestRequest:
-      type: object
-      properties:
-        settings_override:
-          $ref: "#/components/schemas/AuthSettingsRequest"
-        test_username:
-          type: string
-        test_password:
-          type: string
-          format: password
-        scope_override:
-          type: array
-          items:
+          user_sync:
+            type: boolean
+          updated_at:
             type: string
-        async:
-          type: boolean
-          description: 是否以背景方式執行測試。
-    AuthTestResult:
-      type: object
-      required: [status, executed_at]
-      properties:
-        status:
-          type: string
-          enum: [success, failed, queued]
-        executed_at:
-          type: string
-          format: date-time
-        latency_ms:
-          type: integer
-        message:
-          type: string
-        warnings:
-          type: array
-          items:
-            type: string
-        trace_id:
-          type: string
-          nullable: true
+            format: date-time
+            nullable: true
     LayoutScopeType:
       type: string
       enum: [global, role, user]

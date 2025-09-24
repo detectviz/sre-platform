@@ -375,8 +375,8 @@ CREATE TABLE events (
     notes TEXT,
     -- 資源識別碼
     resource_id UUID,
-    -- Grafana 告警規則 UID
-    grafana_rule_uid VARCHAR(64),
+    -- 觸發來源的告警規則 UID (Grafana)
+    rule_uid VARCHAR(64),
     -- 觸發門檻
     trigger_threshold VARCHAR(64),
     -- 觸發數值
@@ -406,7 +406,7 @@ CREATE INDEX idx_events_status ON events (status);
 CREATE INDEX idx_events_severity ON events (severity);
 CREATE INDEX idx_events_trigger_time ON events (trigger_time DESC);
 CREATE INDEX idx_events_priority ON events (priority);
-CREATE INDEX idx_events_rule_uid ON events (grafana_rule_uid);
+CREATE INDEX idx_events_rule_uid ON events (rule_uid);
 CREATE INDEX idx_events_source_status_time ON events (event_source, status, trigger_time DESC);
 COMMENT ON TABLE events IS '事件增值處理資料表，專注於 AI 分析、關聯分析與處理追蹤，不承載告警規則管理邏輯。';
 
@@ -497,6 +497,8 @@ CREATE TABLE event_rule_templates (
     title_template TEXT,
     -- 內容模板
     content_template TEXT,
+    -- 建議搭配的自動化腳本
+    suggested_script_id UUID REFERENCES automation_scripts(id),
     -- 建立時間
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
@@ -508,48 +510,43 @@ CREATE TABLE event_rule_templates (
 CREATE INDEX idx_event_rule_templates_name ON event_rule_templates (name);
 COMMENT ON TABLE event_rule_templates IS '事件規則快速套用範本表，提供前端精靈預設條件與內容模板。';
 
-CREATE TABLE event_rule_configs (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 規則名稱
-    name VARCHAR(128) NOT NULL UNIQUE,
-    -- 規則描述
-    description TEXT,
-    -- 嚴重度
-    severity VARCHAR(32) NOT NULL,
-    -- 預設優先順序
-    default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
-    -- 啟用狀態
-    enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 套用範本鍵值
-    template_key VARCHAR(64) REFERENCES event_rule_templates(template_key),
-    -- 監控對象摘要
-    target_summary VARCHAR(256),
-    -- 資源篩選條件
-    resource_filters JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 標籤設定
-    labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-    -- 環境設定
-    environments TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-    -- 條件群組設定
-    condition_groups JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 標題模板
-    title_template TEXT,
-    -- 內容模板
-    content_template TEXT,
-    -- Grafana 規則 UID
-    grafana_rule_uid VARCHAR(64) UNIQUE,
+CREATE TABLE grafana_rule_snapshots (
+    -- Grafana 告警規則 UID (唯一識別)
+    rule_uid VARCHAR(64) PRIMARY KEY,
+    -- Grafana 原始定義快取 (用於離線回填)
+    grafana_definition JSONB NOT NULL DEFAULT '{}'::JSONB,
+    -- Grafana 額外中繼資訊 (建立者、最後更新時間等)
+    grafana_metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 同步狀態
     sync_status VARCHAR(16) NOT NULL DEFAULT 'fresh',
-    -- 最近同步時間
+    -- 最近成功同步時間
     last_synced_at TIMESTAMPTZ,
     -- 同步訊息
     sync_message TEXT,
+    -- 建立時間
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_grafana_rule_snapshots_sync CHECK (sync_status IN ('fresh','stale','failed'))
+);
+CREATE INDEX idx_grafana_rule_snapshots_status ON grafana_rule_snapshots (sync_status);
+CREATE INDEX idx_grafana_rule_snapshots_updated ON grafana_rule_snapshots (updated_at DESC);
+COMMENT ON TABLE grafana_rule_snapshots IS 'Grafana 告警規則快取表，僅存放同步快照與狀態，不承載規則真實來源。';
+
+CREATE TABLE rule_overrides (
+    -- Grafana 規則 UID (對應 grafana_rule_snapshots)
+    rule_uid VARCHAR(64) PRIMARY KEY REFERENCES grafana_rule_snapshots(rule_uid) ON DELETE CASCADE,
+    -- 預設優先順序 (平台增值欄位)
+    default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
+    -- 套用範本鍵值
+    template_key VARCHAR(64) REFERENCES event_rule_templates(template_key),
+    -- 監控對象摘要 (供列表顯示)
+    target_summary VARCHAR(256),
     -- 是否啟用自動化
     automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     -- 綁定腳本識別碼
     automation_script_id UUID REFERENCES automation_scripts(id) ON DELETE SET NULL,
-    -- 腳本參數
+    -- 自動化參數
     automation_parameters JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 自動化綁定最後更新者
     automation_updated_by UUID REFERENCES users(id),
@@ -563,48 +560,13 @@ CREATE TABLE event_rule_configs (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_event_rule_configs_severity CHECK (severity IN ('critical','warning','info')),
-    CONSTRAINT chk_event_rule_configs_priority CHECK (default_priority IN ('P0','P1','P2','P3')),
-    CONSTRAINT chk_event_rule_configs_sync CHECK (sync_status IN ('fresh','stale','failed')),
-    CONSTRAINT chk_event_rule_configs_filters CHECK (jsonb_typeof(resource_filters) = 'array'),
-    CONSTRAINT chk_event_rule_configs_conditions CHECK (jsonb_typeof(condition_groups) = 'array'),
-    CONSTRAINT chk_event_rule_configs_automation_params CHECK (jsonb_typeof(automation_parameters) = 'object')
+    CONSTRAINT chk_rule_overrides_priority CHECK (default_priority IN ('P0','P1','P2','P3')),
+    CONSTRAINT chk_rule_overrides_automation_params CHECK (jsonb_typeof(automation_parameters) = 'object')
 );
-CREATE INDEX idx_event_rule_configs_enabled ON event_rule_configs (enabled);
-CREATE INDEX idx_event_rule_configs_severity ON event_rule_configs (severity);
-CREATE INDEX idx_event_rule_configs_grafana_uid ON event_rule_configs (grafana_rule_uid);
-CREATE INDEX idx_event_rule_configs_updated_at ON event_rule_configs (updated_at DESC);
-CREATE INDEX idx_event_rule_configs_automation_script ON event_rule_configs (automation_script_id);
-COMMENT ON TABLE event_rule_configs IS '儲存事件規則在平台側的完整配置與監控對象摘要，作為多步驟精靈的唯一資料來源。';
-
-CREATE TABLE event_rule_snapshots (
-    -- Grafana 規則 UID
-    grafana_rule_uid VARCHAR(64) PRIMARY KEY,
-    -- 平台規則配置識別碼
-    rule_config_id UUID REFERENCES event_rule_configs(id) ON DELETE SET NULL,
-    -- 快取的完整規則定義 (Grafana JSON 結構)
-    raw_definition JSONB NOT NULL,
-    -- 額外補充資訊 (建立者、最後更新時間等)
-    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 與 Grafana 最新同步時間
-    last_synced_at TIMESTAMPTZ,
-    -- 同步狀態 (fresh: 已同步、stale: 使用快取、failed: 同步失敗)
-    sync_status VARCHAR(16) NOT NULL DEFAULT 'fresh',
-    -- 同步結果補充訊息
-    sync_message TEXT,
-    -- 最近更新操作者
-    updated_by UUID REFERENCES users(id),
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 最近更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_event_rule_snapshot_status CHECK (sync_status IN ('fresh','stale','failed')),
-    CONSTRAINT chk_event_rule_snapshot_metadata CHECK (jsonb_typeof(metadata) = 'object')
-);
-CREATE INDEX idx_event_rule_snapshots_status ON event_rule_snapshots (sync_status);
-CREATE INDEX idx_event_rule_snapshots_synced_at ON event_rule_snapshots (last_synced_at DESC);
-CREATE INDEX idx_event_rule_snapshots_rule_config ON event_rule_snapshots (rule_config_id);
-COMMENT ON TABLE event_rule_snapshots IS '快取 Grafana 告警規則的最新設定與建立者／最後更新時間，以支援離線檢視與編輯時的表單回填。';
+CREATE INDEX idx_rule_overrides_priority ON rule_overrides (default_priority);
+CREATE INDEX idx_rule_overrides_template ON rule_overrides (template_key);
+CREATE INDEX idx_rule_overrides_script ON rule_overrides (automation_script_id);
+COMMENT ON TABLE rule_overrides IS '告警規則增值資料表，僅保存平台層的優先順序與自動化設定。';
 
 CREATE TABLE batch_operations (
     -- 主鍵識別碼
@@ -1318,7 +1280,7 @@ CREATE TABLE notification_strategies (
     -- 嚴重度篩選條件
     severity_filters TEXT[] DEFAULT ARRAY['critical','warning','info'],
     -- 資源篩選條件
-    resource_filters JSONB DEFAULT '{}'::JSONB,
+    resource_filters JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 重試策略
     retry_policy JSONB NOT NULL DEFAULT '{"max_attempts":1,"interval_seconds":300,"escalation_channel_ids":[]}'::JSONB,
     -- 通知送達設定
@@ -1335,7 +1297,8 @@ CREATE TABLE notification_strategies (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_notification_strategies_priority CHECK (priority IN ('high','medium','low'))
+    CONSTRAINT chk_notification_strategies_priority CHECK (priority IN ('high','medium','low')),
+    CONSTRAINT chk_notification_strategies_filters CHECK (jsonb_typeof(resource_filters) = 'object')
 );
 CREATE INDEX idx_notification_strategies_enabled ON notification_strategies (enabled);
 CREATE INDEX idx_notification_strategies_priority ON notification_strategies (priority);
@@ -1402,7 +1365,7 @@ CREATE TABLE notification_history (
     -- 最後重新發送時間
     last_resend_at TIMESTAMPTZ,
     -- 最後重新發送者
-    last_resend_actor UUID REFERENCES users(id),
+    last_resend_by JSONB,
     -- 相關事件識別碼
     related_event_id UUID REFERENCES events(id),
     -- 最後狀態變更時間
@@ -1411,7 +1374,8 @@ CREATE TABLE notification_history (
     CONSTRAINT chk_notification_history_channel CHECK (channel_type IN ('Email','Slack','PagerDuty','Webhook','Teams','LINE Notify','SMS')),
     CONSTRAINT chk_notification_history_recipients CHECK (jsonb_typeof(recipients) = 'array'),
     CONSTRAINT chk_notification_history_attempts CHECK (jsonb_typeof(attempts) = 'array'),
-    CONSTRAINT chk_notification_history_resend_count CHECK (resend_count >= 0)
+    CONSTRAINT chk_notification_history_resend_count CHECK (resend_count >= 0),
+    CONSTRAINT chk_notification_history_resend_actor CHECK (last_resend_by IS NULL OR jsonb_typeof(last_resend_by) = 'object')
 );
 CREATE INDEX idx_notification_history_sent_at ON notification_history (sent_at DESC);
 CREATE INDEX idx_notification_history_status ON notification_history (status);
