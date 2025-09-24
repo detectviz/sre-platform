@@ -24,6 +24,69 @@ const toCsv = (records, columns) => {
   );
   return [header, ...rows].join('\n');
 };
+const normalizeResourceFilters = (filters) => {
+  if (!Array.isArray(filters)) return [];
+  return filters
+    .map((filter) => {
+      if (!filter || typeof filter !== 'object') return null;
+      const values = Array.isArray(filter.values)
+        ? filter.values.filter((value) => value !== null && value !== undefined && value !== '')
+        : [];
+      return {
+        type: filter.type || 'tag',
+        key: filter.key || '',
+        operator: filter.operator || 'equals',
+        value: filter.value ?? null,
+        values
+      };
+    })
+    .filter(Boolean);
+};
+const deriveTargetSummary = (filters) => {
+  if (!Array.isArray(filters) || filters.length === 0) {
+    return '全部資源';
+  }
+  const summary = filters
+    .map((filter) => {
+      const joinedValues = filter.values && filter.values.length > 0 ? filter.values.join('、') : filter.value ?? '';
+      if (filter.type === 'tag') {
+        return joinedValues ? `${filter.key}:${joinedValues}` : filter.key;
+      }
+      if (filter.type === 'resource') {
+        return `資源:${joinedValues || filter.key}`;
+      }
+      if (filter.type === 'resource_group') {
+        return `資源群組:${joinedValues || filter.key}`;
+      }
+      if (filter.type === 'service') {
+        return `服務:${joinedValues || filter.key}`;
+      }
+      return `${filter.key} ${filter.operator} ${joinedValues}`.trim();
+    })
+    .filter((token) => token && token.length > 0)
+    .join('；');
+  return summary || '全部資源';
+};
+const buildEventRule = (rule) => {
+  const normalizedFilters = normalizeResourceFilters(rule.resource_filters || []);
+  const automation =
+    rule.automation && typeof rule.automation === 'object'
+      ? {
+          enabled: Boolean(rule.automation.enabled),
+          script_id: rule.automation.script_id || null,
+          parameters: rule.automation.parameters || {}
+        }
+      : { enabled: false, script_id: null, parameters: {} };
+  const automationEnabled =
+    typeof rule.automation_enabled === 'boolean' ? rule.automation_enabled : automation.enabled;
+  return {
+    ...rule,
+    resource_filters: normalizedFilters,
+    target: rule.target || deriveTargetSummary(normalizedFilters),
+    automation,
+    automation_enabled: automationEnabled
+  };
+};
 const now = new Date();
 
 const currentUser = {
@@ -246,6 +309,10 @@ const eventRuleTemplates = [
     default_priority: 'P1',
     labels: ['tier:compute'],
     environments: ['production'],
+    default_target_summary: 'tier:compute',
+    default_resource_filters: [
+      { type: 'tag', key: 'tier', operator: 'equals', value: 'compute' }
+    ],
     condition_groups: [
       {
         logic: 'AND',
@@ -266,6 +333,10 @@ const eventRuleTemplates = [
     default_priority: 'P2',
     labels: ['tier:frontend'],
     environments: ['production', 'staging'],
+    default_target_summary: 'tier:frontend',
+    default_resource_filters: [
+      { type: 'tag', key: 'tier', operator: 'equals', value: 'frontend' }
+    ],
     condition_groups: [
       {
         logic: 'AND',
@@ -285,6 +356,10 @@ const eventRuleTemplates = [
     default_priority: 'P1',
     labels: ['tier:storage'],
     environments: ['production'],
+    default_target_summary: 'tier:storage',
+    default_resource_filters: [
+      { type: 'tag', key: 'tier', operator: 'equals', value: 'storage' }
+    ],
     condition_groups: [
       {
         logic: 'AND',
@@ -304,6 +379,10 @@ const eventRuleTemplates = [
     default_priority: 'P0',
     labels: ['tier:db'],
     environments: ['production'],
+    default_target_summary: 'tier:db',
+    default_resource_filters: [
+      { type: 'tag', key: 'tier', operator: 'equals', value: 'db' }
+    ],
     condition_groups: [
       {
         logic: 'AND',
@@ -324,6 +403,10 @@ const eventRuleTemplates = [
     default_priority: 'P0',
     labels: ['app:web'],
     environments: ['production'],
+    default_target_summary: 'app:web',
+    default_resource_filters: [
+      { type: 'tag', key: 'app', operator: 'equals', value: 'web' }
+    ],
     condition_groups: [
       {
         logic: 'AND',
@@ -339,7 +422,7 @@ const eventRuleTemplates = [
 ];
 
 const eventRules = [
-  {
+  buildEventRule({
     rule_uid: 'rule-001',
     name: 'API 延遲監控',
     description: '監控交易 API 延遲，超過閾值即觸發事件。',
@@ -354,6 +437,10 @@ const eventRules = [
     sync_status: 'fresh',
     labels: ['app:web'],
     environments: ['production'],
+    resource_filters: [
+      { type: 'tag', key: 'app', operator: 'equals', value: 'web' },
+      { type: 'tag', key: 'env', operator: 'equals', value: 'production' }
+    ],
     condition_groups: [
       {
         logic: 'AND',
@@ -369,8 +456,8 @@ const eventRules = [
       script_id: 'script-001',
       parameters: { mode: 'scale-out', count: 2 }
     }
-  },
-  {
+  }),
+  buildEventRule({
     rule_uid: 'rule-002',
     name: '資料庫延遲監控',
     description: '觀察資料庫連線與查詢延遲。',
@@ -385,6 +472,10 @@ const eventRules = [
     sync_status: 'stale',
     labels: ['tier:db'],
     environments: ['production'],
+    resource_filters: [
+      { type: 'tag', key: 'tier', operator: 'equals', value: 'db' },
+      { type: 'tag', key: 'env', operator: 'equals', value: 'production' }
+    ],
     condition_groups: [
       {
         logic: 'AND',
@@ -400,7 +491,7 @@ const eventRules = [
       script_id: null,
       parameters: {}
     }
-  }
+  })
 ];
 
 const silenceRules = [
@@ -3210,6 +3301,7 @@ app.get('/event-rules', (req, res) => {
     automation_enabled: rule.automation_enabled,
     default_priority: rule.default_priority || 'P2',
     template_key: rule.template_key || null,
+    target: rule.target || deriveTargetSummary(rule.resource_filters),
     creator: rule.creator,
     last_updated: rule.last_updated,
     last_synced_at: rule.last_synced_at || null,
@@ -3220,6 +3312,7 @@ app.get('/event-rules', (req, res) => {
     const csv = toCsv(items, [
       { key: 'rule_uid' },
       { key: 'name' },
+      { key: 'target' },
       { key: 'severity' },
       { key: 'enabled', value: (row) => (row.enabled ? 'true' : 'false') },
       { key: 'automation_enabled', value: (row) => (row.automation_enabled ? 'true' : 'false') },
@@ -3250,9 +3343,8 @@ app.post('/event-rules', (req, res) => {
 
   const clone = (value) => (value ? JSON.parse(JSON.stringify(value)) : value);
 
-  const rule = {
+  const baseRule = buildEventRule({
     rule_uid: `rule-${Date.now()}`,
-
     name: payload.name || template?.name || '新事件規則',
     description: payload.description || template?.description || '',
     severity: payload.severity || template?.severity || 'warning',
@@ -3260,14 +3352,12 @@ app.post('/event-rules', (req, res) => {
     enabled: payload.enabled ?? true,
     automation_enabled: payload.automation?.enabled ?? false,
     template_key: payload.template_key || template?.template_key || null,
-    creator: currentUser.display_name,
-    last_updated: toISO(new Date()),
-    last_synced_at: toISO(new Date()),
-    sync_status: 'fresh',
     labels: payload.labels || clone(template?.labels) || [],
     environments: payload.environments || clone(template?.environments) || [],
-    condition_groups:
-      payload.condition_groups || clone(template?.condition_groups) || [],
+    resource_filters:
+      clone(payload.resource_filters) || clone(template?.default_resource_filters) || [],
+    target: payload.target || template?.default_target_summary || undefined,
+    condition_groups: payload.condition_groups || clone(template?.condition_groups) || [],
     title_template: payload.title_template || template?.title_template || '',
     content_template: payload.content_template || template?.content_template || '',
     automation:
@@ -3276,9 +3366,16 @@ app.post('/event-rules', (req, res) => {
         script_id: template?.suggested_script_id || null,
         parameters: {}
       }
-  };
-  eventRules.push(rule);
-  res.status(201).json(rule);
+  });
+  const timestamp = toISO(new Date());
+  Object.assign(baseRule, {
+    creator: currentUser.display_name,
+    last_updated: timestamp,
+    last_synced_at: timestamp,
+    sync_status: 'fresh'
+  });
+  eventRules.push(baseRule);
+  res.status(201).json(baseRule);
 });
 
 app.get('/event-rules/:rule_uid', (req, res) => {
@@ -3290,14 +3387,18 @@ app.get('/event-rules/:rule_uid', (req, res) => {
 app.put('/event-rules/:rule_uid', (req, res) => {
   const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
-  Object.assign(rule, req.body || {}, {
+  const payload = req.body || {};
+  const updated = buildEventRule({
+    ...rule,
+    ...payload,
+    resource_filters: payload.resource_filters ?? rule.resource_filters,
+    target: payload.target || rule.target
+  });
+  Object.assign(rule, updated, {
     last_updated: toISO(new Date()),
     last_synced_at: toISO(new Date()),
     sync_status: 'fresh'
   });
-  if (rule.automation && typeof rule.automation === 'object') {
-    rule.automation_enabled = Boolean(rule.automation.enabled);
-  }
   res.json(rule);
 });
 

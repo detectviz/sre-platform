@@ -477,6 +477,10 @@ CREATE TABLE event_rule_templates (
     labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     -- 預設環境
     environments TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 預設監控對象摘要
+    default_target_summary VARCHAR(256),
+    -- 預設資源篩選條件
+    default_resource_filters JSONB NOT NULL DEFAULT '[]'::JSONB,
     -- 預設條件群組
     condition_groups JSONB NOT NULL DEFAULT '[]'::JSONB,
     -- 標題模板
@@ -488,14 +492,74 @@ CREATE TABLE event_rule_templates (
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_event_rule_templates_severity CHECK (severity IN ('critical','warning','info')),
-    CONSTRAINT chk_event_rule_templates_priority CHECK (default_priority IN ('P0','P1','P2','P3'))
+    CONSTRAINT chk_event_rule_templates_priority CHECK (default_priority IN ('P0','P1','P2','P3')),
+    CONSTRAINT chk_event_rule_templates_filters CHECK (jsonb_typeof(default_resource_filters) = 'array')
 );
 CREATE INDEX idx_event_rule_templates_name ON event_rule_templates (name);
 COMMENT ON TABLE event_rule_templates IS '事件規則快速套用範本表，提供前端精靈預設條件與內容模板。';
 
+CREATE TABLE event_rule_configs (
+    -- 主鍵識別碼
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- 規則名稱
+    name VARCHAR(128) NOT NULL UNIQUE,
+    -- 規則描述
+    description TEXT,
+    -- 嚴重度
+    severity VARCHAR(32) NOT NULL,
+    -- 預設優先順序
+    default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
+    -- 啟用狀態
+    enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    -- 套用範本鍵值
+    template_key VARCHAR(64) REFERENCES event_rule_templates(template_key),
+    -- 監控對象摘要
+    target_summary VARCHAR(256),
+    -- 資源篩選條件
+    resource_filters JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 標籤設定
+    labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 環境設定
+    environments TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 條件群組設定
+    condition_groups JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 標題模板
+    title_template TEXT,
+    -- 內容模板
+    content_template TEXT,
+    -- Grafana 規則 UID
+    grafana_rule_uid VARCHAR(64) UNIQUE,
+    -- 同步狀態
+    sync_status VARCHAR(16) NOT NULL DEFAULT 'fresh',
+    -- 最近同步時間
+    last_synced_at TIMESTAMPTZ,
+    -- 同步訊息
+    sync_message TEXT,
+    -- 建立者
+    created_by UUID REFERENCES users(id),
+    -- 更新者
+    updated_by UUID REFERENCES users(id),
+    -- 建立時間
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_event_rule_configs_severity CHECK (severity IN ('critical','warning','info')),
+    CONSTRAINT chk_event_rule_configs_priority CHECK (default_priority IN ('P0','P1','P2','P3')),
+    CONSTRAINT chk_event_rule_configs_sync CHECK (sync_status IN ('fresh','stale','failed')),
+    CONSTRAINT chk_event_rule_configs_filters CHECK (jsonb_typeof(resource_filters) = 'array'),
+    CONSTRAINT chk_event_rule_configs_conditions CHECK (jsonb_typeof(condition_groups) = 'array')
+);
+CREATE INDEX idx_event_rule_configs_enabled ON event_rule_configs (enabled);
+CREATE INDEX idx_event_rule_configs_severity ON event_rule_configs (severity);
+CREATE INDEX idx_event_rule_configs_grafana_uid ON event_rule_configs (grafana_rule_uid);
+CREATE INDEX idx_event_rule_configs_updated_at ON event_rule_configs (updated_at DESC);
+COMMENT ON TABLE event_rule_configs IS '儲存事件規則在平台側的完整配置與監控對象摘要，作為多步驟精靈的唯一資料來源。';
+
 CREATE TABLE event_rule_snapshots (
     -- Grafana 規則 UID
     grafana_rule_uid VARCHAR(64) PRIMARY KEY,
+    -- 平台規則配置識別碼
+    rule_config_id UUID REFERENCES event_rule_configs(id) ON DELETE SET NULL,
     -- 快取的完整規則定義 (Grafana JSON 結構)
     raw_definition JSONB NOT NULL,
     -- 快取規則名稱供清單快速顯示
@@ -514,6 +578,10 @@ CREATE TABLE event_rule_snapshots (
     cached_labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
     -- 快取的環境設定
     cached_environments TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 快取的監控對象摘要
+    cached_target_summary VARCHAR(256),
+    -- 快取的資源篩選條件
+    cached_resource_filters JSONB NOT NULL DEFAULT '[]'::JSONB,
     -- 快取的標題模板
     cached_title_template TEXT,
     -- 快取的內容模板
@@ -536,15 +604,19 @@ CREATE TABLE event_rule_snapshots (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_event_rule_snapshot_status CHECK (sync_status IN ('fresh','stale','failed')),
     CONSTRAINT chk_event_rule_snapshot_severity CHECK (cached_severity IN ('critical','warning','info')),
-    CONSTRAINT chk_event_rule_snapshot_priority CHECK (cached_default_priority IN ('P0','P1','P2','P3'))
+    CONSTRAINT chk_event_rule_snapshot_priority CHECK (cached_default_priority IN ('P0','P1','P2','P3')),
+    CONSTRAINT chk_event_rule_snapshot_filters CHECK (jsonb_typeof(cached_resource_filters) = 'array')
 );
 CREATE INDEX idx_event_rule_snapshots_status ON event_rule_snapshots (sync_status);
 CREATE INDEX idx_event_rule_snapshots_synced_at ON event_rule_snapshots (last_synced_at DESC);
+CREATE INDEX idx_event_rule_snapshots_rule_config ON event_rule_snapshots (rule_config_id);
 COMMENT ON TABLE event_rule_snapshots IS '快取 Grafana 告警規則的最新設定與建立者／最後更新時間，以支援離線檢視與編輯時的表單回填。';
 
 CREATE TABLE event_rule_automation_bindings (
+    -- 規則配置識別碼
+    rule_config_id UUID PRIMARY KEY REFERENCES event_rule_configs(id) ON DELETE CASCADE,
     -- Grafana 規則 UID
-    grafana_rule_uid VARCHAR(64) PRIMARY KEY REFERENCES event_rule_snapshots(grafana_rule_uid) ON DELETE CASCADE,
+    grafana_rule_uid VARCHAR(64),
     -- 是否啟用自動化
     automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
     -- 綁定腳本識別碼
@@ -554,10 +626,12 @@ CREATE TABLE event_rule_automation_bindings (
     -- 最後更新者
     updated_by UUID REFERENCES users(id),
     -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_event_rule_automation_parameters CHECK (jsonb_typeof(parameters) = 'object')
 );
+CREATE UNIQUE INDEX idx_event_rule_automation_grafana_uid ON event_rule_automation_bindings (grafana_rule_uid) WHERE grafana_rule_uid IS NOT NULL;
 CREATE INDEX idx_event_rule_automation_script ON event_rule_automation_bindings (script_id);
-COMMENT ON TABLE event_rule_automation_bindings IS '儲存事件規則的自動化綁定設定，並串聯快取資訊補齊 Grafana 規則未提供的擴充屬性。';
+COMMENT ON TABLE event_rule_automation_bindings IS '儲存事件規則的自動化綁定設定，並串聯平台規則配置與 Grafana 規則快取以補齊擴充屬性。';
 
 CREATE TABLE batch_operations (
     -- 主鍵識別碼
