@@ -24,9 +24,12 @@ CREATE TABLE users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_users_status CHECK (status IN ('active','disabled'))
 );
 CREATE INDEX idx_users_status ON users (status);
+CREATE INDEX idx_users_deleted ON users (deleted_at);
 
 CREATE TABLE teams (
     -- 主鍵識別碼
@@ -40,8 +43,11 @@ CREATE TABLE teams (
     -- 建立時間
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ
 );
+CREATE INDEX idx_teams_deleted ON teams (deleted_at);
 
 CREATE TABLE team_members (
     -- 團隊識別碼
@@ -116,9 +122,12 @@ CREATE TABLE roles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_roles_status CHECK (status IN ('active','disabled'))
 );
 CREATE INDEX idx_roles_status ON roles (status);
+CREATE INDEX idx_roles_deleted ON roles (deleted_at);
 
 CREATE TABLE user_roles (
     -- 使用者識別碼
@@ -260,9 +269,12 @@ CREATE TABLE automation_scripts (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_automation_scripts_type CHECK (type IN ('shell','python','ansible','terraform')),
     CONSTRAINT chk_automation_scripts_last_status CHECK (last_execution_status IN ('never','running','success','failed'))
 );
+CREATE INDEX idx_automation_scripts_deleted ON automation_scripts (deleted_at);
 
 CREATE TABLE automation_script_versions (
     -- 主鍵識別碼
@@ -654,9 +666,12 @@ CREATE TABLE resources (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_resources_status CHECK (status IN ('healthy','warning','critical','offline')),
     CONSTRAINT chk_resources_type CHECK (type IN ('server','database','cache','gateway','service'))
 );
+CREATE INDEX idx_resources_deleted ON resources (deleted_at);
 CREATE INDEX idx_resources_status ON resources (status);
 CREATE INDEX idx_resources_type ON resources (type);
 CREATE INDEX idx_resources_team ON resources (team_id);
@@ -845,9 +860,12 @@ CREATE TABLE resource_groups (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_resources_status CHECK (status IN ('healthy','warning','critical','offline')),
     CONSTRAINT chk_resources_type CHECK (type IN ('server','database','cache','gateway','service'))
 );
+CREATE INDEX idx_resource_groups_deleted ON resource_groups (deleted_at);
 
 CREATE TABLE resource_group_members (
     -- 群組識別碼
@@ -999,6 +1017,8 @@ CREATE TABLE dashboards (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_dashboards_status CHECK (status IN ('draft','published')),
     CONSTRAINT chk_dashboards_type CHECK (dashboard_type IN ('built_in','grafana')),
     CONSTRAINT chk_dashboards_embed_options CHECK (jsonb_typeof(grafana_embed_options) = 'object'),
@@ -1153,10 +1173,13 @@ CREATE TABLE automation_schedules (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_automation_schedules_type CHECK (type IN ('one_time','recurring')),
     CONSTRAINT chk_automation_schedules_status CHECK (status IN ('enabled','disabled','running')),
     CONSTRAINT chk_automation_schedules_concurrency CHECK (concurrency_policy IN ('allow','forbid'))
 );
+CREATE INDEX idx_automation_schedules_deleted ON automation_schedules (deleted_at);
 CREATE INDEX idx_automation_schedules_script ON automation_schedules (script_id);
 CREATE INDEX idx_automation_schedules_status ON automation_schedules (status);
 
@@ -1233,6 +1256,8 @@ CREATE TABLE notification_channels (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_notification_channels_type CHECK (type IN ('Email','Slack','PagerDuty','Webhook','Teams','LINE Notify','SMS')),
     CONSTRAINT chk_notification_channels_status CHECK (status IN ('active','degraded','disabled')),
     CONSTRAINT chk_notification_channels_test_result CHECK (last_test_result IS NULL OR last_test_result IN ('success','failed','pending'))
@@ -1293,6 +1318,8 @@ CREATE TABLE notification_strategies (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 軟刪除時間
+    deleted_at TIMESTAMPTZ,
     CONSTRAINT chk_notification_strategies_priority CHECK (priority IN ('high','medium','low')),
     CONSTRAINT chk_notification_strategies_filters CHECK (jsonb_typeof(resource_filters) = 'object')
 );
@@ -1483,6 +1510,22 @@ CREATE INDEX idx_page_layouts_lookup ON page_layouts (page_path, scope_type, sco
 CREATE UNIQUE INDEX idx_page_layouts_global ON page_layouts (page_path) WHERE scope_type = 'global';
 CREATE UNIQUE INDEX idx_page_layouts_role ON page_layouts (page_path, scope_id) WHERE scope_type = 'role';
 CREATE UNIQUE INDEX idx_page_layouts_user ON page_layouts (page_path, scope_id) WHERE scope_type = 'user';
+
+CREATE TABLE system_settings (
+    -- 設定鍵
+    key VARCHAR(128) PRIMARY KEY,
+    -- 設定值
+    value JSONB NOT NULL,
+    -- 描述
+    description TEXT,
+    -- 是否為敏感資訊
+    sensitive BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 最後更新者
+    updated_by UUID REFERENCES users(id),
+    -- 更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+COMMENT ON TABLE system_settings IS '儲存平台級設定，如 OIDC、SMTP 等，敏感資訊應加密儲存。';
 
 -- =============================
 -- 審計日誌

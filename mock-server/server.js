@@ -551,7 +551,8 @@ const resourceData = [
     ],
     groups: ['grp-001'],
     created_at: toISO(new Date(now.getTime() - 604800000)),
-    updated_at: toISO(now)
+    updated_at: toISO(now),
+    deleted_at: null
   },
   {
     resource_id: 'res-002',
@@ -578,7 +579,8 @@ const resourceData = [
     ],
     groups: ['grp-002'],
     created_at: toISO(new Date(now.getTime() - 2592000000)),
-    updated_at: toISO(now)
+    updated_at: toISO(now),
+    deleted_at: null
   },
   {
     resource_id: 'res-003',
@@ -605,7 +607,8 @@ const resourceData = [
     ],
     groups: ['grp-001'],
     created_at: toISO(new Date(now.getTime() - 1209600000)),
-    updated_at: toISO(new Date(now.getTime() - 1800000))
+    updated_at: toISO(new Date(now.getTime() - 1800000)),
+    deleted_at: null
   }
 ];
 
@@ -629,7 +632,8 @@ const resourceGroups = [
       { user_id: 'user-002', display_name: '張宥誠', subscribed_at: toISO(new Date(now.getTime() - 302400000)) },
       { user_id: 'user-003', display_name: '陳昱安', subscribed_at: toISO(new Date(now.getTime() - 86400000)) },
       { user_id: 'user-004', display_name: '游佩珊', subscribed_at: toISO(new Date(now.getTime() - 43200000)) }
-    ]
+    ],
+    deleted_at: null
   },
   {
     group_id: 'grp-002',
@@ -647,7 +651,8 @@ const resourceGroups = [
     subscribers: [
       { user_id: 'user-003', display_name: '陳昱安', subscribed_at: toISO(new Date(now.getTime() - 259200000)) },
       { user_id: 'user-001', display_name: '林佳瑜', subscribed_at: toISO(new Date(now.getTime() - 172800000)) }
-    ]
+    ],
+    deleted_at: null
   }
 ];
 
@@ -822,6 +827,7 @@ const dashboards = [
     target_page_key: 'war_room',
     published_at: toISO(new Date(now.getTime() - 86400000)),
     updated_at: toISO(new Date(now.getTime() - 3600000)),
+    deleted_at: null,
     layout: [
       {
         widget_id: 'widget-001',
@@ -1122,7 +1128,8 @@ const iamUsers = [
     roles: ['sre', 'incident-commander'],
     last_login: toISO(now),
     created_at: toISO(new Date(now.getTime() - 120 * 86400000)),
-    updated_at: toISO(new Date(now.getTime() - 3600000))
+    updated_at: toISO(new Date(now.getTime() - 3600000)),
+    deleted_at: null
   },
   {
     user_id: 'user-002',
@@ -1134,7 +1141,8 @@ const iamUsers = [
     roles: ['ops'],
     last_login: toISO(new Date(now.getTime() - 7200000)),
     created_at: toISO(new Date(now.getTime() - 200 * 86400000)),
-    updated_at: toISO(new Date(now.getTime() - 7200000))
+    updated_at: toISO(new Date(now.getTime() - 7200000)),
+    deleted_at: null
   },
   {
     user_id: 'user-003',
@@ -1146,7 +1154,8 @@ const iamUsers = [
     roles: ['db-admin'],
     last_login: toISO(new Date(now.getTime() - 14400000)),
     created_at: toISO(new Date(now.getTime() - 220 * 86400000)),
-    updated_at: toISO(new Date(now.getTime() - 14400000))
+    updated_at: toISO(new Date(now.getTime() - 14400000)),
+    deleted_at: null
   }
 ];
 
@@ -1203,7 +1212,8 @@ const iamTeams = [
     subscriber_details: [
       { subscriber_id: 'user-003', subscriber_type: 'USER', display_name: '陳昱安' },
       { subscriber_id: 'chn-001', subscriber_type: 'SLACK_CHANNEL', display_name: '#sre-alert' }
-    ]
+    ],
+    deleted_at: null
   },
   {
     team_id: 'team-db',
@@ -1215,7 +1225,8 @@ const iamTeams = [
     member_ids: ['user-003'],
     subscribers: [],
     subscriber_ids: [],
-    subscriber_details: []
+    subscriber_details: [],
+    deleted_at: null
   }
 ];
 
@@ -1231,7 +1242,8 @@ const iamRoles = [
       { module: 'events', actions: ['read', 'update', 'acknowledge'] },
       { module: 'resources', actions: ['read'] }
     ],
-    updated_at: toISO(new Date(now.getTime() - 604800000))
+    updated_at: toISO(new Date(now.getTime() - 604800000)),
+    deleted_at: null
   },
   {
     role_id: 'role-incident-commander',
@@ -1244,7 +1256,8 @@ const iamRoles = [
       { module: 'events', actions: ['read', 'update', 'acknowledge', 'resolve'] },
       { module: 'communications', actions: ['read'] }
     ],
-    updated_at: toISO(new Date(now.getTime() - 432000000))
+    updated_at: toISO(new Date(now.getTime() - 432000000)),
+    deleted_at: null
   }
 ];
 
@@ -1286,7 +1299,8 @@ const notificationChannels = [
     last_test_result: 'success',
     last_test_message: '測試訊息成功送達 Slack',
     updated_at: toISO(new Date(now.getTime() - 3600000)),
-    last_tested_at: toISO(new Date(now.getTime() - 7200000))
+    last_tested_at: toISO(new Date(now.getTime() - 7200000)),
+    deleted_at: null
   },
   {
     channel_id: 'chn-002',
@@ -1300,7 +1314,8 @@ const notificationChannels = [
     last_test_result: 'failed',
     last_test_message: 'SMTP 認證失敗，請檢查憑證',
     updated_at: toISO(new Date(now.getTime() - 10800000)),
-    last_tested_at: toISO(new Date(now.getTime() - 86400000))
+    last_tested_at: toISO(new Date(now.getTime() - 86400000)),
+    deleted_at: null
   }
 ];
 
@@ -1366,7 +1381,8 @@ const notificationStrategies = [
     },
     linked_silence_ids: ['slc-001'],
     created_at: toISO(new Date(now.getTime() - 259200000)),
-    updated_at: toISO(new Date(now.getTime() - 86400000))
+    updated_at: toISO(new Date(now.getTime() - 86400000)),
+    deleted_at: null
   }
 ];
 
@@ -4049,8 +4065,10 @@ app.get('/resources', (req, res) => {
   const environmentFilter = createLowercaseSet(parseListParam(req.query.environment));
   const tagFilter = createLowercaseSet(parseListParam(req.query.tag_value_ids));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
 
   const filtered = resourceData.filter((resource) => {
+    if (!includeDeleted && resource.deleted_at) return false;
     if (!matchesEnumFilter(resource.status, statusFilter)) return false;
     if (!matchesEnumFilter(resource.type, typeFilter)) return false;
     if (!matchesEnumFilter(resource.environment, environmentFilter)) return false;
@@ -4222,7 +4240,10 @@ app.get('/resources/:resource_id/events', (req, res) => {
 
 app.get('/resource-groups', (req, res) => {
   const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+
   const filtered = resourceGroups.filter((group) => {
+    if (!includeDeleted && group.deleted_at) return false;
     if (!keyword) return true;
     const text = `${group.name || ''} ${group.description || ''}`.toLowerCase();
     return text.includes(keyword);
@@ -4336,7 +4357,10 @@ app.get('/dashboards/summary', (req, res) => {
 app.get('/dashboards', (req, res) => {
   const category = (req.query.category || '').trim().toLowerCase();
   const ownerId = (req.query.owner_id || '').trim().toLowerCase();
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+
   const filtered = dashboards.filter((dash) => {
+    if (!includeDeleted && dash.deleted_at) return false;
     if (category && String(dash.category || '').toLowerCase() !== category) return false;
     if (ownerId && String(dash.owner_id || '').toLowerCase() !== ownerId) return false;
     return true;
@@ -4437,7 +4461,10 @@ app.get('/analysis/ai-insights/:report_id', (req, res) => {
 app.get('/automation/scripts', (req, res) => {
   const typeFilter = createLowercaseSet(parseListParam(req.query.type));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+
   const filtered = automationScripts.filter((script) => {
+    if (!includeDeleted && script.deleted_at) return false;
     if (!matchesEnumFilter(script.type, typeFilter)) return false;
     if (keyword) {
       const text = `${script.name || ''} ${script.description || ''}`.toLowerCase();
@@ -4577,7 +4604,11 @@ app.get('/automation/scripts/:script_id/versions', (req, res) => {
 
 app.get('/automation/schedules', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const filtered = automationSchedules.filter((sch) => matchesEnumFilter(sch.status, statusFilter));
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const filtered = automationSchedules.filter((sch) => {
+    if (!includeDeleted && sch.deleted_at) return false;
+    return matchesEnumFilter(sch.status, statusFilter);
+  });
   const items = filtered.map((sch) => ({
     schedule_id: sch.schedule_id,
     name: sch.name,
@@ -4732,7 +4763,10 @@ app.post('/iam/invitations', (req, res) => {
 app.get('/iam/users', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+
   const filtered = iamUsers.filter((user) => {
+    if (!includeDeleted && user.deleted_at) return false;
     if (!matchesEnumFilter(user.status, statusFilter)) return false;
     if (keyword) {
       const text = `${user.display_name || ''} ${user.username || ''} ${user.email || ''}`.toLowerCase();
@@ -4752,7 +4786,7 @@ app.get('/iam/users', (req, res) => {
 
 app.get('/iam/users/:user_id', (req, res) => {
   const user = getIamUserById(req.params.user_id);
-  if (!user) return notFound(res, '找不到人員');
+  if (!user || user.deleted_at) return notFound(res, '找不到人員');
   res.json(user);
 });
 
@@ -4775,12 +4809,16 @@ app.patch('/iam/users/:user_id', (req, res) => {
 app.delete('/iam/users/:user_id', (req, res) => {
   const user = getIamUserById(req.params.user_id);
   if (!user) return notFound(res, '找不到人員');
+  user.deleted_at = toISO(new Date());
   res.status(204).end();
 });
 
 app.get('/iam/teams', (req, res) => {
   const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+
   const filtered = iamTeams.filter((team) => {
+    if (!includeDeleted && team.deleted_at) return false;
     if (!keyword) return true;
     const text = `${team.name || ''} ${team.description || ''}`.toLowerCase();
     return text.includes(keyword);
@@ -4830,13 +4868,13 @@ app.post('/iam/teams', (req, res) => {
 
 app.get('/iam/teams/:team_id', (req, res) => {
   const team = getTeamById(req.params.team_id);
-  if (!team) return notFound(res, '找不到團隊');
+  if (!team || team.deleted_at) return notFound(res, '找不到團隊');
   res.json(buildTeamDetail(team));
 });
 
 app.patch('/iam/teams/:team_id', (req, res) => {
   const team = getTeamById(req.params.team_id);
-  if (!team) return notFound(res, '找不到團隊');
+  if (!team || team.deleted_at) return notFound(res, '找不到團隊');
   const payload = req.body || {};
   Object.assign(team, payload);
 
@@ -4867,11 +4905,17 @@ app.patch('/iam/teams/:team_id', (req, res) => {
 app.delete('/iam/teams/:team_id', (req, res) => {
   const team = getTeamById(req.params.team_id);
   if (!team) return notFound(res, '找不到團隊');
+  team.deleted_at = toISO(new Date());
   res.status(204).end();
 });
 
 app.get('/iam/roles', (req, res) => {
-  res.json(iamRoles.map((role) => ({
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const filtered = iamRoles.filter((role) => {
+    if (!includeDeleted && role.deleted_at) return false;
+    return true;
+  });
+  res.json(filtered.map((role) => ({
     role_id: role.role_id,
     name: role.name,
     description: role.description,
@@ -4926,8 +4970,10 @@ app.get('/notification-config/strategies', (req, res) => {
     parseListParam(req.query.recipient_types ?? req.query.recipient_type)
   );
   const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
 
   const filtered = notificationStrategies.filter((strategy) => {
+    if (!includeDeleted && strategy.deleted_at) return false;
     const statusValue = strategy.enabled ? 'enabled' : 'disabled';
     if (!matchesEnumFilter(statusValue, statusFilter)) return false;
 
@@ -5094,7 +5140,12 @@ app.post('/notification-config/strategies/:strategy_id/test', (req, res) => {
 });
 
 app.get('/notification-config/channels', (req, res) => {
-  res.json(notificationChannels.map((channel) => ({
+  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const filtered = notificationChannels.filter((channel) => {
+    if (!includeDeleted && channel.deleted_at) return false;
+    return true;
+  });
+  res.json(filtered.map((channel) => ({
     channel_id: channel.channel_id,
     name: channel.name,
     type: channel.type,
@@ -5719,6 +5770,101 @@ app.post('/settings/auth/test', (req, res) => {
   };
   res.status(asyncMode ? 202 : 200).json(payload);
 });
+
+const systemConfigurations = [
+  {
+    key: 'oidc.provider',
+    value: { value: 'keycloak' },
+    description: 'OIDC 供應商',
+    sensitive: false,
+    updated_at: toISO(new Date(now.getTime() - 86400000))
+  },
+  {
+    key: 'oidc.client_id',
+    value: { value: 'sre-platform' },
+    description: 'OIDC 客戶端 ID',
+    sensitive: false,
+    updated_at: toISO(new Date(now.getTime() - 86400000))
+  },
+  {
+    key: 'oidc.client_secret',
+    value: { value: null },
+    description: 'OIDC 客戶端密鑰',
+    sensitive: true,
+    updated_at: toISO(new Date(now.getTime() - 86400000))
+  },
+  {
+    key: 'smtp.host',
+    value: { value: 'smtp.example.com' },
+    description: 'SMTP 伺服器主機',
+    sensitive: false,
+    updated_at: toISO(new Date(now.getTime() - 172800000))
+  },
+  {
+    key: 'smtp.password',
+    value: { value: null },
+    description: 'SMTP 伺服器密碼',
+    sensitive: true,
+    updated_at: toISO(new Date(now.getTime() - 172800000))
+  }
+];
+
+app.get('/settings/configurations', (req, res) => {
+  const keys = parseListParam(req.query.keys);
+  let results = systemConfigurations.map(({ sensitive, ...rest }) => ({
+    ...rest,
+    sensitive,
+    // Never send sensitive values over the wire
+    value: sensitive ? { value: null, placeholder: '********' } : rest.value
+  }));
+
+  if (keys && keys.length > 0) {
+    const keySet = new Set(keys);
+    results = results.filter((item) => keySet.has(item.key));
+  }
+
+  res.json(results);
+});
+
+app.put('/settings/configurations', (req, res) => {
+  const { settings } = req.body || {};
+  if (!Array.isArray(settings)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: '請求內容必須包含 settings 陣列。' });
+  }
+
+  const updatedKeys = new Set();
+  const nowIso = toISO(new Date());
+
+  settings.forEach((update) => {
+    if (update && typeof update.key === 'string') {
+      const existing = systemConfigurations.find((item) => item.key === update.key);
+      if (existing) {
+        // Only update the value, other properties are managed by the system
+        if (update.value !== undefined && !existing.sensitive) {
+          existing.value = update.value;
+          existing.updated_at = nowIso;
+          updatedKeys.add(existing.key);
+        } else if (existing.sensitive && update.value?.value) {
+          // Mock storing a sensitive value without actually storing it
+          console.log(`Received sensitive value for ${existing.key}, not storing in mock.`);
+          existing.updated_at = nowIso;
+          updatedKeys.add(existing.key);
+        }
+      }
+    }
+  });
+
+  const results = systemConfigurations
+    .filter((item) => updatedKeys.has(item.key))
+    .map(({ sensitive, ...rest }) => ({
+      ...rest,
+      sensitive,
+      value: sensitive ? { value: null, placeholder: '********' } : rest.value
+    }));
+
+  res.json(results);
+});
+
 app.listen(PORT, () => {
   console.log(`Mock server listening on http://localhost:${PORT}`);
 });

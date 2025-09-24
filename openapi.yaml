@@ -505,6 +505,7 @@ paths:
         - $ref: "#/components/parameters/PageSizeParam"
         - $ref: "#/components/parameters/SortByParam"
         - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/IncludeDeletedParam"
         - name: status
           in: query
           schema:
@@ -1427,7 +1428,8 @@ paths:
     delete:
       tags:
         - 資源管理
-      summary: 刪除資源
+      summary: 軟刪除資源
+      description: 執行軟刪除，將資源標記為已刪除但保留資料庫紀錄。
       operationId: deleteResource
       responses:
         "204":
@@ -1500,6 +1502,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/IncludeDeletedParam"
         - name: keyword
           in: query
           schema:
@@ -1593,7 +1596,8 @@ paths:
     delete:
       tags:
         - 資源群組
-      summary: 刪除資源群組
+      summary: 軟刪除資源群組
+      description: 執行軟刪除，將資源群組標記為已刪除但保留資料庫紀錄。
       operationId: deleteResourceGroup
       responses:
         "204":
@@ -1756,6 +1760,7 @@ paths:
         - $ref: "#/components/parameters/PageSizeParam"
         - $ref: "#/components/parameters/SortByParam"
         - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/IncludeDeletedParam"
         - name: category
           in: query
           schema:
@@ -1858,7 +1863,8 @@ paths:
     delete:
       tags:
         - 儀表板
-      summary: 刪除儀表板
+      summary: 軟刪除儀表板
+      description: 執行軟刪除，將儀表板標記為已刪除但保留資料庫紀錄。
       operationId: deleteDashboard
       responses:
         "204":
@@ -1952,6 +1958,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/IncludeDeletedParam"
         - name: type
           in: query
           schema:
@@ -2133,7 +2140,8 @@ paths:
     delete:
       tags:
         - 自動化
-      summary: 刪除自動化腳本
+      summary: 軟刪除自動化腳本
+      description: 執行軟刪除，將腳本標記為已刪除但保留資料庫紀錄。
       operationId: deleteAutomationScript
       responses:
         "204":
@@ -2201,6 +2209,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/IncludeDeletedParam"
         - name: status
           in: query
           schema:
@@ -2339,6 +2348,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/IncludeDeletedParam"
         - name: status
           in: query
           schema:
@@ -2570,7 +2580,8 @@ paths:
     delete:
       tags:
         - 身份與存取
-      summary: 停用人員帳號
+      summary: 軟刪除人員帳號
+      description: 執行軟刪除，將人員標記為已刪除但保留資料庫紀錄。
       operationId: deleteIamUser
       responses:
         "204":
@@ -2588,6 +2599,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/PageParam"
         - $ref: "#/components/parameters/PageSizeParam"
+        - $ref: "#/components/parameters/IncludeDeletedParam"
         - name: keyword
           in: query
           schema:
@@ -2681,7 +2693,8 @@ paths:
     delete:
       tags:
         - 身份與存取
-      summary: 刪除團隊
+      summary: 軟刪除團隊
+      description: 執行軟刪除，將團隊標記為已刪除但保留資料庫紀錄。
       operationId: deleteIamTeam
       responses:
         "204":
@@ -2696,6 +2709,8 @@ paths:
         - 身份與存取
       summary: 取得角色列表
       operationId: listIamRoles
+      parameters:
+        - $ref: "#/components/parameters/IncludeDeletedParam"
       responses:
         "200":
           description: 回傳角色列表。
@@ -2780,7 +2795,8 @@ paths:
     delete:
       tags:
         - 身份與存取
-      summary: 刪除角色
+      summary: 軟刪除角色
+      description: 執行軟刪除，將角色標記為已刪除但保留資料庫紀錄。
       operationId: deleteIamRole
       responses:
         "204":
@@ -2839,6 +2855,7 @@ paths:
         - $ref: "#/components/parameters/PageSizeParam"
         - $ref: "#/components/parameters/SortByParam"
         - $ref: "#/components/parameters/SortOrderParam"
+        - $ref: "#/components/parameters/IncludeDeletedParam"
         - name: status
           in: query
           description: 依啟用狀態篩選策略，可傳入單一值或逗號分隔多個值。
@@ -2994,7 +3011,8 @@ paths:
     delete:
       tags:
         - 通知管理
-      summary: 刪除通知策略
+      summary: 軟刪除通知策略
+      description: 執行軟刪除，將通知策略標記為已刪除但保留資料庫紀錄。
       operationId: deleteNotificationStrategy
       responses:
         "204":
@@ -3032,6 +3050,8 @@ paths:
         - 通知管理
       summary: 取得通知管道列表
       operationId: listNotificationChannels
+      parameters:
+        - $ref: "#/components/parameters/IncludeDeletedParam"
       responses:
         "200":
           description: 回傳通知管道列表。
@@ -3116,7 +3136,8 @@ paths:
     delete:
       tags:
         - 通知管理
-      summary: 刪除通知管道
+      summary: 軟刪除通知管道
+      description: 執行軟刪除，將通知管道標記為已刪除但保留資料庫紀錄。
       operationId: deleteNotificationChannel
       responses:
         "204":
@@ -3586,6 +3607,61 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /settings/configurations:
+    get:
+      tags:
+        - 平台設定
+      summary: 取得平台設定
+      operationId: getSystemSettings
+      parameters:
+        - name: keys
+          in: query
+          description: 可選，指定要獲取的設定鍵 (以逗號分隔)。
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: false
+      responses:
+        "200":
+          description: 回傳平台設定列表 (不含敏感資訊)。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SystemSetting"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    put:
+      tags:
+        - 平台設定
+      summary: 更新平台設定
+      operationId: updateSystemSettings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SystemSettingsUpdateRequest"
+      responses:
+        "200":
+          description: 平台設定已更新。
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SystemSetting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 components:
   securitySchemes:
     bearerAuth:
@@ -3630,6 +3706,13 @@ components:
       description: 任務唯一識別碼。
       schema:
         type: string
+    IncludeDeletedParam:
+      name: include_deleted
+      in: query
+      description: 是否包含已被軟刪除的資料。
+      schema:
+        type: boolean
+        default: false
   responses:
     BadRequest:
       description: 請求資料不正確。
@@ -3780,6 +3863,40 @@ components:
         metadata:
           type: object
           additionalProperties: true
+    SystemSetting:
+      type: object
+      required: [key, value]
+      properties:
+        key:
+          type: string
+          description: 設定鍵。
+        value:
+          type: object
+          description: 設定值 (JSON 物件)。
+        description:
+          type: string
+          description: 設定說明。
+        sensitive:
+          type: boolean
+          description: 是否為敏感資訊。
+        updated_at:
+          type: string
+          format: date-time
+          description: 最後更新時間。
+    SystemSettingsUpdateRequest:
+      type: object
+      description: 用於批次更新系統設定的請求。
+      properties:
+        settings:
+          type: array
+          items:
+            type: object
+            required: [key, value]
+            properties:
+              key:
+                type: string
+              value:
+                type: object
         created_at:
           type: string
           format: date-time
