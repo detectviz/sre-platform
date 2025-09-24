@@ -172,7 +172,7 @@ CREATE TABLE user_preferences (
     -- 系統頁面鍵值 (僅當類型為 system_page 時使用)
     default_home_page_key VARCHAR(64) DEFAULT 'war_room',
     -- 預設儀表板識別碼 (僅當類型為 dashboard 時使用)
-    default_dashboard_id UUID REFERENCES dashboards(id) ON DELETE SET NULL,
+    default_dashboard_id UUID,
     -- 語言
     language VARCHAR(32) NOT NULL DEFAULT 'zh-TW',
     -- 時區
@@ -671,7 +671,7 @@ CREATE TABLE resource_tags (
     -- 資源識別碼
     resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
     -- 標籤值識別碼
-    tag_value_id UUID NOT NULL REFERENCES tag_values(id) ON DELETE CASCADE,
+    tag_value_id UUID NOT NULL,
     -- 指派時間
     assigned_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     PRIMARY KEY (resource_id, tag_value_id)
@@ -1002,6 +1002,12 @@ CREATE INDEX idx_dashboards_category ON dashboards (category);
 CREATE INDEX idx_dashboards_owner ON dashboards (owner_id);
 CREATE INDEX idx_dashboards_type ON dashboards (dashboard_type);
 CREATE UNIQUE INDEX idx_dashboards_grafana_uid ON dashboards (grafana_dashboard_uid) WHERE grafana_dashboard_uid IS NOT NULL;
+
+ALTER TABLE user_preferences
+    ADD CONSTRAINT fk_user_preferences_dashboard
+    FOREIGN KEY (default_dashboard_id)
+    REFERENCES dashboards(id)
+    ON DELETE SET NULL;
 
 CREATE TABLE dashboard_widgets (
     -- 主鍵識別碼
@@ -1396,6 +1402,12 @@ CREATE TABLE tag_values (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX idx_tag_values_unique ON tag_values (tag_id, value);
+
+ALTER TABLE resource_tags
+    ADD CONSTRAINT fk_resource_tags_tag_value
+    FOREIGN KEY (tag_value_id)
+    REFERENCES tag_values(id)
+    ON DELETE CASCADE;
 
 CREATE TABLE layout_widgets (
     -- 小工具識別碼
