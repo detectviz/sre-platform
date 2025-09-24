@@ -86,7 +86,10 @@ export const routes: RouteConfig[] = [
   { path: '/settings/platform/layout', component: pages.PlatformSettings(), title: '版面設定' },
   { path: '/settings/platform/auth', component: pages.PlatformSettings(), title: '實體驗證' },
   { path: '/settings/platform/email', component: pages.PlatformSettings(), title: '郵件設定' },
-  { path: '/profile', component: pages.Profile(), title: '個人設定' }
+  { path: '/profile', component: pages.Profile(), title: '個人設定' },
+  { path: '/profile/personal', component: pages.Profile(), title: '個人資料' },
+  { path: '/profile/security', component: pages.Profile(), title: '安全設定' },
+  { path: '/profile/preferences', component: pages.Profile(), title: '偏好設定' }
 ]
 
 // 導出路由配置
@@ -112,46 +115,10 @@ export const menuItems: MenuProps['items'] = [
   { key: '/dashboard', icon: icons.monitor, label: '儀表板管理' },
   { key: '/analyzing', icon: icons.chart, label: '分析中心' },
   { key: '/automation', icon: icons.code, label: '自動化中心' },
-  {
-    key: '/settings',
-    icon: icons.setting,
-    label: '設定',
-    children: [
-      {
-        key: '/settings/identity',
-        icon: icons.user,
-        label: '身份與存取管理',
-        children: [
-          { key: '/settings/identity/users', label: '人員管理' },
-          { key: '/settings/identity/teams', label: '團隊管理' },
-          { key: '/settings/identity/roles', label: '角色管理' },
-          { key: '/settings/identity/audit', label: '稽核日誌' },
-        ]
-      },
-      {
-        key: '/settings/notifications',
-        icon: icons.bell,
-        label: '通知管理',
-        children: [
-          { key: '/settings/notifications/strategies', label: '通知策略' },
-          { key: '/settings/notifications/channels', label: '通知管道' },
-          { key: '/settings/notifications/history', label: '通知歷史' },
-        ]
-      },
-      {
-        key: '/settings/platform',
-        icon: icons.setting,
-        label: '平台設定',
-        children: [
-          { key: '/settings/platform/tags', label: '標籤管理' },
-          { key: '/settings/platform/layout', label: '版面設定' },
-          { key: '/settings/platform/auth', label: '實體驗證' },
-          { key: '/settings/platform/email', label: '郵件設定' },
-        ]
-      },
-      { key: '/profile', icon: icons.user, label: '個人設定' },
-    ]
-  },
+  { key: '/settings/identity', icon: icons.user, label: '身份與存取管理' },
+  { key: '/settings/notifications', icon: icons.bell, label: '通知管理' },
+  { key: '/settings/platform', icon: icons.setting, label: '平台設定' },
+  { key: '/profile', icon: icons.user, label: '個人設定' },
 ]
 
 

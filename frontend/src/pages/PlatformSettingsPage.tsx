@@ -1,13 +1,16 @@
 import React, { useState } from 'react'
 import { useTabs } from '../hooks'
-import { Typography, List, Space, Divider, Tabs, Alert, Button, Modal } from 'antd'
+import { Typography, List, Space, Tabs, Alert, Button, Modal, Table, Tag } from 'antd'
+import type { ColumnsType } from 'antd/es/table'
 import { ContextualKPICard } from '../components/ContextualKPICard'
+import { ToolbarActions } from '../components/ToolbarActions'
 import {
   TagsOutlined,
   MailOutlined,
   LockOutlined,
   LayoutOutlined,
   EditOutlined,
+  PlusOutlined,
   ArrowRightOutlined,
   ArrowLeftOutlined,
   UpOutlined,
@@ -94,6 +97,329 @@ const PlatformSettingsPage: React.FC = () => {
     setAvailableWidgets([])
   }
 
+  // 處理表格操作
+  const handleAdd = () => {
+    console.log('新增記錄')
+  }
+
+  const handleEdit = (record: any) => {
+    console.log('編輯記錄:', record)
+  }
+
+  const handleDelete = (record: any) => {
+    console.log('刪除記錄:', record)
+  }
+
+  // 模擬數據
+  const tagData = [
+    {
+      key: '1',
+      name: 'production',
+      description: '生產環境標籤',
+      category: 'environment',
+      resourceCount: 45,
+      status: 'active',
+      createdAt: '2024-01-10 09:00',
+      color: '#52c41a',
+    },
+    {
+      key: '2',
+      name: 'staging',
+      description: '測試環境標籤',
+      category: 'environment',
+      resourceCount: 12,
+      status: 'active',
+      createdAt: '2024-01-10 09:05',
+      color: '#faad14',
+    },
+    {
+      key: '3',
+      name: 'database',
+      description: '資料庫相關標籤',
+      category: 'service',
+      resourceCount: 23,
+      status: 'inactive',
+      createdAt: '2024-01-09 15:30',
+      color: '#1890ff',
+    },
+  ]
+
+  const emailData = [
+    {
+      key: '1',
+      smtpHost: 'smtp.company.com',
+      smtpPort: 587,
+      username: 'alerts@company.com',
+      encryption: 'TLS',
+      status: 'active',
+      lastTest: '2024-01-15 14:00',
+      testResult: 'success',
+    },
+    {
+      key: '2',
+      smtpHost: 'backup-smtp.company.com',
+      smtpPort: 465,
+      username: 'backup@company.com',
+      encryption: 'SSL',
+      status: 'inactive',
+      lastTest: '2024-01-15 13:30',
+      testResult: 'failed',
+    },
+  ]
+
+  const authData = [
+    {
+      key: '1',
+      method: 'LDAP',
+      status: 'active',
+      provider: 'Active Directory',
+      userCount: 156,
+      lastSync: '2024-01-15 10:00',
+      syncStatus: 'success',
+    },
+    {
+      key: '2',
+      method: 'SAML',
+      status: 'active',
+      provider: 'Okta',
+      userCount: 89,
+      lastSync: '2024-01-15 09:30',
+      syncStatus: 'success',
+    },
+    {
+      key: '3',
+      method: 'OAuth',
+      status: 'inactive',
+      provider: 'Google Workspace',
+      userCount: 0,
+      lastSync: '2024-01-14 16:00',
+      syncStatus: 'failed',
+    },
+  ]
+
+  // 表格列定義
+  const tagColumns: ColumnsType = [
+    {
+      title: '標籤名稱',
+      dataIndex: 'name',
+      key: 'name',
+      render: (name: string, record: any) => (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                backgroundColor: record.color,
+              }}
+            />
+            <strong>{name}</strong>
+          </div>
+          <div style={{ color: '#666', fontSize: '12px' }}>{record.description}</div>
+        </div>
+      ),
+    },
+    {
+      title: '分類',
+      dataIndex: 'category',
+      key: 'category',
+      render: (category: string) => (
+        <Tag color="blue">{category === 'environment' ? '環境' : '服務'}</Tag>
+      ),
+    },
+    {
+      title: '資源數量',
+      dataIndex: 'resourceCount',
+      key: 'resourceCount',
+      render: (count: number) => (
+        <span style={{ color: count > 0 ? '#1890ff' : '#666' }}>{count}</span>
+      ),
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'active' ? 'success' : 'default'}>
+          {status === 'active' ? '啟用' : '停用'}
+        </Tag>
+      ),
+    },
+    {
+      title: '創建時間',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            onClick={() => handleEdit(record)}
+          >
+            編輯
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            danger
+            onClick={() => handleDelete(record)}
+          >
+            刪除
+          </Button>
+        </Space>
+      ),
+    },
+  ]
+
+  const emailColumns: ColumnsType = [
+    {
+      title: 'SMTP 伺服器',
+      dataIndex: 'smtpHost',
+      key: 'smtpHost',
+      render: (host: string, record: any) => (
+        <div>
+          <div style={{ fontWeight: 'bold' }}>{host}</div>
+          <div style={{ color: '#666', fontSize: '12px' }}>Port: {record.smtpPort}</div>
+        </div>
+      ),
+    },
+    {
+      title: '加密方式',
+      dataIndex: 'encryption',
+      key: 'encryption',
+      render: (encryption: string) => (
+        <Tag color={encryption === 'TLS' ? 'green' : 'blue'}>{encryption}</Tag>
+      ),
+    },
+    {
+      title: '用戶名稱',
+      dataIndex: 'username',
+      key: 'username',
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'active' ? 'success' : 'default'}>
+          {status === 'active' ? '正常' : '停用'}
+        </Tag>
+      ),
+    },
+    {
+      title: '最後測試',
+      dataIndex: 'lastTest',
+      key: 'lastTest',
+    },
+    {
+      title: '測試結果',
+      dataIndex: 'testResult',
+      key: 'testResult',
+      render: (result: string) => (
+        <Tag color={result === 'success' ? 'success' : 'error'}>
+          {result === 'success' ? '成功' : '失敗'}
+        </Tag>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            onClick={() => handleEdit(record)}
+          >
+            測試
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => handleEdit(record)}
+          >
+            配置
+          </Button>
+        </Space>
+      ),
+    },
+  ]
+
+  const authColumns: ColumnsType = [
+    {
+      title: '認證方法',
+      dataIndex: 'method',
+      key: 'method',
+      render: (method: string) => (
+        <Tag color="blue">{method}</Tag>
+      ),
+    },
+    {
+      title: '供應商',
+      dataIndex: 'provider',
+      key: 'provider',
+    },
+    {
+      title: '狀態',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status: string) => (
+        <Tag color={status === 'active' ? 'success' : 'default'}>
+          {status === 'active' ? '正常' : '停用'}
+        </Tag>
+      ),
+    },
+    {
+      title: '用戶數量',
+      dataIndex: 'userCount',
+      key: 'userCount',
+      render: (count: number) => (
+        <span style={{ color: count > 0 ? '#1890ff' : '#666' }}>{count}</span>
+      ),
+    },
+    {
+      title: '最後同步',
+      dataIndex: 'lastSync',
+      key: 'lastSync',
+    },
+    {
+      title: '同步狀態',
+      dataIndex: 'syncStatus',
+      key: 'syncStatus',
+      render: (status: string) => (
+        <Tag color={status === 'success' ? 'success' : 'error'}>
+          {status === 'success' ? '成功' : '失敗'}
+        </Tag>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      render: (_, record) => (
+        <Space size="small">
+          <Button
+            type="link"
+            size="small"
+            onClick={() => handleEdit(record)}
+          >
+            同步
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            onClick={() => handleEdit(record)}
+          >
+            配置
+          </Button>
+        </Space>
+      ),
+    },
+  ]
 
   const kpiData = [
     {
@@ -125,47 +451,29 @@ const PlatformSettingsPage: React.FC = () => {
       label: '標籤管理',
       icon: <TagsOutlined />,
       children: (
-        <div style={{ padding: '16px' }}>
-          <Space align="center" style={{ marginBottom: '16px' }}>
-            <TagsOutlined style={{ fontSize: '18px' }} />
-            <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
-              標籤管理
-            </Title>
-          </Space>
-          <Text
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              display: 'block',
-              marginBottom: 'var(--spacing-lg)',
+        <div>
+          <ToolbarActions
+            onRefresh={handleEditModalCancel}
+            onExport={() => console.log('匯出標籤')}
+            showRefresh={true}
+            showExport={true}
+            actions={[{
+              key: 'add',
+              label: '新增標籤',
+              icon: <PlusOutlined />,
+              onClick: () => handleAdd(),
+              tooltip: '新增資源標籤',
+            }]}
+          />
+          <Table
+            columns={tagColumns}
+            dataSource={tagData}
+            size="middle"
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
             }}
-          >
-            統一管理資源標籤和分類
-          </Text>
-          <Divider style={{ margin: 'var(--spacing-md) 0', borderColor: 'var(--border-light)' }} />
-          <List
-            size="small"
-            dataSource={['標籤創建', '標籤編輯', '標籤刪除', '標籤批量操作', '標籤統計']}
-            renderItem={(item) => (
-              <List.Item
-                style={{
-                  padding: 'var(--spacing-sm) 0',
-                  border: 'none',
-                  color: 'var(--text-tertiary)',
-                  fontSize: '12px',
-                }}
-              >
-                <Space>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    background: 'var(--text-tertiary)',
-                  }} />
-                  {item}
-                </Space>
-              </List.Item>
-            )}
           />
         </div>
       ),
@@ -175,47 +483,29 @@ const PlatformSettingsPage: React.FC = () => {
       label: '郵件設定',
       icon: <MailOutlined />,
       children: (
-        <div style={{ padding: '16px' }}>
-          <Space align="center" style={{ marginBottom: '16px' }}>
-            <MailOutlined style={{ fontSize: '18px' }} />
-            <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
-              郵件設定
-            </Title>
-          </Space>
-          <Text
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              display: 'block',
-              marginBottom: 'var(--spacing-lg)',
+        <div>
+          <ToolbarActions
+            onRefresh={handleEditModalCancel}
+            onExport={() => console.log('匯出郵件設定')}
+            showRefresh={true}
+            showExport={true}
+            actions={[{
+              key: 'add',
+              label: '新增SMTP',
+              icon: <PlusOutlined />,
+              onClick: () => handleAdd(),
+              tooltip: '新增SMTP伺服器配置',
+            }]}
+          />
+          <Table
+            columns={emailColumns}
+            dataSource={emailData}
+            size="middle"
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
             }}
-          >
-            配置系統郵件服務和模板
-          </Text>
-          <Divider style={{ margin: 'var(--spacing-md) 0', borderColor: 'var(--border-light)' }} />
-          <List
-            size="small"
-            dataSource={['SMTP 設定', '郵件模板', '發送測試', '黑白名單', '郵件統計']}
-            renderItem={(item) => (
-              <List.Item
-                style={{
-                  padding: 'var(--spacing-sm) 0',
-                  border: 'none',
-                  color: 'var(--text-tertiary)',
-                  fontSize: '12px',
-                }}
-              >
-                <Space>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    background: 'var(--text-tertiary)',
-                  }} />
-                  {item}
-                </Space>
-              </List.Item>
-            )}
           />
         </div>
       ),
@@ -225,47 +515,29 @@ const PlatformSettingsPage: React.FC = () => {
       label: '身份驗證',
       icon: <LockOutlined />,
       children: (
-        <div style={{ padding: '16px' }}>
-          <Space align="center" style={{ marginBottom: '16px' }}>
-            <LockOutlined style={{ fontSize: '18px' }} />
-            <Title level={4} style={{ margin: 0, color: 'var(--text-primary)' }}>
-              身份驗證
-            </Title>
-          </Space>
-          <Text
-            style={{
-              color: 'var(--text-secondary)',
-              fontSize: '14px',
-              display: 'block',
-              marginBottom: 'var(--spacing-lg)',
+        <div>
+          <ToolbarActions
+            onRefresh={handleEditModalCancel}
+            onExport={() => console.log('匯出身份驗證')}
+            showRefresh={true}
+            showExport={true}
+            actions={[{
+              key: 'add',
+              label: '新增認證',
+              icon: <PlusOutlined />,
+              onClick: () => handleAdd(),
+              tooltip: '新增身份驗證方法',
+            }]}
+          />
+          <Table
+            columns={authColumns}
+            dataSource={authData}
+            size="middle"
+            pagination={{
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total: number, range: [number, number]) => `第 ${range[0]}-${range[1]} 項，共 ${total} 項`,
             }}
-          >
-            配置系統身份驗證和安全設定
-          </Text>
-          <Divider style={{ margin: 'var(--spacing-md) 0', borderColor: 'var(--border-light)' }} />
-          <List
-            size="small"
-            dataSource={['SSO 設定', 'OAuth 配置', '2FA 設定', '密碼策略', '會話管理']}
-            renderItem={(item) => (
-              <List.Item
-                style={{
-                  padding: 'var(--spacing-sm) 0',
-                  border: 'none',
-                  color: 'var(--text-tertiary)',
-                  fontSize: '12px',
-                }}
-              >
-                <Space>
-                  <div style={{
-                    width: '4px',
-                    height: '4px',
-                    borderRadius: '50%',
-                    background: 'var(--text-tertiary)',
-                  }} />
-                  {item}
-                </Space>
-              </List.Item>
-            )}
           />
         </div>
       ),
