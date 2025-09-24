@@ -40,17 +40,8 @@ CREATE TABLE teams (
     -- 建立時間
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_page_layouts_scope_type CHECK (scope_type IN ('global','role','user')),
-    CONSTRAINT chk_page_layouts_scope_target CHECK (
-        (scope_type = 'global' AND scope_id IS NULL)
-        OR (scope_type <> 'global' AND scope_id IS NOT NULL)
-    )
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE UNIQUE INDEX idx_page_layouts_global ON page_layouts (page_path)
-    WHERE scope_type = 'global';
-CREATE UNIQUE INDEX idx_page_layouts_scoped ON page_layouts (page_path, scope_type, scope_id)
-    WHERE scope_type <> 'global';
 
 CREATE TABLE team_members (
     -- 團隊識別碼
@@ -125,7 +116,7 @@ CREATE TABLE roles (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_roles_status CHECK (status IN ('active','inactive'))
+    CONSTRAINT chk_roles_status CHECK (status IN ('active','disabled'))
 );
 CREATE INDEX idx_roles_status ON roles (status);
 
@@ -523,7 +514,7 @@ CREATE TABLE event_rule_templates (
 CREATE INDEX idx_event_rule_templates_name ON event_rule_templates (name);
 COMMENT ON TABLE event_rule_templates IS '事件規則快速套用範本表，提供前端精靈預設條件與內容模板。';
 
-CREATE TABLE grafana_rule_snapshots (
+CREATE TABLE alert_rule_extensions (
     -- Grafana 告警規則 UID (唯一識別)
     rule_uid VARCHAR(64) PRIMARY KEY,
     -- Grafana 原始定義快取 (用於離線回填)
@@ -536,19 +527,6 @@ CREATE TABLE grafana_rule_snapshots (
     last_synced_at TIMESTAMPTZ,
     -- 同步訊息
     sync_message TEXT,
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_grafana_rule_snapshots_sync CHECK (sync_status IN ('fresh','stale','failed'))
-);
-CREATE INDEX idx_grafana_rule_snapshots_status ON grafana_rule_snapshots (sync_status);
-CREATE INDEX idx_grafana_rule_snapshots_updated ON grafana_rule_snapshots (updated_at DESC);
-COMMENT ON TABLE grafana_rule_snapshots IS 'Grafana 告警規則快取表，僅存放同步快照與狀態，不承載規則真實來源。';
-
-CREATE TABLE rule_overrides (
-    -- Grafana 規則 UID (對應 grafana_rule_snapshots)
-    rule_uid VARCHAR(64) PRIMARY KEY REFERENCES grafana_rule_snapshots(rule_uid) ON DELETE CASCADE,
     -- 預設優先順序 (平台增值欄位)
     default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
     -- 套用範本鍵值
@@ -561,25 +539,28 @@ CREATE TABLE rule_overrides (
     automation_script_id UUID REFERENCES automation_scripts(id) ON DELETE SET NULL,
     -- 自動化參數
     automation_parameters JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 自動化綁定最後更新者
-    automation_updated_by UUID REFERENCES users(id),
-    -- 自動化綁定最後更新時間
-    automation_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 建立者
-    created_by UUID REFERENCES users(id),
-    -- 更新者
-    updated_by UUID REFERENCES users(id),
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_rule_overrides_priority CHECK (default_priority IN ('P0','P1','P2','P3')),
-    CONSTRAINT chk_rule_overrides_automation_params CHECK (jsonb_typeof(automation_parameters) = 'object')
+    -- 擴充設定建立者
+    extension_created_by UUID REFERENCES users(id),
+    -- 擴充設定更新者
+    extension_updated_by UUID REFERENCES users(id),
+    -- 擴充設定建立時間
+    extension_created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 擴充設定更新時間
+    extension_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 快照建立時間
+    snapshot_created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 快照更新時間
+    snapshot_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_alert_rule_extensions_sync CHECK (sync_status IN ('fresh','stale','failed')),
+    CONSTRAINT chk_alert_rule_extensions_priority CHECK (default_priority IN ('P0','P1','P2','P3')),
+    CONSTRAINT chk_alert_rule_extensions_automation_params CHECK (jsonb_typeof(automation_parameters) = 'object')
 );
-CREATE INDEX idx_rule_overrides_priority ON rule_overrides (default_priority);
-CREATE INDEX idx_rule_overrides_template ON rule_overrides (template_key);
-CREATE INDEX idx_rule_overrides_script ON rule_overrides (automation_script_id);
-COMMENT ON TABLE rule_overrides IS '告警規則增值資料表，僅保存平台層的優先順序與自動化設定。';
+CREATE INDEX idx_alert_rule_extensions_status ON alert_rule_extensions (sync_status);
+CREATE INDEX idx_alert_rule_extensions_updated ON alert_rule_extensions (snapshot_updated_at DESC);
+CREATE INDEX idx_alert_rule_extensions_priority ON alert_rule_extensions (default_priority);
+CREATE INDEX idx_alert_rule_extensions_template ON alert_rule_extensions (template_key);
+CREATE INDEX idx_alert_rule_extensions_script ON alert_rule_extensions (automation_script_id);
+COMMENT ON TABLE alert_rule_extensions IS '告警規則擴充設定表，整合 Grafana 快取與平台自動化增值設定。';
 
 CREATE TABLE batch_operations (
     -- 主鍵識別碼
@@ -1403,45 +1384,6 @@ CREATE INDEX idx_notification_history_event ON notification_history (related_eve
 -- =============================
 -- 平台設定與整合
 -- =============================
-CREATE TABLE identity_provider_settings (
-    -- 固定為單一紀錄 (ID = 1)
-    id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-    -- 外部身份供應商類型
-    provider VARCHAR(64) NOT NULL DEFAULT 'Keycloak',
-    -- 是否啟用 OIDC 認證
-    oidc_enabled BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 設定維護來源 (keycloak 或 custom)
-    managed_by VARCHAR(32) NOT NULL DEFAULT 'keycloak',
-    -- 是否唯讀 (由外部系統託管)
-    read_only BOOLEAN NOT NULL DEFAULT TRUE,
-    -- Keycloak Realm 或自訂網域
-    realm VARCHAR(128),
-    -- OIDC 客戶端識別
-    client_id VARCHAR(128),
-    -- 加密後的客戶端密鑰
-    client_secret_encrypted TEXT,
-    -- 授權端點
-    auth_url TEXT,
-    -- Token 端點
-    token_url TEXT,
-    -- 使用者資訊端點
-    userinfo_url TEXT,
-    -- 平台 Redirect URI
-    redirect_uri TEXT,
-    -- 登出端點
-    logout_url TEXT,
-    -- 請求範圍
-    scopes TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-    -- 是否啟用使用者同步
-    user_sync BOOLEAN NOT NULL DEFAULT TRUE,
-    -- 設定更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 最後更新者
-    updated_by UUID REFERENCES users(id),
-    CONSTRAINT chk_identity_provider_managed_by CHECK (managed_by IN ('keycloak','custom')),
-    CONSTRAINT chk_identity_provider_scopes CHECK (array_position(scopes, NULL) IS NULL)
-);
-CREATE INDEX idx_identity_provider_settings_updated_at ON identity_provider_settings (updated_at DESC);
 
 CREATE TABLE tag_definitions (
     -- 主鍵識別碼

@@ -114,7 +114,6 @@ const userPreferences = {
     dashboard_name: 'SRE 戰情室儀表板',
     dashboard_type: 'built_in'
   },
-  default_page: 'war_room',
   language: 'zh-TW',
   timezone: 'Asia/Taipei',
   notification_preferences: {
@@ -1825,38 +1824,6 @@ const tagValueCatalog = {
       last_seen_at: toISO(new Date(now.getTime() - 7200000))
     }
   ]
-};
-
-const emailSettings = {
-  channel_id: 'channel-email-default',
-  channel_name: '預設郵件通道',
-  smtp_host: 'smtp.example.com',
-  smtp_port: 587,
-  username: 'noreply@example.com',
-  sender_name: 'SRE Platform',
-  sender_email: 'noreply@example.com',
-  encryption: 'tls',
-  test_recipient: 'ops@example.com',
-  is_enabled: true,
-  updated_at: toISO(new Date(now.getTime() - 3600000))
-};
-
-const authSettings = {
-  provider: 'Keycloak',
-  oidc_enabled: true,
-  managed_by: 'keycloak',
-  read_only: true,
-  realm: 'sre-platform',
-  client_id: 'sre-ui',
-  client_secret_hint: '***',
-  auth_url: 'https://auth.example.com/realms/sre/protocol/openid-connect/auth',
-  token_url: 'https://auth.example.com/realms/sre/protocol/openid-connect/token',
-  userinfo_url: 'https://auth.example.com/realms/sre/protocol/openid-connect/userinfo',
-  redirect_uri: 'https://sre.example.com/callback',
-  logout_url: 'https://auth.example.com/realms/sre/protocol/openid-connect/logout',
-  scopes: ['openid', 'profile', 'email'],
-  user_sync: true,
-  updated_at: toISO(new Date(now.getTime() - 7200000))
 };
 
 const layoutWidgets = [
@@ -5525,90 +5492,6 @@ app.delete('/settings/tags/:tag_id/values/:value_id', (req, res) => {
   const value = tag.values.find((item) => item.value_id === req.params.value_id);
   if (!value) return notFound(res, '找不到標籤值');
   res.status(204).end();
-});
-
-app.get('/settings/email', (req, res) => res.json(emailSettings));
-
-app.put('/settings/email', (req, res) => {
-  const { channel_id, channel_name } = emailSettings;
-  Object.assign(emailSettings, req.body || {}, {
-    channel_id,
-    channel_name,
-    updated_at: toISO(new Date())
-  });
-  res.json(emailSettings);
-});
-
-app.post('/settings/email/test', (req, res) => {
-  const recipient = req.body?.recipient || emailSettings.test_recipient || emailSettings.sender_email;
-  const executedAt = toISO(new Date());
-  const result = {
-    status: 'success',
-    executed_at: executedAt,
-    duration_ms: 380,
-    recipient,
-    message: '測試郵件已送出',
-    error: null,
-    logs: ['已成功連線 SMTP 伺服器', '測試郵件已送出'],
-    preview_url: null
-  };
-  emailTestHistory.unshift({
-    id: `email-test-${Date.now()}`,
-    status: result.status,
-    recipient,
-    template_key: req.body?.template_key || 'default',
-    duration_ms: result.duration_ms,
-    response_message: result.message,
-    error_message: result.error,
-    metadata: { variables: req.body?.variables || {} },
-    executed_at: executedAt
-  });
-  res.json(result);
-});
-
-app.get('/settings/auth', (req, res) => res.json(authSettings));
-
-app.put('/settings/auth', (req, res) => {
-  const payload = req.body || {};
-  if (authSettings.read_only && payload.managed_by !== 'custom') {
-    return res.status(400).json({
-      code: 'READ_ONLY_SETTING',
-      message: '身份驗證設定由外部系統管理，請改為 managed_by="custom" 後再修改。',
-      details: { managed_by: authSettings.managed_by }
-    });
-  }
-
-  if (typeof payload.oidc_enabled === 'boolean') {
-    authSettings.oidc_enabled = payload.oidc_enabled;
-  }
-  if (payload.provider) {
-    authSettings.provider = payload.provider;
-  }
-
-  const nextManagedBy = payload.managed_by || authSettings.managed_by;
-  authSettings.managed_by = nextManagedBy;
-  authSettings.read_only = nextManagedBy !== 'custom';
-
-  ['realm', 'client_id', 'auth_url', 'token_url', 'userinfo_url', 'redirect_uri', 'logout_url'].forEach((field) => {
-    if (Object.prototype.hasOwnProperty.call(payload, field)) {
-      authSettings[field] = payload[field] || null;
-    }
-  });
-
-  if (Array.isArray(payload.scopes)) {
-    authSettings.scopes = payload.scopes;
-  }
-  if (typeof payload.user_sync === 'boolean') {
-    authSettings.user_sync = payload.user_sync;
-  }
-  if (payload.client_secret) {
-    const secret = String(payload.client_secret);
-    const maskLength = Math.max(secret.length - 2, 2);
-    authSettings.client_secret_hint = `${secret[0]}${'*'.repeat(maskLength)}${secret[secret.length - 1]}`;
-  }
-
-  authSettings.updated_at = toISO(new Date());
-  res.json(authSettings);
 });
 
 // Admin endpoints
