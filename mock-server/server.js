@@ -596,18 +596,11 @@ const resourceGroups = [
     owner_team_id: 'team-sre',
     owner_team: 'SRE 核心小組',
     member_count: 2,
-    subscriber_count: 4,
     status_summary: { healthy: 1, warning: 1, critical: 0 },
     created_at: toISO(new Date(now.getTime() - 777600000)),
     members: [
       { resource_id: 'res-001', name: 'web-01', type: 'service', status: 'warning' },
       { resource_id: 'res-003', name: 'redis-cache', type: 'cache', status: 'healthy' }
-    ],
-    subscribers: [
-      { user_id: 'user-001', display_name: '林佳瑜', subscribed_at: toISO(new Date(now.getTime() - 604800000)) },
-      { user_id: 'user-002', display_name: '張宥誠', subscribed_at: toISO(new Date(now.getTime() - 302400000)) },
-      { user_id: 'user-003', display_name: '陳昱安', subscribed_at: toISO(new Date(now.getTime() - 86400000)) },
-      { user_id: 'user-004', display_name: '游佩珊', subscribed_at: toISO(new Date(now.getTime() - 43200000)) }
     ],
     deleted_at: null
   },
@@ -618,15 +611,10 @@ const resourceGroups = [
     owner_team_id: 'team-db',
     owner_team: '資料庫團隊',
     member_count: 1,
-    subscriber_count: 2,
     status_summary: { healthy: 0, warning: 1, critical: 0 },
     created_at: toISO(new Date(now.getTime() - 1036800000)),
     members: [
       { resource_id: 'res-002', name: 'rds-read-1', type: 'database', status: 'warning' }
-    ],
-    subscribers: [
-      { user_id: 'user-003', display_name: '陳昱安', subscribed_at: toISO(new Date(now.getTime() - 259200000)) },
-      { user_id: 'user-001', display_name: '林佳瑜', subscribed_at: toISO(new Date(now.getTime() - 172800000)) }
     ],
     deleted_at: null
   }
@@ -2294,7 +2282,7 @@ const buildTeamDetail = (team) => {
     team_id: team.team_id,
     name: team.name,
     description: team.description,
-    owner: team.owner,
+    creator: team.creator,
     members,
     member_ids: memberIds,
     subscriber_ids: subscriberIds,
@@ -4112,7 +4100,6 @@ app.get('/resource-groups', (req, res) => {
     owner_team_id: grp.owner_team_id || null,
     owner_team: grp.owner_team,
     member_count: grp.member_count,
-    subscriber_count: grp.subscriber_count,
     status_summary: grp.status_summary,
     created_at: grp.created_at
   }));
@@ -4137,11 +4124,9 @@ app.post('/resource-groups', (req, res) => {
       payload.owner_team ||
       (payload.owner_team_id ? getTeamById(payload.owner_team_id)?.name || null : null),
     member_count: payload.resource_ids ? payload.resource_ids.length : 0,
-    subscriber_count: payload.subscriber_ids ? payload.subscriber_ids.length : 0,
     status_summary: { healthy: 0, warning: 0, critical: 0 },
     created_at: toISO(new Date()),
-    members: (payload.resource_ids || []).map((id) => ({ resource_id: id, name: id, type: 'unknown', status: 'healthy' })),
-    subscribers: (payload.subscriber_ids || []).map((id) => ({ user_id: id, display_name: id, subscribed_at: toISO(new Date()) }))
+    members: (payload.resource_ids || []).map((id) => ({ resource_id: id, name: id, type: 'unknown', status: 'healthy' }))
   };
   res.status(201).json(group);
 });
@@ -4269,8 +4254,7 @@ app.post('/dashboards', (req, res) => {
     dashboard_id: `dash-${Date.now()}`,
     name: payload.name || '新儀表板',
     category: payload.category || '自訂',
-    owner: currentUser.display_name,
-    owner_id: currentUser.user_id,
+    creator: { user_id: currentUser.user_id, display_name: currentUser.display_name },
     description: payload.description || '',
     status: 'draft',
     is_featured: false,
@@ -4705,7 +4689,7 @@ app.get('/iam/teams', (req, res) => {
     team_id: team.team_id,
     name: team.name,
     description: team.description,
-    owner: team.owner,
+    creator: team.creator,
     members: team.members,
     subscribers: team.subscribers,
     created_at: team.created_at
@@ -4731,7 +4715,7 @@ app.post('/iam/teams', (req, res) => {
     team_id: `team-${Date.now()}`,
     name: payload.name || '新團隊',
     description: payload.description || '',
-    owner: payload.owner_id || currentUser.user_id,
+    creator: { user_id: payload.creator_id || currentUser.user_id, display_name: currentUser.display_name },
     created_at: toISO(new Date()),
     member_ids: memberIds,
     members: memberIds,

@@ -38,8 +38,8 @@ CREATE TABLE teams (
     name VARCHAR(128) NOT NULL UNIQUE,
     -- 描述
     description TEXT,
-    -- 擁有者識別碼
-    owner_id UUID REFERENCES users(id),
+    -- 建立者識別碼
+    creator_id UUID REFERENCES users(id),
     -- 建立時間
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
@@ -78,41 +78,6 @@ CREATE TABLE team_subscribers (
 );
 CREATE INDEX idx_team_subscribers_user ON team_subscribers (user_id);
 CREATE INDEX idx_team_subscribers_type ON team_subscribers (subscriber_type);
-
--- DEPRECATED: 此功能應由 Keycloak 統一管理，待未來版本移除。
-CREATE TABLE user_invitations (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 電子郵件
-    email VARCHAR(256) NOT NULL,
-    -- 名稱
-    name VARCHAR(128),
-    -- 預指派團隊
-    team_ids UUID[] NOT NULL DEFAULT '{}'::UUID[],
-    -- 預指派角色
-    role_ids UUID[] NOT NULL DEFAULT '{}'::UUID[],
-    -- 狀態
-    status VARCHAR(32) NOT NULL DEFAULT 'invitation_sent',
-    -- 邀請者識別碼
-    invited_by UUID REFERENCES users(id),
-    -- 邀請時間
-    invited_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 到期時間
-    expires_at TIMESTAMPTZ,
-    -- 接受時間
-    accepted_at TIMESTAMPTZ,
-    -- 最後發送時間
-    last_sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 令牌
-    token VARCHAR(256),
-    CONSTRAINT chk_user_invitations_status CHECK (status IN ('invitation_sent','accepted','expired','cancelled'))
-);
-CREATE UNIQUE INDEX idx_user_invitations_active_email ON user_invitations (email)
-    WHERE status = 'invitation_sent';
-CREATE INDEX idx_user_invitations_status ON user_invitations (status);
-CREATE INDEX idx_user_invitations_invited_at ON user_invitations (invited_at DESC);
-CREATE INDEX idx_user_invitations_last_sent_at ON user_invitations (last_sent_at DESC);
-CREATE INDEX idx_user_invitations_expires_at ON user_invitations (expires_at DESC);
 
 CREATE TABLE roles (
     -- 主鍵識別碼
@@ -157,28 +122,6 @@ CREATE TABLE role_permissions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE INDEX idx_role_permissions_role ON role_permissions (role_id);
-
--- DEPRECATED: 此功能應由 Keycloak 統一管理，待未來版本移除。
-CREATE TABLE security_login_history (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 使用者識別碼
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    -- 登入時間
-    logged_in_at TIMESTAMPTZ NOT NULL,
-    -- IP位址
-    ip_address VARCHAR(64),
-    -- 裝置資訊
-    device_info VARCHAR(256),
-    -- 狀態
-    status VARCHAR(32) NOT NULL,
-    -- 位置
-    location VARCHAR(128),
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_security_login_status CHECK (status IN ('success','failed'))
-);
-CREATE INDEX idx_security_login_user ON security_login_history (user_id, logged_in_at DESC);
 
 -- NOTE: 此表的 landing_* 欄位對應 openapi.yaml 中的 UserPreference.default_landing (discriminator object)
 CREATE TABLE user_preferences (
@@ -852,16 +795,6 @@ CREATE TABLE resource_group_members (
     PRIMARY KEY (group_id, resource_id)
 );
 
-CREATE TABLE resource_group_subscribers (
-    -- 群組識別碼
-    group_id UUID NOT NULL REFERENCES resource_groups(id) ON DELETE CASCADE,
-    -- 使用者識別碼
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    -- 訂閱時間
-    subscribed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (group_id, user_id)
-);
-
 CREATE TABLE topology_edges (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -958,8 +891,8 @@ CREATE TABLE dashboards (
     dashboard_type VARCHAR(16) NOT NULL DEFAULT 'built_in',
     -- 描述
     description TEXT,
-    -- 擁有者識別碼
-    owner_id UUID REFERENCES users(id),
+    -- 建立者識別碼
+    creator_id UUID REFERENCES users(id),
     -- 狀態
     status VARCHAR(32) NOT NULL DEFAULT 'draft',
     -- 是否精選
