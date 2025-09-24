@@ -3821,12 +3821,22 @@ app.get('/event-rules', (req, res) => {
   const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
   const enabledFilter = parseBooleanParam(req.query.enabled);
   const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const automationEnabledFilter = parseBooleanParam(req.query.automation_enabled);
+  const syncStatusFilter = createLowercaseSet(parseListParam(req.query.sync_status));
+  const hasTemplateFilter = parseBooleanParam(req.query.has_template);
 
   const filtered = eventRules.filter((rule) => {
     if (!matchesEnumFilter(rule.severity, severityFilter)) return false;
     if (enabledFilter !== null && Boolean(rule.enabled) !== enabledFilter) return false;
+    if (automationEnabledFilter !== null && Boolean(rule.automation_enabled) !== automationEnabledFilter) return false;
+    if (!matchesEnumFilter(rule.sync_status, syncStatusFilter)) return false;
+    if (hasTemplateFilter !== null) {
+      if (hasTemplateFilter && !rule.template_key) return false;
+      if (!hasTemplateFilter && rule.template_key) return false;
+    }
+
     if (keyword) {
-      const text = `${rule.name || ''} ${rule.description || ''}`.toLowerCase();
+      const text = `${rule.name || ''} ${rule.description || ''} ${rule.rule_uid || ''} ${rule.target || ''}`.toLowerCase();
       if (!text.includes(keyword)) return false;
     }
     return true;
@@ -3868,7 +3878,7 @@ app.get('/event-rules', (req, res) => {
 
   res.json(
     paginate(items, req, {
-      allowedSortFields: ['name', 'severity', 'last_updated', 'default_priority'],
+      allowedSortFields: ['name', 'severity', 'last_updated', 'default_priority', 'sync_status'],
       defaultSortKey: 'last_updated',
       defaultSortOrder: 'desc'
     })
@@ -3974,9 +3984,18 @@ app.post('/event-rules/:rule_uid/test', (req, res) => {
 app.get('/silence-rules', (req, res) => {
   const typeFilter = createLowercaseSet(parseListParam(req.query.silence_type));
   const enabledFilter = parseBooleanParam(req.query.enabled);
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const scopeFilter = createLowercaseSet(parseListParam(req.query.scope));
+
   const filtered = silenceRules.filter((rule) => {
     if (!matchesEnumFilter(rule.silence_type, typeFilter)) return false;
     if (enabledFilter !== null && Boolean(rule.enabled) !== enabledFilter) return false;
+    if (!matchesEnumFilter(rule.scope, scopeFilter)) return false;
+
+    if (keyword) {
+      const text = `${rule.name || ''} ${rule.description || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
     return true;
   });
 
@@ -3987,7 +4006,10 @@ app.get('/silence-rules', (req, res) => {
     silence_type: rule.silence_type,
     scope: rule.scope,
     enabled: rule.enabled,
-    created_at: rule.created_at
+    created_at: rule.created_at,
+    schedule: rule.schedule,
+    matchers: rule.matchers,
+    created_by: rule.created_by
   }));
 
   if ((req.query.format || 'json').toLowerCase() === 'csv') {
@@ -4009,7 +4031,7 @@ app.get('/silence-rules', (req, res) => {
 
   res.json(
     paginate(items, req, {
-      allowedSortFields: ['name', 'silence_type', 'created_at'],
+      allowedSortFields: ['name', 'silence_type', 'created_at', 'scope'],
       defaultSortKey: 'created_at',
       defaultSortOrder: 'desc'
     })
@@ -4068,12 +4090,21 @@ app.get('/resources', (req, res) => {
   const tagFilter = createLowercaseSet(parseListParam(req.query.tag_value_ids));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
   const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const teamIdFilter = createLowercaseSet(parseListParam(req.query.team_id));
+  const groupFilter = createLowercaseSet(parseListParam(req.query.group_id));
 
   const filtered = resourceData.filter((resource) => {
     if (!includeDeleted && resource.deleted_at) return false;
     if (!matchesEnumFilter(resource.status, statusFilter)) return false;
     if (!matchesEnumFilter(resource.type, typeFilter)) return false;
     if (!matchesEnumFilter(resource.environment, environmentFilter)) return false;
+    if (!matchesEnumFilter(resource.team_id, teamIdFilter)) return false;
+
+    if (groupFilter) {
+      const groupIds = normalizeGroupIds(resource.groups).map(g => g.toLowerCase());
+      if (!groupIds.some(id => groupFilter.has(id))) return false;
+    }
+
     if (tagFilter) {
       const tagIds = normalizeTags(resource.tags)
         .map((tag) => (tag.tag_value_id || `${tag.key}:${tag.value}`))
@@ -4125,7 +4156,7 @@ app.get('/resources', (req, res) => {
 
   res.json(
     paginate(items, req, {
-      allowedSortFields: ['updated_at', 'cpu_usage', 'memory_usage', 'name', 'status'],
+      allowedSortFields: ['updated_at', 'cpu_usage', 'memory_usage', 'name', 'status', 'type', 'environment'],
       defaultSortKey: 'updated_at',
       defaultSortOrder: 'desc'
     })
@@ -4243,12 +4274,16 @@ app.get('/resources/:resource_id/events', (req, res) => {
 app.get('/resource-groups', (req, res) => {
   const keyword = (req.query.keyword || '').trim().toLowerCase();
   const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const ownerTeamIdFilter = createLowercaseSet(parseListParam(req.query.owner_team_id));
 
   const filtered = resourceGroups.filter((group) => {
     if (!includeDeleted && group.deleted_at) return false;
-    if (!keyword) return true;
-    const text = `${group.name || ''} ${group.description || ''}`.toLowerCase();
-    return text.includes(keyword);
+    if (!matchesEnumFilter(group.owner_team_id, ownerTeamIdFilter)) return false;
+    if (keyword) {
+      const text = `${group.name || ''} ${group.description || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
   });
 
   const items = filtered.map((grp) => ({
@@ -4265,7 +4300,7 @@ app.get('/resource-groups', (req, res) => {
 
   res.json(
     paginate(items, req, {
-      allowedSortFields: ['name', 'created_at', 'member_count', 'subscriber_count'],
+      allowedSortFields: ['name', 'created_at', 'member_count', 'subscriber_count', 'owner_team'],
       defaultSortKey: 'name',
       defaultSortOrder: 'asc'
     })
@@ -4479,10 +4514,19 @@ app.get('/automation/scripts', (req, res) => {
   const typeFilter = createLowercaseSet(parseListParam(req.query.type));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
   const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const tagsFilter = createLowercaseSet(parseListParam(req.query.tags));
+  const lastExecStatusFilter = createLowercaseSet(parseListParam(req.query.last_execution_status));
 
   const filtered = automationScripts.filter((script) => {
     if (!includeDeleted && script.deleted_at) return false;
     if (!matchesEnumFilter(script.type, typeFilter)) return false;
+    if (!matchesEnumFilter(script.last_execution_status, lastExecStatusFilter)) return false;
+
+    if (tagsFilter) {
+      const scriptTags = (script.tags || []).map(t => t.toLowerCase());
+      if (!scriptTags.some(t => tagsFilter.has(t))) return false;
+    }
+
     if (keyword) {
       const text = `${script.name || ''} ${script.description || ''}`.toLowerCase();
       if (!text.includes(keyword)) return false;
@@ -4622,9 +4666,18 @@ app.get('/automation/scripts/:script_id/versions', (req, res) => {
 app.get('/automation/schedules', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const scriptIdFilter = createLowercaseSet(parseListParam(req.query.script_id));
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+
   const filtered = automationSchedules.filter((sch) => {
     if (!includeDeleted && sch.deleted_at) return false;
-    return matchesEnumFilter(sch.status, statusFilter);
+    if (!matchesEnumFilter(sch.status, statusFilter)) return false;
+    if (!matchesEnumFilter(sch.script_id, scriptIdFilter)) return false;
+    if (keyword) {
+      const text = `${sch.name || ''} ${sch.script_name || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
   });
   const items = filtered.map((sch) => ({
     schedule_id: sch.schedule_id,
@@ -4704,15 +4757,28 @@ app.post('/automation/schedules/:schedule_id/toggle', (req, res) => {
 app.get('/automation/executions', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const scriptIds = parseListParam(req.query.script_id);
+  const triggerSourceFilter = createLowercaseSet(parseListParam(req.query.trigger_source));
+  const eventIdFilter = createLowercaseSet(parseListParam(req.query.event_id));
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+
   const filtered = automationExecutions.filter((execution) => {
     if (!matchesEnumFilter(execution.status, statusFilter)) return false;
     if (scriptIds && scriptIds.length > 0 && !scriptIds.includes(execution.script_id)) return false;
+    if (!matchesEnumFilter(execution.trigger_source, triggerSourceFilter)) return false;
+    if (eventIdFilter) {
+        const related = execution.related_event_ids || [];
+        if (!related.some(id => eventIdFilter.has(id))) return false;
+    }
+    if (keyword) {
+        const text = `${execution.script_name || ''} ${execution.execution_id || ''}`.toLowerCase();
+        if (!text.includes(keyword)) return false;
+    }
     return true;
   });
 
   res.json(
     paginate(filtered, req, {
-      allowedSortFields: ['start_time', 'status', 'duration_ms'],
+      allowedSortFields: ['start_time', 'status', 'duration_ms', 'trigger_source'],
       defaultSortKey: 'start_time',
       defaultSortOrder: 'desc'
     })
@@ -4734,9 +4800,11 @@ app.post('/automation/executions/:execution_id/retry', (req, res) => {
 app.get('/iam/invitations', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const invitedByFilter = createLowercaseSet(parseListParam(req.query.invited_by));
 
   const filtered = iamInvitations.filter((invitation) => {
     if (!matchesEnumFilter(invitation.status, statusFilter)) return false;
+    if (!matchesEnumFilter(invitation.invited_by, invitedByFilter)) return false;
     if (keyword) {
       const text = `${invitation.email || ''} ${invitation.name || ''}`.toLowerCase();
       if (!text.includes(keyword)) return false;
@@ -4783,10 +4851,22 @@ app.get('/iam/users', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
   const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const teamIdFilter = createLowercaseSet(parseListParam(req.query.team_id));
+  const roleIdFilter = createLowercaseSet(parseListParam(req.query.role_id));
 
   const filtered = iamUsers.filter((user) => {
     if (!includeDeleted && user.deleted_at) return false;
     if (!matchesEnumFilter(user.status, statusFilter)) return false;
+
+    if (teamIdFilter) {
+      const userTeams = (user.teams || []).map(t => t.toLowerCase());
+      if (!userTeams.some(t => teamIdFilter.has(t))) return false;
+    }
+    if (roleIdFilter) {
+      const userRoles = (user.roles || []).map(r => r.toLowerCase());
+      if (!userRoles.some(r => roleIdFilter.has(r))) return false;
+    }
+
     if (keyword) {
       const text = `${user.display_name || ''} ${user.username || ''} ${user.email || ''}`.toLowerCase();
       if (!text.includes(keyword)) return false;
@@ -4835,12 +4915,21 @@ app.delete('/iam/users/:user_id', (req, res) => {
 app.get('/iam/teams', (req, res) => {
   const keyword = (req.query.keyword || '').trim().toLowerCase();
   const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const userIdFilter = createLowercaseSet(parseListParam(req.query.user_id));
 
   const filtered = iamTeams.filter((team) => {
     if (!includeDeleted && team.deleted_at) return false;
-    if (!keyword) return true;
-    const text = `${team.name || ''} ${team.description || ''}`.toLowerCase();
-    return text.includes(keyword);
+
+    if (userIdFilter) {
+      const memberIds = (team.member_ids || []).map(id => id.toLowerCase());
+      if (!memberIds.some(id => userIdFilter.has(id))) return false;
+    }
+
+    if (keyword) {
+      const text = `${team.name || ''} ${team.description || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
   });
 
   const items = filtered.map((team) => ({
@@ -4930,8 +5019,14 @@ app.delete('/iam/teams/:team_id', (req, res) => {
 
 app.get('/iam/roles', (req, res) => {
   const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+
   const filtered = iamRoles.filter((role) => {
     if (!includeDeleted && role.deleted_at) return false;
+    if (keyword) {
+      const text = `${role.name || ''} ${role.description || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
     return true;
   });
   res.json(filtered.map((role) => ({
@@ -5160,8 +5255,18 @@ app.post('/notification-config/strategies/:strategy_id/test', (req, res) => {
 
 app.get('/notification-config/channels', (req, res) => {
   const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
+  const typeFilter = createLowercaseSet(parseListParam(req.query.type));
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+
   const filtered = notificationChannels.filter((channel) => {
     if (!includeDeleted && channel.deleted_at) return false;
+    if (!matchesEnumFilter(channel.type, typeFilter)) return false;
+    if (!matchesEnumFilter(channel.status, statusFilter)) return false;
+    if (keyword) {
+      const text = `${channel.name || ''} ${channel.description || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
     return true;
   });
   res.json(filtered.map((channel) => ({
