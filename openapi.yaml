@@ -2443,6 +2443,57 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
   /iam/invitations:
+    get:
+      tags:
+        - 身份與存取
+      summary: 取得邀請列表
+      operationId: listIamInvitations
+      parameters:
+        - $ref: "#/components/parameters/PageParam"
+        - $ref: "#/components/parameters/PageSizeParam"
+        - in: query
+          name: status
+          description: 依邀請狀態篩選，多個狀態以逗號分隔。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [invitation_sent, accepted, expired, cancelled]
+        - in: query
+          name: keyword
+          description: 依電子郵件或姓名關鍵字模糊搜尋。
+          schema:
+            type: string
+        - in: query
+          name: sort_by
+          description: 指定排序欄位，預設為 invited_at。
+          schema:
+            type: string
+            enum: [invited_at, expires_at, email, status, last_sent_at]
+        - in: query
+          name: sort_order
+          description: 排序方向，支援 asc 或 desc，預設為 desc。
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        "200":
+          description: 邀請列表。
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/PaginatedResponse"
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/IAMInvitationResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
     post:
       tags:
         - 身份與存取
@@ -4998,6 +5049,7 @@ components:
           type: boolean
         script_id:
           type: string
+          nullable: true
         parameters:
           type: object
           additionalProperties: true
@@ -6203,6 +6255,7 @@ components:
           type: string
         script_id:
           type: string
+          nullable: true
         script_name:
           type: string
         status:
@@ -6250,13 +6303,13 @@ components:
           type: boolean
     IAMUserSummary:
       type: object
-      required: [user_id, username, name, email, status]
+      required: [user_id, username, display_name, email, status]
       properties:
         user_id:
           type: string
         username:
           type: string
-        name:
+        display_name:
           type: string
         email:
           type: string
@@ -6300,7 +6353,7 @@ components:
           type: string
     IAMInvitationResponse:
       type: object
-      required: [status, email, sent_at]
+      required: [invitation_id, status, email, invited_at, last_sent_at]
       properties:
         invitation_id:
           type: string
@@ -6312,7 +6365,27 @@ components:
           format: email
         name:
           type: string
-        sent_at:
+          nullable: true
+        invited_by:
+          type: string
+          nullable: true
+          description: 發送邀請者的使用者識別碼。
+        invited_by_name:
+          type: string
+          nullable: true
+          description: 發送邀請者的顯示名稱，供列表顯示。
+        invited_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        accepted_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_sent_at:
           type: string
           format: date-time
     IAMUserDetail:
