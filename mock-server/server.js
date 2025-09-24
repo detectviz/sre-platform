@@ -1015,36 +1015,79 @@ const iamUsers = [
   {
     user_id: 'user-001',
     username: 'sre.lead',
-    name: '林佳瑜',
+    display_name: '林佳瑜',
     email: 'sre.lead@example.com',
     status: 'active',
     teams: ['sre-core'],
     roles: ['sre', 'incident-commander'],
-    last_login: toISO(now)
+    last_login: toISO(now),
+    created_at: toISO(new Date(now.getTime() - 120 * 86400000)),
+    updated_at: toISO(new Date(now.getTime() - 3600000))
   },
   {
     user_id: 'user-002',
     username: 'ops.chen',
-    name: '陳昱安',
+    display_name: '陳昱安',
     email: 'ops.chen@example.com',
     status: 'active',
     teams: ['ops'],
     roles: ['ops'],
-    last_login: toISO(new Date(now.getTime() - 7200000))
+    last_login: toISO(new Date(now.getTime() - 7200000)),
+    created_at: toISO(new Date(now.getTime() - 200 * 86400000)),
+    updated_at: toISO(new Date(now.getTime() - 7200000))
   },
   {
     user_id: 'user-003',
     username: 'db.tsai',
-    name: '蔡敏豪',
+    display_name: '蔡敏豪',
     email: 'db.tsai@example.com',
     status: 'active',
     teams: ['team-db'],
     roles: ['db-admin'],
-    last_login: toISO(new Date(now.getTime() - 14400000))
+    last_login: toISO(new Date(now.getTime() - 14400000)),
+    created_at: toISO(new Date(now.getTime() - 220 * 86400000)),
+    updated_at: toISO(new Date(now.getTime() - 14400000))
   }
 ];
 
-const iamInvitations = [];
+const iamInvitations = [
+  {
+    invitation_id: 'inv-001',
+    email: 'new.engineer@example.com',
+    name: '李佳蓉',
+    status: 'invitation_sent',
+    invited_by: 'user-001',
+    invited_by_name: '林佳瑜',
+    invited_at: toISO(new Date(now.getTime() - 2 * 86400000)),
+    last_sent_at: toISO(new Date(now.getTime() - 2 * 86400000)),
+    expires_at: toISO(new Date(now.getTime() + 5 * 86400000)),
+    accepted_at: null
+  },
+  {
+    invitation_id: 'inv-002',
+    email: 'contractor@example.com',
+    name: '周文俊',
+    status: 'expired',
+    invited_by: 'user-002',
+    invited_by_name: '陳昱安',
+    invited_at: toISO(new Date(now.getTime() - 14 * 86400000)),
+    last_sent_at: toISO(new Date(now.getTime() - 13 * 86400000)),
+    expires_at: toISO(new Date(now.getTime() - 7 * 86400000)),
+    accepted_at: null
+  },
+  {
+    invitation_id: 'inv-003',
+    email: 'observer@example.com',
+    name: '吳映潔',
+    status: 'accepted',
+    invited_by: 'user-001',
+    invited_by_name: '林佳瑜',
+    invited_at: toISO(new Date(now.getTime() - 30 * 86400000)),
+    last_sent_at: toISO(new Date(now.getTime() - 30 * 86400000)),
+    expires_at: toISO(new Date(now.getTime() - 23 * 86400000)),
+    accepted_at: toISO(new Date(now.getTime() - 22 * 86400000))
+  }
+];
 
 const iamTeams = [
   {
@@ -2073,7 +2116,7 @@ const resolveRecipientDisplayName = (recipient) => {
   }
   if (recipient.type === 'user') {
     const user = getIamUserById(recipient.id);
-    return user?.name || user?.display_name || null;
+    return user?.display_name || null;
   }
   if (recipient.type === 'team') {
     return getTeamById(recipient.id)?.name || null;
@@ -2252,7 +2295,7 @@ const applyEventBatchAction = (event, action, payload) => {
     event.status = 'acknowledged';
     const assigneeId = payload.assignee_id || event.assignee_id || currentUser.user_id;
     event.assignee_id = assigneeId;
-    event.assignee = getIamUserById(assigneeId)?.name || event.assignee || currentUser.display_name;
+    event.assignee = getIamUserById(assigneeId)?.display_name || event.assignee || currentUser.display_name;
     event.acknowledged_at = nowIso;
     event.updated_at = nowIso;
     appendTimelineEntry(event, {
@@ -2273,7 +2316,7 @@ const applyEventBatchAction = (event, action, payload) => {
   if (action === 'assign') {
     const assigneeId = payload.assignee_id;
     event.assignee_id = assigneeId;
-    event.assignee = getIamUserById(assigneeId)?.name || assigneeId;
+    event.assignee = getIamUserById(assigneeId)?.display_name || assigneeId;
     if (event.status === 'new' || event.status === 'acknowledged') {
       event.status = 'in_progress';
     }
@@ -3036,7 +3079,7 @@ app.post('/events', (req, res) => {
     unit: payload.unit || null,
     trigger_time: payload.trigger_time || toISO(new Date()),
     assignee_id: payload.assignee_id || null,
-    assignee: iamUsers.find((user) => user.user_id === payload.assignee_id)?.name || null,
+    assignee: iamUsers.find((user) => user.user_id === payload.assignee_id)?.display_name || null,
     acknowledged_at: acknowledgedAt,
     resolved_at: resolvedAt,
     tags: payload.tags || [],
@@ -4073,27 +4116,50 @@ app.post('/automation/executions/:execution_id/retry', (req, res) => {
   res.status(202).json({ ...execution, status: 'pending', start_time: toISO(new Date()), end_time: null });
 });
 
+app.get('/iam/invitations', (req, res) => {
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const keyword = (req.query.keyword || '').trim().toLowerCase();
+
+  const filtered = iamInvitations.filter((invitation) => {
+    if (!matchesEnumFilter(invitation.status, statusFilter)) return false;
+    if (keyword) {
+      const text = `${invitation.email || ''} ${invitation.name || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
+  });
+
+  res.json(
+    paginate(filtered, req, {
+      allowedSortFields: ['email', 'status', 'invited_at', 'expires_at', 'last_sent_at'],
+      defaultSortKey: 'invited_at',
+      defaultSortOrder: 'desc'
+    })
+  );
+});
+
 app.post('/iam/invitations', (req, res) => {
   const payload = req.body || {};
   const email = typeof payload.email === 'string' ? payload.email.trim() : '';
   if (!email) {
     return res.status(400).json({ code: 'invalid_request', message: '請提供邀請 Email。' });
   }
+  const expiresAtDate = parseDateSafe(payload.expires_at) || new Date(Date.now() + 7 * 86400000);
+  const nowIso = toISO(new Date());
   const invitation = {
     invitation_id: `inv-${Date.now()}`,
     email,
-    name: typeof payload.name === 'string' ? payload.name.trim() : null,
+    name: typeof payload.name === 'string' && payload.name.trim().length > 0 ? payload.name.trim() : null,
     status: 'invitation_sent',
-    sent_at: toISO(new Date())
+    invited_by: currentUser.user_id,
+    invited_by_name: currentUser.display_name,
+    invited_at: nowIso,
+    last_sent_at: nowIso,
+    expires_at: toISO(expiresAtDate),
+    accepted_at: null
   };
-  iamInvitations.push(invitation);
-  res.status(201).json({
-    invitation_id: invitation.invitation_id,
-    status: invitation.status,
-    email: invitation.email,
-    name: invitation.name,
-    sent_at: invitation.sent_at
-  });
+  iamInvitations.unshift(invitation);
+  res.status(201).json(invitation);
 });
 
 app.get('/iam/users', (req, res) => {
@@ -4102,7 +4168,7 @@ app.get('/iam/users', (req, res) => {
   const filtered = iamUsers.filter((user) => {
     if (!matchesEnumFilter(user.status, statusFilter)) return false;
     if (keyword) {
-      const text = `${user.name || ''} ${user.username || ''} ${user.email || ''}`.toLowerCase();
+      const text = `${user.display_name || ''} ${user.username || ''} ${user.email || ''}`.toLowerCase();
       if (!text.includes(keyword)) return false;
     }
     return true;
@@ -4110,8 +4176,8 @@ app.get('/iam/users', (req, res) => {
 
   res.json(
     paginate(filtered, req, {
-      allowedSortFields: ['name', 'username', 'status', 'last_login'],
-      defaultSortKey: 'name',
+      allowedSortFields: ['display_name', 'username', 'status', 'last_login'],
+      defaultSortKey: 'display_name',
       defaultSortOrder: 'asc'
     })
   );

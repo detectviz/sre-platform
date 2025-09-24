@@ -99,6 +99,9 @@ CREATE TABLE user_invitations (
 CREATE UNIQUE INDEX idx_user_invitations_active_email ON user_invitations (email)
     WHERE status = 'invitation_sent';
 CREATE INDEX idx_user_invitations_status ON user_invitations (status);
+CREATE INDEX idx_user_invitations_invited_at ON user_invitations (invited_at DESC);
+CREATE INDEX idx_user_invitations_last_sent_at ON user_invitations (last_sent_at DESC);
+CREATE INDEX idx_user_invitations_expires_at ON user_invitations (expires_at DESC);
 
 CREATE TABLE roles (
     -- 主鍵識別碼
@@ -1234,7 +1237,7 @@ CREATE TABLE automation_executions (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     -- 腳本識別碼
-    script_id UUID NOT NULL REFERENCES automation_scripts(id) ON DELETE SET NULL,
+    script_id UUID REFERENCES automation_scripts(id) ON DELETE SET NULL,
     -- 排程識別碼
     schedule_id UUID REFERENCES automation_schedules(id) ON DELETE SET NULL,
     -- 觸發來源
