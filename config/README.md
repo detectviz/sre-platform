@@ -34,23 +34,23 @@ config/
 
 ```bash
 # 啟動服務
-docker-compose -f config/docker/docker-compose.yml up -d
+docker compose -f config/docker/docker-compose.yml up -d
 
 # 查看狀態
-docker-compose -f config/docker/docker-compose.yml ps
+docker compose -f config/docker/docker-compose.yml ps
 
 # 查看日誌
-docker-compose -f config/docker/docker-compose.yml logs -f
+docker compose -f config/docker/docker-compose.yml logs -f
 
 # 停止服務
-docker-compose -f config/docker/docker-compose.yml down
+docker compose -f config/docker/docker-compose.yml down
 ```
 
 ## ⚙️ 配置說明
 
 ### Docker Compose 配置 (`docker/docker-compose.yml`)
 
-- **服務定義**: 包含 8 個核心服務
+- **服務定義**: 包含 10 個核心依賴服務
 - **網路配置**: 使用 `sre-network` 自定義網路
 - **數據持久化**: 所有服務數據保存到 Docker 卷
 - **健康檢查**: 每個服務都有健康檢查配置
@@ -136,7 +136,7 @@ scrape_configs:
 
 ```bash
 # 查看具體錯誤
-docker-compose -f config/docker/docker-compose.yml logs <service_name>
+docker compose -f config/docker/docker-compose.yml logs <service_name>
 
 # 檢查端口衝突
 netstat -tlnp | grep :<port>
@@ -146,8 +146,8 @@ netstat -tlnp | grep :<port>
 
 ```bash
 # 重置所有數據卷
-docker-compose -f config/docker/docker-compose.yml down -v
-docker-compose -f config/docker/docker-compose.yml up -d
+docker compose -f config/docker/docker-compose.yml down -v
+docker compose -f config/docker/docker-compose.yml up -d
 ```
 
 #### 網路連接問題

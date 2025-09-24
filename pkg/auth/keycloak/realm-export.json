@@ -1,0 +1,165 @@
+{
+  "id": "sre-platform",
+  "realm": "sre-platform",
+  "enabled": true,
+  "displayName": "SRE 平台",
+  "displayNameHtml": "<strong>SRE 平台</strong>",
+  "internationalizationEnabled": true,
+  "defaultLocale": "zh-TW",
+  "accountTheme": "keycloak",
+  "loginTheme": "keycloak",
+  "emailTheme": "keycloak",
+  "adminTheme": "keycloak",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "accessTokenLifespan": 3600,
+  "roles": {
+    "realm": [
+      {
+        "name": "sre_admin",
+        "description": "SRE 平台系統管理員",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "sre-platform"
+      },
+      {
+        "name": "sre_operator",
+        "description": "SRE 平台日常操作人員",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "sre-platform"
+      }
+    ]
+  },
+  "groups": [
+    {
+      "name": "SRE-Admins",
+      "path": "/SRE-Admins",
+      "realmRoles": ["sre_admin"]
+    },
+    {
+      "name": "SRE-Operators",
+      "path": "/SRE-Operators",
+      "realmRoles": ["sre_operator"]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "平台",
+      "lastName": "管理員",
+      "email": "admin@sre-platform.local",
+      "credentials": [
+        {
+          "type": "password",
+          "temporary": false,
+          "value": "admin"
+        }
+      ],
+      "realmRoles": [
+        "sre_admin",
+        "offline_access",
+        "uma_authorization"
+      ],
+      "groups": ["/SRE-Admins"]
+    },
+    {
+      "username": "operator",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "SRE",
+      "lastName": "工程師",
+      "email": "operator@sre-platform.local",
+      "credentials": [
+        {
+          "type": "password",
+          "temporary": false,
+          "value": "operator"
+        }
+      ],
+      "realmRoles": [
+        "sre_operator",
+        "offline_access",
+        "uma_authorization"
+      ],
+      "groups": ["/SRE-Operators"]
+    }
+  ],
+  "clients": [
+    {
+      "clientId": "sre-platform-frontend",
+      "name": "SRE 平台前端",
+      "description": "SRE 平台 Web 前端客戶端",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:5173/*\nhttp://localhost:3000/*"
+      }
+    },
+    {
+      "clientId": "sre-platform-backend",
+      "name": "SRE 平台後端",
+      "description": "SRE 平台後端服務",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "redirectUris": ["http://localhost:8080/*"],
+      "secret": "backend-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "attributes": {
+        "client.secret.creation.time": "0"
+      }
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "sre-default",
+      "description": "SRE 平台預設範圍",
+      "protocol": "openid-connect",
+      "attributes": {
+        "display.on.consent.screen": "true",
+        "include.in.token.scope": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ],
+  "defaultDefaultClientScopes": [
+    "web-origins",
+    "role_list",
+    "profile",
+    "email",
+    "roles",
+    "sre-default"
+  ],
+  "defaultOptionalClientScopes": [
+    "offline_access"
+  ]
+}

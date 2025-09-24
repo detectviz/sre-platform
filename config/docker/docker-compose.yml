@@ -1,8 +1,11 @@
+version: "3.9"
+
 services:
   # PostgreSQL 資料庫
   postgres:
     image: postgres:15
     container_name: sre-postgres
+    restart: unless-stopped
     environment:
       POSTGRES_DB: sre_dev
       POSTGRES_USER: postgres
@@ -23,6 +26,7 @@ services:
   redis:
     image: redis:7-alpine
     container_name: sre-redis
+    restart: unless-stopped
     ports:
       - "6379:6379"
     volumes:
@@ -39,6 +43,7 @@ services:
   grafana:
     image: grafana/grafana:10.2.0
     container_name: sre-grafana
+    restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: admin
@@ -61,6 +66,7 @@ services:
   vmstorage:
     image: victoriametrics/vmstorage:v1.125.0-cluster
     container_name: sre-vmstorage
+    restart: unless-stopped
     ports:
       - "8400:8400"
       - "8401:8401"
@@ -83,6 +89,7 @@ services:
   vminsert:
     image: victoriametrics/vminsert:v1.125.0-cluster
     container_name: sre-vminsert
+    restart: unless-stopped
     ports:
       - "8480:8480"
     depends_on:
@@ -103,6 +110,7 @@ services:
   vmselect:
     image: victoriametrics/vmselect:v1.125.0-cluster
     container_name: sre-vmselect
+    restart: unless-stopped
     ports:
       - "8481:8481"
     depends_on:
@@ -123,6 +131,7 @@ services:
   prometheus:
     image: victoriametrics/vmagent:v1.125.0
     container_name: sre-prometheus
+    restart: unless-stopped
     ports:
       - "8429:8429"  # vmagent metrics
     volumes:
@@ -149,6 +158,11 @@ services:
   snmp-exporter:
     image: prom/snmp-exporter:v0.20.0
     container_name: sre-snmp-exporter
+    restart: unless-stopped
+    volumes:
+      - ../monitoring/snmp.yml:/etc/snmp_exporter/snmp.yml:ro
+    command:
+      - --config.file=/etc/snmp_exporter/snmp.yml
     ports:
       - "9116:9116"
     networks:
@@ -158,6 +172,7 @@ services:
   chromadb:
     image: chromadb/chroma:0.4.24
     container_name: sre-chromadb
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
@@ -177,6 +192,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:26.3.3
     container_name: sre-keycloak
+    restart: unless-stopped
     environment:
       KC_HOSTNAME: localhost
       KC_HTTP_ENABLED: true
@@ -196,7 +212,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    command: ["start-dev", "--import-realm"]
+    command:
+      - start-dev
+      - --import-realm
+      - --hostname-strict=false
     volumes:
       - ../../pkg/auth/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json:ro
     healthcheck:
@@ -205,50 +224,6 @@ services:
       timeout: 10s
       retries: 10
       start_period: 120s
-    networks:
-      - sre-network
-
-  # SRE 後端服務
-  backend:
-    build:
-      context: ../..
-      dockerfile: backend/Dockerfile
-    container_name: sre-backend
-    ports:
-      - "8080:8080"
-    environment:
-      - DB_HOST=postgres
-      - DB_PORT=5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    networks:
-      - sre-network
-
-  # SRE 前端服務
-  frontend:
-    build:
-      context: ../..
-      dockerfile: frontend/Dockerfile
-    container_name: sre-frontend
-    ports:
-      - "3001:80"
-    depends_on:
-      - backend
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     networks:
       - sre-network
 
