@@ -9,6 +9,8 @@
 - 事件模組需明確標註 Grafana 與平台的分工，並於快取表格補齊建立者與最後更新時間以支援離線回填。
 - 通知策略與通道屬於平台增值功能，資料表已補強註解與索引並新增 CSV 匯出 API 參數，維持與規格一致。
 - 事件與靜音、通知策略列表需支援 `format=csv` 參數匯出資料，並在 Mock Server 中同步提供對應回應。
+- `silence_rules` 與 `events` 的外鍵建立順序需調整，避免部署時因依賴尚未建立而導致匯入失敗。
+- 事件規則與自動化排程缺少專用的啟用/停用端點，已補齊切換契約以支援前端的 Switch 控制。 
 
 ## 🧾 契約更新摘要 (Contract Updates)
 
@@ -18,17 +20,20 @@
 - `notification_channels`、`notification_strategies` 新增註解與複合索引，突顯平台特有通知策略與查詢需求。
 - `audit_logs` 表新增用途註解與 `cleanup_old_audit_logs` 保留策略函式，落實審查報告建議的日誌治理機制。
 - `event_rule_snapshots` 表快取 Grafana 規則 JSON 與同步狀態，並補充 `cached_creator`、`cached_last_updated`、`created_at` 欄位與可為空的 `last_synced_at`，確保離線模式仍能提供建立者與更新時間。
+- `silence_rules` 表將 `event_id` 外鍵延後至 `events` 建立後再新增約束，確保匯入腳本在 PostgreSQL 上可順利執行。
 
 ### API 契約 (OpenAPI Specification)
 - `EventSummary`、`CreateEventRequest`、`UpdateEventRequest` 增加 `event_source` 枚舉欄位與說明，並補上 `source` 的語意描述。
 - 調整事件回應的 required 欄位，確保前端可取得來源分類以支援 UI 標籤與篩選。
 - `EventRuleSummary` 現在要求回傳 `creator` 與 `last_updated`，並補充欄位說明以對應快取欄位 `cached_creator`、`cached_last_updated`。
 - `/event-rules`、`/silence-rules`、`/notification-config/strategies` GET 端點新增 `format=csv` 查詢參數與 `text/csv` 回應，支援規格中的匯出需求。
+- 新增 `/event-rules/{rule_uid}/toggle` 與 `/automation/schedules/{schedule_id}/toggle` 端點，採用 `ToggleEnabledRequest` 支援顯式傳入狀態或預設反轉行為。
 
 ### 模擬服務 (Mock Server)
 - 事件樣本資料補齊 `event_source` 與 `source` 欄位，並在建立事件時依據 rule_uid 自動推導來源。
 - `mapEventSummary` 回傳結構同步 OpenAPI 契約，確保前端型別推導一致。
 - 事件規則樣本補充 `sync_status`、`last_synced_at` 欄位，模擬快取回填情境。
+- 事件規則與自動化排程的切換端點改為支援 `enabled`/`status` payload，確保模擬行為與 OpenAPI 契約一致。
 
 ### 前端型別 (Frontend Types)
 - `Incident` 介面新增 `event_source` 與 `source`，支援 UI 顯示事件來源標籤。

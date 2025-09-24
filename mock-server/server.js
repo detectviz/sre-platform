@@ -3411,7 +3411,14 @@ app.delete('/event-rules/:rule_uid', (req, res) => {
 app.post('/event-rules/:rule_uid/toggle', (req, res) => {
   const rule = getEventRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到事件規則');
-  rule.enabled = !rule.enabled;
+  const payload = req.body || {};
+  if (typeof payload.enabled === 'boolean') {
+    rule.enabled = payload.enabled;
+  } else if (typeof payload.status === 'string') {
+    rule.enabled = payload.status.toLowerCase() === 'enabled';
+  } else {
+    rule.enabled = !rule.enabled;
+  }
   rule.last_updated = toISO(new Date());
   rule.last_synced_at = toISO(new Date());
   rule.sync_status = 'fresh';
@@ -4024,7 +4031,15 @@ app.delete('/automation/schedules/:schedule_id', (req, res) => {
 app.post('/automation/schedules/:schedule_id/toggle', (req, res) => {
   const schedule = getScheduleById(req.params.schedule_id);
   if (!schedule) return notFound(res, '找不到排程');
-  schedule.status = schedule.status === 'enabled' ? 'disabled' : 'enabled';
+  const payload = req.body || {};
+  if (typeof payload.enabled === 'boolean') {
+    schedule.status = payload.enabled ? 'enabled' : 'disabled';
+  } else if (typeof payload.status === 'string') {
+    schedule.status = payload.status.toLowerCase() === 'disabled' ? 'disabled' : 'enabled';
+  } else {
+    schedule.status = schedule.status === 'enabled' ? 'disabled' : 'enabled';
+  }
+  schedule.updated_at = toISO(new Date());
   res.json(schedule);
 });
 

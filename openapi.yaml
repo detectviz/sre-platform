@@ -1189,6 +1189,32 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /event-rules/{rule_uid}/toggle:
+    post:
+      tags:
+        - 事件規則
+      summary: 切換事件規則啟用狀態
+      operationId: toggleEventRule
+      description: |-
+        切換或直接設定事件規則的啟用狀態。若未提供 payload，則反轉目前狀態；
+        若提供 `enabled` 欄位則依指定值更新。
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToggleEnabledRequest"
+      responses:
+        "200":
+          description: 更新後的事件規則資訊。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventRuleDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /event-rules/{rule_uid}/test:
     post:
       tags:
@@ -2305,6 +2331,32 @@ paths:
       responses:
         "204":
           description: 排程已刪除。
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /automation/schedules/{schedule_id}/toggle:
+    post:
+      tags:
+        - 自動化
+      summary: 切換自動化排程狀態
+      operationId: toggleAutomationSchedule
+      description: |-
+        切換或直接指定排程的 `status`。若 payload 內提供 `enabled` 或 `status` 值，
+        將依指定狀態更新；若無 payload 則在 enabled/disabled 間反轉。
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ToggleEnabledRequest"
+      responses:
+        "200":
+          description: 更新後的排程資訊。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AutomationScheduleDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -5035,6 +5087,17 @@ components:
       $ref: "#/components/schemas/EventRulePayload"
     UpdateEventRuleRequest:
       $ref: "#/components/schemas/EventRulePayload"
+    ToggleEnabledRequest:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          description: |-
+            為 true 時啟用目標資源，為 false 時停用；若未提供則改以 status 或反轉現有狀態。
+        status:
+          type: string
+          enum: [enabled, disabled]
+          description: 供自動化排程直接指定狀態使用，會同步更新 enabled 布林值。
     TestEventRuleRequest:
       type: object
       properties:
