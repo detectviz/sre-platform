@@ -94,8 +94,13 @@ const currentUser = {
   username: 'sre.lead',
   display_name: '林佳瑜',
   email: 'sre.lead@example.com',
-  roles: ['sre', 'incident-commander'],
-  teams: ['sre-core'],
+  roles: [
+    { role_id: 'role-sre', name: 'sre' },
+    { role_id: 'role-incident-commander', name: 'incident-commander' }
+  ],
+  teams: [
+    { team_id: 'team-sre', name: 'SRE 核心小組' }
+  ],
   status: 'active',
   last_login_at: toISO(now),
   avatar_url: null
@@ -1183,6 +1188,19 @@ const iamRoles = [
       { module: 'resources', actions: ['read'] }
     ],
     updated_at: toISO(new Date(now.getTime() - 604800000))
+  },
+  {
+    role_id: 'role-incident-commander',
+    name: 'incident-commander',
+    description: '事件指揮官權限',
+    status: 'active',
+    user_count: 2,
+    created_at: toISO(new Date(now.getTime() - 1296000000)),
+    permissions: [
+      { module: 'events', actions: ['read', 'update', 'acknowledge', 'resolve'] },
+      { module: 'communications', actions: ['read'] }
+    ],
+    updated_at: toISO(new Date(now.getTime() - 432000000))
   }
 ];
 
@@ -1873,6 +1891,39 @@ const pageLayouts = [
   }
 ];
 
+const getCurrentUserRoleIds = () => {
+  const roles = Array.isArray(currentUser.roles) ? currentUser.roles : [];
+  const roleIds = new Set();
+
+  roles.forEach((entry) => {
+    if (!entry) {
+      return;
+    }
+
+    const value = typeof entry === 'string' ? entry : entry.role_id;
+    if (!value) {
+      return;
+    }
+
+    const trimmed = String(value).trim();
+    if (!trimmed) {
+      return;
+    }
+
+    roleIds.add(trimmed);
+    if (trimmed.startsWith('role-')) {
+      const alias = trimmed.slice(5);
+      if (alias) {
+        roleIds.add(alias);
+      }
+    } else {
+      roleIds.add(`role-${trimmed}`);
+    }
+  });
+
+  return Array.from(roleIds);
+};
+
 const allowedLayoutScopeTypes = new Set(['global', 'role', 'user']);
 
 const mapLayoutWidgetDefinition = (widget) => ({
@@ -1889,16 +1940,7 @@ const getRoleScopeCandidates = (pagePath, preferredScopeId) => {
   if (preferredScopeId) {
     candidates.add(preferredScopeId);
   }
-  if (Array.isArray(currentUser.roles)) {
-    currentUser.roles.forEach((roleId) => {
-      if (typeof roleId === 'string' && roleId.trim().length > 0) {
-        candidates.add(roleId);
-        if (!roleId.startsWith('role-')) {
-          candidates.add(`role-${roleId}`);
-        }
-      }
-    });
-  }
+  getCurrentUserRoleIds().forEach((roleId) => candidates.add(roleId));
   pageLayouts
     .filter((layout) => layout.page_path === pagePath && layout.scope_type === 'role')
     .forEach((layout) => {
@@ -3240,59 +3282,77 @@ app.get('/notifications', (req, res) => {
   );
 });
 
-app.post('/notifications/read', (req, res) => {
-  const { notification_ids: notificationIds, mark_all: markAll, read_at: readAt } = req.body || {};
-  const shouldMarkAll = markAll === true;
-  if (!shouldMarkAll && (!Array.isArray(notificationIds) || notificationIds.length === 0)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'notification_ids 至少需要一筆識別碼。' });
+app.post('/notifications/bulk', (req, res) => {
+  const { action, target = 'selected', notification_ids: notificationIds, effective_at: effectiveAt } = req.body || {};
+
+  const normalizedAction = typeof action === 'string' ? action.trim().toLowerCase() : '';
+  if (!['mark_read', 'clear'].includes(normalizedAction)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'action 必須為 mark_read 或 clear。' });
   }
 
-  const idsToMark = shouldMarkAll
-    ? new Set(notifications.map((item) => item.notification_id))
-    : new Set(notificationIds);
+  const rawTarget = typeof target === 'string' ? target.trim().toLowerCase() : '';
+  const normalizedTarget = rawTarget || 'selected';
+  if (!['selected', 'all', 'read'].includes(normalizedTarget)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'target 必須為 selected、all 或 read。' });
+  }
 
-  const timestamp = readAt && !Number.isNaN(Date.parse(readAt)) ? toISO(new Date(readAt)) : toISO(new Date());
-  const updatedItems = [];
-
-  notifications.forEach((item) => {
-    if (!item.deleted_at && idsToMark.has(item.notification_id)) {
-      item.status = 'read';
-      item.read_at = timestamp;
-      updatedItems.push(item);
+  let idSet = null;
+  if (normalizedTarget === 'selected') {
+    if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
+      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'notification_ids 至少需要一筆識別碼。' });
     }
-  });
+    const normalizedIds = notificationIds
+      .map((value) => (value === undefined || value === null ? '' : String(value).trim()))
+      .filter((value) => value.length > 0);
+    if (normalizedIds.length === 0) {
+      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'notification_ids 至少需要一筆識別碼。' });
+    }
+    idSet = new Set(normalizedIds);
+  }
 
-  res.json({
-    summary: buildNotificationSummary(),
-    updated_items: updatedItems
-  });
-});
+  const shouldAffect = (item) => {
+    if (!item || item.deleted_at) {
+      return false;
+    }
+    if (normalizedTarget === 'all') {
+      return true;
+    }
+    if (normalizedTarget === 'read') {
+      return item.status === 'read';
+    }
+    return idSet ? idSet.has(item.notification_id) : false;
+  };
 
-app.post('/notifications/clear', (req, res) => {
-  const { notification_ids: notificationIds, clear_all_read: clearAllRead, clear_all: clearAll } = req.body || {};
+  if (normalizedAction === 'mark_read') {
+    const timestamp =
+      effectiveAt && !Number.isNaN(Date.parse(effectiveAt)) ? toISO(new Date(effectiveAt)) : toISO(new Date());
+    const updatedItems = [];
 
-  let predicate;
-  if (clearAll === true) {
-    predicate = (item) => !item.deleted_at;
-  } else if (clearAllRead === true) {
-    predicate = (item) => !item.deleted_at && item.status === 'read';
-  } else if (Array.isArray(notificationIds) && notificationIds.length > 0) {
-    const idsToClear = new Set(notificationIds);
-    predicate = (item) => !item.deleted_at && idsToClear.has(item.notification_id);
-  } else {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: '請指定要清除的通知。' });
+    notifications.forEach((item) => {
+      if (shouldAffect(item) && item.status !== 'read') {
+        item.status = 'read';
+        item.read_at = timestamp;
+        updatedItems.push({ ...item });
+      }
+    });
+
+    const response = { summary: buildNotificationSummary() };
+    if (updatedItems.length > 0) {
+      response.updated_items = updatedItems;
+    }
+    return res.json(response);
   }
 
   const clearedIds = [];
-  const timestamp = toISO(new Date());
+  const clearedTimestamp = toISO(new Date());
   notifications.forEach((item) => {
-    if (predicate(item)) {
-      item.deleted_at = timestamp;
+    if (shouldAffect(item)) {
+      item.deleted_at = clearedTimestamp;
       clearedIds.push(item.notification_id);
     }
   });
 
-  res.json({
+  return res.json({
     cleared_ids: clearedIds,
     cleared_count: clearedIds.length,
     summary: buildNotificationSummary()
