@@ -206,6 +206,7 @@ const eventData = [
     resource_id: 'res-001',
     resource_name: 'web-01',
     service_impact: '客戶交易延遲，SLA 風險升高',
+    notes: '已請 DBA 團隊協助檢查資料庫連線瓶頸。',
     rule_uid: 'rule-001',
     rule_name: 'API 延遲監控',
     trigger_threshold: '> 500ms',
@@ -283,6 +284,7 @@ const eventData = [
     resource_id: 'res-002',
     resource_name: 'rds-read-1',
     service_impact: '延遲影響讀取性能',
+    notes: '持續觀察，必要時安排離峰期間調整參數。',
     rule_uid: 'rule-002',
     rule_name: '資料庫延遲監控',
     trigger_threshold: '> 120ms',
@@ -1962,6 +1964,7 @@ const toEventDetail = (event) => ({
   unit: event.unit,
   acknowledged_at: event.acknowledged_at,
   resolved_at: event.resolved_at,
+  notes: event.notes ?? null,
   timeline: event.timeline || [],
   related_events: event.related || [],
   automation_executions: getAutomationExecutionsForEvent(event.event_id),
@@ -3053,6 +3056,8 @@ app.post('/events', (req, res) => {
       : initialStatus === 'resolved'
         ? nowIso
         : null;
+  const normalizedNotes =
+    typeof payload.notes === 'string' && payload.notes.trim().length > 0 ? payload.notes.trim() : null;
   const updatedAt = resolvedAt || acknowledgedAt || nowIso;
   const newEvent = {
     event_id: `evt-${Date.now()}`,
@@ -3082,6 +3087,7 @@ app.post('/events', (req, res) => {
     assignee: iamUsers.find((user) => user.user_id === payload.assignee_id)?.display_name || null,
     acknowledged_at: acknowledgedAt,
     resolved_at: resolvedAt,
+    notes: normalizedNotes,
     tags: payload.tags || [],
     timeline: [],
     related: [],
@@ -3102,7 +3108,14 @@ app.get('/events/:event_id', (req, res) => {
 app.patch('/events/:event_id', (req, res) => {
   const event = getEventById(req.params.event_id);
   if (!event) return notFound(res, '找不到事件');
-  Object.assign(event, req.body || {});
+  const updates = { ...(req.body || {}) };
+  if (Object.prototype.hasOwnProperty.call(updates, 'notes')) {
+    const rawNote = updates.notes;
+    const trimmedNote = typeof rawNote === 'string' ? rawNote.trim() : '';
+    event.notes = trimmedNote.length > 0 ? trimmedNote : null;
+    delete updates.notes;
+  }
+  Object.assign(event, updates);
   event.updated_at = toISO(new Date());
   res.json(toEventDetail(event));
 });
