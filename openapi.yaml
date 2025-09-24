@@ -129,65 +129,6 @@ tags:
   - name: 標籤服務
     description: 提供全平台標籤鍵與標籤值查詢服務。
 paths:
-  /auth/login:
-    post:
-      tags:
-        - 認證
-      summary: 使用者登入
-      operationId: login
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LoginRequest"
-      responses:
-        "200":
-          description: 登入成功，回傳存取與刷新令牌。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TokenResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalError"
-  /auth/logout:
-    post:
-      tags:
-        - 認證
-      summary: 登出並註銷目前的存取令牌
-      operationId: logout
-      responses:
-        "204":
-          description: 已成功登出。
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-  /auth/refresh:
-    post:
-      tags:
-        - 認證
-      summary: 透過刷新令牌取得新的存取令牌
-      operationId: refreshToken
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/RefreshRequest"
-      responses:
-        "200":
-          description: 成功換發新的令牌。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/TokenResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "500":
-          $ref: "#/components/responses/InternalError"
   /me:
     get:
       tags:
@@ -1406,6 +1347,15 @@ paths:
           in: query
           schema:
             type: string
+        - name: tag_value_ids
+          in: query
+          description: 以標籤值識別碼過濾資源，可傳入逗號分隔的多個值。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
         - name: keyword
           in: query
           description: 名稱、IP 或標籤關鍵字。
@@ -1689,9 +1639,51 @@ paths:
             enum: [force, circular, hierarchical, grid]
         - name: status
           in: query
+          description: 篩選節點狀態，可傳入逗號分隔的多個值。
+          style: form
+          explode: false
           schema:
-            type: string
-            enum: [healthy, warning, critical]
+            type: array
+            items:
+              type: string
+              enum: [healthy, warning, critical, offline]
+        - name: resource_types
+          in: query
+          description: 篩選節點資源類型，可傳入逗號分隔的多個值。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [server, database, cache, gateway, service]
+        - name: resource_group_ids
+          in: query
+          description: 僅返回指定資源群組所屬的節點，可傳入逗號分隔的多個群組識別碼。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: tag_value_ids
+          in: query
+          description: 依標籤值識別碼篩選節點，可傳入逗號分隔的多個值。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+        - name: team_ids
+          in: query
+          description: 僅返回屬於指定團隊的節點。
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
       responses:
         "200":
           description: 拓撲節點與連線資料。
@@ -4175,65 +4167,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/MetricAnnotation"
-    LoginRequest:
-      type: object
-      required: [username, password]
-      properties:
-        username:
-          type: string
-        password:
-          type: string
-          format: password
-    RefreshRequest:
-      type: object
-      required: [refresh_token]
-      properties:
-        refresh_token:
-          type: string
-    TokenResponse:
-      type: object
-      required: [access_token, refresh_token, expires_in]
-      properties:
-        access_token:
-          type: string
-        refresh_token:
-          type: string
-        token_type:
-          type: string
-          default: Bearer
-        expires_in:
-          type: integer
-          description: 存取令牌有效秒數。
-    UserProfile:
-      type: object
-      required: [user_id, username, display_name, email, roles]
-      properties:
-        user_id:
-          type: string
-        username:
-          type: string
-        display_name:
-          type: string
-        email:
-          type: string
-          format: email
-        roles:
-          type: array
-          items:
-            type: string
-        teams:
-          type: array
-          items:
-            type: string
-        status:
-          type: string
-          enum: [active, disabled]
-        last_login_at:
-          type: string
-          format: date-time
-        avatar_url:
-          type: string
-          nullable: true
     UserPreference:
       type: object
       required: [theme, language, timezone]
@@ -5611,21 +5544,44 @@ components:
         metrics:
           type: object
           additionalProperties: true
-      TopologyEdge:
-        type: object
-        required: [source, target]
-        properties:
-          source:
+        environment:
+          type: string
+        team_id:
+          type: string
+          nullable: true
+        team:
+          type: string
+          nullable: true
+        group_ids:
+          type: array
+          items:
             type: string
-          target:
-            type: string
-          relation:
-            type: string
-          traffic_level:
-            type: number
-          metadata:
-            type: object
-            additionalProperties: true
+        groups:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceGroupRef"
+        tags:
+          type: array
+          items:
+            $ref: "#/components/schemas/ResourceTag"
+    TopologyEdge:
+      type: object
+      required: [source, target]
+      properties:
+        source:
+          type: string
+        target:
+          type: string
+        relation:
+          type: string
+        traffic_level:
+          type: number
+        status:
+          type: string
+          enum: [healthy, warning, critical, offline]
+        metadata:
+          type: object
+          additionalProperties: true
     TopologyGraph:
       type: object
       required: [nodes, edges]

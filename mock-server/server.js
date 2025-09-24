@@ -542,8 +542,8 @@ const resourceData = [
     notes: '主要服務外部交易流量，需要高可用度。',
     last_event_count: 3,
     tags: [
-      { key: 'env', value: 'production' },
-      { key: 'tier', value: 'frontend' }
+      { tag_id: 'tag-001', tag_value_id: 'tag-001-v1', key: 'env', value: 'production', assigned_at: toISO(new Date(now.getTime() - 172800000)) },
+      { tag_id: 'tag-002', tag_value_id: 'tag-002-v1', key: 'tier', value: 'frontend', assigned_at: toISO(new Date(now.getTime() - 86400000)) }
     ],
     groups: ['grp-001'],
     created_at: toISO(new Date(now.getTime() - 604800000)),
@@ -569,12 +569,39 @@ const resourceData = [
     notes: '供應交易資料庫的讀取節點，需監控延遲。',
     last_event_count: 2,
     tags: [
-      { key: 'env', value: 'production' },
-      { key: 'role', value: 'read-replica' }
+      { tag_id: 'tag-001', tag_value_id: 'tag-001-v1', key: 'env', value: 'production', assigned_at: toISO(new Date(now.getTime() - 604800000)) },
+      { tag_id: 'tag-003', tag_value_id: 'tag-003-v1', key: 'role', value: 'read-replica', assigned_at: toISO(new Date(now.getTime() - 259200000)) }
     ],
     groups: ['grp-002'],
     created_at: toISO(new Date(now.getTime() - 2592000000)),
     updated_at: toISO(now)
+  },
+  {
+    resource_id: 'res-003',
+    name: 'redis-cache',
+    status: 'healthy',
+    type: 'cache',
+    ip_address: '10.10.5.45',
+    location: 'ap-southeast-1c',
+    environment: 'staging',
+    team_id: 'team-sre',
+    team: 'SRE 核心小組',
+    os: 'Debian 12',
+    cpu_usage: 39.5,
+    memory_usage: 54.2,
+    disk_usage: 33.1,
+    network_in_mbps: 45.3,
+    network_out_mbps: 40.8,
+    service_impact: '快取層',
+    notes: '提供 Web 交易熱資料快取。',
+    last_event_count: 1,
+    tags: [
+      { tag_id: 'tag-001', tag_value_id: 'tag-001-v2', key: 'env', value: 'staging', assigned_at: toISO(new Date(now.getTime() - 432000000)) },
+      { tag_id: 'tag-003', tag_value_id: 'tag-003-v2', key: 'role', value: 'cache', assigned_at: toISO(new Date(now.getTime() - 216000000)) }
+    ],
+    groups: ['grp-001'],
+    created_at: toISO(new Date(now.getTime() - 1209600000)),
+    updated_at: toISO(new Date(now.getTime() - 1800000))
   }
 ];
 
@@ -585,28 +612,50 @@ const resourceGroups = [
     description: 'Web 與 API 節點',
     owner_team_id: 'team-sre',
     owner_team: 'SRE 核心小組',
-    member_count: 1,
+    member_count: 2,
     subscriber_count: 4,
-    status_summary: { healthy: 2, warning: 1, critical: 0 },
+    status_summary: { healthy: 1, warning: 1, critical: 0 },
     created_at: toISO(new Date(now.getTime() - 777600000)),
     members: [
-      { resource_id: 'res-001', name: 'web-01', type: 'service', status: 'warning' }
+      { resource_id: 'res-001', name: 'web-01', type: 'service', status: 'warning' },
+      { resource_id: 'res-003', name: 'redis-cache', type: 'cache', status: 'healthy' }
     ],
     subscribers: [
-      { user_id: 'user-001', display_name: '林佳瑜', subscribed_at: toISO(new Date(now.getTime() - 604800000)) }
+      { user_id: 'user-001', display_name: '林佳瑜', subscribed_at: toISO(new Date(now.getTime() - 604800000)) },
+      { user_id: 'user-002', display_name: '張宥誠', subscribed_at: toISO(new Date(now.getTime() - 302400000)) },
+      { user_id: 'user-003', display_name: '陳昱安', subscribed_at: toISO(new Date(now.getTime() - 86400000)) },
+      { user_id: 'user-004', display_name: '游佩珊', subscribed_at: toISO(new Date(now.getTime() - 43200000)) }
+    ]
+  },
+  {
+    group_id: 'grp-002',
+    name: '交易資料庫集群',
+    description: '主從資料庫節點',
+    owner_team_id: 'team-db',
+    owner_team: '資料庫團隊',
+    member_count: 1,
+    subscriber_count: 2,
+    status_summary: { healthy: 0, warning: 1, critical: 0 },
+    created_at: toISO(new Date(now.getTime() - 1036800000)),
+    members: [
+      { resource_id: 'res-002', name: 'rds-read-1', type: 'database', status: 'warning' }
+    ],
+    subscribers: [
+      { user_id: 'user-003', display_name: '陳昱安', subscribed_at: toISO(new Date(now.getTime() - 259200000)) },
+      { user_id: 'user-001', display_name: '林佳瑜', subscribed_at: toISO(new Date(now.getTime() - 172800000)) }
     ]
   }
 ];
 
-const topologyGraph = {
+const topologyConfig = {
   nodes: [
-    { id: 'res-001', name: 'web-01', type: 'service', status: 'warning', icon: 'service', metrics: { cpu: 72, latency: 820 } },
-    { id: 'res-002', name: 'rds-read-1', type: 'database', status: 'warning', icon: 'database', metrics: { latency: 210 } },
-    { id: 'res-003', name: 'redis-cache', type: 'cache', status: 'healthy', icon: 'cache', metrics: { hitRate: 0.98 } }
+    { resource_id: 'res-001', icon: 'service', metrics: { cpu: 72, latency_ms: 820 } },
+    { resource_id: 'res-002', icon: 'database', metrics: { latency_ms: 210, connections: 342 } },
+    { resource_id: 'res-003', icon: 'cache', metrics: { hit_rate: 0.98, memory_usage: 54 } }
   ],
   edges: [
-    { source: 'res-001', target: 'res-002', relation: 'reads-from', traffic_level: 320 },
-    { source: 'res-001', target: 'res-003', relation: 'cache', traffic_level: 210 }
+    { source: 'res-001', target: 'res-002', relation: 'reads-from', traffic_level: 320, status: 'warning' },
+    { source: 'res-001', target: 'res-003', relation: 'cache', traffic_level: 210, status: 'healthy' }
   ]
 };
 
@@ -1477,6 +1526,7 @@ const emailTestHistory = [
 const tagDefinitions = [
   {
     tag_id: 'tag-001',
+    key: 'env',
     name: '環境',
     category: '基礎設施',
     required: true,
@@ -1497,34 +1547,134 @@ const tagDefinitions = [
         is_default: false,
         usage_count: 34,
         last_synced_at: toISO(new Date(now.getTime() - 7200000))
+      },
+      {
+        value_id: 'tag-001-v3',
+        value: 'development',
+        description: '開發環境',
+        is_default: false,
+        usage_count: 8,
+        last_synced_at: toISO(new Date(now.getTime() - 10800000))
+      }
+    ]
+  },
+  {
+    tag_id: 'tag-002',
+    key: 'tier',
+    name: '層級',
+    category: '應用服務',
+    required: false,
+    usage_count: 58,
+    values: [
+      {
+        value_id: 'tag-002-v1',
+        value: 'frontend',
+        description: '前端層服務',
+        is_default: false,
+        usage_count: 28,
+        last_synced_at: toISO(new Date(now.getTime() - 4200000))
+      },
+      {
+        value_id: 'tag-002-v2',
+        value: 'backend',
+        description: '後端層服務',
+        is_default: false,
+        usage_count: 18,
+        last_synced_at: toISO(new Date(now.getTime() - 5400000))
+      }
+    ]
+  },
+  {
+    tag_id: 'tag-003',
+    key: 'role',
+    name: '角色',
+    category: '資料平台',
+    required: false,
+    usage_count: 41,
+    values: [
+      {
+        value_id: 'tag-003-v1',
+        value: 'read-replica',
+        description: '資料庫讀取節點',
+        is_default: false,
+        usage_count: 12,
+        last_synced_at: toISO(new Date(now.getTime() - 3600000 * 4))
+      },
+      {
+        value_id: 'tag-003-v2',
+        value: 'cache',
+        description: '快取節點',
+        is_default: false,
+        usage_count: 9,
+        last_synced_at: toISO(new Date(now.getTime() - 3600000 * 5))
       }
     ]
   }
 ];
 
-const tagSummary = {
-  updated_at: toISO(now),
-  totals: {
+const tagSummary = (() => {
+  const totals = {
     total_keys: tagDefinitions.length,
     required_keys: tagDefinitions.filter((tag) => tag.required).length,
     optional_keys: tagDefinitions.filter((tag) => !tag.required).length,
     total_values: tagDefinitions.reduce((acc, tag) => acc + (tag.values?.length || 0), 0)
-  },
-  categories: [
-    {
-      category: '基礎設施',
-      total_keys: 1,
-      required_keys: 1,
+  };
+
+  const categoryMap = new Map();
+  tagDefinitions.forEach((tag) => {
+    const existing = categoryMap.get(tag.category) || {
+      category: tag.category,
+      total_keys: 0,
+      required_keys: 0,
       optional_keys: 0,
-      total_values: tagDefinitions[0].values.length,
-      last_updated_at: toISO(new Date(now.getTime() - 1800000)),
-      top_keys: [
-        { tag_key: 'env', description: '部署環境', usage_count: 124, required: true },
-        { tag_key: 'cluster', description: '叢集名稱', usage_count: 48, required: false }
-      ]
+      total_values: 0,
+      lastSyncedAt: 0,
+      topCandidates: []
+    };
+
+    existing.total_keys += 1;
+    existing.total_values += tag.values?.length || 0;
+    if (tag.required) {
+      existing.required_keys += 1;
+    } else {
+      existing.optional_keys += 1;
     }
-  ]
-};
+
+    const latestValueTime = Math.max(
+      0,
+      ...(tag.values || [])
+        .map((value) => new Date(value.last_synced_at || now).getTime())
+        .filter((timestamp) => !Number.isNaN(timestamp))
+    );
+    existing.lastSyncedAt = Math.max(existing.lastSyncedAt, latestValueTime);
+    existing.topCandidates.push({
+      tag_key: tag.key,
+      description: tag.name,
+      usage_count: tag.usage_count,
+      required: Boolean(tag.required)
+    });
+
+    categoryMap.set(tag.category, existing);
+  });
+
+  const categories = Array.from(categoryMap.values()).map((entry) => ({
+    category: entry.category,
+    total_keys: entry.total_keys,
+    required_keys: entry.required_keys,
+    optional_keys: entry.optional_keys,
+    total_values: entry.total_values,
+    last_updated_at: entry.lastSyncedAt ? toISO(new Date(entry.lastSyncedAt)) : null,
+    top_keys: entry.topCandidates
+      .sort((a, b) => b.usage_count - a.usage_count)
+      .slice(0, 3)
+  }));
+
+  return {
+    updated_at: toISO(now),
+    totals,
+    categories
+  };
+})();
 
 const tagKeyOptions = [
   {
@@ -2007,21 +2157,31 @@ const normalizeTags = (tags) => {
         const key = rawKey ? rawKey.trim() : '';
         if (!key) return null;
         const value = rawValue.join('=').trim();
-        return { key, value };
+        return { key, value, tag_id: null, tag_value_id: null, assigned_at: null };
       }
       if (typeof tag === 'object') {
         const key = typeof tag.key === 'string' ? tag.key.trim() : '';
         if (!key) return null;
         const value =
           tag.value === undefined || tag.value === null ? '' : String(tag.value).trim();
-        return { key, value };
+        const tagId = tag.tag_id || tag.tagId || null;
+        const tagValueId = tag.tag_value_id || tag.value_id || null;
+        const assignedAt = tag.assigned_at ? toISO(tag.assigned_at) : null;
+        return { key, value, tag_id: tagId, tag_value_id: tagValueId, assigned_at: assignedAt };
       }
       return null;
     })
     .filter((tag) => tag && tag.key);
 };
 
-const cloneTags = (tags) => normalizeTags(tags).map(({ key, value }) => ({ key, value }));
+const cloneTags = (tags) =>
+  normalizeTags(tags).map(({ key, value, tag_id, tag_value_id, assigned_at }) => ({
+    tag_id: tag_id || null,
+    tag_value_id: tag_value_id || `${key}:${value}`.toLowerCase(),
+    key,
+    value,
+    assigned_at: assigned_at || null
+  }));
 
 const normalizeGroupIds = (value) => {
   if (!value) return [];
@@ -2232,6 +2392,143 @@ const getNotificationStrategyById = (id) => notificationStrategies.find((s) => s
 const getNotificationChannelById = (id) => notificationChannels.find((c) => c.channel_id === id);
 const getHistoryById = (id) => notificationHistory.find((h) => h.record_id === id);
 const getTagById = (id) => tagDefinitions.find((tag) => tag.tag_id === id);
+
+const buildTopologyNode = (nodeConfig = {}, index = 0) => {
+  const resourceId = nodeConfig.resource_id || nodeConfig.id;
+  const resource = resourceId ? getResourceById(resourceId) : null;
+  const fallbackId =
+    resourceId ||
+    nodeConfig.id ||
+    (nodeConfig.name ? nodeConfig.name.toLowerCase().replace(/[^a-z0-9]+/gi, '-') : null) ||
+    `node-${index + 1}`;
+
+  const metrics = {};
+  if (resource) {
+    const metricCandidates = [
+      ['cpu_usage', resource.cpu_usage],
+      ['memory_usage', resource.memory_usage],
+      ['disk_usage', resource.disk_usage],
+      ['network_in_mbps', resource.network_in_mbps],
+      ['network_out_mbps', resource.network_out_mbps]
+    ];
+    metricCandidates.forEach(([key, value]) => {
+      if (typeof value === 'number' && !Number.isNaN(value)) {
+        metrics[key] = value;
+      }
+    });
+  }
+  if (nodeConfig.metrics && typeof nodeConfig.metrics === 'object') {
+    Object.entries(nodeConfig.metrics).forEach(([key, value]) => {
+      metrics[key] = value;
+    });
+  }
+
+  const groupIds = normalizeGroupIds(nodeConfig.group_ids || (resource ? resource.groups : []));
+  const environment = nodeConfig.environment || resource?.environment;
+  const teamId = nodeConfig.team_id || resource?.team_id || null;
+  const teamName =
+    nodeConfig.team || resource?.team || (teamId ? getTeamById(teamId)?.name || null : null);
+
+  const node = {
+    id: fallbackId,
+    name: nodeConfig.name || resource?.name || fallbackId,
+    type: nodeConfig.type || resource?.type || 'service',
+    status: nodeConfig.status || resource?.status || 'healthy',
+    icon: nodeConfig.icon || resource?.type || 'service',
+    metrics,
+    group_ids: groupIds,
+    groups: buildResourceGroupRefs(groupIds),
+    tags: cloneTags(nodeConfig.tags || (resource ? resource.tags : [])),
+    team_id: teamId,
+    team: teamName
+  };
+
+  if (environment) {
+    node.environment = environment;
+  }
+
+  return node;
+};
+
+const buildTopologyEdge = (edgeConfig = {}) => {
+  if (!edgeConfig) return null;
+  const source = edgeConfig.source || edgeConfig.from || null;
+  const target = edgeConfig.target || edgeConfig.to || null;
+  if (!source || !target) return null;
+  const edge = {
+    source,
+    target,
+    status: edgeConfig.status || 'healthy',
+    metadata:
+      edgeConfig.metadata && typeof edgeConfig.metadata === 'object'
+        ? { ...edgeConfig.metadata }
+        : {}
+  };
+  if (edgeConfig.relation) {
+    edge.relation = edgeConfig.relation;
+  }
+  if (typeof edgeConfig.traffic_level === 'number' && !Number.isNaN(edgeConfig.traffic_level)) {
+    edge.traffic_level = edgeConfig.traffic_level;
+  }
+  return edge;
+};
+
+const buildTopologyGraph = ({
+  statusFilter,
+  typeFilter,
+  groupFilter,
+  tagFilter,
+  teamFilter
+} = {}) => {
+  const nodes = Array.isArray(topologyConfig.nodes)
+    ? topologyConfig.nodes.map((nodeConfig, index) => buildTopologyNode(nodeConfig, index))
+    : [];
+
+  const filteredNodes = nodes.filter((node) => {
+    if (!matchesEnumFilter(node.status, statusFilter)) return false;
+    if (!matchesEnumFilter(node.type, typeFilter)) return false;
+    if (!matchesEnumFilter(node.team_id, teamFilter)) return false;
+
+    if (groupFilter) {
+      const nodeGroupIds = Array.isArray(node.group_ids)
+        ? node.group_ids
+            .map((value) => (value === undefined || value === null ? '' : String(value).trim().toLowerCase()))
+            .filter((value) => value.length > 0)
+        : [];
+      if (!nodeGroupIds.some((value) => groupFilter.has(value))) return false;
+    }
+
+    if (tagFilter) {
+      const nodeTagIds = Array.isArray(node.tags)
+        ? node.tags
+            .map((tag) => {
+              if (!tag) return null;
+              const rawValue =
+                tag.tag_value_id || (tag.key ? `${tag.key}:${tag.value ?? ''}` : null);
+              return rawValue ? String(rawValue).toLowerCase() : null;
+            })
+            .filter((value) => value && value.length > 0)
+        : [];
+      if (!nodeTagIds.some((value) => tagFilter.has(value))) return false;
+    }
+
+    return true;
+  });
+
+  const includedNodeIds = new Set(filteredNodes.map((node) => node.id));
+  const edges = Array.isArray(topologyConfig.edges)
+    ? topologyConfig.edges
+        .map((edgeConfig) => buildTopologyEdge(edgeConfig))
+        .filter(
+          (edge) =>
+            edge &&
+            includedNodeIds.has(edge.source) &&
+            includedNodeIds.has(edge.target)
+        )
+    : [];
+
+  return { nodes: filteredNodes, edges };
+};
 
 const resolveRecipientDisplayName = (recipient) => {
   if (!recipient || !recipient.type || !recipient.id) {
@@ -2598,28 +2895,6 @@ const processBatchOperation = (operationId, payload, ids) => {
 };
 
 const notFound = (res, message = '查無資料') => res.status(404).json({ code: 'NOT_FOUND', message });
-
-app.post('/auth/login', (req, res) => {
-  const { username } = req.body || {};
-  res.json({
-    access_token: 'mock-access-token',
-    refresh_token: 'mock-refresh-token',
-    token_type: 'Bearer',
-    expires_in: 3600,
-    username: username || currentUser.username
-  });
-});
-
-app.post('/auth/logout', (req, res) => res.status(204).end());
-
-app.post('/auth/refresh', (req, res) => {
-  res.json({
-    access_token: 'mock-access-token-refreshed',
-    refresh_token: 'mock-refresh-token',
-    token_type: 'Bearer',
-    expires_in: 3600
-  });
-});
 
 app.get('/me', (req, res) => res.json(currentUser));
 
@@ -3700,12 +3975,19 @@ app.get('/resources', (req, res) => {
   const statusFilter = createLowercaseSet(parseListParam(req.query.status));
   const typeFilter = createLowercaseSet(parseListParam(req.query.type));
   const environmentFilter = createLowercaseSet(parseListParam(req.query.environment));
+  const tagFilter = createLowercaseSet(parseListParam(req.query.tag_value_ids));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
 
   const filtered = resourceData.filter((resource) => {
     if (!matchesEnumFilter(resource.status, statusFilter)) return false;
     if (!matchesEnumFilter(resource.type, typeFilter)) return false;
     if (!matchesEnumFilter(resource.environment, environmentFilter)) return false;
+    if (tagFilter) {
+      const tagIds = normalizeTags(resource.tags)
+        .map((tag) => (tag.tag_value_id || `${tag.key}:${tag.value}`))
+        .map((id) => id.toLowerCase());
+      if (!tagIds.some((id) => tagFilter.has(id))) return false;
+    }
     if (keyword) {
       const tagTexts = normalizeTags(resource.tags).map((tag) => `${tag.key}:${tag.value}`.toLowerCase());
       const searchFields = [
@@ -3949,7 +4231,27 @@ app.delete('/resource-groups/:group_id', (req, res) => {
 });
 
 app.get('/topology', (req, res) => {
-  res.json(topologyGraph);
+  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
+  const typeFilter = createLowercaseSet(
+    parseListParam(req.query.resource_types ?? req.query.type)
+  );
+  const groupFilter = createLowercaseSet(
+    parseListParam(req.query.resource_group_ids ?? req.query.group_ids)
+  );
+  const tagFilter = createLowercaseSet(
+    parseListParam(req.query.tag_value_ids ?? req.query.tags)
+  );
+  const teamFilter = createLowercaseSet(parseListParam(req.query.team_ids ?? req.query.team_id));
+
+  const graph = buildTopologyGraph({
+    statusFilter,
+    typeFilter,
+    groupFilter,
+    tagFilter,
+    teamFilter
+  });
+
+  res.json(graph);
 });
 
 app.get('/dashboards/summary', (req, res) => {
