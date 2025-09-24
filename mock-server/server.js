@@ -132,30 +132,6 @@ const userPreferences = {
   }
 };
 
-const securityLogins = [
-  {
-    login_time: toISO(now),
-    ip_address: '203.0.113.8',
-    device_info: 'Chrome on macOS',
-    status: 'success',
-    location: 'Taipei'
-  },
-  {
-    login_time: toISO(new Date(now.getTime() - 3600 * 1000)),
-    ip_address: '198.51.100.25',
-    device_info: 'Safari on iOS',
-    status: 'success',
-    location: 'Kaohsiung'
-  },
-  {
-    login_time: toISO(new Date(now.getTime() - 86400 * 1000)),
-    ip_address: '192.0.2.11',
-    device_info: 'Firefox on Windows',
-    status: 'failed',
-    location: 'Unknown'
-  }
-];
-
 const notifications = [
   {
     notification_id: 'ntf-001',
@@ -216,7 +192,7 @@ const eventData = [
     trigger_threshold: '> 500ms',
     trigger_value: '820ms',
     unit: 'ms',
-    trigger_time: toISO(new Date(now.getTime() - 15 * 60000)),
+    triggered_at: toISO(new Date(now.getTime() - 15 * 60000)),
     assignee_id: 'user-002',
     assignee: '張于庭',
     acknowledged_at: toISO(new Date(now.getTime() - 10 * 60000)),
@@ -294,7 +270,7 @@ const eventData = [
     trigger_threshold: '> 120ms',
     trigger_value: '210ms',
     unit: 'ms',
-    trigger_time: toISO(new Date(now.getTime() - 45 * 60000)),
+    triggered_at: toISO(new Date(now.getTime() - 45 * 60000)),
     assignee_id: 'user-003',
     assignee: '蔡敏豪',
     acknowledged_at: toISO(new Date(now.getTime() - 35 * 60000)),
@@ -437,7 +413,7 @@ const eventRules = [
     enabled: true,
     automation_enabled: true,
     template_key: 'api_latency',
-    creator: '林佳瑜',
+    creator: { user_id: 'user-001', display_name: '林佳瑜' },
     last_updated: toISO(new Date(now.getTime() - 86400000)),
     last_synced_at: toISO(new Date(now.getTime() - 600000)),
     sync_status: 'fresh',
@@ -472,7 +448,7 @@ const eventRules = [
     enabled: true,
     automation_enabled: false,
     template_key: 'db_latency',
-    creator: '林佳瑜',
+    creator: { user_id: 'user-001', display_name: '林佳瑜' },
     last_updated: toISO(new Date(now.getTime() - 172800000)),
     last_synced_at: toISO(new Date(now.getTime() - 3600000)),
     sync_status: 'stale',
@@ -1127,7 +1103,7 @@ const iamUsers = [
     status: 'active',
     teams: ['sre-core'],
     roles: ['sre', 'incident-commander'],
-    last_login: toISO(now),
+    last_login_at: toISO(now),
     created_at: toISO(new Date(now.getTime() - 120 * 86400000)),
     updated_at: toISO(new Date(now.getTime() - 3600000)),
     deleted_at: null
@@ -1140,7 +1116,7 @@ const iamUsers = [
     status: 'active',
     teams: ['ops'],
     roles: ['ops'],
-    last_login: toISO(new Date(now.getTime() - 7200000)),
+    last_login_at: toISO(new Date(now.getTime() - 7200000)),
     created_at: toISO(new Date(now.getTime() - 200 * 86400000)),
     updated_at: toISO(new Date(now.getTime() - 7200000)),
     deleted_at: null
@@ -1153,49 +1129,10 @@ const iamUsers = [
     status: 'active',
     teams: ['team-db'],
     roles: ['db-admin'],
-    last_login: toISO(new Date(now.getTime() - 14400000)),
+    last_login_at: toISO(new Date(now.getTime() - 14400000)),
     created_at: toISO(new Date(now.getTime() - 220 * 86400000)),
     updated_at: toISO(new Date(now.getTime() - 14400000)),
     deleted_at: null
-  }
-];
-
-const iamInvitations = [
-  {
-    invitation_id: 'inv-001',
-    email: 'new.engineer@example.com',
-    name: '李佳蓉',
-    status: 'invitation_sent',
-    invited_by: 'user-001',
-    invited_by_name: '林佳瑜',
-    invited_at: toISO(new Date(now.getTime() - 2 * 86400000)),
-    last_sent_at: toISO(new Date(now.getTime() - 2 * 86400000)),
-    expires_at: toISO(new Date(now.getTime() + 5 * 86400000)),
-    accepted_at: null
-  },
-  {
-    invitation_id: 'inv-002',
-    email: 'contractor@example.com',
-    name: '周文俊',
-    status: 'expired',
-    invited_by: 'user-002',
-    invited_by_name: '陳昱安',
-    invited_at: toISO(new Date(now.getTime() - 14 * 86400000)),
-    last_sent_at: toISO(new Date(now.getTime() - 13 * 86400000)),
-    expires_at: toISO(new Date(now.getTime() - 7 * 86400000)),
-    accepted_at: null
-  },
-  {
-    invitation_id: 'inv-003',
-    email: 'observer@example.com',
-    name: '吳映潔',
-    status: 'accepted',
-    invited_by: 'user-001',
-    invited_by_name: '林佳瑜',
-    invited_at: toISO(new Date(now.getTime() - 30 * 86400000)),
-    last_sent_at: toISO(new Date(now.getTime() - 30 * 86400000)),
-    expires_at: toISO(new Date(now.getTime() - 23 * 86400000)),
-    accepted_at: toISO(new Date(now.getTime() - 22 * 86400000))
   }
 ];
 
@@ -3017,10 +2954,6 @@ app.put('/me/preferences', (req, res) => {
   res.json(userPreferences);
 });
 
-app.get('/me/security/logins', (req, res) => {
-  res.json(paginate(securityLogins, req));
-});
-
 app.get('/search', (req, res) => {
   const keyword = (req.query.keyword || '').toLowerCase();
   const eventResults = eventData
@@ -3487,21 +3420,6 @@ app.post('/events', (req, res) => {
 app.get('/events/:event_id', (req, res) => {
   const event = getEventById(req.params.event_id);
   if (!event) return notFound(res, '找不到事件');
-  res.json(toEventDetail(event));
-});
-
-app.patch('/events/:event_id', (req, res) => {
-  const event = getEventById(req.params.event_id);
-  if (!event) return notFound(res, '找不到事件');
-  const updates = { ...(req.body || {}) };
-  if (Object.prototype.hasOwnProperty.call(updates, 'notes')) {
-    const rawNote = updates.notes;
-    const trimmedNote = typeof rawNote === 'string' ? rawNote.trim() : '';
-    event.notes = trimmedNote.length > 0 ? trimmedNote : null;
-    delete updates.notes;
-  }
-  Object.assign(event, updates);
-  event.updated_at = toISO(new Date());
   res.json(toEventDetail(event));
 });
 
@@ -4696,56 +4614,6 @@ app.post('/automation/executions/:execution_id/retry', (req, res) => {
   const execution = getExecutionById(req.params.execution_id);
   if (!execution) return notFound(res, '找不到執行紀錄');
   res.status(202).json({ ...execution, status: 'pending', start_time: toISO(new Date()), end_time: null });
-});
-
-app.get('/iam/invitations', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-  const invitedByFilter = createLowercaseSet(parseListParam(req.query.invited_by));
-
-  const filtered = iamInvitations.filter((invitation) => {
-    if (!matchesEnumFilter(invitation.status, statusFilter)) return false;
-    if (!matchesEnumFilter(invitation.invited_by, invitedByFilter)) return false;
-    if (keyword) {
-      const text = `${invitation.email || ''} ${invitation.name || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-
-  res.json(
-    paginate(filtered, req, {
-      allowedSortFields: ['email', 'status', 'invited_at', 'expires_at', 'last_sent_at'],
-      defaultSortKey: 'invited_at',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.post('/iam/invitations', (req, res) => {
-  const payload = req.body || {};
-  const email = typeof payload.email === 'string' ? payload.email.trim() : '';
-  if (!email) {
-    return res.status(400).json({ code: 'invalid_request', message: '請提供邀請 Email。' });
-  }
-  const expiresAtDate = parseDateSafe(payload.expires_at) || new Date(Date.now() + 7 * 86400000);
-  const nowIso = toISO(new Date());
-  const invitation = {
-    invitation_id: `inv-${Date.now()}`,
-    email,
-    name: typeof payload.name === 'string' && payload.name.trim().length > 0 ? payload.name.trim() : null,
-    team_ids: payload.team_ids || [],
-    role_ids: payload.role_ids || [],
-    status: 'invitation_sent',
-    invited_by: currentUser.user_id,
-    invited_by_name: currentUser.display_name,
-    invited_at: nowIso,
-    last_sent_at: nowIso,
-    expires_at: toISO(expiresAtDate),
-    accepted_at: null
-  };
-  iamInvitations.unshift(invitation);
-  res.status(201).json(invitation);
 });
 
 app.get('/iam/users', (req, res) => {

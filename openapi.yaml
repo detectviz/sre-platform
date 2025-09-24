@@ -96,8 +96,6 @@ tags:
     description: 平台健康檢查與就緒狀態監控。
   - name: 指標服務
     description: 系統指標定義、彙總與時序查詢服務。
-  - name: 通知中心
-    description: 個人通知收取與管理。
   - name: 事件管理
     description: 事件列表、詳情與 AI 分析。
   - name: 事件規則
@@ -179,31 +177,6 @@ paths:
                 $ref: "#/components/schemas/UserPreference"
         "400":
           $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-  /me/security/logins:
-    get:
-      tags:
-        - 個人偏好
-      summary: 取得最近登入記錄
-      operationId: listSecurityLogins
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-      responses:
-        "200":
-          description: 回傳登入記錄列表。
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/PaginatedResponse"
-                  - type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/SecurityLoginRecord"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /search:
@@ -392,7 +365,7 @@ paths:
   /notifications/summary:
     get:
       tags:
-        - 通知中心
+        - 通知管理
       summary: 取得通知中心摘要
       operationId: getNotificationSummary
       responses:
@@ -407,7 +380,7 @@ paths:
   /notifications:
     get:
       tags:
-        - 通知中心
+        - 通知管理
       summary: 取得通知列表
       operationId: listNotifications
       parameters:
@@ -444,7 +417,7 @@ paths:
   /notifications/bulk:
     post:
       tags:
-        - 通知中心
+        - 通知管理
       summary: 批次更新或清除通知
       operationId: bulkUpdateNotifications
       requestBody:
@@ -695,31 +668,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/EventDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    patch:
-      tags:
-        - 事件管理
-      summary: 更新事件狀態或指派資訊
-      operationId: updateEvent
-      deprecated: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateEventRequest"
-      responses:
-        "200":
-          description: 事件已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventDetail"
-        "400":
-          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -2422,80 +2370,6 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /iam/invitations:
-    get:
-      tags:
-        - 身份與存取
-      summary: 取得邀請列表
-      operationId: listIamInvitations
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - in: query
-          name: status
-          description: 依邀請狀態篩選，多個狀態以逗號分隔。
-          style: form
-          explode: false
-          schema:
-            type: array
-            items:
-              type: string
-              enum: [invitation_sent, accepted, expired, cancelled]
-        - in: query
-          name: keyword
-          description: 依電子郵件或姓名關鍵字模糊搜尋。
-          schema:
-            type: string
-        - in: query
-          name: sort_by
-          description: 指定排序欄位，預設為 invited_at。
-          schema:
-            type: string
-            enum: [invited_at, expires_at, email, status, last_sent_at]
-        - in: query
-          name: sort_order
-          description: 排序方向，支援 asc 或 desc，預設為 desc。
-          schema:
-            type: string
-            enum: [asc, desc]
-      responses:
-        "200":
-          description: 邀請列表。
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/PaginatedResponse"
-                  - type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/IAMInvitationResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-    post:
-      tags:
-        - 身份與存取
-      summary: 發送人員邀請
-      operationId: createIamInvitation
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CreateIAMInvitationRequest"
-      responses:
-        "201":
-          description: 邀請已發送。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/IAMInvitationResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /iam/users:
     get:
       tags:
@@ -4261,23 +4135,6 @@ components:
           type: boolean
           description: 是否自動儲存儀表板布局變更。
       additionalProperties: false
-    SecurityLoginRecord:
-      type: object
-      required: [login_time, ip_address, device_info, status]
-      properties:
-        login_time:
-          type: string
-          format: date-time
-        ip_address:
-          type: string
-        device_info:
-          type: string
-        status:
-          type: string
-          enum: [success, failed]
-        location:
-          type: string
-          nullable: true
     GlobalSearchGroup:
       type: object
       required: [type, label, results]
@@ -4508,7 +4365,7 @@ components:
         assignee:
           type: string
           nullable: true
-        trigger_time:
+        triggered_at:
           type: string
           format: date-time
         tags:
@@ -4555,7 +4412,7 @@ components:
           type: string
         unit:
           type: string
-        trigger_time:
+        triggered_at:
           type: string
           format: date-time
         assignee_id:
@@ -4757,7 +4614,7 @@ components:
         status:
           type: string
           enum: [new, acknowledged, in_progress, resolved, silenced]
-        trigger_time:
+        triggered_at:
           type: string
           format: date-time
     EventActionRequest:
@@ -4919,8 +4776,7 @@ components:
           type: string
           description: 監控對象摘要文字，供事件規則列表顯示使用。
         creator:
-          type: string
-          description: 規則建立者，若 Grafana 暫不可用則使用快取的建立者資訊。
+          $ref: '#/components/schemas/CreatorInfo'
         last_updated:
           type: string
           format: date-time
@@ -6293,9 +6149,10 @@ components:
           type: array
           items:
             type: string
-        last_login:
+        last_login_at:
           type: string
           format: date-time
+          nullable: true
     UpdateIAMUserRequest:
       type: object
       properties:
@@ -6310,64 +6167,6 @@ components:
         status:
           type: string
           enum: [active, disabled]
-    CreateIAMInvitationRequest:
-      type: object
-      required: [email]
-      properties:
-        email:
-          type: string
-          format: email
-        name:
-          type: string
-        team_ids:
-          type: array
-          description: 預先指派的團隊識別碼列表。
-          items:
-            type: string
-            format: uuid
-        role_ids:
-          type: array
-          description: 預先指派的角色識別碼列表。
-          items:
-            type: string
-            format: uuid
-    IAMInvitationResponse:
-      type: object
-      required: [invitation_id, status, email, invited_at, last_sent_at]
-      properties:
-        invitation_id:
-          type: string
-        status:
-          type: string
-          enum: [invitation_sent, accepted, expired, cancelled]
-        email:
-          type: string
-          format: email
-        name:
-          type: string
-          nullable: true
-        invited_by:
-          type: string
-          nullable: true
-          description: 發送邀請者的使用者識別碼。
-        invited_by_name:
-          type: string
-          nullable: true
-          description: 發送邀請者的顯示名稱，供列表顯示。
-        invited_at:
-          type: string
-          format: date-time
-        expires_at:
-          type: string
-          format: date-time
-          nullable: true
-        accepted_at:
-          type: string
-          format: date-time
-          nullable: true
-        last_sent_at:
-          type: string
-          format: date-time
     IAMUserDetail:
       allOf:
         - $ref: "#/components/schemas/IAMUserSummary"

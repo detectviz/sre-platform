@@ -79,6 +79,7 @@ CREATE TABLE team_subscribers (
 CREATE INDEX idx_team_subscribers_user ON team_subscribers (user_id);
 CREATE INDEX idx_team_subscribers_type ON team_subscribers (subscriber_type);
 
+-- DEPRECATED: 此功能應由 Keycloak 統一管理，待未來版本移除。
 CREATE TABLE user_invitations (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -157,13 +158,14 @@ CREATE TABLE role_permissions (
 );
 CREATE INDEX idx_role_permissions_role ON role_permissions (role_id);
 
+-- DEPRECATED: 此功能應由 Keycloak 統一管理，待未來版本移除。
 CREATE TABLE security_login_history (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     -- 使用者識別碼
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     -- 登入時間
-    login_time TIMESTAMPTZ NOT NULL,
+    logged_in_at TIMESTAMPTZ NOT NULL,
     -- IP位址
     ip_address VARCHAR(64),
     -- 裝置資訊
@@ -176,8 +178,9 @@ CREATE TABLE security_login_history (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_security_login_status CHECK (status IN ('success','failed'))
 );
-CREATE INDEX idx_security_login_user ON security_login_history (user_id, login_time DESC);
+CREATE INDEX idx_security_login_user ON security_login_history (user_id, logged_in_at DESC);
 
+-- NOTE: 此表的 landing_* 欄位對應 openapi.yaml 中的 UserPreference.default_landing (discriminator object)
 CREATE TABLE user_preferences (
     -- 使用者識別碼
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
@@ -374,7 +377,7 @@ CREATE TABLE events (
     -- 單位
     unit VARCHAR(32),
     -- 觸發時間
-    trigger_time TIMESTAMPTZ NOT NULL,
+    triggered_at TIMESTAMPTZ NOT NULL,
     -- 受指派者識別碼
     assignee_id UUID REFERENCES users(id),
     -- 已確認時間
@@ -394,10 +397,10 @@ CREATE TABLE events (
 );
 CREATE INDEX idx_events_status ON events (status);
 CREATE INDEX idx_events_severity ON events (severity);
-CREATE INDEX idx_events_trigger_time ON events (trigger_time DESC);
+CREATE INDEX idx_events_triggered_at ON events (triggered_at DESC);
 CREATE INDEX idx_events_priority ON events (priority);
 CREATE INDEX idx_events_rule_uid ON events (rule_uid);
-CREATE INDEX idx_events_source_status_time ON events (event_source, status, trigger_time DESC);
+CREATE INDEX idx_events_source_status_time ON events (event_source, status, triggered_at DESC);
 COMMENT ON TABLE events IS '事件增值處理資料表，專注於 AI 分析、關聯分析與處理追蹤，不承載告警規則管理邏輯。';
 
 ALTER TABLE silence_rules
