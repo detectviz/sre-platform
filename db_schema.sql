@@ -545,6 +545,16 @@ CREATE TABLE event_rule_configs (
     last_synced_at TIMESTAMPTZ,
     -- 同步訊息
     sync_message TEXT,
+    -- 是否啟用自動化
+    automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 綁定腳本識別碼
+    automation_script_id UUID REFERENCES automation_scripts(id) ON DELETE SET NULL,
+    -- 腳本參數
+    automation_parameters JSONB NOT NULL DEFAULT '{}'::JSONB,
+    -- 自動化綁定最後更新者
+    automation_updated_by UUID REFERENCES users(id),
+    -- 自動化綁定最後更新時間
+    automation_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 建立者
     created_by UUID REFERENCES users(id),
     -- 更新者
@@ -557,12 +567,14 @@ CREATE TABLE event_rule_configs (
     CONSTRAINT chk_event_rule_configs_priority CHECK (default_priority IN ('P0','P1','P2','P3')),
     CONSTRAINT chk_event_rule_configs_sync CHECK (sync_status IN ('fresh','stale','failed')),
     CONSTRAINT chk_event_rule_configs_filters CHECK (jsonb_typeof(resource_filters) = 'array'),
-    CONSTRAINT chk_event_rule_configs_conditions CHECK (jsonb_typeof(condition_groups) = 'array')
+    CONSTRAINT chk_event_rule_configs_conditions CHECK (jsonb_typeof(condition_groups) = 'array'),
+    CONSTRAINT chk_event_rule_configs_automation_params CHECK (jsonb_typeof(automation_parameters) = 'object')
 );
 CREATE INDEX idx_event_rule_configs_enabled ON event_rule_configs (enabled);
 CREATE INDEX idx_event_rule_configs_severity ON event_rule_configs (severity);
 CREATE INDEX idx_event_rule_configs_grafana_uid ON event_rule_configs (grafana_rule_uid);
 CREATE INDEX idx_event_rule_configs_updated_at ON event_rule_configs (updated_at DESC);
+CREATE INDEX idx_event_rule_configs_automation_script ON event_rule_configs (automation_script_id);
 COMMENT ON TABLE event_rule_configs IS '儲存事件規則在平台側的完整配置與監控對象摘要，作為多步驟精靈的唯一資料來源。';
 
 CREATE TABLE event_rule_snapshots (
@@ -572,34 +584,8 @@ CREATE TABLE event_rule_snapshots (
     rule_config_id UUID REFERENCES event_rule_configs(id) ON DELETE SET NULL,
     -- 快取的完整規則定義 (Grafana JSON 結構)
     raw_definition JSONB NOT NULL,
-    -- 快取規則名稱供清單快速顯示
-    cached_name VARCHAR(128) NOT NULL,
-    -- 快取規則描述
-    cached_description TEXT,
-    -- 快取的嚴重度資訊
-    cached_severity VARCHAR(32) NOT NULL,
-    -- 快取的啟用狀態
-    cached_enabled BOOLEAN NOT NULL,
-    -- 快取的預設優先級
-    cached_default_priority VARCHAR(8) NOT NULL DEFAULT 'P2',
-    -- 快取的範本鍵值
-    cached_template_key VARCHAR(64),
-    -- 快取的標籤
-    cached_labels TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-    -- 快取的環境設定
-    cached_environments TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
-    -- 快取的監控對象摘要
-    cached_target_summary VARCHAR(256),
-    -- 快取的資源篩選條件
-    cached_resource_filters JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 快取的標題模板
-    cached_title_template TEXT,
-    -- 快取的內容模板
-    cached_content_template TEXT,
-    -- 快取的規則建立者
-    cached_creator VARCHAR(128) NOT NULL,
-    -- 快取的最後更新時間
-    cached_last_updated TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 額外補充資訊 (建立者、最後更新時間等)
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 與 Grafana 最新同步時間
     last_synced_at TIMESTAMPTZ,
     -- 同步狀態 (fresh: 已同步、stale: 使用快取、failed: 同步失敗)
@@ -613,35 +599,12 @@ CREATE TABLE event_rule_snapshots (
     -- 最近更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_event_rule_snapshot_status CHECK (sync_status IN ('fresh','stale','failed')),
-    CONSTRAINT chk_event_rule_snapshot_severity CHECK (cached_severity IN ('critical','warning','info')),
-    CONSTRAINT chk_event_rule_snapshot_priority CHECK (cached_default_priority IN ('P0','P1','P2','P3')),
-    CONSTRAINT chk_event_rule_snapshot_filters CHECK (jsonb_typeof(cached_resource_filters) = 'array')
+    CONSTRAINT chk_event_rule_snapshot_metadata CHECK (jsonb_typeof(metadata) = 'object')
 );
 CREATE INDEX idx_event_rule_snapshots_status ON event_rule_snapshots (sync_status);
 CREATE INDEX idx_event_rule_snapshots_synced_at ON event_rule_snapshots (last_synced_at DESC);
 CREATE INDEX idx_event_rule_snapshots_rule_config ON event_rule_snapshots (rule_config_id);
 COMMENT ON TABLE event_rule_snapshots IS '快取 Grafana 告警規則的最新設定與建立者／最後更新時間，以支援離線檢視與編輯時的表單回填。';
-
-CREATE TABLE event_rule_automation_bindings (
-    -- 規則配置識別碼
-    rule_config_id UUID PRIMARY KEY REFERENCES event_rule_configs(id) ON DELETE CASCADE,
-    -- Grafana 規則 UID
-    grafana_rule_uid VARCHAR(64),
-    -- 是否啟用自動化
-    automation_enabled BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 綁定腳本識別碼
-    script_id UUID REFERENCES automation_scripts(id) ON DELETE SET NULL,
-    -- 腳本參數
-    parameters JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 最後更新者
-    updated_by UUID REFERENCES users(id),
-    -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_event_rule_automation_parameters CHECK (jsonb_typeof(parameters) = 'object')
-);
-CREATE UNIQUE INDEX idx_event_rule_automation_grafana_uid ON event_rule_automation_bindings (grafana_rule_uid) WHERE grafana_rule_uid IS NOT NULL;
-CREATE INDEX idx_event_rule_automation_script ON event_rule_automation_bindings (script_id);
-COMMENT ON TABLE event_rule_automation_bindings IS '儲存事件規則的自動化綁定設定，並串聯平台規則配置與 Grafana 規則快取以補齊擴充屬性。';
 
 CREATE TABLE batch_operations (
     -- 主鍵識別碼
@@ -1458,42 +1421,6 @@ CREATE INDEX idx_notification_history_strategy ON notification_history (strategy
 CREATE INDEX idx_notification_history_last_resend_at ON notification_history (last_resend_at DESC);
 CREATE INDEX idx_notification_history_resend_available ON notification_history (resend_available);
 CREATE INDEX idx_notification_history_event ON notification_history (related_event_id);
-
-CREATE TABLE notification_resend_jobs (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 通知歷史識別碼
-    notification_history_id UUID NOT NULL REFERENCES notification_history(id) ON DELETE CASCADE,
-    -- 狀態
-    status VARCHAR(32) NOT NULL,
-    -- 申請人
-    requested_by UUID REFERENCES users(id),
-    -- 申請時間
-    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 通知通道識別碼
-    channel_id UUID REFERENCES notification_channels(id) ON DELETE SET NULL,
-    -- 目標接收者
-    recipients JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 是否僅做乾跑
-    dry_run BOOLEAN NOT NULL DEFAULT FALSE,
-    -- 備註
-    note TEXT,
-    -- 開始時間
-    started_at TIMESTAMPTZ,
-    -- 完成時間
-    completed_at TIMESTAMPTZ,
-    -- 結果訊息
-    result_message TEXT,
-    -- 錯誤訊息
-    error_message TEXT,
-    -- 中繼資料
-    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
-    CONSTRAINT chk_notification_resend_status CHECK (status IN ('queued','running','completed','failed','cancelled')),
-    CONSTRAINT chk_notification_resend_recipients CHECK (jsonb_typeof(recipients) = 'array')
-);
-CREATE INDEX idx_notification_resend_history ON notification_resend_jobs (notification_history_id);
-CREATE INDEX idx_notification_resend_status ON notification_resend_jobs (status);
-CREATE INDEX idx_notification_resend_requested_at ON notification_resend_jobs (requested_at DESC);
 
 -- =============================
 -- 平台設定與整合

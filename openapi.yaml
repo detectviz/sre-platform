@@ -1053,7 +1053,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateEventRuleRequest"
+              $ref: "#/components/schemas/EventRuleUpsertRequest"
       responses:
         "201":
           description: 規則建立成功。
@@ -1103,7 +1103,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateEventRuleRequest"
+              $ref: "#/components/schemas/EventRuleUpsertRequest"
       responses:
         "200":
           description: 規則已更新。
@@ -1235,7 +1235,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateSilenceRuleRequest"
+              $ref: "#/components/schemas/SilenceRuleUpsertRequest"
       responses:
         "201":
           description: 靜音規則建立成功。
@@ -1281,7 +1281,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateSilenceRuleRequest"
+              $ref: "#/components/schemas/SilenceRuleUpsertRequest"
       responses:
         "200":
           description: 靜音規則已更新。
@@ -4798,9 +4798,6 @@ components:
           type: string
           format: date-time
           description: 當 action 為 resolve 時可覆寫結束時間。
-        resolution_note:
-          type: string
-          description: 當 action 為 resolve 時填寫的結案說明。
     EventAnalysisReport:
       type: object
       required: [event_id, generated_at, root_cause, confidence]
@@ -5076,9 +5073,7 @@ components:
           type: string
         automation:
           $ref: "#/components/schemas/AutomationSetting"
-    CreateEventRuleRequest:
-      $ref: "#/components/schemas/EventRulePayload"
-    UpdateEventRuleRequest:
+    EventRuleUpsertRequest:
       $ref: "#/components/schemas/EventRulePayload"
     ToggleEnabledRequest:
       type: object
@@ -5216,9 +5211,7 @@ components:
           type: boolean
         notify_on_end:
           type: boolean
-    CreateSilenceRuleRequest:
-      $ref: "#/components/schemas/SilenceRulePayload"
-    UpdateSilenceRuleRequest:
+    SilenceRuleUpsertRequest:
       $ref: "#/components/schemas/SilenceRulePayload"
     ResourceSummaryMetrics:
       type: object
@@ -6637,47 +6630,6 @@ components:
           $ref: "#/components/schemas/NotificationDeliveryRequest"
         response:
           $ref: "#/components/schemas/NotificationDeliveryResponse"
-    NotificationResendJob:
-      type: object
-      required: [job_id, status, requested_at]
-      properties:
-        job_id:
-          type: string
-        status:
-          type: string
-          enum: [queued, running, completed, failed, cancelled]
-        requested_at:
-          type: string
-          format: date-time
-        requested_by:
-          $ref: "#/components/schemas/UserReference"
-          nullable: true
-        channel_id:
-          type: string
-          nullable: true
-        recipients:
-          type: array
-          items:
-            $ref: "#/components/schemas/NotificationDeliveryRecipient"
-        dry_run:
-          type: boolean
-        note:
-          type: string
-        started_at:
-          type: string
-          format: date-time
-          nullable: true
-        completed_at:
-          type: string
-          format: date-time
-          nullable: true
-        result_message:
-          type: string
-        error_message:
-          type: string
-        metadata:
-          type: object
-          additionalProperties: true
     NotificationRetryPolicy:
       type: object
       properties:
@@ -7002,10 +6954,6 @@ components:
             metadata:
               type: object
               additionalProperties: true
-            resend_jobs:
-              type: array
-              items:
-                $ref: "#/components/schemas/NotificationResendJob"
     NotificationHistoryPurgeRequest:
       type: object
       required: [before]
