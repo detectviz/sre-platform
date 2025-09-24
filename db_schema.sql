@@ -371,6 +371,8 @@ CREATE TABLE events (
     source VARCHAR(100),
     -- 服務影響
     service_impact TEXT,
+    -- 備註
+    notes TEXT,
     -- 資源識別碼
     resource_id UUID,
     -- Grafana 告警規則 UID

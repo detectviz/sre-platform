@@ -4648,6 +4648,9 @@ components:
           format: date-time
         assignee_id:
           type: string
+        notes:
+          type: string
+          description: 事件備註說明，通常由人工填寫補充資訊。
         metadata:
           type: object
           additionalProperties: true
@@ -4674,6 +4677,7 @@ components:
           format: date-time
         notes:
           type: string
+          description: 更新事件備註內容，若傳入空字串則清除備註。
         source:
           type: string
         service_impact:
@@ -4771,6 +4775,10 @@ components:
               type: string
               format: date-time
               nullable: true
+            notes:
+              type: string
+              nullable: true
+              description: 事件備註內容。
             timeline:
               type: array
               items:
