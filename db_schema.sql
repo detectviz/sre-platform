@@ -861,9 +861,7 @@ CREATE TABLE resource_groups (
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 軟刪除時間
-    deleted_at TIMESTAMPTZ,
-    CONSTRAINT chk_resources_status CHECK (status IN ('healthy','warning','critical','offline')),
-    CONSTRAINT chk_resources_type CHECK (type IN ('server','database','cache','gateway','service'))
+    deleted_at TIMESTAMPTZ
 );
 CREATE INDEX idx_resource_groups_deleted ON resource_groups (deleted_at);
 
@@ -1576,3 +1574,21 @@ BEGIN
 END;
 $$;
 COMMENT ON FUNCTION cleanup_old_audit_logs(INTERVAL) IS '刪除早於保留期間的審計日誌並回傳刪除筆數，預設保留兩年資料。';
+
+-- =============================
+-- 平台基礎資料填充
+-- =============================
+INSERT INTO layout_widgets (widget_id, name, description, supported_pages, data_api_endpoint) VALUES
+('incident_pending_count', '待處理告警', '顯示待處理事件數量', '["事件管理", "SRE 戰情室", "分析中心", "通知管理"]', '/api/v1/events/summary'),
+('incident_in_progress', '處理中事件', '追蹤目前由工程師處理的事件數', '["事件管理"]', '/api/v1/events/summary'),
+('incident_resolved_today', '今日已解決', '顯示今日已關閉事件數', '["事件管理", "SRE 戰情室", "儀表板管理"]', '/api/v1/events/summary'),
+('resource_total_count', '總資源數', '顯示納管資源總量', '["資源管理", "SRE 戰情室", "分析中心", "儀表板管理"]', '/api/v1/resources/summary'),
+('resource_health_rate', '正常率', '顯示健康資源百分比', '["資源管理", "SRE 戰情室"]', '/api/v1/resources/summary'),
+('resource_alerting', '異常資源', '顯示異常或離線資源數', '["資源管理", "儀表板管理"]', '/api/v1/resources/summary'),
+('automation_runs_today', '今日自動化執行', '顯示今日觸發自動化任務數量', '["自動化中心", "SRE 戰情室", "分析中心", "通知管理"]', '/api/v1/automation/summary'),
+('automation_success_rate', '成功率', '顯示自動化任務成功比例', '["自動化中心"]', '/api/v1/automation/summary'),
+('automation_suppressed_alerts', '已抑制告警', '顯示因自動化而抑制的告警數', '["自動化中心"]', '/api/v1/automation/summary'),
+('user_total_count', '總人員數', '顯示系統總用戶數量', '["身份與存取管理", "通知管理", "平台設定", "個人設定"]', '/api/v1/iam/summary'),
+('user_online_count', '在線人員', '顯示當前在線用戶數', '["身份與存取管理", "平台設定", "個人設定", "儀表板管理"]', '/api/v1/iam/summary'),
+('user_team_count', '團隊數量', '顯示系統中團隊總數', '["身份與存取管理", "平台設定"]', '/api/v1/iam/summary'),
+('user_pending_invites', '待處理邀請', '顯示待處理的用戶邀請', '["身份與存取管理", "個人設定"]', '/api/v1/iam/summary');

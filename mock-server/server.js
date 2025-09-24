@@ -825,6 +825,7 @@ const dashboards = [
     tags: ['戰情室', 'SLA', 'AI 預測'],
     data_sources: ['prometheus', 'grafana', 'alertmanager'],
     target_page_key: 'war_room',
+    grafana_url: 'http://localhost:3000/d/sre-war-room',
     published_at: toISO(new Date(now.getTime() - 86400000)),
     updated_at: toISO(new Date(now.getTime() - 3600000)),
     deleted_at: null,
@@ -4380,6 +4381,7 @@ app.get('/dashboards', (req, res) => {
     tags: dash.tags,
     data_sources: dash.data_sources,
     target_page_key: dash.target_page_key,
+    grafana_url: dash.grafana_url || null,
     updated_at: dash.updated_at
   }));
 

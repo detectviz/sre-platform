@@ -5646,6 +5646,10 @@ components:
           type: boolean
         target_page_key:
           type: string
+        grafana_url:
+          type: string
+          nullable: true
+          description: Grafana 儀表板原始連結，僅於 dashboard_type 為 grafana 時提供。
         updated_at:
           type: string
           format: date-time
