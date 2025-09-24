@@ -296,7 +296,7 @@ CREATE TABLE silence_rules (
     -- 適用範圍
     scope VARCHAR(32) NOT NULL,
     -- 關聯事件識別碼 (快速靜音)
-    event_id UUID REFERENCES events(id) ON DELETE CASCADE,
+    event_id UUID,
     -- 開始時間
     starts_at TIMESTAMPTZ NOT NULL,
     -- 結束時間
@@ -405,6 +405,11 @@ CREATE INDEX idx_events_rule_uid ON events (grafana_rule_uid);
 CREATE INDEX idx_events_source_status_time ON events (event_source, status, trigger_time DESC);
 COMMENT ON TABLE events IS '事件增值處理資料表，專注於 AI 分析、關聯分析與處理追蹤，不承載告警規則管理邏輯。';
 
+ALTER TABLE silence_rules
+    ADD CONSTRAINT fk_silence_rules_event
+    FOREIGN KEY (event_id)
+    REFERENCES events(id)
+    ON DELETE CASCADE;
 
 CREATE TABLE event_tags (
     -- 事件識別碼
