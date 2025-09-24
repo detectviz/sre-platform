@@ -1420,25 +1420,76 @@ CREATE TABLE notification_history (
     duration_ms INTEGER,
     -- 錯誤訊息
     error_message TEXT,
+    -- 錯誤堆疊資訊
+    error_stack TEXT,
     -- 原始負載
     raw_payload JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 中繼資料
     metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
     -- 嘗試次數
     attempts JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 重新發送次數
+    resend_count INTEGER NOT NULL DEFAULT 0,
+    -- 是否允許重新發送
+    resend_available BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 最後重新發送時間
+    last_resend_at TIMESTAMPTZ,
+    -- 最後重新發送者
+    last_resend_actor UUID REFERENCES users(id),
     -- 相關事件識別碼
     related_event_id UUID REFERENCES events(id),
     -- 最後狀態變更時間
     last_status_change_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_notification_history_status CHECK (status IN ('SUCCESS','FAILED','RETRYING','QUEUED')),
-    CONSTRAINT chk_notification_history_channel CHECK (channel_type IN ('Email','Slack','PagerDuty','Webhook','Teams','LINE Notify','SMS'))
+    CONSTRAINT chk_notification_history_channel CHECK (channel_type IN ('Email','Slack','PagerDuty','Webhook','Teams','LINE Notify','SMS')),
+    CONSTRAINT chk_notification_history_recipients CHECK (jsonb_typeof(recipients) = 'array'),
+    CONSTRAINT chk_notification_history_attempts CHECK (jsonb_typeof(attempts) = 'array'),
+    CONSTRAINT chk_notification_history_resend_count CHECK (resend_count >= 0)
 );
 CREATE INDEX idx_notification_history_sent_at ON notification_history (sent_at DESC);
 CREATE INDEX idx_notification_history_status ON notification_history (status);
 CREATE INDEX idx_notification_history_channel_type ON notification_history (channel_type);
 CREATE INDEX idx_notification_history_channel_id ON notification_history (channel_id);
 CREATE INDEX idx_notification_history_strategy ON notification_history (strategy_id);
+CREATE INDEX idx_notification_history_last_resend_at ON notification_history (last_resend_at DESC);
+CREATE INDEX idx_notification_history_resend_available ON notification_history (resend_available);
 CREATE INDEX idx_notification_history_event ON notification_history (related_event_id);
+
+CREATE TABLE notification_resend_jobs (
+    -- 主鍵識別碼
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- 通知歷史識別碼
+    notification_history_id UUID NOT NULL REFERENCES notification_history(id) ON DELETE CASCADE,
+    -- 狀態
+    status VARCHAR(32) NOT NULL,
+    -- 申請人
+    requested_by UUID REFERENCES users(id),
+    -- 申請時間
+    requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 通知通道識別碼
+    channel_id UUID REFERENCES notification_channels(id) ON DELETE SET NULL,
+    -- 目標接收者
+    recipients JSONB NOT NULL DEFAULT '[]'::JSONB,
+    -- 是否僅做乾跑
+    dry_run BOOLEAN NOT NULL DEFAULT FALSE,
+    -- 備註
+    note TEXT,
+    -- 開始時間
+    started_at TIMESTAMPTZ,
+    -- 完成時間
+    completed_at TIMESTAMPTZ,
+    -- 結果訊息
+    result_message TEXT,
+    -- 錯誤訊息
+    error_message TEXT,
+    -- 中繼資料
+    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
+    CONSTRAINT chk_notification_resend_status CHECK (status IN ('queued','running','completed','failed','cancelled')),
+    CONSTRAINT chk_notification_resend_recipients CHECK (jsonb_typeof(recipients) = 'array')
+);
+CREATE INDEX idx_notification_resend_history ON notification_resend_jobs (notification_history_id);
+CREATE INDEX idx_notification_resend_status ON notification_resend_jobs (status);
+CREATE INDEX idx_notification_resend_requested_at ON notification_resend_jobs (requested_at DESC);
 
 -- =============================
 -- 平台設定與整合

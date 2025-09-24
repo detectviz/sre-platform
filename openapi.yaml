@@ -6563,6 +6563,36 @@ components:
         details:
           type: object
           additionalProperties: true
+    UserReference:
+      type: object
+      required: [user_id, display_name]
+      properties:
+        user_id:
+          type: string
+        display_name:
+          type: string
+        email:
+          type: string
+          format: email
+          nullable: true
+    NotificationDeliveryRecipient:
+      type: object
+      required: [recipient_type, identifier]
+      properties:
+        recipient_type:
+          type: string
+          enum: [user, team, role, channel, external]
+        identifier:
+          type: string
+        display_name:
+          type: string
+        contact:
+          type: string
+        delivery_status:
+          type: string
+          enum: [delivered, pending, failed, unknown]
+        delivery_status_message:
+          type: string
     NotificationRecipient:
       type: object
       required: [type, id]
@@ -6592,6 +6622,106 @@ components:
           type: string
           description: 通知管道的顯示名稱，僅於回應中提供。
           readOnly: true
+    NotificationDeliveryRequest:
+      type: object
+      properties:
+        method:
+          type: string
+        url:
+          type: string
+          format: uri
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        body:
+          type: object
+          additionalProperties: true
+    NotificationDeliveryResponse:
+      type: object
+      properties:
+        status_code:
+          type: integer
+        status_text:
+          type: string
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        body:
+          type: object
+          additionalProperties: true
+        raw_body:
+          type: string
+          description: 當回應非 JSON 格式時，保留原始字串內容。
+    NotificationDeliveryAttempt:
+      type: object
+      required: [attempt_number, status, sent_at]
+      properties:
+        attempt_number:
+          type: integer
+          minimum: 1
+        status:
+          type: string
+          enum: [SUCCESS, FAILED, RETRYING, QUEUED]
+        status_code:
+          type: integer
+        sent_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration_ms:
+          type: integer
+        error_message:
+          type: string
+        request:
+          $ref: "#/components/schemas/NotificationDeliveryRequest"
+        response:
+          $ref: "#/components/schemas/NotificationDeliveryResponse"
+    NotificationResendJob:
+      type: object
+      required: [job_id, status, requested_at]
+      properties:
+        job_id:
+          type: string
+        status:
+          type: string
+          enum: [queued, running, completed, failed, cancelled]
+        requested_at:
+          type: string
+          format: date-time
+        requested_by:
+          $ref: "#/components/schemas/UserReference"
+          nullable: true
+        channel_id:
+          type: string
+          nullable: true
+        recipients:
+          type: array
+          items:
+            $ref: "#/components/schemas/NotificationDeliveryRecipient"
+        dry_run:
+          type: boolean
+        note:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        result_message:
+          type: string
+        error_message:
+          type: string
+        metadata:
+          type: object
+          additionalProperties: true
     NotificationRetryPolicy:
       type: object
       properties:
@@ -6843,7 +6973,7 @@ components:
     NotificationHistoryRecord:
       type: object
       required:
-        [record_id, sent_at, status, channel_type, channel_label, strategy_name]
+        [record_id, sent_at, status, channel_type, channel_label, strategy_name, resend_available, resend_count]
       properties:
         record_id:
           type: string
@@ -6860,6 +6990,7 @@ components:
           type: string
         channel_id:
           type: string
+          nullable: true
         strategy_name:
           type: string
         strategy_id:
@@ -6878,13 +7009,24 @@ components:
         recipients:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/NotificationDeliveryRecipient"
         retry_count:
           type: integer
         duration_ms:
           type: integer
         actor:
           type: string
+        resend_available:
+          type: boolean
+        resend_count:
+          type: integer
+        last_resend_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_resend_by:
+          $ref: "#/components/schemas/UserReference"
+          nullable: true
     NotificationHistoryDetail:
       allOf:
         - $ref: "#/components/schemas/NotificationHistoryRecord"
@@ -6896,22 +7038,18 @@ components:
             attempts:
               type: array
               items:
-                type: object
-                properties:
-                  sent_at:
-                    type: string
-                    format: date-time
-                  status:
-                    type: string
-                  response:
-                    type: string
-            error_message:
+                $ref: "#/components/schemas/NotificationDeliveryAttempt"
+            error_stack:
               type: string
             related_event_id:
               type: string
             metadata:
               type: object
               additionalProperties: true
+            resend_jobs:
+              type: array
+              items:
+                $ref: "#/components/schemas/NotificationResendJob"
     NotificationHistoryPurgeRequest:
       type: object
       required: [before]

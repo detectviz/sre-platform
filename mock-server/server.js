@@ -1268,7 +1268,16 @@ const notificationHistory = [
     channel_type: 'Slack',
     channel_label: '#sre-alert',
     channel_id: 'chn-001',
-    recipients: ['#sre-alert'],
+    recipients: [
+      {
+        recipient_type: 'channel',
+        identifier: 'chn-001',
+        display_name: '#sre-alert',
+        contact: '#sre-alert',
+        delivery_status: 'delivered',
+        delivery_status_message: null
+      }
+    ],
     status: 'SUCCESS',
     duration_ms: 1200,
     alert_title: 'API 延遲飆高',
@@ -1276,13 +1285,39 @@ const notificationHistory = [
     raw_payload: { event_id: 'evt-001', rule: 'API 延遲監控' },
     metadata: { provider: 'slack', request_id: 'req-123' },
     attempts: [
-      { sent_at: toISO(new Date(now.getTime() - 3600000)), status: 'SUCCESS', response: '200 OK' }
+      {
+        attempt_number: 1,
+        status: 'SUCCESS',
+        status_code: 200,
+        sent_at: toISO(new Date(now.getTime() - 3600000)),
+        completed_at: toISO(new Date(now.getTime() - 3598800)),
+        duration_ms: 1200,
+        error_message: null,
+        request: {
+          method: 'POST',
+          url: 'https://hooks.slack.com/services/T000/B000/XXXXXXXX',
+          headers: { 'content-type': 'application/json' },
+          body: { text: 'API 延遲飆高 - 已通知核心團隊' }
+        },
+        response: {
+          status_code: 200,
+          status_text: 'OK',
+          headers: { 'content-type': 'application/json' },
+          body: { ok: true }
+        }
+      }
     ],
     error_message: null,
+    error_stack: null,
     related_event_id: 'evt-001',
     resend_count: 1,
     resend_available: true,
     last_resend_at: toISO(new Date(now.getTime() - 1800000)),
+    last_resend_by: {
+      user_id: 'user-001',
+      display_name: '林佳瑜',
+      email: 'sre.lead@example.com'
+    },
     actor: '林佳瑜'
   },
   {
@@ -1293,7 +1328,16 @@ const notificationHistory = [
     channel_type: 'Email',
     channel_label: 'ops@example.com',
     channel_id: 'chn-002',
-    recipients: ['ops@example.com'],
+    recipients: [
+      {
+        recipient_type: 'external',
+        identifier: 'ops@example.com',
+        display_name: 'ops@example.com',
+        contact: 'ops@example.com',
+        delivery_status: 'failed',
+        delivery_status_message: 'SMTP timeout'
+      }
+    ],
     status: 'FAILED',
     duration_ms: 2480,
     alert_title: '資料庫連線逾時',
@@ -1301,14 +1345,56 @@ const notificationHistory = [
     raw_payload: { event_id: 'evt-004', rule: '資料庫健康檢查' },
     metadata: { provider: 'smtp', request_id: 'req-456' },
     attempts: [
-      { sent_at: toISO(new Date(now.getTime() - 7200000)), status: 'FAILED', response: 'SMTP timeout' },
-      { sent_at: toISO(new Date(now.getTime() - 7100000)), status: 'RETRYING', response: 'SMTP queued' }
+      {
+        attempt_number: 1,
+        status: 'FAILED',
+        status_code: 504,
+        sent_at: toISO(new Date(now.getTime() - 7200000)),
+        completed_at: toISO(new Date(now.getTime() - 7198200)),
+        duration_ms: 1800,
+        error_message: 'SMTP timeout',
+        request: {
+          method: 'POST',
+          url: 'smtp://smtp.example.com:587',
+          headers: { 'content-type': 'text/plain' },
+          body: { subject: '資料庫連線逾時', to: ['ops@example.com'] }
+        },
+        response: {
+          status_code: 504,
+          status_text: 'Gateway Timeout',
+          headers: {},
+          body: {}
+        }
+      },
+      {
+        attempt_number: 2,
+        status: 'RETRYING',
+        status_code: 102,
+        sent_at: toISO(new Date(now.getTime() - 7100000)),
+        completed_at: null,
+        duration_ms: 680,
+        error_message: null,
+        request: {
+          method: 'POST',
+          url: 'smtp://smtp.example.com:587',
+          headers: { 'content-type': 'text/plain' },
+          body: { subject: '資料庫連線逾時', to: ['ops@example.com'] }
+        },
+        response: {
+          status_code: 102,
+          status_text: 'Processing',
+          headers: {},
+          body: {}
+        }
+      }
     ],
     error_message: 'SMTP timeout',
+    error_stack: 'SMTPConnectionTimeout: connect ETIMEDOUT smtp.example.com:587',
     related_event_id: 'evt-004',
     resend_count: 0,
     resend_available: true,
     last_resend_at: null,
+    last_resend_by: null,
     actor: '系統'
   }
 ];
@@ -1319,9 +1405,22 @@ const notificationResendJobs = [
     notification_history_id: 'hist-001',
     status: 'completed',
     requested_at: toISO(new Date(now.getTime() - 1800000)),
-    requested_by: '林佳瑜',
+    requested_by: {
+      user_id: 'user-001',
+      display_name: '林佳瑜',
+      email: 'sre.lead@example.com'
+    },
     channel_id: 'chn-001',
-    recipients: ['#sre-alert'],
+    recipients: [
+      {
+        recipient_type: 'channel',
+        identifier: 'chn-001',
+        display_name: '#sre-alert',
+        contact: '#sre-alert',
+        delivery_status: 'delivered',
+        delivery_status_message: null
+      }
+    ],
     dry_run: false,
     note: '手動確認通知已送達核心團隊',
     started_at: toISO(new Date(now.getTime() - 1750000)),
@@ -1335,9 +1434,22 @@ const notificationResendJobs = [
     notification_history_id: 'hist-002',
     status: 'failed',
     requested_at: toISO(new Date(now.getTime() - 3500000)),
-    requested_by: '系統',
+    requested_by: {
+      user_id: 'system',
+      display_name: '系統',
+      email: null
+    },
     channel_id: 'chn-002',
-    recipients: ['ops@example.com'],
+    recipients: [
+      {
+        recipient_type: 'external',
+        identifier: 'ops@example.com',
+        display_name: 'ops@example.com',
+        contact: 'ops@example.com',
+        delivery_status: 'failed',
+        delivery_status_message: 'SMTP timeout'
+      }
+    ],
     dry_run: false,
     note: '系統自動重試',
     started_at: toISO(new Date(now.getTime() - 3480000)),
@@ -2036,16 +2148,24 @@ const mapNotificationHistorySummary = (record) => ({
   alert_title: record.alert_title,
   message: record.message,
   error_message: record.error_message,
-  recipients: record.recipients,
+  recipients: Array.isArray(record.recipients) ? record.recipients : [],
   metadata: record.metadata || {},
   retry_count: record.retry_count ?? Math.max((record.attempts?.length || 1) - 1, 0),
   duration_ms: record.duration_ms,
   resend_available: record.resend_available ?? false,
   resend_count: record.resend_count ?? 0,
   last_resend_at: record.last_resend_at ?? null,
+  last_resend_by: record.last_resend_by || null,
   actor: record.actor ?? null,
   related_event_id: record.related_event_id || null
 });
+
+const getRecipientSearchTokens = (recipients) => {
+  if (!Array.isArray(recipients)) return [];
+  return recipients
+    .flatMap((recipient) => [recipient.display_name, recipient.contact, recipient.identifier])
+    .filter((value) => typeof value === 'string' && value.trim().length > 0);
+};
 
 const mapNotificationResendJob = (job) => ({
   job_id: job.job_id,
@@ -2053,7 +2173,7 @@ const mapNotificationResendJob = (job) => ({
   requested_at: job.requested_at,
   requested_by: job.requested_by,
   channel_id: job.channel_id,
-  recipients: job.recipients,
+  recipients: Array.isArray(job.recipients) ? job.recipients : [],
   dry_run: job.dry_run,
   note: job.note || null,
   started_at: job.started_at || null,
@@ -4636,6 +4756,10 @@ app.get('/notification-config/history', (req, res) => {
       if (endTime && (!sentAt || sentAt > endTime)) return false;
 
       if (keyword) {
+        const recipientTokens = getRecipientSearchTokens(record.recipients);
+        const actorTokens = record.last_resend_by?.display_name
+          ? [record.last_resend_by.display_name]
+          : [];
         const haystack = [
           record.strategy_name,
           record.strategy_id,
@@ -4643,7 +4767,8 @@ app.get('/notification-config/history', (req, res) => {
           record.channel_type,
           record.alert_title,
           record.message,
-          ...(Array.isArray(record.recipients) ? record.recipients : [])
+          ...recipientTokens,
+          ...actorTokens
         ]
           .filter(Boolean)
           .join(' ')
