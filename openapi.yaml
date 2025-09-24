@@ -704,6 +704,7 @@ paths:
         - 事件管理
       summary: 更新事件狀態或指派資訊
       operationId: updateEvent
+      deprecated: true
       requestBody:
         required: true
         content:
@@ -4128,6 +4129,15 @@ components:
           type: string
         name:
           type: string
+    CreatorInfo:
+      type: object
+      description: 提供統一的建立者或擁有者資訊結構。
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        display_name:
+          type: string
     TeamReference:
       type: object
       required: [team_id, name]
@@ -5157,8 +5167,8 @@ components:
               type: boolean
             notify_on_end:
               type: boolean
-            created_by:
-              type: string
+            creator:
+              $ref: '#/components/schemas/CreatorInfo'
     SilenceRulePayload:
       type: object
       required: [name, silence_type, scope, schedule, matchers]
@@ -5624,8 +5634,8 @@ components:
           type: string
           nullable: true
           description: Grafana 資料夾 UID，僅當 dashboard_type 為 grafana 時提供。
-        owner:
-          type: string
+        creator:
+          $ref: '#/components/schemas/CreatorInfo'
         tags:
           type: array
           items:
@@ -6026,6 +6036,8 @@ components:
         updated_at:
           type: string
           format: date-time
+        creator:
+          $ref: '#/components/schemas/CreatorInfo'
         current_version:
           $ref: "#/components/schemas/AutomationScriptVersion"
     AutomationScriptPayload:
@@ -6377,8 +6389,8 @@ components:
           type: string
         description:
           type: string
-        owner:
-          type: string
+        creator:
+          $ref: '#/components/schemas/CreatorInfo'
         member_ids:
           type: array
           description: 成員識別碼列表。

@@ -214,36 +214,6 @@ CREATE TABLE user_preferences (
 );
 CREATE INDEX idx_user_preferences_dashboard ON user_preferences (landing_dashboard_id);
 
-CREATE TABLE user_notifications (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 使用者識別碼
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    -- 標題
-    title VARCHAR(256) NOT NULL,
-    -- 描述
-    description TEXT,
-    -- 嚴重度
-    severity VARCHAR(32) NOT NULL,
-    -- 分類
-    category VARCHAR(64),
-    -- 狀態
-    status VARCHAR(16) NOT NULL DEFAULT 'unread',
-    -- 連結網址
-    link_url TEXT,
-    -- 操作列表
-    actions JSONB DEFAULT '[]'::JSONB,
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 閱讀時間
-    read_at TIMESTAMPTZ,
-    -- 清除時間
-    deleted_at TIMESTAMPTZ,
-    CONSTRAINT chk_user_notifications_severity CHECK (severity IN ('critical','warning','info','success')),
-    CONSTRAINT chk_user_notifications_status CHECK (status IN ('unread','read'))
-);
-CREATE INDEX idx_user_notifications_user ON user_notifications (user_id, status, created_at DESC);
-CREATE INDEX idx_user_notifications_deleted ON user_notifications (user_id, deleted_at) WHERE deleted_at IS NOT NULL;
 
 -- =============================
 -- 自動化腳本 (供事件規則及排程引用)

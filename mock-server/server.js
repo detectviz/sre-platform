@@ -521,7 +521,7 @@ const silenceRules = [
     ],
     notify_on_start: true,
     notify_on_end: false,
-    created_by: 'user-001'
+    creator: { user_id: 'user-001', display_name: '林佳瑜' }
   }
 ];
 
@@ -814,8 +814,7 @@ const dashboards = [
     name: 'SRE 戰情室儀表板',
     dashboard_type: 'built_in',
     category: '戰情室',
-    owner: '事件指揮中心',
-    owner_id: 'team-war-room',
+    creator: { user_id: 'team-war-room', display_name: '事件指揮中心' },
     description: '跨團隊即時戰情看板，聚焦重大事件與 SLA 指標。',
     status: 'published',
     is_featured: true,
@@ -978,7 +977,7 @@ const automationScripts = [
     last_execution_status: 'success',
     last_execution_at: toISO(new Date(now.getTime() - 3600000)),
     created_at: toISO(new Date(now.getTime() - 86400000 * 14)),
-    created_by: 'user-001',
+    creator: { user_id: 'user-001', display_name: '林佳瑜' },
     updated_at: toISO(new Date(now.getTime() - 3600000)),
     updated_by: 'user-001',
     versions: [
@@ -1205,7 +1204,7 @@ const iamTeams = [
     team_id: 'team-sre',
     name: 'SRE 核心小組',
     description: '負責平台可靠性維運',
-    owner: 'user-001',
+    creator: { user_id: 'user-001', display_name: '林佳瑜' },
     created_at: toISO(new Date(now.getTime() - 2592000000)),
     members: ['user-001', 'user-002'],
     member_ids: ['user-001', 'user-002'],
@@ -1221,7 +1220,7 @@ const iamTeams = [
     team_id: 'team-db',
     name: '資料庫團隊',
     description: '管理資料庫平台與效能',
-    owner: 'user-003',
+    creator: { user_id: 'user-003', display_name: '蔡敏豪' },
     created_at: toISO(new Date(now.getTime() - 3456000000)),
     members: ['user-003'],
     member_ids: ['user-003'],
@@ -3290,104 +3289,6 @@ app.post('/metrics/query', (req, res) => {
   });
 });
 
-app.get('/notifications/summary', (req, res) => {
-  res.json(buildNotificationSummary());
-});
-
-app.get('/notifications', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
-  const filtered = notifications.filter(
-    (item) =>
-      !item.deleted_at &&
-      matchesEnumFilter(item.status, statusFilter) &&
-      matchesEnumFilter(item.severity, severityFilter)
-  );
-  res.json(
-    paginate(filtered, req, {
-      allowedSortFields: ['created_at', 'severity', 'title'],
-      defaultSortKey: 'created_at',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.post('/notifications/bulk', (req, res) => {
-  const { action, target = 'selected', notification_ids: notificationIds, effective_at: effectiveAt } = req.body || {};
-
-  const normalizedAction = typeof action === 'string' ? action.trim().toLowerCase() : '';
-  if (!['mark_read', 'clear'].includes(normalizedAction)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'action 必須為 mark_read 或 clear。' });
-  }
-
-  const rawTarget = typeof target === 'string' ? target.trim().toLowerCase() : '';
-  const normalizedTarget = rawTarget || 'selected';
-  if (!['selected', 'all', 'read'].includes(normalizedTarget)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'target 必須為 selected、all 或 read。' });
-  }
-
-  let idSet = null;
-  if (normalizedTarget === 'selected') {
-    if (!Array.isArray(notificationIds) || notificationIds.length === 0) {
-      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'notification_ids 至少需要一筆識別碼。' });
-    }
-    const normalizedIds = notificationIds
-      .map((value) => (value === undefined || value === null ? '' : String(value).trim()))
-      .filter((value) => value.length > 0);
-    if (normalizedIds.length === 0) {
-      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'notification_ids 至少需要一筆識別碼。' });
-    }
-    idSet = new Set(normalizedIds);
-  }
-
-  const shouldAffect = (item) => {
-    if (!item || item.deleted_at) {
-      return false;
-    }
-    if (normalizedTarget === 'all') {
-      return true;
-    }
-    if (normalizedTarget === 'read') {
-      return item.status === 'read';
-    }
-    return idSet ? idSet.has(item.notification_id) : false;
-  };
-
-  if (normalizedAction === 'mark_read') {
-    const timestamp =
-      effectiveAt && !Number.isNaN(Date.parse(effectiveAt)) ? toISO(new Date(effectiveAt)) : toISO(new Date());
-    const updatedItems = [];
-
-    notifications.forEach((item) => {
-      if (shouldAffect(item) && item.status !== 'read') {
-        item.status = 'read';
-        item.read_at = timestamp;
-        updatedItems.push({ ...item });
-      }
-    });
-
-    const response = { summary: buildNotificationSummary() };
-    if (updatedItems.length > 0) {
-      response.updated_items = updatedItems;
-    }
-    return res.json(response);
-  }
-
-  const clearedIds = [];
-  const clearedTimestamp = toISO(new Date());
-  notifications.forEach((item) => {
-    if (shouldAffect(item)) {
-      item.deleted_at = clearedTimestamp;
-      clearedIds.push(item.notification_id);
-    }
-  });
-
-  return res.json({
-    cleared_ids: clearedIds,
-    cleared_count: clearedIds.length,
-    summary: buildNotificationSummary()
-  });
-});
 
 app.get('/events/summary', (req, res) => {
   const critical = eventData.filter((evt) => evt.severity === 'critical').length;
