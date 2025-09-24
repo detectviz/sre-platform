@@ -1,11 +1,10 @@
 import React from 'react'
-import { Table, Space, Select, Switch, Tag, Input } from 'antd'
-import { FilterOutlined, ReloadOutlined, EditOutlined, ClockCircleOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { Table, Switch, Tag } from 'antd'
+import { FilterOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { TableLayout } from '../components/layouts'
 import { ToolbarActions } from '../components/ToolbarActions'
 import { DEFAULT_PAGINATION, createActionColumn, COMMON_ACTIONS } from '../components'
 
-const { Option } = Select
 
 // 模擬靜音規則數據
 const mockSilenceRulesData = [
@@ -139,36 +138,6 @@ const silenceRulesColumns = [
 ]
 
 // KPI 卡片數據
-const kpiCardsData = [
-  {
-    title: '總靜音規則',
-    value: '12',
-    change: '+2',
-    changeType: 'increase' as const,
-    icon: '🔕',
-  },
-  {
-    title: '啟用規則',
-    value: '8',
-    change: '+1',
-    changeType: 'increase' as const,
-    icon: '✅',
-  },
-  {
-    title: '禁用規則',
-    value: '4',
-    change: '-1',
-    changeType: 'decrease' as const,
-    icon: '❌',
-  },
-  {
-    title: '今日生效',
-    value: '3',
-    change: '+1',
-    changeType: 'increase' as const,
-    icon: '⏰',
-  },
-]
 
 const SilenceRulesPage: React.FC = () => {
   // 工具列動作
@@ -202,24 +171,25 @@ const SilenceRulesPage: React.FC = () => {
   ]
 
   // 篩選條件
-  const filters = (
-    <Space wrap>
-      <Input
-        placeholder="搜尋規則名稱"
-        prefix={<SearchOutlined />}
-        style={{ width: 200 }}
-      />
-      <Select placeholder="狀態" style={{ width: 100 }}>
-        <Option value="enabled">已啟用</Option>
-        <Option value="disabled">已禁用</Option>
-      </Select>
-      <Select placeholder="建立者" style={{ width: 120 }}>
-        <Option value="admin">Admin</Option>
-        <Option value="db-admin">DB Admin</Option>
-        <Option value="devops">DevOps</Option>
-      </Select>
-    </Space>
-  )
+  const filters = [
+    {
+      key: 'status',
+      label: '狀態',
+      options: [
+        { value: 'enabled', label: '已啟用' },
+        { value: 'disabled', label: '已禁用' }
+      ]
+    },
+    {
+      key: 'creator',
+      label: '建立者',
+      options: [
+        { value: 'admin', label: 'Admin' },
+        { value: 'db-admin', label: 'DB Admin' },
+        { value: 'devops', label: 'DevOps' }
+      ]
+    }
+  ]
 
   return (
     <TableLayout

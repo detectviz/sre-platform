@@ -1,11 +1,10 @@
 import React from 'react'
-import { Table, Space, Select, Tag, Input } from 'antd'
+import { Table, Tag, Space } from 'antd'
 import { ReloadOutlined, SafetyOutlined, PlusOutlined } from '@ant-design/icons'
 import { TableLayout } from '../components/layouts'
 import { ToolbarActions } from '../components/ToolbarActions'
 import { DEFAULT_PAGINATION, createActionColumn, COMMON_ACTIONS } from '../components'
 
-const { Option } = Select
 
 // 模擬角色數據
 const mockRoleData = [
@@ -135,36 +134,6 @@ const roleColumns = [
   ]),
 ]
 
-const kpiCardsData = [
-  {
-    title: '總角色數',
-    value: '8',
-    change: '+1',
-    changeType: 'increase' as const,
-    icon: '🔐',
-  },
-  {
-    title: '活躍角色',
-    value: '7',
-    change: '+1',
-    changeType: 'increase' as const,
-    icon: '✅',
-  },
-  {
-    title: '系統權限',
-    value: '24',
-    change: '+2',
-    changeType: 'increase' as const,
-    icon: '🛡️',
-  },
-  {
-    title: '停用角色',
-    value: '1',
-    change: '0',
-    changeType: 'neutral' as const,
-    icon: '❌',
-  },
-]
 
 const RoleManagementPage: React.FC = () => {
   const toolbarActions = [
@@ -183,15 +152,16 @@ const RoleManagementPage: React.FC = () => {
     },
   ]
 
-  const filters = (
-    <Space wrap>
-      <Input placeholder="搜尋角色名稱" prefix={<SearchOutlined />} style={{ width: 200 }} />
-      <Select placeholder="狀態" style={{ width: 100 }}>
-        <Option value="active">活躍</Option>
-        <Option value="inactive">停用</Option>
-      </Select>
-    </Space>
-  )
+  const filters = [
+    {
+      key: 'status',
+      label: '狀態',
+      options: [
+        { value: 'active', label: '活躍' },
+        { value: 'inactive', label: '停用' }
+      ]
+    }
+  ]
 
   return (
     <TableLayout

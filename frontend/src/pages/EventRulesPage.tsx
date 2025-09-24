@@ -1,5 +1,5 @@
 import React from 'react'
-import { Table, Switch, Tag, Space } from 'antd'
+import { Table, Switch, Tag } from 'antd'
 import { FilterOutlined, ReloadOutlined, PlusOutlined } from '@ant-design/icons'
 import { TableLayout } from '../components/layouts'
 import { ToolbarActions } from '../components/ToolbarActions'
@@ -120,13 +120,13 @@ const eventRulesColumns = [
     key: 'channels',
     width: 150,
     render: (channels: string[]) => (
-      <Space wrap>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
         {channels.map((channel, index) => (
           <Tag key={index}>
             {channel}
           </Tag>
         ))}
-      </Space>
+      </div>
     ),
   },
   {

@@ -1,11 +1,10 @@
 import React from 'react'
-import { Table, Space, Select, Tag, Avatar, Input } from 'antd'
-import { FilterOutlined, ReloadOutlined, EditOutlined, TeamOutlined, UserOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { Table, Tag, Avatar, Space } from 'antd'
+import { FilterOutlined, ReloadOutlined, TeamOutlined, UserOutlined, PlusOutlined } from '@ant-design/icons'
 import { TableLayout } from '../components/layouts'
 import { ToolbarActions } from '../components/ToolbarActions'
 import { DEFAULT_PAGINATION, createActionColumn, COMMON_ACTIONS } from '../components'
 
-const { Option } = Select
 
 // 模擬團隊數據
 const mockTeamData = [
@@ -164,36 +163,6 @@ const teamColumns = [
 ]
 
 // KPI 卡片數據
-const kpiCardsData = [
-  {
-    title: '總團隊數',
-    value: '12',
-    change: '+1',
-    changeType: 'increase' as const,
-    icon: '👥',
-  },
-  {
-    title: '活躍團隊',
-    value: '10',
-    change: '+1',
-    changeType: 'increase' as const,
-    icon: '✅',
-  },
-  {
-    title: '總成員數',
-    value: '89',
-    change: '+3',
-    changeType: 'increase' as const,
-    icon: '👤',
-  },
-  {
-    title: '停用團隊',
-    value: '2',
-    change: '0',
-    changeType: 'neutral' as const,
-    icon: '❌',
-  },
-]
 
 const TeamManagementPage: React.FC = () => {
   // 工具列動作
@@ -226,25 +195,26 @@ const TeamManagementPage: React.FC = () => {
   ]
 
   // 篩選條件
-  const filters = (
-    <Space wrap>
-      <Input
-        placeholder="搜尋團隊名稱"
-        prefix={<SearchOutlined />}
-        style={{ width: 200 }}
-      />
-      <Select placeholder="狀態" style={{ width: 100 }}>
-        <Option value="active">活躍</Option>
-        <Option value="inactive">停用</Option>
-      </Select>
-      <Select placeholder="團隊領導" style={{ width: 150 }}>
-        <Option value="john.smith">John Smith</Option>
-        <Option value="sarah.johnson">Sarah Johnson</Option>
-        <Option value="david.wilson">David Wilson</Option>
-        <Option value="amy.martinez">Amy Martinez</Option>
-      </Select>
-    </Space>
-  )
+  const filters = [
+    {
+      key: 'status',
+      label: '狀態',
+      options: [
+        { value: 'active', label: '活躍' },
+        { value: 'inactive', label: '停用' }
+      ]
+    },
+    {
+      key: 'leader',
+      label: '團隊領導',
+      options: [
+        { value: 'john.smith', label: 'John Smith' },
+        { value: 'sarah.johnson', label: 'Sarah Johnson' },
+        { value: 'david.wilson', label: 'David Wilson' },
+        { value: 'amy.martinez', label: 'Amy Martinez' }
+      ]
+    }
+  ]
 
   return (
     <TableLayout

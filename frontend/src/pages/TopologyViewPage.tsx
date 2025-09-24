@@ -1,61 +1,12 @@
 import React from 'react'
-import { Card, Space, Select, Empty, Button } from 'antd'
+import { Card, Empty, Button } from 'antd'
 import { ReloadOutlined, SettingOutlined, FullscreenOutlined, DownloadOutlined } from '@ant-design/icons'
 import { StandardLayout } from '../components/layouts'
 import { ToolbarActions } from '../components/ToolbarActions'
-import { ContextualKPICard } from '../components/ContextualKPICard'
 
-const { Option } = Select
 
-// 模擬拓撲數據
-const mockTopologyData = {
-  nodes: [
-    { id: '1', name: 'Load Balancer', type: 'loadbalancer', status: 'healthy', x: 100, y: 50 },
-    { id: '2', name: 'Web Server 1', type: 'server', status: 'healthy', x: 200, y: 150 },
-    { id: '3', name: 'Web Server 2', type: 'server', status: 'warning', x: 400, y: 150 },
-    { id: '4', name: 'Database', type: 'database', status: 'healthy', x: 300, y: 300 },
-    { id: '5', name: 'Cache Server', type: 'cache', status: 'critical', x: 500, y: 300 },
-  ],
-  edges: [
-    { source: '1', target: '2' },
-    { source: '1', target: '3' },
-    { source: '2', target: '4' },
-    { source: '3', target: '4' },
-    { source: '4', target: '5' },
-  ],
-}
 
 // KPI 卡片數據
-const kpiCardsData = [
-  {
-    title: '總節點數',
-    value: '42',
-    change: '+3',
-    changeType: 'increase' as const,
-    icon: '🔗',
-  },
-  {
-    title: '健康節點',
-    value: '38',
-    change: '+2',
-    changeType: 'increase' as const,
-    icon: '✅',
-  },
-  {
-    title: '警告節點',
-    value: '3',
-    change: '+1',
-    changeType: 'increase' as const,
-    icon: '⚠️',
-  },
-  {
-    title: '嚴重節點',
-    value: '1',
-    change: '0',
-    changeType: 'neutral' as const,
-    icon: '❌',
-  },
-]
 
 // 模擬拓撲視圖組件
 const TopologyView: React.FC = () => {
@@ -64,17 +15,17 @@ const TopologyView: React.FC = () => {
       title="系統拓撲視圖"
       style={{ height: '600px', position: 'relative' }}
       extra={
-        <Space>
-          <Select defaultValue="layered" style={{ width: 120 }}>
-            <Option value="layered">分層佈局</Option>
-            <Option value="circular">環形佈局</Option>
-            <Option value="force">力導向佈局</Option>
-          </Select>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <select defaultValue="layered" style={{ width: 120 }}>
+            <option value="layered">分層佈局</option>
+            <option value="circular">環形佈局</option>
+            <option value="force">力導向佈局</option>
+          </select>
           <Button icon={<ReloadOutlined />}>刷新</Button>
           <Button icon={<SettingOutlined />}>設定</Button>
           <Button icon={<FullscreenOutlined />}>全螢幕</Button>
           <Button icon={<DownloadOutlined />}>匯出</Button>
-        </Space>
+        </div>
       }
     >
       <div style={{
@@ -105,7 +56,7 @@ const TopologyView: React.FC = () => {
 const Legend: React.FC = () => {
   return (
     <Card title="節點狀態圖例" size="small" style={{ width: 300 }}>
-      <Space direction="vertical" style={{ width: '100%' }}>
+      <div style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{ width: 16, height: 16, backgroundColor: '#52c41a', borderRadius: '50%' }}></div>
           <span>健康節點</span>
@@ -122,7 +73,7 @@ const Legend: React.FC = () => {
           <div style={{ width: 16, height: 16, backgroundColor: '#d9d9d9', borderRadius: '50%' }}></div>
           <span>未知節點</span>
         </div>
-      </Space>
+      </div>
     </Card>
   )
 }

@@ -1,11 +1,10 @@
 import React from 'react'
-import { Table, Space, Select, Tag, Avatar, Input } from 'antd'
-import { FilterOutlined, ReloadOutlined, EditOutlined, UserOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { Table, Tag, Avatar } from 'antd'
+import { FilterOutlined, ReloadOutlined, UserOutlined, PlusOutlined } from '@ant-design/icons'
 import { TableLayout } from '../components/layouts'
 import { ToolbarActions } from '../components/ToolbarActions'
 import { DEFAULT_PAGINATION, createActionColumn, COMMON_ACTIONS } from '../components'
 
-const { Option } = Select
 
 // 模擬用戶數據
 const mockUserData = [
@@ -145,36 +144,6 @@ const userColumns = [
 ]
 
 // KPI 卡片數據
-const kpiCardsData = [
-  {
-    title: '總用戶數',
-    value: '156',
-    change: '+8',
-    changeType: 'increase' as const,
-    icon: '👥',
-  },
-  {
-    title: '活躍用戶',
-    value: '142',
-    change: '+5',
-    changeType: 'increase' as const,
-    icon: '✅',
-  },
-  {
-    title: '管理員',
-    value: '3',
-    change: '0',
-    changeType: 'neutral' as const,
-    icon: '👑',
-  },
-  {
-    title: '停用用戶',
-    value: '14',
-    change: '+2',
-    changeType: 'increase' as const,
-    icon: '❌',
-  },
-]
 
 const UserManagementPage: React.FC = () => {
   // 工具列動作
@@ -215,31 +184,36 @@ const UserManagementPage: React.FC = () => {
   ]
 
   // 篩選條件
-  const filters = (
-    <Space wrap>
-      <Input
-        placeholder="搜尋用戶名稱或郵件"
-        prefix={<SearchOutlined />}
-        style={{ width: 250 }}
-      />
-      <Select placeholder="角色" style={{ width: 100 }}>
-        <Option value="admin">管理員</Option>
-        <Option value="manager">經理</Option>
-        <Option value="user">用戶</Option>
-        <Option value="viewer">檢視者</Option>
-      </Select>
-      <Select placeholder="狀態" style={{ width: 100 }}>
-        <Option value="active">活躍</Option>
-        <Option value="inactive">停用</Option>
-      </Select>
-      <Select placeholder="部門" style={{ width: 150 }}>
-        <Option value="IT">IT 部門</Option>
-        <Option value="開發">開發部門</Option>
-        <Option value="營運">營運部門</Option>
-        <Option value="測試">測試部門</Option>
-      </Select>
-    </Space>
-  )
+  const filters = [
+    {
+      key: 'role',
+      label: '角色',
+      options: [
+        { value: 'admin', label: '管理員' },
+        { value: 'manager', label: '經理' },
+        { value: 'user', label: '用戶' },
+        { value: 'viewer', label: '檢視者' }
+      ]
+    },
+    {
+      key: 'status',
+      label: '狀態',
+      options: [
+        { value: 'active', label: '活躍' },
+        { value: 'inactive', label: '停用' }
+      ]
+    },
+    {
+      key: 'department',
+      label: '部門',
+      options: [
+        { value: 'IT', label: 'IT 部門' },
+        { value: '開發', label: '開發部門' },
+        { value: '營運', label: '營運部門' },
+        { value: '測試', label: '測試部門' }
+      ]
+    }
+  ]
 
   return (
     <TableLayout
