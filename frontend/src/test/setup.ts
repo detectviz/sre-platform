@@ -3,31 +3,31 @@ import '@testing-library/jest-dom'
 // Mock Ant Design 的動態樣式載入
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
+  value: (() => ({
     matches: false,
-    media: query,
+    media: '',
     onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
+    addListener: () => { }, // deprecated
+    removeListener: () => { }, // deprecated
+    addEventListener: () => { },
+    removeEventListener: () => { },
+    dispatchEvent: () => { },
   })),
 })
 
-// Mock ResizeObserver
-global.ResizeObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}))
+  // Mock ResizeObserver
+  (global as any).ResizeObserver = (() => ({
+    observe: () => { },
+    unobserve: () => { },
+    disconnect: () => { },
+  }))
 
-// Mock IntersectionObserver
-global.IntersectionObserver = jest.fn().mockImplementation(() => ({
-  observe: jest.fn(),
-  unobserve: jest.fn(),
-  disconnect: jest.fn(),
-}))
+    // Mock IntersectionObserver
+    (global as any).IntersectionObserver = (() => ({
+      observe: () => { },
+      unobserve: () => { },
+      disconnect: () => { },
+    }))
 
 // 清理測試後的狀態
 import { afterEach } from 'vitest'

@@ -20,11 +20,11 @@ const PlatformSettingsPage: React.FC = () => {
   console.log('🔧 PlatformSettingsPage 組件已加載')
   console.log('🔧 當前 URL:', window.location.pathname)
 
-  const { activeTab, handleTabChange } = useTabs('tags', {
-    tags: '/settings/platform/tags',
-    email: '/settings/platform/email',
-    auth: '/settings/platform/auth',
-    layout: '/settings/platform/layout',
+  const { activeTab, handleTabChange } = useTabs('tags', {}, {
+    tags: ['/settings/platform/tags', '/settings/platform'],
+    email: ['/settings/platform/email', '/settings/platform'],
+    auth: ['/settings/platform/auth', '/settings/platform'],
+    layout: ['/settings/platform/layout', '/settings/platform'],
   })
 
   // 編輯模態框狀態

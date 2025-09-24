@@ -44,9 +44,6 @@ const pages = {
   IdentitySettings: () => import('../pages/IdentitySettingsPage'),
   NotificationSettings: () => import('../pages/NotificationSettingsPage'),
   PlatformSettings: () => import('../pages/PlatformSettingsPage'),
-  UserManagement: () => import('../pages/UserManagementPage'),
-  TeamManagement: () => import('../pages/TeamManagementPage'),
-  RoleManagement: () => import('../pages/RoleManagementPage'),
   Profile: () => import('../pages/ProfilePage'),
 }
 
@@ -75,14 +72,20 @@ export const routes: RouteConfig[] = [
   { path: '/automation/scripts', component: pages.Automation(), title: '腳本庫' },
   { path: '/automation/schedules', component: pages.Automation(), title: '排程管理' },
   { path: '/automation/logs', component: pages.Automation(), title: '執行日誌' },
-  { path: '/settings/identity/users', component: pages.UserManagement(), title: '人員管理' },
-  { path: '/settings/identity/teams', component: pages.TeamManagement(), title: '團隊管理' },
-  { path: '/settings/identity/roles', component: pages.RoleManagement(), title: '角色管理' },
+  { path: '/settings/identity', component: pages.IdentitySettings(), title: '身份與存取管理' },
+  { path: '/settings/identity/users', component: pages.IdentitySettings(), title: '人員管理' },
+  { path: '/settings/identity/teams', component: pages.IdentitySettings(), title: '團隊管理' },
+  { path: '/settings/identity/roles', component: pages.IdentitySettings(), title: '角色管理' },
   { path: '/settings/identity/audit', component: pages.IdentitySettings(), title: '稽核日誌' },
+  { path: '/settings/notifications', component: pages.NotificationSettings(), title: '通知管理' },
   { path: '/settings/notifications/strategies', component: pages.NotificationSettings(), title: '通知策略' },
-  { path: '/settings/notifications/channels', component: pages.NotificationSettings(), title: '通知通道' },
+  { path: '/settings/notifications/channels', component: pages.NotificationSettings(), title: '通知管道' },
   { path: '/settings/notifications/history', component: pages.NotificationSettings(), title: '通知歷史' },
   { path: '/settings/platform', component: pages.PlatformSettings(), title: '平台設定' },
+  { path: '/settings/platform/tags', component: pages.PlatformSettings(), title: '標籤管理' },
+  { path: '/settings/platform/layout', component: pages.PlatformSettings(), title: '版面設定' },
+  { path: '/settings/platform/auth', component: pages.PlatformSettings(), title: '實體驗證' },
+  { path: '/settings/platform/email', component: pages.PlatformSettings(), title: '郵件設定' },
   { path: '/profile', component: pages.Profile(), title: '個人設定' }
 ]
 
@@ -114,9 +117,38 @@ export const menuItems: MenuProps['items'] = [
     icon: icons.setting,
     label: '設定',
     children: [
-      { key: '/settings/identity/users', icon: icons.user, label: '身份與存取管理' },
-      { key: '/settings/notifications/strategies', icon: icons.bell, label: '通知管理' },
-      { key: '/settings/platform', icon: icons.setting, label: '平台設定' },
+      {
+        key: '/settings/identity',
+        icon: icons.user,
+        label: '身份與存取管理',
+        children: [
+          { key: '/settings/identity/users', label: '人員管理' },
+          { key: '/settings/identity/teams', label: '團隊管理' },
+          { key: '/settings/identity/roles', label: '角色管理' },
+          { key: '/settings/identity/audit', label: '稽核日誌' },
+        ]
+      },
+      {
+        key: '/settings/notifications',
+        icon: icons.bell,
+        label: '通知管理',
+        children: [
+          { key: '/settings/notifications/strategies', label: '通知策略' },
+          { key: '/settings/notifications/channels', label: '通知管道' },
+          { key: '/settings/notifications/history', label: '通知歷史' },
+        ]
+      },
+      {
+        key: '/settings/platform',
+        icon: icons.setting,
+        label: '平台設定',
+        children: [
+          { key: '/settings/platform/tags', label: '標籤管理' },
+          { key: '/settings/platform/layout', label: '版面設定' },
+          { key: '/settings/platform/auth', label: '實體驗證' },
+          { key: '/settings/platform/email', label: '郵件設定' },
+        ]
+      },
       { key: '/profile', icon: icons.user, label: '個人設定' },
     ]
   },
@@ -140,15 +172,20 @@ export const routePathMapping: Record<string, string> = {
   '/profile/preferences': '/profile',
 
   // 設定子頁面
-  '/settings/identity/users': '/settings',
-  '/settings/identity/teams': '/settings',
-  '/settings/identity/roles': '/settings',
-  '/settings/identity/audit': '/settings',
-  '/settings/notifications/strategies': '/settings',
-  '/settings/notifications/channels': '/settings',
-  '/settings/notifications/history': '/settings',
-  '/settings/platform/tags': '/settings',
-  '/settings/platform/email': '/settings',
-  '/settings/platform/auth': '/settings',
-  '/settings/platform/layout': '/settings'
+  '/settings/identity/users': '/settings/identity',
+  '/settings/identity/teams': '/settings/identity',
+  '/settings/identity/roles': '/settings/identity',
+  '/settings/identity/audit': '/settings/identity',
+  '/settings/notifications/strategies': '/settings/notifications',
+  '/settings/notifications/channels': '/settings/notifications',
+  '/settings/notifications/history': '/settings/notifications',
+  '/settings/platform/tags': '/settings/platform',
+  '/settings/platform/email': '/settings/platform',
+  '/settings/platform/auth': '/settings/platform',
+  '/settings/platform/layout': '/settings/platform',
+
+  // 自動化子頁面
+  '/automation/scripts': '/automation',
+  '/automation/schedules': '/automation',
+  '/automation/logs': '/automation'
 }

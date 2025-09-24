@@ -7,7 +7,7 @@ import { Dropdown, MenuProps } from 'antd'
 export interface TableAction {
   key: string
   label: string
-  icon: React.ComponentType
+  icon: React.ReactNode
   onClick: (record: any) => void
   type?: 'primary' | 'default' | 'dashed' | 'text' | 'link'
   danger?: boolean
@@ -23,21 +23,21 @@ export const COMMON_ACTIONS = {
   VIEW: {
     key: 'view',
     label: '查看詳情',
-    icon: EyeOutlined,
+    icon: <EyeOutlined />,
     type: 'text' as const
   },
 
   EDIT: {
     key: 'edit',
     label: '編輯',
-    icon: EditOutlined,
+    icon: <EditOutlined />,
     type: 'text' as const
   },
 
   DELETE: {
     key: 'delete',
     label: '刪除',
-    icon: DeleteOutlined,
+    icon: <DeleteOutlined />,
     type: 'text' as const,
     danger: true,
     confirm: {
@@ -48,14 +48,14 @@ export const COMMON_ACTIONS = {
   REFRESH: {
     key: 'refresh',
     label: '刷新',
-    icon: ReloadOutlined,
+    icon: <ReloadOutlined />,
     type: 'text' as const
   },
 
   EXPORT: {
     key: 'export',
     label: '導出',
-    icon: DownloadOutlined,
+    icon: <DownloadOutlined />,
     type: 'text' as const
   }
 }
@@ -64,7 +64,7 @@ export const COMMON_ACTIONS = {
 export const createAction = (
   key: string,
   label: string,
-  icon: React.ComponentType,
+  icon: React.ReactNode,
   onClick: (record: any) => void,
   options?: Partial<TableAction>
 ): TableAction => ({
@@ -80,7 +80,7 @@ export const createAction = (
 export const createConfirmAction = (
   key: string,
   label: string,
-  icon: React.ComponentType,
+  icon: React.ReactNode,
   onClick: (record: any) => void,
   confirmTitle = '確定要執行這項操作嗎？',
   options?: Partial<TableAction>
@@ -137,7 +137,6 @@ const ActionButtons = <T = any>({ actions, record, showMore = true, maxActions =
   const hiddenActions = actions.slice(maxActions)
 
   const renderActionButton = (action: TableAction) => {
-    const Icon = action.icon
     const disabled = action.disabled?.(record) || false
 
     const buttonProps = {
@@ -145,7 +144,7 @@ const ActionButtons = <T = any>({ actions, record, showMore = true, maxActions =
       size: 'small' as const,
       danger: action.danger,
       disabled,
-      icon: <Icon />,
+      icon: action.icon,
       onClick: () => action.onClick(record),
     }
 
@@ -183,7 +182,7 @@ const ActionButtons = <T = any>({ actions, record, showMore = true, maxActions =
             items: hiddenActions.map(action => ({
               key: action.key,
               label: action.label,
-              icon: <action.icon />,
+              icon: action.icon,
               onClick: () => action.onClick(record),
               disabled: action.disabled?.(record) || false,
               danger: action.danger,

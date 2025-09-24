@@ -48,8 +48,17 @@ export const generateBreadcrumb = (
   if (currentPath.startsWith('/settings/')) {
     if (currentPath === '/settings/profile') {
       processedPath = '/profile/personal'
+    } else if (currentPath.startsWith('/settings/identity/')) {
+      // 身份與存取管理子頁面映射到主頁面
+      processedPath = '/settings/identity'
+    } else if (currentPath.startsWith('/settings/notifications/')) {
+      // 通知管理子頁面映射到主頁面
+      processedPath = '/settings/notifications'
+    } else if (currentPath.startsWith('/settings/platform/')) {
+      // 平台設定子頁面映射到主頁面
+      processedPath = '/settings/platform'
     } else {
-      // 所有設定子頁面都映射到主設定頁面
+      // 其他設定子頁面都映射到主設定頁面
       processedPath = '/settings'
     }
   }

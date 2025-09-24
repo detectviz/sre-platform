@@ -61,11 +61,11 @@ interface AuditData {
 }
 
 const IdentitySettingsPage: React.FC = () => {
-  const { activeTab, handleTabChange } = useTabs('users', {
-    users: '/settings/identity/users',
-    teams: '/settings/identity/teams',
-    roles: '/settings/identity/roles',
-    audit: '/settings/identity/audit',
+  const { activeTab, handleTabChange } = useTabs('users', {}, {
+    users: ['/settings/identity/users', '/settings/identity'],
+    teams: ['/settings/identity/teams', '/settings/identity'],
+    roles: ['/settings/identity/roles', '/settings/identity'],
+    audit: ['/settings/identity/audit', '/settings/identity'],
   })
 
   // 狀態管理

@@ -14,10 +14,10 @@ import {
 
 
 const ProfilePage: React.FC = () => {
-  const { activeTab, handleTabChange } = useTabs('personal', {
-    personal: '/profile/personal',
-    security: '/profile/security',
-    preferences: '/profile/preferences',
+  const { activeTab, handleTabChange } = useTabs('personal', {}, {
+    personal: ['/profile/personal', '/profile'],
+    security: ['/profile/security', '/profile'],
+    preferences: ['/profile/preferences', '/profile'],
   })
 
   // KPI 數據

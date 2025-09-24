@@ -18,10 +18,10 @@ import type { ColumnsType } from 'antd/es/table'
 
 
 const AutomationPage: React.FC = () => {
-  const { activeTab, handleTabChange } = useTabs('scripts', {
-    scripts: '/automation/scripts',
-    schedules: '/automation/schedules',
-    logs: '/automation/logs',
+  const { activeTab, handleTabChange } = useTabs('scripts', {}, {
+    scripts: ['/automation/scripts', '/automation'],
+    schedules: ['/automation/schedules', '/automation'],
+    logs: ['/automation/logs', '/automation'],
   })
 
   // 狀態管理

@@ -11,10 +11,10 @@ import {
 const { Title, Text } = Typography
 
 const NotificationSettingsPage: React.FC = () => {
-  const { activeTab, handleTabChange } = useTabs('strategies', {
-    strategies: '/settings/notifications/strategies',
-    channels: '/settings/notifications/channels',
-    history: '/settings/notifications/history',
+  const { activeTab, handleTabChange } = useTabs('strategies', {}, {
+    strategies: ['/settings/notifications/strategies', '/settings/notifications'],
+    channels: ['/settings/notifications/channels', '/settings/notifications'],
+    history: ['/settings/notifications/history', '/settings/notifications'],
   })
 
   const kpiData = [
