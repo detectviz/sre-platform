@@ -959,10 +959,14 @@ CREATE TABLE topology_edges (
     relation VARCHAR(64) NOT NULL,
     -- 流量層級
     traffic_level NUMERIC(10,2) DEFAULT 0,
+    -- 連線狀態
+    status VARCHAR(32) NOT NULL DEFAULT 'healthy',
     -- 中繼資料
-    metadata JSONB DEFAULT '{}'::JSONB
+    metadata JSONB DEFAULT '{}'::JSONB,
+    CONSTRAINT chk_topology_edges_status CHECK (status IN ('healthy','warning','critical','offline'))
 );
 CREATE INDEX idx_topology_edges_source ON topology_edges (source_resource_id);
+CREATE INDEX idx_topology_edges_status ON topology_edges (status);
 
 -- =============================
 -- 資源批次作業與掃描
