@@ -698,7 +698,11 @@ paths:
         依據 target_type 對事件或資源發起批次操作。當目標為資源時，僅允許團隊管理員或超級管理員執行。
       operationId: createBatchOperation
       security:
-        - bearerAuth: [team_member, team_manager, super_admin]
+        - bearerAuth: []
+      x-roles:
+        - team_member
+        - team_manager
+        - super_admin
       requestBody:
         required: true
         content:
@@ -734,7 +738,11 @@ paths:
       summary: 查詢批次處理狀態
       operationId: getBatchOperationStatus
       security:
-        - bearerAuth: [team_member, team_manager, super_admin]
+        - bearerAuth: []
+      x-roles:
+        - team_member
+        - team_manager
+        - super_admin
       responses:
         "200":
           description: 批次處理狀態與結果。
@@ -968,7 +976,11 @@ paths:
       summary: 產生事件彙總報告
       operationId: generateEventReport
       security:
-        - bearerAuth: [team_member, team_manager, super_admin]
+        - bearerAuth: []
+      x-roles:
+        - team_member
+        - team_manager
+        - super_admin
       requestBody:
         required: true
         content:
@@ -1670,7 +1682,10 @@ paths:
       summary: 啟動網路資源掃描
       operationId: scanResources
       security:
-        - bearerAuth: [team_manager, super_admin]
+        - bearerAuth: []
+      x-roles:
+        - team_manager
+        - super_admin
       requestBody:
         required: true
         content:
@@ -1699,7 +1714,10 @@ paths:
       summary: 查詢掃描任務狀態
       operationId: getScanTask
       security:
-        - bearerAuth: [team_manager, super_admin]
+        - bearerAuth: []
+      x-roles:
+        - team_manager
+        - super_admin
       parameters:
         - $ref: "#/components/parameters/TaskIdParam"
       responses:
@@ -3638,6 +3656,11 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
   parameters:
     PageParam:
       name: page
