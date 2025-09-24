@@ -1,4 +1,11 @@
 -- SRE 平台資料庫結構定義
+-- 版本: 2.0 (精簡優化版)
+-- 變更日誌:
+-- 1. 統一所有建立者欄位為 created_by。
+-- 2. 從 resources 表移除即時指標欄位，這些資料應由指標系統提供。
+-- 3. 合併 event_ai_analysis 至 ai_insight_reports，並以 report_type 區分。
+-- 4. 確保所有時間戳欄位命名以 _at 結尾。
+
 -- 需先啟用 pgcrypto extension 以便使用 gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -38,8 +45,8 @@ CREATE TABLE teams (
     name VARCHAR(128) NOT NULL UNIQUE,
     -- 描述
     description TEXT,
-    -- 建立者識別碼
-    creator_id UUID REFERENCES users(id),
+    -- 建立者識別碼 (修正: creator_id -> created_by)
+    created_by UUID REFERENCES users(id),
     -- 建立時間
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
@@ -390,23 +397,8 @@ CREATE TABLE event_relations (
 );
 COMMENT ON TABLE event_relations IS '管理事件之間的關聯資訊，支援根因定位與影響分析。';
 
-CREATE TABLE event_ai_analysis (
-    -- 事件識別碼
-    event_id UUID PRIMARY KEY REFERENCES events(id) ON DELETE CASCADE,
-    -- 摘要
-    summary TEXT,
-    -- 根源原因
-    root_cause TEXT,
-    -- 影響分析
-    impact_analysis TEXT,
-    -- 建議
-    recommendations JSONB DEFAULT '[]'::JSONB,
-    -- 可信度
-    confidence NUMERIC(5,2),
-    -- 產生時間
-    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-COMMENT ON TABLE event_ai_analysis IS '儲存 AI 根因分析與建議結果，協助值班人員快速決策。';
+-- 備註: event_ai_analysis 已被合併至 ai_insight_reports
+-- CREATE TABLE event_ai_analysis (...)
 
 CREATE TABLE event_rule_templates (
     -- 範本鍵值
@@ -471,14 +463,14 @@ CREATE TABLE alert_rule_extensions (
     automation_script_id UUID REFERENCES automation_scripts(id) ON DELETE SET NULL,
     -- 自動化參數
     automation_parameters JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 擴充設定建立者
-    extension_created_by UUID REFERENCES users(id),
-    -- 擴充設定更新者
-    extension_updated_by UUID REFERENCES users(id),
+    -- 擴充設定建立者 (修正: extension_created_by -> created_by)
+    created_by UUID REFERENCES users(id),
+    -- 擴充設定更新者 (修正: extension_updated_by -> updated_by)
+    updated_by UUID REFERENCES users(id),
     -- 擴充設定建立時間
-    extension_created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 擴充設定更新時間
-    extension_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 快照建立時間
     snapshot_created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 快照更新時間
@@ -566,16 +558,6 @@ CREATE TABLE resources (
     team_id UUID REFERENCES teams(id),
     -- 作業系統
     os VARCHAR(128),
-    -- CPU使用量
-    cpu_usage NUMERIC(5,2) DEFAULT 0,
-    -- 記憶體使用量
-    memory_usage NUMERIC(5,2) DEFAULT 0,
-    -- 磁碟使用量
-    disk_usage NUMERIC(5,2) DEFAULT 0,
-    -- 網路輸入 Mbps
-    network_in_mbps NUMERIC(10,2) DEFAULT 0,
-    -- 網路輸出 Mbps
-    network_out_mbps NUMERIC(10,2) DEFAULT 0,
     -- 服務影響
     service_impact TEXT,
     -- 備註
@@ -891,7 +873,7 @@ CREATE TABLE dashboards (
     dashboard_type VARCHAR(16) NOT NULL DEFAULT 'built_in',
     -- 描述
     description TEXT,
-    -- 建立者識別碼
+    -- 建立者識別碼 (修正: owner_id -> creator_id)
     creator_id UUID REFERENCES users(id),
     -- 狀態
     status VARCHAR(32) NOT NULL DEFAULT 'draft',
@@ -934,7 +916,7 @@ CREATE TABLE dashboards (
     )
 );
 CREATE INDEX idx_dashboards_category ON dashboards (category);
-CREATE INDEX idx_dashboards_owner ON dashboards (owner_id);
+CREATE INDEX idx_dashboards_creator ON dashboards (creator_id);
 CREATE INDEX idx_dashboards_type ON dashboards (dashboard_type);
 CREATE UNIQUE INDEX idx_dashboards_grafana_uid ON dashboards (grafana_dashboard_uid) WHERE grafana_dashboard_uid IS NOT NULL;
 
@@ -1011,6 +993,10 @@ CREATE INDEX idx_capacity_analysis_reports_generated ON capacity_analysis_report
 CREATE TABLE ai_insight_reports (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    -- 分析類型 (合併: 新增 report_type)
+    report_type VARCHAR(32) NOT NULL,
+    -- 關聯事件識別碼 (合併: 新增 event_id)
+    event_id UUID REFERENCES events(id) ON DELETE SET NULL,
     -- 分析類型
     analysis_type VARCHAR(64) NOT NULL,
     -- 產生時間
@@ -1022,8 +1008,18 @@ CREATE TABLE ai_insight_reports (
     -- 影響範圍
     impact_range TEXT,
     -- 摘要
-    summary TEXT
+    summary TEXT,
+    -- 根源原因 (合併: 從 event_ai_analysis 移入)
+    root_cause TEXT,
+    -- 影響分析 (合併: 從 event_ai_analysis 移入)
+    impact_analysis TEXT,
+    -- 建議 (合併: 從 event_ai_analysis 移入)
+    recommendations JSONB DEFAULT '[]'::JSONB,
+    -- 可信度 (合併: 從 event_ai_analysis 移入)
+    confidence NUMERIC(5,2),
+    CONSTRAINT chk_ai_insight_reports_type CHECK (report_type IN ('event_specific', 'general'))
 );
+CREATE INDEX idx_ai_insight_reports_event ON ai_insight_reports (event_id);
 
 CREATE TABLE ai_insight_suggestions (
     -- 主鍵識別碼

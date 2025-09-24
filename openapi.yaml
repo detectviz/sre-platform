@@ -1,8 +1,14 @@
 openapi: 3.1.0
 info:
   title: SRE 平台 API 契約
-  version: 3.0.0
+  version: 3.1.0
   description: |
+    # 版本 3.1.0 (精簡優化版)
+    - **路徑更名**: /event-rules -> /alert-rules，以符合 Grafana 代理定位。
+    - **端點整併**: 移除 /events/{event_id}/silence 與所有 /toggle 端點，功能分別併入 POST /silence-rules 與 PATCH 方法。
+    - **Schema 優化**: 建立通用 Base Schemas，統一時間戳與建立者欄位命名，移除冗餘欄位。
+    - **描述更新**: 全面更新註解以符合最新設計。
+
     定義 SRE 平台前端與後端之間的資料契約，涵蓋事件管理、資源監控、儀表板、
     自動化、通知、設定與個人偏好等模組。所有時間皆為 ISO 8601 格式 (UTC)。
 servers:
@@ -98,8 +104,8 @@ tags:
     description: 系統指標定義、彙總與時序查詢服務。
   - name: 事件管理
     description: 事件列表、詳情與 AI 分析。
-  - name: 事件規則
-    description: 事件偵測與自動化規則設定。
+  - name: 告警規則 (Grafana 代理)
+    description: 告警偵測與自動化規則設定 (代理 Grafana API)。
   - name: 靜音規則
     description: 事件靜音排程與條件設定。
   - name: 批次作業
@@ -793,7 +799,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventAnalysisReport"
+                $ref: "#/components/schemas/AIInsightReport"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -809,34 +815,11 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventAnalysisReport"
+                $ref: "#/components/schemas/AIInsightReport"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /events/{event_id}/silence:
-    post:
-      tags:
-        - 事件管理
-      summary: 針對事件建立快速靜音設定
-      operationId: createQuickSilence
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/QuickSilenceRequest"
-      responses:
-        "201":
-          description: 已建立新的靜音規則。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SilenceRuleDetail"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /events/report:
     post:
       tags:
@@ -866,12 +849,12 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /event-rules/summary:
+  /alert-rules/summary:
     get:
       tags:
-        - 事件規則
-      summary: 取得事件規則統計
-      operationId: getEventRuleSummary
+        - 告警規則 (Grafana 代理)
+      summary: 取得告警規則統計
+      operationId: getAlertRuleSummary
       responses:
         "200":
           description: 規則啟用狀態統計。
@@ -888,13 +871,13 @@ paths:
                     type: integer
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /event-rules/templates:
+  /alert-rules/templates:
     get:
       tags:
-        - 事件規則
-      summary: 取得事件規則範本列表
-      operationId: listEventRuleTemplates
-      description: 提供前端精靈快速載入的標準事件規則範本內容。
+        - 告警規則 (Grafana 代理)
+      summary: 取得告警規則範本列表
+      operationId: listAlertRuleTemplates
+      description: 提供前端精靈快速載入的標準告警規則範本內容。
       parameters:
         - name: severity
           in: query
@@ -913,16 +896,15 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: "#/components/schemas/EventRuleTemplate"
+                  $ref: "#/components/schemas/AlertRuleTemplate"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /event-rules:
+  /alert-rules:
     get:
       tags:
-        - 事件規則
-      summary: 取得事件規則列表
-      operationId: listEventRules
-
+        - 告警規則 (Grafana 代理)
+      summary: 取得告警規則列表
+      operationId: listAlertRules
       description: 從 Grafana Alerting 取得告警規則快取，並合併平台擴充的自動化設定資訊；若同步失敗則回傳快取資料並於 sync_status 標示。
       parameters:
         - $ref: "#/components/parameters/PageParam"
@@ -951,7 +933,7 @@ paths:
             default: json
       responses:
         "200":
-          description: 回傳事件規則列表。
+          description: 回傳告警規則列表。
           content:
             application/json:
               schema:
@@ -962,7 +944,7 @@ paths:
                       items:
                         type: array
                         items:
-                          $ref: "#/components/schemas/EventRuleSummary"
+                          $ref: "#/components/schemas/AlertRuleSummary"
             text/csv:
               schema:
                 type: string
@@ -971,30 +953,30 @@ paths:
           $ref: "#/components/responses/Unauthorized"
     post:
       tags:
-        - 事件規則
-      summary: 建立事件規則
-      operationId: createEventRule
+        - 告警規則 (Grafana 代理)
+      summary: 建立告警規則
+      operationId: createAlertRule
       description: 透過 Grafana API 建立告警規則，並儲存平台端額外的自動化綁定設定。
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EventRuleUpsertRequest"
+              $ref: "#/components/schemas/AlertRuleUpsertRequest"
       responses:
         "201":
           description: 規則建立成功。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventRuleDetail"
+                $ref: "#/components/schemas/AlertRuleDetail"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "409":
           $ref: "#/components/responses/Conflict"
-  /event-rules/{rule_uid}:
+  /alert-rules/{rule_uid}:
     parameters:
       - name: rule_uid
         in: path
@@ -1004,9 +986,9 @@ paths:
           type: string
     get:
       tags:
-        - 事件規則
-      summary: 取得事件規則詳情
-      operationId: getEventRuleById
+        - 告警規則 (Grafana 代理)
+      summary: 取得告警規則詳情
+      operationId: getAlertRuleById
       description: 從 Grafana Alerting 取得指定告警規則並附帶平台的擴充屬性；若 Grafana 暫時不可用則回傳快取內容並揭露 sync_status 與 last_synced_at。
       responses:
         "200":
@@ -1014,30 +996,59 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventRuleDetail"
+                $ref: "#/components/schemas/AlertRuleDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
     put:
       tags:
-        - 事件規則
-      summary: 更新事件規則
-      operationId: updateEventRule
+        - 告警規則 (Grafana 代理)
+      summary: 更新告警規則
+      operationId: updateAlertRule
       description: 更新 Grafana 告警規則內容，並同步平台側的自動化綁定資訊。
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/EventRuleUpsertRequest"
+              $ref: "#/components/schemas/AlertRuleUpsertRequest"
       responses:
         "200":
           description: 規則已更新。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/EventRuleDetail"
+                $ref: "#/components/schemas/AlertRuleDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - 告警規則 (Grafana 代理)
+      summary: 更新告警規則部分欄位
+      operationId: patchAlertRule
+      description: 更新告警規則的特定欄位，例如啟用狀態。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                  description: 啟用或停用此規則。
+      responses:
+        "200":
+          description: 規則已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AlertRuleDetail"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -1046,9 +1057,9 @@ paths:
           $ref: "#/components/responses/NotFound"
     delete:
       tags:
-        - 事件規則
-      summary: 刪除事件規則
-      operationId: deleteEventRule
+        - 告警規則 (Grafana 代理)
+      summary: 刪除告警規則
+      operationId: deleteAlertRule
       description: 從 Grafana Alerting 刪除指定告警規則並解除平台綁定。
       responses:
         "204":
@@ -1057,52 +1068,26 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /event-rules/{rule_uid}/toggle:
+  /alert-rules/{rule_uid}/test:
     post:
       tags:
-        - 事件規則
-      summary: 切換事件規則啟用狀態
-      operationId: toggleEventRule
-      description: |-
-        切換或直接設定事件規則的啟用狀態。若未提供 payload，則反轉目前狀態；
-        若提供 `enabled` 欄位則依指定值更新。
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ToggleEnabledRequest"
-      responses:
-        "200":
-          description: 更新後的事件規則資訊。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/EventRuleDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /event-rules/{rule_uid}/test:
-    post:
-      tags:
-        - 事件規則
-      summary: 測試事件規則
-      operationId: testEventRule
+        - 告警規則 (Grafana 代理)
+      summary: 測試告警規則
+      operationId: testAlertRule
       description: 將測試事件傳送至 Grafana Alerting，回傳模擬比對結果與預覽事件。
       requestBody:
         required: false
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/TestEventRuleRequest"
+              $ref: "#/components/schemas/TestAlertRuleRequest"
       responses:
         "200":
           description: 回傳測試結果摘要。
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/TestEventRuleResponse"
+                $ref: "#/components/schemas/TestAlertRuleResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -1157,6 +1142,7 @@ paths:
         - 靜音規則
       summary: 建立靜音規則
       operationId: createSilenceRule
+      description: 建立新的靜音規則。若 request body 中包含 event_id，則為特定事件建立快速靜音。
       requestBody:
         required: true
         content:
@@ -2258,32 +2244,6 @@ paths:
       responses:
         "204":
           description: 排程已刪除。
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /automation/schedules/{schedule_id}/toggle:
-    post:
-      tags:
-        - 自動化
-      summary: 切換自動化排程狀態
-      operationId: toggleAutomationSchedule
-      description: |-
-        切換或直接指定排程的 `status`。若 payload 內提供 `enabled` 或 `status` 值，
-        將依指定狀態更新；若無 payload 則在 enabled/disabled 間反轉。
-      requestBody:
-        required: false
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ToggleEnabledRequest"
-      responses:
-        "200":
-          description: 更新後的排程資訊。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AutomationScheduleDetail"
         "401":
           $ref: "#/components/responses/Unauthorized"
         "404":
@@ -4307,10 +4267,27 @@ components:
               type: number
             automated_count:
               type: integer
+    BaseSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
     EventSummary:
       type: object
       required:
-        [event_id, summary, event_source, severity, status, resource_name, trigger_time, priority]
+        [event_id, summary, event_source, severity, status, resource_name, triggered_at, priority]
       properties:
         event_id:
           type: string
@@ -4374,7 +4351,7 @@ components:
             type: string
     CreateEventRequest:
       type: object
-      required: [summary, severity, status, trigger_time]
+      required: [summary, severity, status, triggered_at]
       properties:
         summary:
           type: string
@@ -4561,7 +4538,7 @@ components:
               items:
                 $ref: "#/components/schemas/AutomationExecutionSummary"
             analysis:
-              $ref: "#/components/schemas/EventAnalysisReport"
+              $ref: "#/components/schemas/AIInsightReport"
             metadata:
               type: object
               additionalProperties: true
@@ -4634,46 +4611,6 @@ components:
           type: string
           format: date-time
           description: 當 action 為 resolve 時可覆寫結束時間。
-    EventAnalysisReport:
-      type: object
-      required: [event_id, generated_at, root_cause, confidence]
-      properties:
-        event_id:
-          type: string
-        generated_at:
-          type: string
-          format: date-time
-        summary:
-          type: string
-        root_cause:
-          type: string
-        confidence:
-          type: number
-        impact_analysis:
-          type: string
-        recommendations:
-          type: array
-          items:
-            $ref: "#/components/schemas/AIInsightSuggestion"
-    QuickSilenceRequest:
-      type: object
-      required: [duration_hours]
-      properties:
-        scope:
-          type: string
-          enum: [event, resource, team]
-          default: event
-        matchers:
-          type: array
-          items:
-            $ref: "#/components/schemas/SilenceMatcher"
-        duration_hours:
-          type: integer
-          enum: [1, 2, 4, 8, 12, 24]
-        reason:
-          type: string
-        notify_on_end:
-          type: boolean
     ResourceFilter:
       type: object
       required: [type, key, operator]
@@ -4699,7 +4636,7 @@ components:
             type: string
           nullable: true
           description: 多選條件值，適用於 in/not_in 運算子。
-    EventRuleTemplate:
+    AlertRuleTemplate:
       type: object
       required: [template_key, name, severity, default_priority, condition_groups]
       properties:
@@ -4742,11 +4679,11 @@ components:
           type: string
           nullable: true
           description: 建議搭配的自動化腳本識別碼，可協助前端顯示提示用語。
-    EventRuleSyncStatus:
+    AlertRuleSyncStatus:
       type: string
       description: 事件規則資料的同步狀態，標示是否為即時資料或快取結果。
       enum: [fresh, stale, failed]
-    EventRuleSummary:
+    AlertRuleSummary:
       type: object
       required: [rule_uid, name, severity, enabled, creator, last_updated, sync_status, target]
       properties:
@@ -4787,7 +4724,7 @@ components:
           nullable: true
           description: 最近一次成功同步 Grafana 規則的時間；若為 null 代表僅有快取資料。
         sync_status:
-          $ref: "#/components/schemas/EventRuleSyncStatus"
+          $ref: "#/components/schemas/AlertRuleSyncStatus"
     RuleCondition:
       type: object
       required: [metric, operator, threshold]
@@ -4826,9 +4763,9 @@ components:
         parameters:
           type: object
           additionalProperties: true
-    EventRuleDetail:
+    AlertRuleDetail:
       allOf:
-        - $ref: "#/components/schemas/EventRuleSummary"
+        - $ref: "#/components/schemas/AlertRuleSummary"
         - type: object
           properties:
             template_key:
@@ -4869,7 +4806,7 @@ components:
                 additionalProperties: true
               automation:
                 $ref: "#/components/schemas/AutomationSetting"
-    EventRulePayload:
+    AlertRulePayload:
       type: object
       required: [name, severity, condition_groups]
       properties:
@@ -4916,26 +4853,15 @@ components:
           type: string
         automation:
           $ref: "#/components/schemas/AutomationSetting"
-    EventRuleUpsertRequest:
-      $ref: "#/components/schemas/EventRulePayload"
-    ToggleEnabledRequest:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-          description: |-
-            為 true 時啟用目標資源，為 false 時停用；若未提供則改以 status 或反轉現有狀態。
-        status:
-          type: string
-          enum: [enabled, disabled]
-          description: 供自動化排程直接指定狀態使用，會同步更新 enabled 布林值。
-    TestEventRuleRequest:
+    AlertRuleUpsertRequest:
+      $ref: "#/components/schemas/AlertRulePayload"
+    TestAlertRuleRequest:
       type: object
       properties:
         sample_payload:
           type: object
           additionalProperties: true
-    TestEventRuleResponse:
+    TestAlertRuleResponse:
       type: object
       required: [matches, preview_event]
       properties:
@@ -5055,7 +4981,14 @@ components:
         notify_on_end:
           type: boolean
     SilenceRuleUpsertRequest:
-      $ref: "#/components/schemas/SilenceRulePayload"
+      allOf:
+        - $ref: "#/components/schemas/SilenceRulePayload"
+        - type: object
+          properties:
+            duration_hours:
+              type: integer
+              enum: [1, 2, 4, 8, 12, 24]
+              description: 快速靜音時使用，用於替代 schedule 物件。
     ResourceSummaryMetrics:
       type: object
       required: [total_resources, healthy, warning, critical, groups]
@@ -5104,7 +5037,7 @@ components:
     ResourceSummary:
       type: object
       required:
-        [resource_id, name, status, type, ip_address, cpu_usage, memory_usage]
+        [resource_id, name, status, type, ip_address]
       properties:
         resource_id:
           type: string
@@ -5132,16 +5065,6 @@ components:
           description: 顯示用的團隊名稱。
         os:
           type: string
-        cpu_usage:
-          type: number
-        memory_usage:
-          type: number
-        disk_usage:
-          type: number
-        network_in_mbps:
-          type: number
-        network_out_mbps:
-          type: number
         service_impact:
           type: string
           nullable: true
@@ -5470,7 +5393,7 @@ components:
             $ref: "#/components/schemas/DashboardKPI"
     DashboardSummary:
       type: object
-      required: [dashboard_id, name, category, owner, status, updated_at, dashboard_type]
+      required: [dashboard_id, name, category, status, updated_at, dashboard_type]
       properties:
         dashboard_id:
           type: string
@@ -5572,7 +5495,7 @@ components:
           $ref: "#/components/schemas/DashboardType"
         description:
           type: string
-        owner_id:
+        creator_id:
           type: string
         tags:
           type: array
@@ -5623,7 +5546,7 @@ components:
           $ref: "#/components/schemas/DashboardType"
         description:
           type: string
-        owner_id:
+        creator_id:
           type: string
         tags:
           type: array
@@ -5671,7 +5594,7 @@ components:
           properties:
             description:
               type: string
-            owner_id:
+            creator_id:
               type: string
             layout:
               type: array
@@ -5843,7 +5766,7 @@ components:
           nullable: true
     AIInsightReport:
       type: object
-      required: [report_id, generated_at, predicted_events, accuracy]
+      required: [report_id, generated_at, accuracy]
       properties:
         report_id:
           type: string
@@ -5864,6 +5787,12 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/AIInsightSuggestion"
+        root_cause:
+          type: string
+        impact_analysis:
+          type: string
+        confidence:
+          type: number
     AutomationScriptSummary:
       type: object
       required: [script_id, name, type, current_version, last_execution_status, updated_at]
@@ -6211,7 +6140,7 @@ components:
           type: string
         description:
           type: string
-        owner_id:
+        creator_id:
           type: string
         member_ids:
           type: array

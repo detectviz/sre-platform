@@ -67,7 +67,8 @@ const deriveTargetSummary = (filters) => {
     .join('；');
   return summary || '全部資源';
 };
-const buildEventRule = (rule) => {
+// 修正: 統一 event-rules -> alert-rules
+const buildAlertRule = (rule) => {
   const normalizedFilters = normalizeResourceFilters(rule.resource_filters || []);
   const automation =
     rule.automation && typeof rule.automation === 'object'
@@ -225,7 +226,7 @@ const eventData = [
         summary: '資料庫連線延遲升高',
         severity: 'warning',
         status: 'acknowledged',
-        trigger_time: toISO(new Date(now.getTime() - 40 * 60000))
+        triggered_at: toISO(new Date(now.getTime() - 40 * 60000))
       }
     ],
     analysis: {
@@ -282,7 +283,7 @@ const eventData = [
   }
 ];
 
-const eventRuleTemplates = [
+const alertRuleTemplates = [
   {
     template_key: 'cpu_high',
     name: 'CPU 使用率過高',
@@ -403,8 +404,8 @@ const eventRuleTemplates = [
   }
 ];
 
-const eventRules = [
-  buildEventRule({
+const alertRules = [
+  buildAlertRule({
     rule_uid: 'rule-001',
     name: 'API 延遲監控',
     description: '監控交易 API 延遲，超過閾值即觸發事件。',
@@ -439,7 +440,7 @@ const eventRules = [
       parameters: { mode: 'scale-out', count: 2 }
     }
   }),
-  buildEventRule({
+  buildAlertRule({
     rule_uid: 'rule-002',
     name: '資料庫延遲監控',
     description: '觀察資料庫連線與查詢延遲。',
@@ -513,11 +514,6 @@ const resourceData = [
     team_id: 'team-sre',
     team: 'SRE 核心小組',
     os: 'Ubuntu 22.04',
-    cpu_usage: 72.4,
-    memory_usage: 68.1,
-    disk_usage: 55.3,
-    network_in_mbps: 125.4,
-    network_out_mbps: 118.2,
     service_impact: '交易 API',
     notes: '主要服務外部交易流量，需要高可用度。',
     last_event_count: 3,
@@ -541,11 +537,6 @@ const resourceData = [
     team_id: 'team-db',
     team: '資料庫團隊',
     os: 'Amazon Linux 2023',
-    cpu_usage: 64.8,
-    memory_usage: 71.2,
-    disk_usage: 62.7,
-    network_in_mbps: 95.1,
-    network_out_mbps: 90.4,
     service_impact: '讀取節點',
     notes: '供應交易資料庫的讀取節點，需監控延遲。',
     last_event_count: 2,
@@ -569,11 +560,6 @@ const resourceData = [
     team_id: 'team-sre',
     team: 'SRE 核心小組',
     os: 'Debian 12',
-    cpu_usage: 39.5,
-    memory_usage: 54.2,
-    disk_usage: 33.1,
-    network_in_mbps: 45.3,
-    network_out_mbps: 40.8,
     service_impact: '快取層',
     notes: '提供 Web 交易熱資料快取。',
     last_event_count: 1,
@@ -2204,6 +2190,7 @@ const buildResourceGroupRefs = (groupIds) =>
     };
   });
 
+// 修正: `trigger_time` -> `triggered_at`
 const mapEventSummary = (event) => ({
   event_id: event.event_id,
   event_key: event.event_key,
@@ -2222,7 +2209,7 @@ const mapEventSummary = (event) => ({
   trigger_threshold: event.trigger_threshold,
   assignee_id: event.assignee_id || null,
   assignee: event.assignee,
-  trigger_time: event.trigger_time,
+  triggered_at: event.triggered_at,
   tags: event.tags || []
 });
 
@@ -2262,11 +2249,26 @@ const getSilencesForResource = (resourceId) =>
     (rule.matchers || []).some((matcher) => matcher.key === 'resource_id' && matcher.value === resourceId)
   );
 
+// 修正: 移除即時指標欄位
 const buildResourceDetail = (resource) => ({
-  ...resource,
+  resource_id: resource.resource_id,
+  name: resource.name,
+  status: resource.status,
+  type: resource.type,
+  ip_address: resource.ip_address,
+  location: resource.location,
+  environment: resource.environment,
+  team_id: resource.team_id,
+  team: resource.team,
+  os: resource.os,
+  service_impact: resource.service_impact,
+  notes: resource.notes,
+  last_event_count: resource.last_event_count,
   tags: cloneTags(resource.tags),
   groups: buildResourceGroupRefs(resource.groups),
-  silences: getSilencesForResource(resource.resource_id)
+  silences: getSilencesForResource(resource.resource_id),
+  created_at: resource.created_at,
+  updated_at: resource.updated_at
 });
 
 const buildTeamDetail = (team) => {
@@ -2344,13 +2346,8 @@ const buildSeedFromResource = (seed, index, metricKey) => {
   const baseResource = resourceData.find((res) => res.resource_id === seed.resource_id);
   let defaultValue = 60 + index * 5;
   if (baseResource) {
-    if (metricKey === 'memory_usage_percent' && typeof baseResource.memory_usage === 'number') {
-      defaultValue = baseResource.memory_usage;
-    } else if (metricKey === 'cpu_usage_percent' && typeof baseResource.cpu_usage === 'number') {
-      defaultValue = baseResource.cpu_usage;
-    } else if (typeof baseResource.cpu_usage === 'number') {
-      defaultValue = baseResource.cpu_usage;
-    }
+    // 修正: 移除對已刪除欄位的依賴
+    defaultValue = 60;
   }
   return {
     resource_id: seed.resource_id,
@@ -2373,7 +2370,8 @@ const getMetricSeriesSeeds = (metricKey, resourceIds = []) => {
 };
 
 const getEventById = (id) => eventData.find((evt) => evt.event_id === id);
-const getEventRuleByUid = (id) => eventRules.find((rule) => rule.rule_uid === id);
+// 修正: event-rules -> alert-rules
+const getAlertRuleByUid = (id) => alertRules.find((rule) => rule.rule_uid === id);
 const getSilenceRuleById = (id) => silenceRules.find((rule) => rule.silence_id === id);
 const getResourceById = (id) => resourceData.find((res) => res.resource_id === id);
 const getResourceGroupById = (id) => resourceGroups.find((grp) => grp.group_id === id);
@@ -2400,18 +2398,7 @@ const buildTopologyNode = (nodeConfig = {}, index = 0) => {
 
   const metrics = {};
   if (resource) {
-    const metricCandidates = [
-      ['cpu_usage', resource.cpu_usage],
-      ['memory_usage', resource.memory_usage],
-      ['disk_usage', resource.disk_usage],
-      ['network_in_mbps', resource.network_in_mbps],
-      ['network_out_mbps', resource.network_out_mbps]
-    ];
-    metricCandidates.forEach(([key, value]) => {
-      if (typeof value === 'number' && !Number.isNaN(value)) {
-        metrics[key] = value;
-      }
-    });
+    // 修正: 移除對已刪除欄位的依賴
   }
   if (nodeConfig.metrics && typeof nodeConfig.metrics === 'object') {
     Object.entries(nodeConfig.metrics).forEach(([key, value]) => {
@@ -3246,7 +3233,7 @@ app.get('/events', (req, res) => {
     if (ruleUids && ruleUids.length > 0 && !ruleUids.includes(event.rule_uid)) return false;
     if (assigneeIds && assigneeIds.length > 0 && !assigneeIds.includes(event.assignee_id)) return false;
 
-    const eventTime = parseDateSafe(event.trigger_time);
+    const eventTime = parseDateSafe(event.triggered_at); // 修正: trigger_time -> triggered_at
     if (startTime && !eventTime) return false;
     if (endTime && !eventTime) return false;
     if (startTime && eventTime && eventTime < startTime) return false;
@@ -3269,7 +3256,7 @@ app.get('/events', (req, res) => {
     }
 
     if (ruleNameKeyword) {
-      const rule = event.rule_uid ? getEventRuleByUid(event.rule_uid) : null;
+      const rule = event.rule_uid ? getAlertRuleByUid(event.rule_uid) : null; // 修正: getEventRuleByUid -> getAlertRuleByUid
       const ruleText = `${event.rule_name || ''} ${rule?.name || ''}`.toLowerCase();
       if (!ruleText.includes(ruleNameKeyword)) return false;
     }
@@ -3286,8 +3273,8 @@ app.get('/events', (req, res) => {
   const items = filtered.map(mapEventSummary);
   res.json(
     paginate(items, req, {
-      allowedSortFields: ['trigger_time', 'severity', 'status', 'priority', 'summary'],
-      defaultSortKey: 'trigger_time',
+      allowedSortFields: ['triggered_at', 'severity', 'status', 'priority', 'summary'],
+      defaultSortKey: 'triggered_at',
       defaultSortOrder: 'desc'
     })
   );
@@ -3348,7 +3335,7 @@ app.get('/batch-operations/:operation_id', (req, res) => {
 app.post('/events', (req, res) => {
   const payload = req.body || {};
   const nowIso = toISO(new Date());
-  const defaultPriority = eventRules.find((rule) => rule.rule_uid === payload.rule_uid)?.default_priority || 'P2';
+  const defaultPriority = alertRules.find((rule) => rule.rule_uid === payload.rule_uid)?.default_priority || 'P2'; // 修正: eventRules -> alertRules
   const initialStatus = payload.status || 'new';
   const acknowledgedAt =
     typeof payload.acknowledged_at === 'string'
@@ -3384,11 +3371,11 @@ app.post('/events', (req, res) => {
     resource_name: resourceData.find((r) => r.resource_id === payload.resource_id)?.name || null,
     service_impact: payload.service_impact || null,
     rule_uid: payload.rule_uid || null,
-    rule_name: eventRules.find((rule) => rule.rule_uid === payload.rule_uid)?.name || null,
+    rule_name: alertRules.find((rule) => rule.rule_uid === payload.rule_uid)?.name || null, // 修正: eventRules -> alertRules
     trigger_threshold: payload.trigger_threshold || null,
     trigger_value: payload.trigger_value || null,
     unit: payload.unit || null,
-    trigger_time: payload.trigger_time || toISO(new Date()),
+    triggered_at: payload.triggered_at || toISO(new Date()), // 修正: trigger_time -> triggered_at
     assignee_id: payload.assignee_id || null,
     assignee: iamUsers.find((user) => user.user_id === payload.assignee_id)?.display_name || null,
     acknowledged_at: acknowledgedAt,
@@ -3497,122 +3484,20 @@ app.post('/events/:event_id/analysis', (req, res) => {
   res.status(202).json(event.analysis);
 });
 
-app.post('/events/:event_id/silence', (req, res) => {
-  const event = getEventById(req.params.event_id);
-  if (!event) return notFound(res, '找不到事件');
-  const durationHours = req.body?.duration_hours || 2;
-  const start = new Date();
-  const silence = {
-    silence_id: `slc-${Date.now()}`,
-    name: `${event.summary} 靜音`,
-    description: req.body?.reason || '快速靜音',
-    silence_type: 'single',
-    scope: 'resource',
-    enabled: true,
-    created_at: toISO(start),
-    schedule: {
-      silence_type: 'single',
-      starts_at: toISO(start),
-      ends_at: toISO(new Date(start.getTime() + durationHours * 3600000)),
-      timezone: 'UTC',
-      repeat: null
-    },
-    matchers: [
-      { key: 'resource_id', operator: 'equals', value: event.resource_id }
-    ],
-    notify_on_start: false,
-    notify_on_end: req.body?.notify_on_end ?? false,
-    created_by: currentUser.user_id
-  };
-  res.status(201).json(silence);
+// 修正: 移除 /events/:event_id/silence 端點，其功能已合併到 POST /silence-rules
+
+// 修正: /event-rules -> /alert-rules
+app.get('/alert-rules/summary', (req, res) => {
+  const enabled = alertRules.filter((rule) => rule.enabled).length;
+  const automation = alertRules.filter((rule) => rule.automation?.enabled).length;
+  res.json({ total: alertRules.length, enabled, automation_enabled: automation });
 });
 
-app.post('/events/report', (req, res) => {
-  const { event_ids: eventIds, include_timeline: includeTimeline, title } = req.body || {};
-  if (!Array.isArray(eventIds) || eventIds.length === 0) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'event_ids 至少需要一筆事件。' });
-  }
-
-  const selectedEvents = eventIds
-    .map((id) => getEventById(id))
-    .filter((event) => Boolean(event));
-
-  if (selectedEvents.length === 0) {
-    return res.status(404).json({ code: 'NOT_FOUND', message: '找不到指定的事件。' });
-  }
-
-  const severityBreakdown = selectedEvents.reduce((acc, event) => {
-    acc[event.severity] = (acc[event.severity] || 0) + 1;
-    return acc;
-  }, {});
-
-  const priorityBreakdown = selectedEvents.reduce((acc, event) => {
-    const priority = event.priority || 'P2';
-    acc[priority] = (acc[priority] || 0) + 1;
-    return acc;
-  }, {});
-
-  const rootCauses = new Set();
-  const impacts = new Set();
-  const recommendations = [];
-  const timelineHighlights = includeTimeline
-    ? selectedEvents.map((event) => ({
-      event_id: event.event_id,
-      event_summary: event.summary,
-      items: (event.timeline || []).map((entry) => ({
-        entry_id: entry.entry_id,
-        event_id: entry.event_id,
-        entry_type: entry.entry_type,
-        message: entry.message,
-        created_by: entry.created_by,
-        created_at: entry.created_at,
-        metadata: entry.metadata || {}
-      }))
-    }))
-    : undefined;
-
-  selectedEvents.forEach((event) => {
-    if (event.analysis?.root_cause) {
-      rootCauses.add(event.analysis.root_cause);
-    }
-    if (event.analysis?.impact_analysis) {
-      impacts.add(event.analysis.impact_analysis);
-    }
-    if (Array.isArray(event.analysis?.recommendations)) {
-      recommendations.push(...event.analysis.recommendations);
-    }
-  });
-
-  const summary = `共 ${selectedEvents.length} 件事件，Critical ${severityBreakdown.critical || 0} 件、` +
-    `Warning ${severityBreakdown.warning || 0} 件，已完成彙總分析。`;
-
-  const report = {
-    report_id: `evt-report-${Date.now()}`,
-    generated_at: toISO(new Date()),
-    title: title || '事件彙總報告',
-    event_ids: eventIds,
-    severity_breakdown: severityBreakdown,
-    priority_breakdown: priorityBreakdown,
-    summary,
-    root_causes: Array.from(rootCauses),
-    impacts: Array.from(impacts),
-    recommendations,
-    ...(includeTimeline ? { timeline_highlights: timelineHighlights } : {})
-  };
-
-  res.json(report);
-});
-app.get('/event-rules/summary', (req, res) => {
-  const enabled = eventRules.filter((rule) => rule.enabled).length;
-  const automation = eventRules.filter((rule) => rule.automation?.enabled).length;
-  res.json({ total: eventRules.length, enabled, automation_enabled: automation });
-});
-
-app.get('/event-rules/templates', (req, res) => {
+app.get('/alert-rules/templates', (req, res) => {
   const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
   const keyword = (req.query.keyword || '').trim().toLowerCase();
 
-  const templates = eventRuleTemplates.filter((tpl) => {
+  const templates = alertRuleTemplates.filter((tpl) => {
     if (!matchesEnumFilter(tpl.severity, severityFilter)) return false;
     if (keyword) {
       const text = `${tpl.name} ${tpl.description || ''}`.toLowerCase();
@@ -3624,7 +3509,7 @@ app.get('/event-rules/templates', (req, res) => {
   res.json(templates);
 });
 
-app.get('/event-rules', (req, res) => {
+app.get('/alert-rules', (req, res) => {
   const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
   const enabledFilter = parseBooleanParam(req.query.enabled);
   const keyword = (req.query.keyword || '').trim().toLowerCase();
@@ -3632,7 +3517,7 @@ app.get('/event-rules', (req, res) => {
   const syncStatusFilter = createLowercaseSet(parseListParam(req.query.sync_status));
   const hasTemplateFilter = parseBooleanParam(req.query.has_template);
 
-  const filtered = eventRules.filter((rule) => {
+  const filtered = alertRules.filter((rule) => {
     if (!matchesEnumFilter(rule.severity, severityFilter)) return false;
     if (enabledFilter !== null && Boolean(rule.enabled) !== enabledFilter) return false;
     if (automationEnabledFilter !== null && Boolean(rule.automation_enabled) !== automationEnabledFilter) return false;
@@ -3692,17 +3577,17 @@ app.get('/event-rules', (req, res) => {
   );
 });
 
-app.post('/event-rules', (req, res) => {
+app.post('/alert-rules', (req, res) => {
   const payload = req.body || {};
   const template = payload.template_key
-    ? eventRuleTemplates.find((item) => item.template_key === payload.template_key)
+    ? alertRuleTemplates.find((item) => item.template_key === payload.template_key)
     : null;
 
   const clone = (value) => (value ? JSON.parse(JSON.stringify(value)) : value);
 
-  const baseRule = buildEventRule({
+  const baseRule = buildAlertRule({
     rule_uid: `rule-${Date.now()}`,
-    name: payload.name || template?.name || '新事件規則',
+    name: payload.name || template?.name || '新告警規則',
     description: payload.description || template?.description || '',
     severity: payload.severity || template?.severity || 'warning',
     default_priority: payload.default_priority || template?.default_priority || 'P2',
@@ -3731,21 +3616,21 @@ app.post('/event-rules', (req, res) => {
     last_synced_at: timestamp,
     sync_status: 'fresh'
   });
-  eventRules.push(baseRule);
+  alertRules.push(baseRule);
   res.status(201).json(baseRule);
 });
 
-app.get('/event-rules/:rule_uid', (req, res) => {
-  const rule = getEventRuleByUid(req.params.rule_uid);
-  if (!rule) return notFound(res, '找不到事件規則');
+app.get('/alert-rules/:rule_uid', (req, res) => {
+  const rule = getAlertRuleByUid(req.params.rule_uid);
+  if (!rule) return notFound(res, '找不到告警規則');
   res.json(rule);
 });
 
-app.put('/event-rules/:rule_uid', (req, res) => {
-  const rule = getEventRuleByUid(req.params.rule_uid);
-  if (!rule) return notFound(res, '找不到事件規則');
+app.put('/alert-rules/:rule_uid', (req, res) => {
+  const rule = getAlertRuleByUid(req.params.rule_uid);
+  if (!rule) return notFound(res, '找不到告警規則');
   const payload = req.body || {};
-  const updated = buildEventRule({
+  const updated = buildAlertRule({
     ...rule,
     ...payload,
     resource_filters: payload.resource_filters ?? rule.resource_filters,
@@ -3759,22 +3644,13 @@ app.put('/event-rules/:rule_uid', (req, res) => {
   res.json(rule);
 });
 
-app.delete('/event-rules/:rule_uid', (req, res) => {
-  const rule = getEventRuleByUid(req.params.rule_uid);
-  if (!rule) return notFound(res, '找不到事件規則');
-  res.status(204).end();
-});
-
-app.post('/event-rules/:rule_uid/toggle', (req, res) => {
-  const rule = getEventRuleByUid(req.params.rule_uid);
-  if (!rule) return notFound(res, '找不到事件規則');
+// 修正: 增加 PATCH 方法處理啟用/停用
+app.patch('/alert-rules/:rule_uid', (req, res) => {
+  const rule = getAlertRuleByUid(req.params.rule_uid);
+  if (!rule) return notFound(res, '找不到告警規則');
   const payload = req.body || {};
   if (typeof payload.enabled === 'boolean') {
     rule.enabled = payload.enabled;
-  } else if (typeof payload.status === 'string') {
-    rule.enabled = payload.status.toLowerCase() === 'enabled';
-  } else {
-    rule.enabled = !rule.enabled;
   }
   rule.last_updated = toISO(new Date());
   rule.last_synced_at = toISO(new Date());
@@ -3782,1964 +3658,16 @@ app.post('/event-rules/:rule_uid/toggle', (req, res) => {
   res.json(rule);
 });
 
-app.post('/event-rules/:rule_uid/test', (req, res) => {
-  const rule = getEventRuleByUid(req.params.rule_uid);
-  if (!rule) return notFound(res, '找不到事件規則');
+app.delete('/alert-rules/:rule_uid', (req, res) => {
+  const rule = getAlertRuleByUid(req.params.rule_uid);
+  if (!rule) return notFound(res, '找不到告警規則');
+  res.status(204).end();
+});
+
+app.post('/alert-rules/:rule_uid/test', (req, res) => {
+  const rule = getAlertRuleByUid(req.params.rule_uid);
+  if (!rule) return notFound(res, '找不到告警規則');
   res.json({ matches: true, preview_event: mapEventSummary(eventData[0]), messages: ['條件符合範例資料'] });
-});
-
-app.get('/silence-rules', (req, res) => {
-  const typeFilter = createLowercaseSet(parseListParam(req.query.silence_type));
-  const enabledFilter = parseBooleanParam(req.query.enabled);
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-  const scopeFilter = createLowercaseSet(parseListParam(req.query.scope));
-
-  const filtered = silenceRules.filter((rule) => {
-    if (!matchesEnumFilter(rule.silence_type, typeFilter)) return false;
-    if (enabledFilter !== null && Boolean(rule.enabled) !== enabledFilter) return false;
-    if (!matchesEnumFilter(rule.scope, scopeFilter)) return false;
-
-    if (keyword) {
-      const text = `${rule.name || ''} ${rule.description || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-
-  const items = filtered.map((rule) => ({
-    silence_id: rule.silence_id,
-    name: rule.name,
-    description: rule.description,
-    silence_type: rule.silence_type,
-    scope: rule.scope,
-    enabled: rule.enabled,
-    created_at: rule.created_at,
-    schedule: rule.schedule,
-    matchers: rule.matchers,
-    created_by: rule.created_by
-  }));
-
-  if ((req.query.format || 'json').toLowerCase() === 'csv') {
-    const csv = toCsv(filtered, [
-      { key: 'silence_id' },
-      { key: 'name' },
-      { key: 'silence_type' },
-      { key: 'scope' },
-      { key: 'enabled', value: (row) => (row.enabled ? 'true' : 'false') },
-      { key: 'created_at' },
-      { header: 'starts_at', value: (row) => row.schedule?.starts_at || '' },
-      { header: 'ends_at', value: (row) => row.schedule?.ends_at || '' },
-      { header: 'timezone', value: (row) => row.schedule?.timezone || '' },
-      { header: 'repeat_frequency', value: (row) => row.schedule?.repeat?.frequency || '' }
-    ]);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    return res.send(csv);
-  }
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['name', 'silence_type', 'created_at', 'scope'],
-      defaultSortKey: 'created_at',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.post('/silence-rules', (req, res) => {
-  const payload = req.body || {};
-  const rule = {
-    silence_id: `slc-${Date.now()}`,
-    name: payload.name || '新靜音規則',
-    description: payload.description || '',
-    silence_type: payload.silence_type || 'single',
-    scope: payload.scope || 'global',
-    enabled: payload.enabled ?? true,
-    created_at: toISO(new Date()),
-    schedule: payload.schedule || null,
-    matchers: payload.matchers || [],
-    notify_on_start: payload.notify_on_start ?? false,
-    notify_on_end: payload.notify_on_end ?? false,
-    created_by: currentUser.user_id
-  };
-  res.status(201).json(rule);
-});
-
-app.get('/silence-rules/:silence_id', (req, res) => {
-  const rule = getSilenceRuleById(req.params.silence_id);
-  if (!rule) return notFound(res, '找不到靜音規則');
-  res.json(rule);
-});
-
-app.put('/silence-rules/:silence_id', (req, res) => {
-  const rule = getSilenceRuleById(req.params.silence_id);
-  if (!rule) return notFound(res, '找不到靜音規則');
-  Object.assign(rule, req.body || {}, { updated_at: toISO(new Date()) });
-  res.json(rule);
-});
-
-app.delete('/silence-rules/:silence_id', (req, res) => {
-  const rule = getSilenceRuleById(req.params.silence_id);
-  if (!rule) return notFound(res, '找不到靜音規則');
-  res.status(204).end();
-});
-
-app.get('/resources/summary', (req, res) => {
-  const healthy = resourceData.filter((resItem) => resItem.status === 'healthy').length;
-  const warning = resourceData.filter((resItem) => resItem.status === 'warning').length;
-  const critical = resourceData.filter((resItem) => resItem.status === 'critical').length;
-  res.json({ total_resources: resourceData.length, healthy, warning, critical, groups: resourceGroups.length });
-});
-
-app.get('/resources', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const typeFilter = createLowercaseSet(parseListParam(req.query.type));
-  const environmentFilter = createLowercaseSet(parseListParam(req.query.environment));
-  const tagFilter = createLowercaseSet(parseListParam(req.query.tag_value_ids));
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-  const teamIdFilter = createLowercaseSet(parseListParam(req.query.team_id));
-  const groupFilter = createLowercaseSet(parseListParam(req.query.group_id));
-
-  const filtered = resourceData.filter((resource) => {
-    if (!includeDeleted && resource.deleted_at) return false;
-    if (!matchesEnumFilter(resource.status, statusFilter)) return false;
-    if (!matchesEnumFilter(resource.type, typeFilter)) return false;
-    if (!matchesEnumFilter(resource.environment, environmentFilter)) return false;
-    if (!matchesEnumFilter(resource.team_id, teamIdFilter)) return false;
-
-    if (groupFilter) {
-      const groupIds = normalizeGroupIds(resource.groups).map(g => g.toLowerCase());
-      if (!groupIds.some(id => groupFilter.has(id))) return false;
-    }
-
-    if (tagFilter) {
-      const tagIds = normalizeTags(resource.tags)
-        .map((tag) => (tag.tag_value_id || `${tag.key}:${tag.value}`))
-        .map((id) => id.toLowerCase());
-      if (!tagIds.some((id) => tagFilter.has(id))) return false;
-    }
-    if (keyword) {
-      const tagTexts = normalizeTags(resource.tags).map((tag) => `${tag.key}:${tag.value}`.toLowerCase());
-      const searchFields = [
-        resource.resource_id,
-        resource.name,
-        resource.ip_address,
-        resource.location,
-        resource.environment,
-        resource.team,
-        resource.service_impact,
-        ...(tagTexts || [])
-      ]
-        .filter((value) => typeof value === 'string' && value.length > 0)
-        .map((value) => value.toLowerCase());
-      const match = searchFields.some((text) => text.includes(keyword));
-      if (!match) return false;
-    }
-    return true;
-  });
-
-  const items = filtered.map((resItem) => ({
-    resource_id: resItem.resource_id,
-    name: resItem.name,
-    status: resItem.status,
-    type: resItem.type,
-    ip_address: resItem.ip_address,
-    location: resItem.location,
-    environment: resItem.environment,
-    team: resItem.team,
-    team_id: resItem.team_id || null,
-    os: resItem.os,
-    cpu_usage: resItem.cpu_usage,
-    memory_usage: resItem.memory_usage,
-    disk_usage: resItem.disk_usage,
-    network_in_mbps: resItem.network_in_mbps,
-    network_out_mbps: resItem.network_out_mbps,
-    service_impact: resItem.service_impact,
-    tags: cloneTags(resItem.tags),
-    last_event_count: resItem.last_event_count,
-    updated_at: resItem.updated_at,
-    groups: buildResourceGroupRefs(resItem.groups)
-  }));
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['updated_at', 'cpu_usage', 'memory_usage', 'name', 'status', 'type', 'environment'],
-      defaultSortKey: 'updated_at',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.post('/resources', (req, res) => {
-  const payload = req.body || {};
-  const resource = {
-    resource_id: `res-${Date.now()}`,
-    name: payload.name || '新資源',
-    status: payload.status || 'healthy',
-    type: payload.type || 'server',
-    ip_address: payload.ip_address || '10.0.0.1',
-    location: payload.location || 'ap-southeast-1a',
-    environment: payload.environment || 'production',
-    team_id: payload.team_id || null,
-    team:
-      payload.team ||
-      (payload.team_id ? getTeamById(payload.team_id)?.name || null : null),
-    os: payload.os || 'Linux',
-    cpu_usage: 0,
-    memory_usage: 0,
-    disk_usage: 0,
-    network_in_mbps: 0,
-    network_out_mbps: 0,
-    service_impact: payload.service_impact || null,
-    tags: normalizeTags(payload.tags ?? payload.labels),
-    notes: payload.notes || null,
-    last_event_count: 0,
-    groups: normalizeGroupIds(payload.group_ids),
-    created_at: toISO(new Date()),
-    updated_at: toISO(new Date())
-  };
-  resourceData.push(resource);
-  res.status(201).json(buildResourceDetail(resource));
-});
-
-app.get('/resources/:resource_id', (req, res) => {
-  const resource = getResourceById(req.params.resource_id);
-  if (!resource) return notFound(res, '找不到資源');
-  res.json(buildResourceDetail(resource));
-});
-
-app.patch('/resources/:resource_id', (req, res) => {
-  const resource = getResourceById(req.params.resource_id);
-  if (!resource) return notFound(res, '找不到資源');
-  const updates = { ...(req.body || {}) };
-  if (Object.prototype.hasOwnProperty.call(updates, 'tags') || Object.prototype.hasOwnProperty.call(updates, 'labels')) {
-    resource.tags = normalizeTags(updates.tags ?? updates.labels);
-    delete updates.tags;
-    delete updates.labels;
-  }
-  if (Object.prototype.hasOwnProperty.call(updates, 'group_ids')) {
-    resource.groups = normalizeGroupIds(updates.group_ids);
-    delete updates.group_ids;
-  }
-  if (Object.prototype.hasOwnProperty.call(updates, 'team_id')) {
-    resource.team_id = updates.team_id;
-    if (!Object.prototype.hasOwnProperty.call(updates, 'team')) {
-      resource.team = updates.team_id
-        ? getTeamById(updates.team_id)?.name || resource.team
-        : null;
-    }
-    delete updates.team_id;
-  }
-  if (Object.prototype.hasOwnProperty.call(updates, 'team')) {
-    resource.team = updates.team;
-    delete updates.team;
-  }
-  Object.assign(resource, updates, { updated_at: toISO(new Date()) });
-  res.json(buildResourceDetail(resource));
-});
-
-app.delete('/resources/:resource_id', (req, res) => {
-  const resource = getResourceById(req.params.resource_id);
-  if (!resource) return notFound(res, '找不到資源');
-  res.status(204).end();
-});
-
-app.get('/resources/:resource_id/metrics', (req, res) => {
-  const resource = getResourceById(req.params.resource_id);
-  if (!resource) return notFound(res, '找不到資源');
-  res.json({
-    metrics: [
-      {
-        metric: 'cpu_usage',
-        unit: '%',
-        points: [
-          { timestamp: toISO(new Date(now.getTime() - 3600000 * 2)), value: 55 },
-          { timestamp: toISO(new Date(now.getTime() - 3600000)), value: 60 },
-          { timestamp: toISO(now), value: resource.cpu_usage }
-        ]
-      },
-      {
-        metric: 'memory_usage',
-        unit: '%',
-        points: [
-          { timestamp: toISO(new Date(now.getTime() - 3600000 * 2)), value: 50 },
-          { timestamp: toISO(new Date(now.getTime() - 3600000)), value: 64 },
-          { timestamp: toISO(now), value: resource.memory_usage }
-        ]
-      }
-    ]
-  });
-});
-
-app.get('/resources/:resource_id/events', (req, res) => {
-  const resource = getResourceById(req.params.resource_id);
-  if (!resource) return notFound(res, '找不到資源');
-  const relatedEvents = eventData.filter((evt) => evt.resource_id === resource.resource_id).map(mapEventSummary);
-  res.json(paginate(relatedEvents, req));
-});
-
-app.get('/resource-groups', (req, res) => {
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-  const ownerTeamIdFilter = createLowercaseSet(parseListParam(req.query.owner_team_id));
-
-  const filtered = resourceGroups.filter((group) => {
-    if (!includeDeleted && group.deleted_at) return false;
-    if (!matchesEnumFilter(group.owner_team_id, ownerTeamIdFilter)) return false;
-    if (keyword) {
-      const text = `${group.name || ''} ${group.description || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-
-  const items = filtered.map((grp) => ({
-    group_id: grp.group_id,
-    name: grp.name,
-    description: grp.description,
-    owner_team_id: grp.owner_team_id || null,
-    owner_team: grp.owner_team,
-    member_count: grp.member_count,
-    status_summary: grp.status_summary,
-    created_at: grp.created_at
-  }));
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['name', 'created_at', 'member_count', 'subscriber_count', 'owner_team'],
-      defaultSortKey: 'name',
-      defaultSortOrder: 'asc'
-    })
-  );
-});
-
-app.post('/resource-groups', (req, res) => {
-  const payload = req.body || {};
-  const group = {
-    group_id: `grp-${Date.now()}`,
-    name: payload.name || '新資源群組',
-    description: payload.description || '',
-    owner_team_id: payload.owner_team_id || null,
-    owner_team:
-      payload.owner_team ||
-      (payload.owner_team_id ? getTeamById(payload.owner_team_id)?.name || null : null),
-    member_count: payload.resource_ids ? payload.resource_ids.length : 0,
-    status_summary: { healthy: 0, warning: 0, critical: 0 },
-    created_at: toISO(new Date()),
-    members: (payload.resource_ids || []).map((id) => ({ resource_id: id, name: id, type: 'unknown', status: 'healthy' }))
-  };
-  res.status(201).json(group);
-});
-
-app.get('/resource-groups/:group_id', (req, res) => {
-  const group = getResourceGroupById(req.params.group_id);
-  if (!group) return notFound(res, '找不到資源群組');
-  res.json(group);
-});
-
-app.put('/resource-groups/:group_id', (req, res) => {
-  const group = getResourceGroupById(req.params.group_id);
-  if (!group) return notFound(res, '找不到資源群組');
-  const payload = req.body || {};
-  if (Object.prototype.hasOwnProperty.call(payload, 'owner_team_id')) {
-    group.owner_team_id = payload.owner_team_id;
-    if (!Object.prototype.hasOwnProperty.call(payload, 'owner_team')) {
-      group.owner_team = payload.owner_team_id
-        ? getTeamById(payload.owner_team_id)?.name || group.owner_team
-        : null;
-    }
-    delete payload.owner_team_id;
-  }
-  if (Object.prototype.hasOwnProperty.call(payload, 'owner_team')) {
-    group.owner_team = payload.owner_team;
-    delete payload.owner_team;
-  }
-  Object.assign(group, payload, { updated_at: toISO(new Date()) });
-  res.json(group);
-});
-
-app.delete('/resource-groups/:group_id', (req, res) => {
-  const group = getResourceGroupById(req.params.group_id);
-  if (!group) return notFound(res, '找不到資源群組');
-  res.status(204).end();
-});
-
-app.get('/topology', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const typeFilter = createLowercaseSet(
-    parseListParam(req.query.resource_types ?? req.query.type)
-  );
-  const groupFilter = createLowercaseSet(
-    parseListParam(req.query.resource_group_ids ?? req.query.group_ids)
-  );
-  const tagFilter = createLowercaseSet(
-    parseListParam(req.query.tag_value_ids ?? req.query.tags)
-  );
-  const teamFilter = createLowercaseSet(parseListParam(req.query.team_ids ?? req.query.team_id));
-
-  const graph = buildTopologyGraph({
-    statusFilter,
-    typeFilter,
-    groupFilter,
-    tagFilter,
-    teamFilter
-  });
-
-  res.json(graph);
-});
-
-app.get('/dashboards/summary', (req, res) => {
-  const totals = {
-    total: dashboards.length,
-    built_in: dashboards.filter((d) => d.dashboard_type === 'built_in').length,
-    grafana: dashboards.filter((d) => d.dashboard_type === 'grafana').length,
-    published: dashboards.filter((d) => d.status === 'published').length,
-    featured: dashboards.filter((d) => d.is_featured).length,
-    automated: dashboards.filter((d) => d.target_page_key).length,
-    active_users: 156
-  };
-
-  const kpis = [
-    { label: '總儀表板數', value: `${totals.total}`, trend: 4 },
-    { label: '活躍用戶', value: `${totals.active_users}`, trend: 12.5 },
-    { label: 'SRE 戰情室', value: `${dashboards.filter((d) => d.category === '戰情室').length}`, trend: 0 },
-    { label: '基礎設施洞察', value: `${dashboards.filter((d) => d.category === '基礎設施洞察').length}`, trend: 2 }
-  ];
-
-  res.json({ totals, kpi_cards: kpis });
-});
-
-app.get('/dashboards', (req, res) => {
-  const category = (req.query.category || '').trim().toLowerCase();
-  const ownerId = (req.query.owner_id || '').trim().toLowerCase();
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-
-  const filtered = dashboards.filter((dash) => {
-    if (!includeDeleted && dash.deleted_at) return false;
-    if (category && String(dash.category || '').toLowerCase() !== category) return false;
-    if (ownerId && String(dash.owner_id || '').toLowerCase() !== ownerId) return false;
-    return true;
-  });
-
-  const items = filtered.map((dash) => ({
-    dashboard_id: dash.dashboard_id,
-    name: dash.name,
-    category: dash.category,
-    owner: dash.owner,
-    status: dash.status,
-    is_featured: dash.is_featured,
-    is_default: dash.is_default,
-    viewer_count: dash.viewer_count,
-    favorite_count: dash.favorite_count,
-    panel_count: dash.panel_count,
-    tags: dash.tags,
-    data_sources: dash.data_sources,
-    target_page_key: dash.target_page_key,
-    grafana_url: dash.grafana_url || null,
-    updated_at: dash.updated_at
-  }));
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['updated_at', 'viewer_count', 'favorite_count', 'name'],
-      defaultSortKey: 'updated_at',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.post('/dashboards', (req, res) => {
-  const payload = req.body || {};
-  const dash = {
-    dashboard_id: `dash-${Date.now()}`,
-    name: payload.name || '新儀表板',
-    category: payload.category || '自訂',
-    creator: { user_id: currentUser.user_id, display_name: currentUser.display_name },
-    description: payload.description || '',
-    status: 'draft',
-    is_featured: false,
-    is_default: false,
-    viewer_count: 0,
-    favorite_count: 0,
-    panel_count: (payload.layout || []).length,
-    tags: payload.tags || [],
-    data_sources: payload.data_sources || [],
-    target_page_key: payload.target_page_key || null,
-    published_at: null,
-    updated_at: toISO(new Date()),
-    layout: payload.layout || [],
-    kpis: payload.kpis || []
-  };
-  dashboards.push(dash);
-  res.status(201).json(dash);
-});
-
-app.get('/dashboards/:dashboard_id', (req, res) => {
-  const dash = getDashboardById(req.params.dashboard_id);
-  if (!dash) return notFound(res, '找不到儀表板');
-  res.json(dash);
-});
-
-app.patch('/dashboards/:dashboard_id', (req, res) => {
-  const dash = getDashboardById(req.params.dashboard_id);
-  if (!dash) return notFound(res, '找不到儀表板');
-  Object.assign(dash, req.body || {}, { updated_at: toISO(new Date()) });
-  dash.panel_count = Array.isArray(dash.layout) ? dash.layout.length : dash.panel_count;
-  res.json(dash);
-});
-
-app.delete('/dashboards/:dashboard_id', (req, res) => {
-  const dash = getDashboardById(req.params.dashboard_id);
-  if (!dash) return notFound(res, '找不到儀表板');
-  res.status(204).end();
-});
-
-app.get('/analysis/capacity', (req, res) => {
-  const report = buildCapacityAnalysisReport({ timeRange: req.query?.time_range, model: req.query?.model });
-  res.json(report);
-});
-
-app.get('/analysis/resource-load', (req, res) => {
-  res.json({ summary: resourceLoadSummary, items: resourceLoadItems });
-});
-
-app.get('/analysis/ai-insights', (req, res) => {
-  res.json(paginate(aiInsightReports, req));
-});
-
-app.get('/analysis/ai-insights/:report_id', (req, res) => {
-  const report = aiInsightReports.find((item) => item.report_id === req.params.report_id);
-  if (!report) return notFound(res, '找不到 AI 洞察報告');
-  res.json(report);
-});
-
-app.get('/automation/scripts', (req, res) => {
-  const typeFilter = createLowercaseSet(parseListParam(req.query.type));
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-  const tagsFilter = createLowercaseSet(parseListParam(req.query.tags));
-  const lastExecStatusFilter = createLowercaseSet(parseListParam(req.query.last_execution_status));
-
-  const filtered = automationScripts.filter((script) => {
-    if (!includeDeleted && script.deleted_at) return false;
-    if (!matchesEnumFilter(script.type, typeFilter)) return false;
-    if (!matchesEnumFilter(script.last_execution_status, lastExecStatusFilter)) return false;
-
-    if (tagsFilter) {
-      const scriptTags = (script.tags || []).map(t => t.toLowerCase());
-      if (!scriptTags.some(t => tagsFilter.has(t))) return false;
-    }
-
-    if (keyword) {
-      const text = `${script.name || ''} ${script.description || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-
-  const items = filtered.map((script) => toScriptSummary(script));
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['updated_at', 'last_execution_at', 'name', 'type', 'last_execution_status'],
-      defaultSortKey: 'updated_at',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.post('/automation/scripts', (req, res) => {
-  const payload = req.body || {};
-  const nowIso = toISO(new Date());
-  const scriptId = `script-${Date.now()}`;
-  const versionId = `ver-${Date.now()}`;
-  const versionLabel = payload.version || 'v1';
-  const versionEntry = {
-    version_id: versionId,
-    version: versionLabel,
-    changelog: payload.changelog || '建立初始版本',
-    created_at: nowIso,
-    created_by: payload.created_by || currentUser.user_id,
-    content: payload.content || ''
-  };
-  const script = {
-    script_id: scriptId,
-    name: payload.name || '新腳本',
-    type: payload.type || 'shell',
-    description: payload.description || '',
-    tags: Array.isArray(payload.tags) ? [...payload.tags] : [],
-    last_execution_status: 'never',
-    last_execution_at: null,
-    created_at: nowIso,
-    created_by: payload.created_by || currentUser.user_id,
-    updated_at: nowIso,
-    updated_by: payload.updated_by || currentUser.user_id,
-    versions: [versionEntry],
-    current_version: { ...versionEntry }
-  };
-  automationScripts.unshift(script);
-  res.status(201).json(toScriptDetail(script));
-});
-
-app.get('/automation/scripts/:script_id', (req, res) => {
-  const script = getScriptById(req.params.script_id);
-  if (!script) return notFound(res, '找不到腳本');
-  res.json(toScriptDetail(script));
-});
-
-app.patch('/automation/scripts/:script_id', (req, res) => {
-  const script = getScriptById(req.params.script_id);
-  if (!script) return notFound(res, '找不到腳本');
-  const payload = req.body || {};
-  const nowIso = toISO(new Date());
-
-  if (Object.prototype.hasOwnProperty.call(payload, 'name')) {
-    script.name = payload.name;
-  }
-  if (Object.prototype.hasOwnProperty.call(payload, 'type') && payload.type) {
-    script.type = payload.type;
-  }
-  if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
-    script.description = payload.description;
-  }
-  if (Array.isArray(payload.tags)) {
-    script.tags = [...payload.tags];
-  }
-
-  if (
-    Object.prototype.hasOwnProperty.call(payload, 'content') ||
-    Object.prototype.hasOwnProperty.call(payload, 'version') ||
-    Object.prototype.hasOwnProperty.call(payload, 'changelog')
-  ) {
-    const versionEntry = {
-      version_id: `ver-${Date.now()}`,
-      version: payload.version || script.current_version?.version || 'v1',
-      changelog: payload.changelog || '更新腳本內容',
-      created_at: nowIso,
-      created_by: payload.updated_by || currentUser.user_id,
-      content:
-        Object.prototype.hasOwnProperty.call(payload, 'content')
-          ? payload.content
-          : script.current_version?.content || ''
-    };
-    script.current_version = { ...versionEntry };
-    script.versions = [versionEntry, ...script.versions];
-  }
-
-  script.updated_at = nowIso;
-  script.updated_by = payload.updated_by || currentUser.user_id;
-
-  res.json(toScriptDetail(script));
-});
-
-app.delete('/automation/scripts/:script_id', (req, res) => {
-  const index = automationScripts.findIndex((sc) => sc.script_id === req.params.script_id);
-  if (index === -1) return notFound(res, '找不到腳本');
-  automationScripts.splice(index, 1);
-  res.status(204).end();
-});
-
-app.post('/automation/scripts/:script_id/execute', (req, res) => {
-  const script = getScriptById(req.params.script_id);
-  if (!script) return notFound(res, '找不到腳本');
-  res.status(202).json({
-    execution_id: `exe-${Date.now()}`,
-    status: 'pending',
-    queued_at: toISO(new Date()),
-    script_id: script.script_id,
-    script_version: script.current_version?.version || null
-  });
-});
-
-app.get('/automation/scripts/:script_id/versions', (req, res) => {
-  const script = getScriptById(req.params.script_id);
-  if (!script) return notFound(res, '找不到腳本');
-  const versions = Array.isArray(script.versions)
-    ? script.versions.map((version) => summarizeScriptVersion(version))
-    : [];
-  res.json(
-    paginate(versions, req, {
-      allowedSortFields: ['created_at', 'version'],
-      defaultSortKey: 'created_at',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.get('/automation/schedules', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-  const scriptIdFilter = createLowercaseSet(parseListParam(req.query.script_id));
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-
-  const filtered = automationSchedules.filter((sch) => {
-    if (!includeDeleted && sch.deleted_at) return false;
-    if (!matchesEnumFilter(sch.status, statusFilter)) return false;
-    if (!matchesEnumFilter(sch.script_id, scriptIdFilter)) return false;
-    if (keyword) {
-      const text = `${sch.name || ''} ${sch.script_name || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-  const items = filtered.map((sch) => ({
-    schedule_id: sch.schedule_id,
-    name: sch.name,
-    type: sch.type,
-    status: sch.status,
-    cron_expression: sch.cron_expression,
-    next_run_time: sch.next_run_time,
-    script_id: sch.script_id,
-    script_name: sch.script_name
-  }));
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['next_run_time', 'name', 'status', 'cron_expression'],
-      defaultSortKey: 'next_run_time',
-      defaultSortOrder: 'asc'
-    })
-  );
-});
-
-app.post('/automation/schedules', (req, res) => {
-  const payload = req.body || {};
-  const schedule = {
-    schedule_id: `sch-${Date.now()}`,
-    name: payload.name || '新排程',
-    type: payload.type || 'recurring',
-    status: payload.status || 'enabled',
-    cron_expression: payload.cron_expression || '0 * * * *',
-    timezone: payload.timezone || 'UTC',
-    next_run_time: toISO(new Date(now.getTime() + 3600000)),
-    script_id: payload.script_id || null,
-    script_name: automationScripts.find((s) => s.script_id === payload.script_id)?.name || null,
-    concurrency_policy: payload.concurrency_policy || 'allow',
-    retry_policy: payload.retry_policy || { max_retries: 0, interval_seconds: 0 },
-    notify_on_success: payload.notify_on_success ?? false,
-    notify_on_failure: payload.notify_on_failure ?? true,
-    channels: payload.channels || []
-  };
-  res.status(201).json(schedule);
-});
-
-app.get('/automation/schedules/:schedule_id', (req, res) => {
-  const schedule = getScheduleById(req.params.schedule_id);
-  if (!schedule) return notFound(res, '找不到排程');
-  res.json(schedule);
-});
-
-app.patch('/automation/schedules/:schedule_id', (req, res) => {
-  const schedule = getScheduleById(req.params.schedule_id);
-  if (!schedule) return notFound(res, '找不到排程');
-  Object.assign(schedule, req.body || {}, { updated_at: toISO(new Date()) });
-  res.json(schedule);
-});
-
-app.delete('/automation/schedules/:schedule_id', (req, res) => {
-  const schedule = getScheduleById(req.params.schedule_id);
-  if (!schedule) return notFound(res, '找不到排程');
-  res.status(204).end();
-});
-
-app.post('/automation/schedules/:schedule_id/toggle', (req, res) => {
-  const schedule = getScheduleById(req.params.schedule_id);
-  if (!schedule) return notFound(res, '找不到排程');
-  const payload = req.body || {};
-  if (typeof payload.enabled === 'boolean') {
-    schedule.status = payload.enabled ? 'enabled' : 'disabled';
-  } else if (typeof payload.status === 'string') {
-    schedule.status = payload.status.toLowerCase() === 'disabled' ? 'disabled' : 'enabled';
-  } else {
-    schedule.status = schedule.status === 'enabled' ? 'disabled' : 'enabled';
-  }
-  schedule.updated_at = toISO(new Date());
-  res.json(schedule);
-});
-
-app.get('/automation/executions', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const scriptIds = parseListParam(req.query.script_id);
-  const triggerSourceFilter = createLowercaseSet(parseListParam(req.query.trigger_source));
-  const eventIdFilter = createLowercaseSet(parseListParam(req.query.event_id));
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-
-  const filtered = automationExecutions.filter((execution) => {
-    if (!matchesEnumFilter(execution.status, statusFilter)) return false;
-    if (scriptIds && scriptIds.length > 0 && !scriptIds.includes(execution.script_id)) return false;
-    if (!matchesEnumFilter(execution.trigger_source, triggerSourceFilter)) return false;
-    if (eventIdFilter) {
-        const related = execution.related_event_ids || [];
-        if (!related.some(id => eventIdFilter.has(id))) return false;
-    }
-    if (keyword) {
-        const text = `${execution.script_name || ''} ${execution.execution_id || ''}`.toLowerCase();
-        if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-
-  res.json(
-    paginate(filtered, req, {
-      allowedSortFields: ['start_time', 'status', 'duration_ms', 'trigger_source'],
-      defaultSortKey: 'start_time',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.get('/automation/executions/:execution_id', (req, res) => {
-  const execution = getExecutionById(req.params.execution_id);
-  if (!execution) return notFound(res, '找不到執行紀錄');
-  res.json(execution);
-});
-
-app.post('/automation/executions/:execution_id/retry', (req, res) => {
-  const execution = getExecutionById(req.params.execution_id);
-  if (!execution) return notFound(res, '找不到執行紀錄');
-  res.status(202).json({ ...execution, status: 'pending', start_time: toISO(new Date()), end_time: null });
-});
-
-app.get('/iam/users', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-  const teamIdFilter = createLowercaseSet(parseListParam(req.query.team_id));
-  const roleIdFilter = createLowercaseSet(parseListParam(req.query.role_id));
-
-  const filtered = iamUsers.filter((user) => {
-    if (!includeDeleted && user.deleted_at) return false;
-    if (!matchesEnumFilter(user.status, statusFilter)) return false;
-
-    if (teamIdFilter) {
-      const userTeams = (user.teams || []).map(t => t.toLowerCase());
-      if (!userTeams.some(t => teamIdFilter.has(t))) return false;
-    }
-    if (roleIdFilter) {
-      const userRoles = (user.roles || []).map(r => r.toLowerCase());
-      if (!userRoles.some(r => roleIdFilter.has(r))) return false;
-    }
-
-    if (keyword) {
-      const text = `${user.display_name || ''} ${user.username || ''} ${user.email || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-
-  res.json(
-    paginate(filtered, req, {
-      allowedSortFields: ['display_name', 'username', 'status', 'last_login'],
-      defaultSortKey: 'display_name',
-      defaultSortOrder: 'asc'
-    })
-  );
-});
-
-app.get('/iam/users/:user_id', (req, res) => {
-  const user = getIamUserById(req.params.user_id);
-  if (!user || user.deleted_at) return notFound(res, '找不到人員');
-  res.json(user);
-});
-
-app.patch('/iam/users/:user_id', (req, res) => {
-  const user = getIamUserById(req.params.user_id);
-  if (!user) return notFound(res, '找不到人員');
-  const payload = req.body || {};
-  if (Array.isArray(payload.role_ids)) {
-    user.roles = payload.role_ids;
-  }
-  if (Array.isArray(payload.team_ids)) {
-    user.teams = payload.team_ids;
-  }
-  if (typeof payload.status === 'string') {
-    user.status = payload.status;
-  }
-  res.json(user);
-});
-
-app.delete('/iam/users/:user_id', (req, res) => {
-  const user = getIamUserById(req.params.user_id);
-  if (!user) return notFound(res, '找不到人員');
-  user.deleted_at = toISO(new Date());
-  res.status(204).end();
-});
-
-app.get('/iam/teams', (req, res) => {
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-  const userIdFilter = createLowercaseSet(parseListParam(req.query.user_id));
-
-  const filtered = iamTeams.filter((team) => {
-    if (!includeDeleted && team.deleted_at) return false;
-
-    if (userIdFilter) {
-      const memberIds = (team.member_ids || []).map(id => id.toLowerCase());
-      if (!memberIds.some(id => userIdFilter.has(id))) return false;
-    }
-
-    if (keyword) {
-      const text = `${team.name || ''} ${team.description || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-
-  const items = filtered.map((team) => ({
-    team_id: team.team_id,
-    name: team.name,
-    description: team.description,
-    creator: team.creator,
-    members: team.members,
-    subscribers: team.subscribers,
-    created_at: team.created_at
-  }));
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['name', 'created_at', 'team_id'],
-      defaultSortKey: 'name',
-      defaultSortOrder: 'asc'
-    })
-  );
-});
-
-app.post('/iam/teams', (req, res) => {
-  const payload = req.body || {};
-  const memberIds = Array.isArray(payload.member_ids) ? payload.member_ids : [];
-  const subscriberDetails = Array.isArray(payload.subscribers) && payload.subscribers.every((item) => typeof item === 'object')
-    ? payload.subscribers
-    : [];
-  const subscriberIds = Array.isArray(payload.subscriber_ids) ? payload.subscriber_ids : subscriberDetails.map((item) => item.subscriber_id);
-  const team = {
-    team_id: `team-${Date.now()}`,
-    name: payload.name || '新團隊',
-    description: payload.description || '',
-    creator: { user_id: payload.creator_id || currentUser.user_id, display_name: currentUser.display_name },
-    created_at: toISO(new Date()),
-    member_ids: memberIds,
-    members: memberIds,
-    subscriber_ids: subscriberIds,
-    subscribers: subscriberIds,
-    subscriber_details: subscriberDetails
-  };
-  iamTeams.push(team);
-  res.status(201).json(buildTeamDetail(team));
-});
-
-app.get('/iam/teams/:team_id', (req, res) => {
-  const team = getTeamById(req.params.team_id);
-  if (!team || team.deleted_at) return notFound(res, '找不到團隊');
-  res.json(buildTeamDetail(team));
-});
-
-app.patch('/iam/teams/:team_id', (req, res) => {
-  const team = getTeamById(req.params.team_id);
-  if (!team || team.deleted_at) return notFound(res, '找不到團隊');
-  const payload = req.body || {};
-  Object.assign(team, payload);
-
-  let subscriberDetails;
-  if (Array.isArray(payload.subscribers) && payload.subscribers.every((item) => typeof item === 'object')) {
-    subscriberDetails = payload.subscribers;
-  } else if (Array.isArray(payload.subscriber_details) && payload.subscriber_details.every((item) => typeof item === 'object')) {
-    subscriberDetails = payload.subscriber_details;
-  }
-
-  if (subscriberDetails) {
-    team.subscriber_details = subscriberDetails;
-    team.subscriber_ids = subscriberDetails.map((item) => item.subscriber_id);
-    team.subscribers = team.subscriber_ids;
-  } else if (Array.isArray(payload.subscriber_ids)) {
-    team.subscriber_ids = payload.subscriber_ids;
-    team.subscribers = payload.subscriber_ids;
-  }
-
-  if (Array.isArray(payload.member_ids)) {
-    team.member_ids = payload.member_ids;
-    team.members = payload.member_ids;
-  }
-
-  res.json(buildTeamDetail(team));
-});
-
-app.delete('/iam/teams/:team_id', (req, res) => {
-  const team = getTeamById(req.params.team_id);
-  if (!team) return notFound(res, '找不到團隊');
-  team.deleted_at = toISO(new Date());
-  res.status(204).end();
-});
-
-app.get('/iam/roles', (req, res) => {
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-
-  const filtered = iamRoles.filter((role) => {
-    if (!includeDeleted && role.deleted_at) return false;
-    if (keyword) {
-      const text = `${role.name || ''} ${role.description || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-  res.json(filtered.map((role) => ({
-    role_id: role.role_id,
-    name: role.name,
-    description: role.description,
-    status: role.status,
-    user_count: role.user_count,
-    created_at: role.created_at
-  })));
-});
-
-app.post('/iam/roles', (req, res) => {
-  const payload = req.body || {};
-  const role = {
-    role_id: `role-${Date.now()}`,
-    name: payload.name || 'new-role',
-    description: payload.description || '',
-    status: payload.status || 'active',
-    permissions: payload.permissions || []
-  };
-  res.status(201).json(role);
-});
-
-app.get('/iam/roles/:role_id', (req, res) => {
-  const role = getRoleById(req.params.role_id);
-  if (!role) return notFound(res, '找不到角色');
-  res.json(role);
-});
-
-app.patch('/iam/roles/:role_id', (req, res) => {
-  const role = getRoleById(req.params.role_id);
-  if (!role) return notFound(res, '找不到角色');
-  Object.assign(role, req.body || {});
-  res.json(role);
-});
-
-app.delete('/iam/roles/:role_id', (req, res) => {
-  const role = getRoleById(req.params.role_id);
-  if (!role) return notFound(res, '找不到角色');
-  res.status(204).end();
-});
-
-app.get('/iam/audit-logs', (req, res) => {
-  res.json(paginate(auditLogs, req));
-});
-
-app.get('/notification-config/strategies', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const priorityFilter = createLowercaseSet(parseListParam(req.query.priority));
-  const channelTypeFilter = createLowercaseSet(parseListParam(req.query.channel_types ?? req.query.channel_type));
-  const channelIdFilter = createLowercaseSet(parseListParam(req.query.channel_ids ?? req.query.channel_id));
-  const severityFilter = createLowercaseSet(parseListParam(req.query.severity));
-  const recipientTypeFilter = createLowercaseSet(
-    parseListParam(req.query.recipient_types ?? req.query.recipient_type)
-  );
-  const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-
-  const filtered = notificationStrategies.filter((strategy) => {
-    if (!includeDeleted && strategy.deleted_at) return false;
-    const statusValue = strategy.enabled ? 'enabled' : 'disabled';
-    if (!matchesEnumFilter(statusValue, statusFilter)) return false;
-
-    const priorityValue = strategy.priority || 'medium';
-    if (!matchesEnumFilter(priorityValue, priorityFilter)) return false;
-
-    const channels = Array.isArray(strategy.channels) ? strategy.channels : [];
-    if (channelTypeFilter) {
-      const hasChannelType = channels.some((channel) => matchesEnumFilter(channel.channel_type, channelTypeFilter));
-      if (!hasChannelType) return false;
-    }
-
-    if (channelIdFilter) {
-      const hasChannelId = channels.some((channel) => matchesEnumFilter(channel.channel_id, channelIdFilter));
-      if (!hasChannelId) return false;
-    }
-
-    if (severityFilter) {
-      const severities = Array.isArray(strategy.severity_filters) ? strategy.severity_filters : [];
-      const hasSeverity = severities.some((severity) => matchesEnumFilter(severity, severityFilter));
-      if (!hasSeverity) return false;
-    }
-
-    if (recipientTypeFilter) {
-      const recipients = Array.isArray(strategy.recipients) ? strategy.recipients : [];
-      const hasRecipient = recipients.some((recipient) => matchesEnumFilter(recipient.type, recipientTypeFilter));
-      if (!hasRecipient) return false;
-    }
-
-    if (keyword) {
-      const haystack = [strategy.name, strategy.description, strategy.trigger_condition]
-        .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
-      if (!haystack.includes(keyword)) return false;
-    }
-
-    return true;
-  });
-
-  const items = filtered.map((strategy) => {
-    const channels = Array.isArray(strategy.channels) ? strategy.channels : [];
-    return {
-      strategy_id: strategy.strategy_id,
-      name: strategy.name,
-      trigger_condition: strategy.trigger_condition,
-      channel_count: channels.length,
-      enabled: Boolean(strategy.enabled),
-      priority: strategy.priority || 'medium'
-    };
-  });
-
-  if ((req.query.format || 'json').toLowerCase() === 'csv') {
-    const csv = toCsv(filtered, [
-      { key: 'strategy_id' },
-      { key: 'name' },
-      { header: 'enabled', value: (row) => (row.enabled ? 'true' : 'false') },
-      { key: 'priority', value: (row) => row.priority || 'medium' },
-      {
-        header: 'channel_count',
-        value: (row) => (Array.isArray(row.channels) ? row.channels.length : 0)
-      },
-      { key: 'trigger_condition' },
-      {
-        header: 'severity_filters',
-        value: (row) => (Array.isArray(row.severity_filters) ? row.severity_filters.join(';') : '')
-      },
-      {
-        header: 'linked_silence_ids',
-        value: (row) => (Array.isArray(row.linked_silence_ids) ? row.linked_silence_ids.join(';') : '')
-      }
-    ]);
-    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    return res.send(csv);
-  }
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['name', 'enabled', 'priority', 'channel_count'],
-      defaultSortKey: 'name',
-      defaultSortOrder: 'asc'
-    })
-  );
-});
-
-app.post('/notification-config/strategies', (req, res) => {
-  const payload = req.body || {};
-  const strategy = {
-    strategy_id: `str-${Date.now()}`,
-    name: payload.name || '新策略',
-    description: payload.description || '',
-    trigger_condition: payload.trigger_condition || 'true',
-    enabled: payload.enabled ?? true,
-    priority: payload.priority || 'medium',
-    severity_filters: payload.severity_filters || [],
-    recipients: payload.recipients || [],
-    channels: payload.channels || [],
-    resource_filters: payload.resource_filters || {},
-    retry_policy: mergeSettings(defaultRetryPolicy, payload.retry_policy),
-    delivery_settings: mergeSettings(defaultDeliverySettings, payload.delivery_settings),
-    snooze_settings: mergeSettings(defaultSnoozeSettings, payload.snooze_settings),
-    linked_silence_ids: Array.isArray(payload.linked_silence_ids)
-      ? [...payload.linked_silence_ids]
-      : [],
-    created_at: toISO(new Date()),
-    updated_at: toISO(new Date())
-  };
-  notificationStrategies.push(strategy);
-  res.status(201).json(mapNotificationStrategyDetail(strategy));
-});
-
-app.get('/notification-config/strategies/:strategy_id', (req, res) => {
-  const strategy = getNotificationStrategyById(req.params.strategy_id);
-  if (!strategy) return notFound(res, '找不到通知策略');
-  res.json(mapNotificationStrategyDetail(strategy));
-});
-
-app.patch('/notification-config/strategies/:strategy_id', (req, res) => {
-  const strategy = getNotificationStrategyById(req.params.strategy_id);
-  if (!strategy) return notFound(res, '找不到通知策略');
-  const payload = req.body || {};
-  if (payload.name !== undefined) strategy.name = payload.name;
-  if (payload.description !== undefined) strategy.description = payload.description;
-  if (payload.trigger_condition !== undefined) strategy.trigger_condition = payload.trigger_condition;
-  if (payload.priority !== undefined) strategy.priority = payload.priority;
-  if (payload.severity_filters !== undefined) strategy.severity_filters = payload.severity_filters;
-  if (payload.recipients !== undefined) strategy.recipients = payload.recipients;
-  if (payload.channels !== undefined) strategy.channels = payload.channels;
-  if (payload.resource_filters !== undefined) strategy.resource_filters = payload.resource_filters;
-  if (payload.enabled !== undefined) strategy.enabled = payload.enabled;
-  if (payload.retry_policy !== undefined) {
-    strategy.retry_policy = mergeSettings(defaultRetryPolicy, payload.retry_policy);
-  }
-  if (payload.delivery_settings !== undefined) {
-    strategy.delivery_settings = mergeSettings(defaultDeliverySettings, payload.delivery_settings);
-  }
-  if (payload.snooze_settings !== undefined) {
-    strategy.snooze_settings = mergeSettings(defaultSnoozeSettings, payload.snooze_settings);
-  }
-  if (payload.linked_silence_ids !== undefined) {
-    strategy.linked_silence_ids = Array.isArray(payload.linked_silence_ids)
-      ? [...payload.linked_silence_ids]
-      : [];
-  }
-  strategy.updated_at = toISO(new Date());
-  res.json(mapNotificationStrategyDetail(strategy));
-});
-
-app.delete('/notification-config/strategies/:strategy_id', (req, res) => {
-  const strategy = getNotificationStrategyById(req.params.strategy_id);
-  if (!strategy) return notFound(res, '找不到通知策略');
-  res.status(204).end();
-});
-
-app.post('/notification-config/strategies/:strategy_id/test', (req, res) => {
-  const strategy = getNotificationStrategyById(req.params.strategy_id);
-  if (!strategy) return notFound(res, '找不到通知策略');
-  const detail = mapNotificationStrategyDetail(strategy);
-  res.json({
-    status: 'success',
-    message: '已發送測試通知',
-    details: { recipients: detail.recipients, channels: detail.channels }
-  });
-});
-
-app.get('/notification-config/channels', (req, res) => {
-  const includeDeleted = parseBooleanParam(req.query.include_deleted) === true;
-  const typeFilter = createLowercaseSet(parseListParam(req.query.type));
-  const keyword = (req.query.keyword || '').trim().toLowerCase();
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-
-  const filtered = notificationChannels.filter((channel) => {
-    if (!includeDeleted && channel.deleted_at) return false;
-    if (!matchesEnumFilter(channel.type, typeFilter)) return false;
-    if (!matchesEnumFilter(channel.status, statusFilter)) return false;
-    if (keyword) {
-      const text = `${channel.name || ''} ${channel.description || ''}`.toLowerCase();
-      if (!text.includes(keyword)) return false;
-    }
-    return true;
-  });
-  res.json(filtered.map((channel) => ({
-    channel_id: channel.channel_id,
-    name: channel.name,
-    type: channel.type,
-    enabled: channel.enabled,
-    status: channel.status,
-    template_key: channel.template_key,
-    last_test_result: channel.last_test_result || 'pending',
-    last_test_message: channel.last_test_message || null,
-    last_tested_at: channel.last_tested_at || null,
-    updated_at: channel.updated_at
-  })));
-});
-
-app.post('/notification-config/channels', (req, res) => {
-  const payload = req.body || {};
-  const channel = {
-    channel_id: `chn-${Date.now()}`,
-    name: payload.name || '新管道',
-    type: payload.type || 'Email',
-    status: payload.status || 'active',
-    enabled: payload.enabled ?? true,
-    description: payload.description || '',
-    config: payload.config || {},
-    template_key: payload.template_key || null,
-    last_test_result: null,
-    last_test_message: null,
-    updated_at: toISO(new Date()),
-    last_tested_at: null
-  };
-  notificationChannels.push(channel);
-  res.status(201).json(channel);
-});
-
-app.post('/notification-config/channels/:channel_id/test', (req, res) => {
-  const channel = getNotificationChannelById(req.params.channel_id);
-  if (!channel) return notFound(res, '找不到通知管道');
-  channel.last_tested_at = toISO(new Date());
-  channel.last_test_result = 'success';
-  channel.last_test_message = '測試通知已發送';
-  res.json({ status: 'success', message: '測試通知已發送' });
-});
-
-app.get('/notification-config/channels/:channel_id', (req, res) => {
-  const channel = getNotificationChannelById(req.params.channel_id);
-  if (!channel) return notFound(res, '找不到通知管道');
-  res.json(channel);
-});
-
-app.patch('/notification-config/channels/:channel_id', (req, res) => {
-  const channel = getNotificationChannelById(req.params.channel_id);
-  if (!channel) return notFound(res, '找不到通知管道');
-  Object.assign(channel, req.body || {}, { updated_at: toISO(new Date()) });
-  res.json(channel);
-});
-
-app.delete('/notification-config/channels/:channel_id', (req, res) => {
-  const channel = getNotificationChannelById(req.params.channel_id);
-  if (!channel) return notFound(res, '找不到通知管道');
-  res.status(204).end();
-});
-
-app.get('/notification-config/history', (req, res) => {
-  const statusFilter = createLowercaseSet(parseListParam(req.query.status));
-  const channelTypeFilter = createLowercaseSet(parseListParam(req.query.channel_types ?? req.query.channel_type));
-  const channelIdFilter = createLowercaseSet(parseListParam(req.query.channel_ids ?? req.query.channel_id));
-  const strategyIdFilter = createLowercaseSet(parseListParam(req.query.strategy_ids ?? req.query.strategy_id));
-  const eventIdFilter = createLowercaseSet(parseListParam(req.query.event_ids ?? req.query.event_id));
-  const resendAvailableFilter = parseBooleanParam(req.query.resend_available);
-  const hasErrorFilter = parseBooleanParam(req.query.has_error);
-  const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
-  const startTime = parseDateSafe(req.query.start_time);
-  const endTime = parseDateSafe(req.query.end_time);
-
-  const items = notificationHistory
-    .filter((record) => {
-      if (!matchesEnumFilter(record.status, statusFilter)) return false;
-      if (!matchesEnumFilter(record.channel_type, channelTypeFilter)) return false;
-      if (!matchesEnumFilter(record.channel_id, channelIdFilter)) return false;
-      if (!matchesEnumFilter(record.strategy_id, strategyIdFilter)) return false;
-      if (!matchesEnumFilter(record.related_event_id, eventIdFilter)) return false;
-
-      if (resendAvailableFilter !== null) {
-        const available = Boolean(record.resend_available);
-        if (available !== resendAvailableFilter) return false;
-      }
-
-      if (hasErrorFilter !== null) {
-        const hasError = Boolean(record.error_message);
-        if (hasError !== hasErrorFilter) return false;
-      }
-
-      const sentAt = parseDateSafe(record.sent_at);
-      if (startTime && (!sentAt || sentAt < startTime)) return false;
-      if (endTime && (!sentAt || sentAt > endTime)) return false;
-
-      if (keyword) {
-        const recipientTokens = getRecipientSearchTokens(record.recipients);
-        const actorTokens = record.last_resend_by?.display_name
-          ? [record.last_resend_by.display_name]
-          : [];
-        const haystack = [
-          record.strategy_name,
-          record.strategy_id,
-          record.channel_label,
-          record.channel_type,
-          record.alert_title,
-          record.message,
-          ...recipientTokens,
-          ...actorTokens
-        ]
-          .filter(Boolean)
-          .join(' ')
-          .toLowerCase();
-        if (!haystack.includes(keyword)) return false;
-      }
-
-      return true;
-    })
-    .map(mapNotificationHistorySummary);
-
-  res.json(
-    paginate(items, req, {
-      allowedSortFields: ['sent_at', 'status', 'channel_type', 'duration_ms', 'resend_count'],
-      defaultSortKey: 'sent_at',
-      defaultSortOrder: 'desc'
-    })
-  );
-});
-
-app.get('/notification-config/history/:record_id', (req, res) => {
-  const record = getHistoryById(req.params.record_id);
-  if (!record) return notFound(res, '找不到通知紀錄');
-  const resendJobs = notificationResendJobs
-    .filter((job) => job.notification_history_id === record.record_id)
-    .map(mapNotificationResendJob);
-  res.json({ ...record, resend_jobs: resendJobs });
-});
-
-app.post('/notification-config/history/purge', (req, res) => {
-  const payload = req.body || {};
-  const before = parseDateSafe(payload.before);
-  if (!before) {
-    return res
-      .status(400)
-      .json({ code: 'INVALID_REQUEST', message: 'before 必須為有效的 ISO 8601 時間字串' });
-  }
-
-  const statusFilter = createLowercaseSet(parseListParam(payload.status));
-  const channelTypeFilter = createLowercaseSet(parseListParam(payload.channel_types));
-  const strategyIdFilter = createLowercaseSet(parseListParam(payload.strategy_ids));
-  const channelIdFilter = createLowercaseSet(parseListParam(payload.channel_ids));
-  const dryRunFlag = parseBooleanParam(payload.dry_run);
-  const isDryRun = dryRunFlag === null ? false : dryRunFlag;
-  const maxRecordsInput = Number(payload.max_records);
-  const maxRecords = Number.isFinite(maxRecordsInput) && maxRecordsInput > 0 ? Math.floor(maxRecordsInput) : null;
-
-  const matchedRecords = notificationHistory
-    .filter((record) => {
-      const sentAt = parseDateSafe(record.sent_at);
-      if (!sentAt || !(sentAt < before)) return false;
-      if (!matchesEnumFilter(record.status, statusFilter)) return false;
-      if (!matchesEnumFilter(record.channel_type, channelTypeFilter)) return false;
-      if (!matchesEnumFilter(record.strategy_id, strategyIdFilter)) return false;
-      if (!matchesEnumFilter(record.channel_id, channelIdFilter)) return false;
-      return true;
-    })
-    .sort((a, b) => {
-      const left = parseDateSafe(a.sent_at)?.getTime() ?? 0;
-      const right = parseDateSafe(b.sent_at)?.getTime() ?? 0;
-      return left - right;
-    });
-
-  const limitedRecords = maxRecords ? matchedRecords.slice(0, maxRecords) : matchedRecords;
-  const matchedIds = new Set(limitedRecords.map((item) => item.record_id));
-
-  if (!isDryRun && matchedIds.size > 0) {
-    for (let i = notificationHistory.length - 1; i >= 0; i -= 1) {
-      if (matchedIds.has(notificationHistory[i].record_id)) {
-        notificationHistory.splice(i, 1);
-      }
-    }
-    for (let i = notificationResendJobs.length - 1; i >= 0; i -= 1) {
-      if (matchedIds.has(notificationResendJobs[i].notification_history_id)) {
-        notificationResendJobs.splice(i, 1);
-      }
-    }
-  }
-
-  res.json({
-    matched_count: matchedRecords.length,
-    deleted_count: isDryRun ? 0 : matchedIds.size,
-    dry_run: isDryRun,
-    message: isDryRun
-      ? 'Dry run 完成，未刪除任何通知紀錄'
-      : `已刪除 ${matchedIds.size} 筆通知紀錄`
-  });
-});
-
-app.get('/settings/widgets', (req, res) => {
-  const pagePath = typeof req.query.page_path === 'string' ? req.query.page_path.trim() : '';
-  const items = layoutWidgets.filter((widget) => {
-    if (!pagePath) return true;
-    const supported = Array.isArray(widget.supported_pages) ? widget.supported_pages : [];
-    return supported.includes(pagePath);
-  });
-  res.json(items.map(mapLayoutWidgetDefinition));
-});
-
-app.get('/settings/layouts', (req, res) => {
-  const pagePath = typeof req.query.page_path === 'string' ? req.query.page_path.trim() : '';
-  if (!pagePath) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'page_path 參數為必填。' });
-  }
-
-  const scopeTypeRaw = typeof req.query.scope_type === 'string' ? req.query.scope_type.trim().toLowerCase() : null;
-  const scopeType = scopeTypeRaw && scopeTypeRaw.length > 0 ? scopeTypeRaw : null;
-  if (scopeType && !allowedLayoutScopeTypes.has(scopeType)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope_type 參數無效。' });
-  }
-
-  const scopeIdRaw = typeof req.query.scope_id === 'string' ? req.query.scope_id.trim() : null;
-  if ((scopeType === 'user' || scopeType === 'role') && (!scopeIdRaw || scopeIdRaw.length === 0)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope_id 參數為必填。' });
-  }
-
-  const resolution = resolveLayoutForRequest(pagePath, {
-    scopeType,
-    scopeId: scopeType === 'global' ? null : scopeIdRaw
-  });
-
-  const matchedEntry = resolution.fallback_chain.find((entry) => entry.matched) || null;
-  const matchedRecord = resolution.record;
-  const layoutRecord =
-    matchedRecord === null
-      ? null
-      : {
-        ...matchedRecord,
-        widgets: matchedRecord.widgets.map((widget) => ({ ...widget }))
-      };
-
-  res.json({
-    page_path: pagePath,
-    resolved_scope_type: matchedEntry?.scope_type ?? 'global',
-    resolved_scope_id: matchedEntry?.scope_id ?? null,
-    widgets: matchedRecord ? matchedRecord.widgets.map((widget) => ({ ...widget })) : [],
-    layout_record: layoutRecord,
-    fallback_chain: resolution.fallback_chain,
-    updated_at: matchedRecord?.updated_at ?? null
-  });
-});
-
-app.put('/settings/layouts', (req, res) => {
-  const payload = req.body || {};
-  const pagePath = typeof payload.page_path === 'string' ? payload.page_path.trim() : '';
-  const scopeTypeRaw = typeof payload.scope_type === 'string' ? payload.scope_type.trim().toLowerCase() : '';
-  if (!pagePath) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'page_path 參數為必填。' });
-  }
-  if (!allowedLayoutScopeTypes.has(scopeTypeRaw)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope_type 參數無效。' });
-  }
-
-  let scopeId = null;
-  if (scopeTypeRaw === 'user' || scopeTypeRaw === 'role') {
-    if (typeof payload.scope_id !== 'string' || payload.scope_id.trim().length === 0) {
-      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope_id 參數為必填。' });
-    }
-    scopeId = payload.scope_id.trim();
-  }
-
-  if (!Array.isArray(payload.widgets)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'widgets 參數必須為陣列。' });
-  }
-
-  const catalog = new Set(layoutWidgets.map((widget) => widget.widget_id));
-  const widgetIdSet = new Set();
-  const sanitizedWidgets = [];
-  for (const item of payload.widgets) {
-    if (!item || typeof item.widget_id !== 'string' || item.widget_id.trim().length === 0) {
-      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'widget_id 為必填欄位。' });
-    }
-    const widgetId = item.widget_id.trim();
-    if (!catalog.has(widgetId)) {
-      return res.status(400).json({ code: 'INVALID_REQUEST', message: `未知的 widget_id: ${widgetId}` });
-    }
-    if (widgetIdSet.has(widgetId)) {
-      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'widgets 不可包含重複的 widget_id。' });
-    }
-    const order = Number(item.order);
-    if (!Number.isInteger(order) || order < 1) {
-      return res.status(400).json({ code: 'INVALID_REQUEST', message: 'order 必須為大於 0 的整數。' });
-    }
-    widgetIdSet.add(widgetId);
-    sanitizedWidgets.push({ widget_id: widgetId, order });
-  }
-
-  sanitizedWidgets.sort((a, b) => a.order - b.order);
-
-  let record = findLayoutRecord(pagePath, scopeTypeRaw, scopeId);
-  const timestamp = toISO(new Date());
-  if (record) {
-    record.widgets = sanitizedWidgets;
-    record.updated_at = timestamp;
-    record.updated_by = currentUser.user_id;
-  } else {
-    record = {
-      layout_id: `layout-${Date.now().toString(16)}-${Math.random().toString(16).slice(2, 6)}`,
-      page_path: pagePath,
-      scope_type: scopeTypeRaw,
-      scope_id: scopeTypeRaw === 'global' ? null : scopeId,
-      widgets: sanitizedWidgets,
-      created_at: timestamp,
-      updated_at: timestamp,
-      updated_by: currentUser.user_id
-    };
-    pageLayouts.push(record);
-  }
-
-  res.json({ ...record, widgets: record.widgets.map((widget) => ({ ...widget })) });
-});
-
-app.get('/settings/tags', (req, res) => {
-  res.json(tagDefinitions);
-});
-
-app.get('/settings/tags/summary', (req, res) => {
-  res.json(tagSummary);
-});
-
-app.post('/settings/tags', (req, res) => {
-  const payload = req.body || {};
-  const tag = {
-    tag_id: `tag-${Date.now()}`,
-    name: payload.name || '新標籤',
-    category: payload.category || '自訂',
-    required: payload.required ?? false,
-    usage_count: 0,
-    values: []
-  };
-  res.status(201).json(tag);
-});
-
-app.get('/settings/tags/:tag_id', (req, res) => {
-  const tag = getTagById(req.params.tag_id);
-  if (!tag) return notFound(res, '找不到標籤');
-  res.json(tag);
-});
-
-app.patch('/settings/tags/:tag_id', (req, res) => {
-  const tag = getTagById(req.params.tag_id);
-  if (!tag) return notFound(res, '找不到標籤');
-  Object.assign(tag, req.body || {});
-  res.json(tag);
-});
-
-app.delete('/settings/tags/:tag_id', (req, res) => {
-  const tag = getTagById(req.params.tag_id);
-  if (!tag) return notFound(res, '找不到標籤');
-  res.status(204).end();
-});
-
-app.get('/settings/tags/:tag_id/values', (req, res) => {
-  const tag = getTagById(req.params.tag_id);
-  if (!tag) return notFound(res, '找不到標籤');
-  res.json(tag.values);
-});
-
-app.post('/settings/tags/:tag_id/values', (req, res) => {
-  const tag = getTagById(req.params.tag_id);
-  if (!tag) return notFound(res, '找不到標籤');
-  const value = {
-    value_id: `tag-value-${Date.now()}`,
-    value: req.body?.value || 'new-value',
-    description: req.body?.description || '',
-    is_default: req.body?.is_default ?? false,
-    usage_count: 0,
-    last_synced_at: null
-  };
-  tag.values.push(value);
-  res.status(201).json(value);
-});
-
-app.patch('/settings/tags/:tag_id/values/:value_id', (req, res) => {
-  const tag = getTagById(req.params.tag_id);
-  if (!tag) return notFound(res, '找不到標籤');
-  const value = tag.values.find((item) => item.value_id === req.params.value_id);
-  if (!value) return notFound(res, '找不到標籤值');
-  Object.assign(value, req.body || {});
-  res.json(value);
-});
-
-app.delete('/settings/tags/:tag_id/values/:value_id', (req, res) => {
-  const tag = getTagById(req.params.tag_id);
-  if (!tag) return notFound(res, '找不到標籤');
-  const value = tag.values.find((item) => item.value_id === req.params.value_id);
-  if (!value) return notFound(res, '找不到標籤值');
-  res.status(204).end();
-});
-
-// Admin endpoints
-const systemSettings = {
-  maintenance_mode: false,
-  max_concurrent_scans: 10,
-  auto_discovery_enabled: true,
-  alert_integration_enabled: true,
-  retention_events_days: 90,
-  retention_logs_days: 30,
-  retention_metrics_days: 365,
-  updated_by: currentUser.user_id,
-  updated_at: toISO(now)
-};
-
-const systemDiagnostics = {
-  platform: {
-    version: '3.0.0',
-    uptime: '7 days 4 hours',
-    memory_usage: 68.5,
-    cpu_usage: 23.1,
-    disk_usage: 45.2
-  },
-  database: {
-    connection_status: 'healthy',
-    pool_size: 20,
-    active_connections: 8,
-    query_time: 12.5
-  },
-  cache: {
-    status: 'healthy',
-    memory_used: 256,
-    hit_rate: 97.8
-  },
-  services: {
-    notification_service: 'running',
-    automation_service: 'running',
-    ai_service: 'running'
-  },
-  external_integrations: {
-    grafana: 'connected',
-    keycloak: 'connected'
-  },
-  generated_at: toISO(now)
-};
-
-const systemHealth = {
-  overall_status: 'healthy',
-  checks: [
-    {
-      name: 'Database Connection',
-      status: 'pass',
-      message: 'All database connections are healthy',
-      duration_ms: 8,
-      last_checked: toISO(new Date(now.getTime() - 30000))
-    },
-    {
-      name: 'Cache Service',
-      status: 'pass',
-      message: 'Redis cluster is responding normally',
-      duration_ms: 5,
-      last_checked: toISO(new Date(now.getTime() - 15000))
-    },
-    {
-      name: 'External Integrations',
-      status: 'pass',
-      message: 'Grafana and Keycloak are reachable',
-      duration_ms: 120,
-      last_checked: toISO(new Date(now.getTime() - 60000))
-    }
-  ],
-  generated_at: toISO(now)
-};
-
-// Batch operations
-const batchOperations = new Map();
-const scanTasks = new Map();
-
-// Resource scanning
-app.post('/resources/scan', (req, res) => {
-  const { scan_type, target, options = {} } = req.body;
-  const taskId = `scan-${Date.now()}`;
-
-  scanTasks.set(taskId, {
-    task_id: taskId,
-    status: 'pending',
-    scan_type,
-    target,
-    progress: 0,
-    results_count: 0,
-    created_at: toISO(new Date()),
-    started_at: null,
-    completed_at: null,
-    results: []
-  });
-
-  // Simulate async scanning
-  setTimeout(() => {
-    const task = scanTasks.get(taskId);
-    if (task) {
-      task.status = 'running';
-      task.started_at = toISO(new Date());
-      scanTasks.set(taskId, task);
-    }
-  }, 1000);
-
-  setTimeout(() => {
-    const task = scanTasks.get(taskId);
-    if (task) {
-      task.status = 'completed';
-      task.progress = 100;
-      task.completed_at = toISO(new Date());
-      task.results = [
-        {
-          resource_id: `res-${Date.now()}`,
-          name: 'Discovered Server',
-          type: 'server',
-          status: 'healthy',
-          ip_address: '192.168.1.100',
-          location: 'Data Center A',
-          discovered_at: toISO(new Date()),
-          services: [
-            {
-              port: 22,
-              protocol: 'tcp',
-              service: 'ssh',
-              version: 'OpenSSH 8.9'
-            },
-            {
-              port: 80,
-              protocol: 'tcp',
-              service: 'http',
-              version: 'nginx/1.21.6'
-            }
-          ]
-        }
-      ];
-      task.results_count = task.results.length;
-      scanTasks.set(taskId, task);
-    }
-  }, 5000);
-
-  res.status(202).json({
-    task_id: taskId,
-    status: 'pending',
-    scan_type,
-    target,
-    created_at: toISO(new Date())
-  });
-});
-
-app.get('/resources/scan/:task_id', (req, res) => {
-  const task = scanTasks.get(req.params.task_id);
-  if (!task) {
-    return notFound(res, 'Scan task not found');
-  }
-  res.json(task);
-});
-
-// Grafana Dashboard URL generation
-const grafanaBaseUrl = process.env.GRAFANA_URL || 'http://localhost:3000';
-const grafanaServiceAccountToken = process.env.GRAFANA_SERVICE_ACCOUNT_TOKEN || 'eyJrIjoiM2R6MzB5VzF5ZGdZWnR3Z3h5dE5oRmJ6d1h5V1VnT2t2MnciLCJuIjoiU1JFUGxhdGZvcm0iLCJpZCI6MX0=';
-
-app.get('/dashboards/:dashboard_id/grafana-url', (req, res) => {
-  const { dashboard_id } = req.params;
-  const { theme, kiosk, refresh } = req.query;
-
-  // Mock dashboard mapping (in real implementation, this would be stored in database)
-  const grafanaDashboardMap = {
-    'dash-001': 'sre-war-room', // SRE 戰情室
-    'dash-002': 'infrastructure-insight', // 基礎設施洞察
-    'dash-003': 'capacity-planning' // 容量規劃
-  };
-
-  const grafanaDashboardId = grafanaDashboardMap[dashboard_id];
-  if (!grafanaDashboardId) {
-    return notFound(res, 'Dashboard not found or not configured for Grafana embedding');
-  }
-
-  // Generate temporary access token (mock implementation)
-  const now = new Date();
-  const expiresAt = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour from now
-  const tempToken = `temp-token-${Date.now()}`;
-
-  // Build Grafana URL with parameters
-  let embedUrl = `${grafanaBaseUrl}/d/${grafanaDashboardId}?orgId=1`;
-
-  if (theme) embedUrl += `&theme=${theme}`;
-  if (kiosk) embedUrl += '&kiosk=true';
-  if (refresh) embedUrl += `&refresh=${refresh}s`;
-
-  // Add authentication token
-  embedUrl += `&authToken=${grafanaServiceAccountToken}`;
-
-  const response = {
-    url: `${grafanaBaseUrl}/d/${grafanaDashboardId}`,
-    embed_url: embedUrl,
-    expires_at: toISO(expiresAt),
-    parameters: {
-      theme: theme || 'light',
-      kiosk: Boolean(kiosk),
-      refresh: parseInt(refresh, 10) || null
-    }
-  };
-
-  res.json(response);
-});
-
-app.post('/settings/auth/test', (req, res) => {
-  const executedAt = toISO(new Date());
-  const asyncMode = Boolean(req.body?.async);
-  const warnings = [];
-  if (!req.body?.test_username) {
-    warnings.push('未提供測試帳號，僅驗證 OIDC 端點可用性。');
-  }
-  const payload = {
-    status: asyncMode ? 'queued' : 'success',
-    executed_at: executedAt,
-    latency_ms: 128,
-    message: asyncMode
-      ? '已排入背景測試工作，完成後將以通知告知結果。'
-      : '身份驗證設定測試成功，能夠取得 access token。',
-    warnings,
-    trace_id: `oidc-test-${Date.now()}`
-  };
-  res.status(asyncMode ? 202 : 200).json(payload);
-});
-
-const systemConfigurations = [
-  {
-    key: 'oidc.provider',
-    value: { value: 'keycloak' },
-    description: 'OIDC 供應商',
-    sensitive: false,
-    updated_at: toISO(new Date(now.getTime() - 86400000))
-  },
-  {
-    key: 'oidc.client_id',
-    value: { value: 'sre-platform' },
-    description: 'OIDC 客戶端 ID',
-    sensitive: false,
-    updated_at: toISO(new Date(now.getTime() - 86400000))
-  },
-  {
-    key: 'oidc.client_secret',
-    value: { value: null },
-    description: 'OIDC 客戶端密鑰',
-    sensitive: true,
-    updated_at: toISO(new Date(now.getTime() - 86400000))
-  },
-  {
-    key: 'smtp.host',
-    value: { value: 'smtp.example.com' },
-    description: 'SMTP 伺服器主機',
-    sensitive: false,
-    updated_at: toISO(new Date(now.getTime() - 172800000))
-  },
-  {
-    key: 'smtp.password',
-    value: { value: null },
-    description: 'SMTP 伺服器密碼',
-    sensitive: true,
-    updated_at: toISO(new Date(now.getTime() - 172800000))
-  }
-];
-
-app.get('/settings/configurations', (req, res) => {
-  const keys = parseListParam(req.query.keys);
-  let results = systemConfigurations.map(({ sensitive, ...rest }) => ({
-    ...rest,
-    sensitive,
-    // Never send sensitive values over the wire
-    value: sensitive ? { value: null, placeholder: '********' } : rest.value
-  }));
-
-  if (keys && keys.length > 0) {
-    const keySet = new Set(keys);
-    results = results.filter((item) => keySet.has(item.key));
-  }
-
-  res.json(results);
-});
-
-app.put('/settings/configurations', (req, res) => {
-  const { settings } = req.body || {};
-  if (!Array.isArray(settings)) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: '請求內容必須包含 settings 陣列。' });
-  }
-
-  const updatedKeys = new Set();
-  const nowIso = toISO(new Date());
-
-  settings.forEach((update) => {
-    if (update && typeof update.key === 'string') {
-      const existing = systemConfigurations.find((item) => item.key === update.key);
-      if (existing) {
-        // Only update the value, other properties are managed by the system
-        if (update.value !== undefined && !existing.sensitive) {
-          existing.value = update.value;
-          existing.updated_at = nowIso;
-          updatedKeys.add(existing.key);
-        } else if (existing.sensitive && update.value?.value) {
-          // Mock storing a sensitive value without actually storing it
-          console.log(`Received sensitive value for ${existing.key}, not storing in mock.`);
-          existing.updated_at = nowIso;
-          updatedKeys.add(existing.key);
-        }
-      }
-    }
-  });
-
-  const results = systemConfigurations
-    .filter((item) => updatedKeys.has(item.key))
-    .map(({ sensitive, ...rest }) => ({
-      ...rest,
-      sensitive,
-      value: sensitive ? { value: null, placeholder: '********' } : rest.value
-    }));
-
-  res.json(results);
 });
 
 app.listen(PORT, () => {
