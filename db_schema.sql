@@ -40,8 +40,17 @@ CREATE TABLE teams (
     -- 建立時間
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_page_layouts_scope_type CHECK (scope_type IN ('global','role','user')),
+    CONSTRAINT chk_page_layouts_scope_target CHECK (
+        (scope_type = 'global' AND scope_id IS NULL)
+        OR (scope_type <> 'global' AND scope_id IS NOT NULL)
+    )
 );
+CREATE UNIQUE INDEX idx_page_layouts_global ON page_layouts (page_path)
+    WHERE scope_type = 'global';
+CREATE UNIQUE INDEX idx_page_layouts_scoped ON page_layouts (page_path, scope_type, scope_id)
+    WHERE scope_type <> 'global';
 
 CREATE TABLE team_members (
     -- 團隊識別碼
@@ -171,11 +180,11 @@ CREATE TABLE user_preferences (
     -- 主題
     theme VARCHAR(16) NOT NULL DEFAULT 'auto',
     -- 預設落地頁類型 (system_page 或 dashboard)
-    default_home_type VARCHAR(32) NOT NULL DEFAULT 'system_page',
+    landing_type VARCHAR(32) NOT NULL DEFAULT 'system_page',
     -- 系統頁面鍵值 (僅當類型為 system_page 時使用)
-    default_home_page_key VARCHAR(64) DEFAULT 'war_room',
+    landing_page_key VARCHAR(64) DEFAULT 'war_room',
     -- 預設儀表板識別碼 (僅當類型為 dashboard 時使用)
-    default_dashboard_id UUID,
+    landing_dashboard_id UUID,
     -- 語言
     language VARCHAR(32) NOT NULL DEFAULT 'zh-TW',
     -- 時區
@@ -189,17 +198,17 @@ CREATE TABLE user_preferences (
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_user_preferences_theme CHECK (theme IN ('light','dark','auto')),
-    CONSTRAINT chk_user_preferences_home_type CHECK (default_home_type IN ('system_page','dashboard')),
-    CONSTRAINT chk_user_preferences_home_target CHECK (
-        (default_home_type = 'system_page' AND default_home_page_key IS NOT NULL AND default_dashboard_id IS NULL)
-        OR (default_home_type = 'dashboard' AND default_dashboard_id IS NOT NULL)
+    CONSTRAINT chk_user_preferences_landing_type CHECK (landing_type IN ('system_page','dashboard')),
+    CONSTRAINT chk_user_preferences_landing_target CHECK (
+        (landing_type = 'system_page' AND landing_page_key IS NOT NULL AND landing_dashboard_id IS NULL)
+        OR (landing_type = 'dashboard' AND landing_dashboard_id IS NOT NULL)
     ),
-    CONSTRAINT chk_user_preferences_home_key CHECK (
-        default_home_type <> 'system_page'
-        OR default_home_page_key IN ('war_room','incidents','resources','analysis','automation','notifications','dashboards')
+    CONSTRAINT chk_user_preferences_landing_key CHECK (
+        landing_type <> 'system_page'
+        OR landing_page_key IN ('war_room','incidents','resources','analysis','automation','notifications','dashboards')
     )
 );
-CREATE INDEX idx_user_preferences_dashboard ON user_preferences (default_dashboard_id);
+CREATE INDEX idx_user_preferences_dashboard ON user_preferences (landing_dashboard_id);
 
 CREATE TABLE user_notifications (
     -- 主鍵識別碼
@@ -244,12 +253,10 @@ CREATE TABLE automation_scripts (
     type VARCHAR(32) NOT NULL,
     -- 描述
     description TEXT,
-    -- 內容
-    content TEXT NOT NULL,
-    -- 版本
-    version VARCHAR(32) DEFAULT 'v1',
     -- 標籤
     tags JSONB DEFAULT '[]'::JSONB,
+    -- 目前版本識別碼
+    current_version_id UUID,
     -- 最後執行狀態
     last_execution_status VARCHAR(32) DEFAULT 'never',
     -- 最後執行時間
@@ -283,6 +290,12 @@ CREATE TABLE automation_script_versions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE UNIQUE INDEX idx_script_versions_unique ON automation_script_versions (script_id, version);
+
+ALTER TABLE automation_scripts
+    ADD CONSTRAINT fk_automation_scripts_current_version
+    FOREIGN KEY (current_version_id)
+    REFERENCES automation_script_versions(id)
+    ON DELETE SET NULL;
 
 -- =============================
 -- 事件資料模型
@@ -850,7 +863,9 @@ CREATE TABLE resource_groups (
     -- 建立時間
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_resources_status CHECK (status IN ('healthy','warning','critical','offline')),
+    CONSTRAINT chk_resources_type CHECK (type IN ('server','database','cache','gateway','service'))
 );
 
 CREATE TABLE resource_group_members (
@@ -1018,7 +1033,7 @@ CREATE UNIQUE INDEX idx_dashboards_grafana_uid ON dashboards (grafana_dashboard_
 
 ALTER TABLE user_preferences
     ADD CONSTRAINT fk_user_preferences_dashboard
-    FOREIGN KEY (default_dashboard_id)
+    FOREIGN KEY (landing_dashboard_id)
     REFERENCES dashboards(id)
     ON DELETE SET NULL;
 
@@ -1365,7 +1380,7 @@ CREATE TABLE notification_history (
     -- 最後重新發送時間
     last_resend_at TIMESTAMPTZ,
     -- 最後重新發送者
-    last_resend_by JSONB,
+    last_resend_by_user_id UUID REFERENCES users(id),
     -- 相關事件識別碼
     related_event_id UUID REFERENCES events(id),
     -- 最後狀態變更時間
@@ -1375,7 +1390,6 @@ CREATE TABLE notification_history (
     CONSTRAINT chk_notification_history_recipients CHECK (jsonb_typeof(recipients) = 'array'),
     CONSTRAINT chk_notification_history_attempts CHECK (jsonb_typeof(attempts) = 'array'),
     CONSTRAINT chk_notification_history_resend_count CHECK (resend_count >= 0),
-    CONSTRAINT chk_notification_history_resend_actor CHECK (last_resend_by IS NULL OR jsonb_typeof(last_resend_by) = 'object')
 );
 CREATE INDEX idx_notification_history_sent_at ON notification_history (sent_at DESC);
 CREATE INDEX idx_notification_history_status ON notification_history (status);
@@ -1389,6 +1403,46 @@ CREATE INDEX idx_notification_history_event ON notification_history (related_eve
 -- =============================
 -- 平台設定與整合
 -- =============================
+CREATE TABLE identity_provider_settings (
+    -- 固定為單一紀錄 (ID = 1)
+    id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+    -- 外部身份供應商類型
+    provider VARCHAR(64) NOT NULL DEFAULT 'Keycloak',
+    -- 是否啟用 OIDC 認證
+    oidc_enabled BOOLEAN NOT NULL DEFAULT TRUE,
+    -- 設定維護來源 (keycloak 或 custom)
+    managed_by VARCHAR(32) NOT NULL DEFAULT 'keycloak',
+    -- 是否唯讀 (由外部系統託管)
+    read_only BOOLEAN NOT NULL DEFAULT TRUE,
+    -- Keycloak Realm 或自訂網域
+    realm VARCHAR(128),
+    -- OIDC 客戶端識別
+    client_id VARCHAR(128),
+    -- 加密後的客戶端密鑰
+    client_secret_encrypted TEXT,
+    -- 授權端點
+    auth_url TEXT,
+    -- Token 端點
+    token_url TEXT,
+    -- 使用者資訊端點
+    userinfo_url TEXT,
+    -- 平台 Redirect URI
+    redirect_uri TEXT,
+    -- 登出端點
+    logout_url TEXT,
+    -- 請求範圍
+    scopes TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+    -- 是否啟用使用者同步
+    user_sync BOOLEAN NOT NULL DEFAULT TRUE,
+    -- 設定更新時間
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    -- 最後更新者
+    updated_by UUID REFERENCES users(id),
+    CONSTRAINT chk_identity_provider_managed_by CHECK (managed_by IN ('keycloak','custom')),
+    CONSTRAINT chk_identity_provider_scopes CHECK (array_position(scopes, NULL) IS NULL)
+);
+CREATE INDEX idx_identity_provider_settings_updated_at ON identity_provider_settings (updated_at DESC);
+
 CREATE TABLE tag_definitions (
     -- 主鍵識別碼
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

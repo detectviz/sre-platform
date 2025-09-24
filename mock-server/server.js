@@ -967,7 +967,6 @@ const automationScripts = [
     name: 'Auto Scale Web',
     type: 'ansible',
     description: '自動擴充 Web 節點。',
-    version: 'v3',
     tags: ['autoscale', 'web'],
     last_execution_status: 'success',
     last_execution_at: toISO(new Date(now.getTime() - 3600000)),
@@ -975,25 +974,71 @@ const automationScripts = [
     created_by: 'user-001',
     updated_at: toISO(new Date(now.getTime() - 3600000)),
     updated_by: 'user-001',
-    content: '#!/bin/bash\\necho "scale"',
     versions: [
       {
         version_id: 'ver-001',
         version: 'v3',
+        changelog: '新增區域容錯',
         created_at: toISO(new Date(now.getTime() - 86400000)),
         created_by: 'user-001',
-        changelog: '新增區域容錯'
+        content: '#!/bin/bash\\necho "scale"'
       },
       {
         version_id: 'ver-002',
         version: 'v2',
+        changelog: '最佳化重試機制',
         created_at: toISO(new Date(now.getTime() - 604800000)),
         created_by: 'user-001',
-        changelog: '最佳化重試機制'
+        content: '#!/bin/bash\\necho "scale --retry"'
       }
     ]
   }
 ];
+automationScripts.forEach((script) => {
+  // 以第一筆版本作為目前版本
+  // 深拷貝以避免在後續更新時直接修改歷史版本內容
+  if (Array.isArray(script.versions) && script.versions.length > 0) {
+    const [latest] = script.versions;
+    script.current_version = { ...latest };
+  } else {
+    script.current_version = null;
+  }
+});
+
+const summarizeScriptVersion = (version, includeContent = false) => {
+  if (!version) return null;
+  const summary = {
+    version_id: version.version_id,
+    version: version.version,
+    changelog: version.changelog || null,
+    created_at: version.created_at,
+    created_by: version.created_by || null
+  };
+  if (includeContent && Object.prototype.hasOwnProperty.call(version, 'content')) {
+    summary.content = version.content;
+  }
+  return summary;
+};
+
+const toScriptSummary = (script) => ({
+  script_id: script.script_id,
+  name: script.name,
+  type: script.type,
+  description: script.description,
+  tags: Array.isArray(script.tags) ? [...script.tags] : [],
+  last_execution_status: script.last_execution_status,
+  last_execution_at: script.last_execution_at,
+  updated_at: script.updated_at || script.created_at,
+  current_version: summarizeScriptVersion(script.current_version)
+});
+
+const toScriptDetail = (script) => ({
+  ...toScriptSummary(script),
+  versions: Array.isArray(script.versions)
+    ? script.versions.map((version) => summarizeScriptVersion(version))
+    : [],
+  current_version: summarizeScriptVersion(script.current_version, true)
+});
 
 const automationSchedules = [
   {
@@ -4434,17 +4479,7 @@ app.get('/automation/scripts', (req, res) => {
     return true;
   });
 
-  const items = filtered.map((script) => ({
-    script_id: script.script_id,
-    name: script.name,
-    type: script.type,
-    description: script.description,
-    version: script.version,
-    tags: script.tags,
-    last_execution_status: script.last_execution_status,
-    last_execution_at: script.last_execution_at,
-    updated_at: script.updated_at || script.last_execution_at
-  }));
+  const items = filtered.map((script) => toScriptSummary(script));
 
   res.json(
     paginate(items, req, {
@@ -4457,49 +4492,120 @@ app.get('/automation/scripts', (req, res) => {
 
 app.post('/automation/scripts', (req, res) => {
   const payload = req.body || {};
+  const nowIso = toISO(new Date());
+  const scriptId = `script-${Date.now()}`;
+  const versionId = `ver-${Date.now()}`;
+  const versionLabel = payload.version || 'v1';
+  const versionEntry = {
+    version_id: versionId,
+    version: versionLabel,
+    changelog: payload.changelog || '建立初始版本',
+    created_at: nowIso,
+    created_by: payload.created_by || currentUser.user_id,
+    content: payload.content || ''
+  };
   const script = {
-    script_id: `script-${Date.now()}`,
+    script_id: scriptId,
     name: payload.name || '新腳本',
     type: payload.type || 'shell',
     description: payload.description || '',
-    version: 'v1',
-    tags: payload.tags || [],
+    tags: Array.isArray(payload.tags) ? [...payload.tags] : [],
     last_execution_status: 'never',
     last_execution_at: null,
-    content: payload.content || ''
+    created_at: nowIso,
+    created_by: payload.created_by || currentUser.user_id,
+    updated_at: nowIso,
+    updated_by: payload.updated_by || currentUser.user_id,
+    versions: [versionEntry],
+    current_version: { ...versionEntry }
   };
-  res.status(201).json(script);
+  automationScripts.unshift(script);
+  res.status(201).json(toScriptDetail(script));
 });
 
 app.get('/automation/scripts/:script_id', (req, res) => {
   const script = getScriptById(req.params.script_id);
   if (!script) return notFound(res, '找不到腳本');
-  res.json(script);
+  res.json(toScriptDetail(script));
 });
 
 app.patch('/automation/scripts/:script_id', (req, res) => {
   const script = getScriptById(req.params.script_id);
   if (!script) return notFound(res, '找不到腳本');
-  Object.assign(script, req.body || {}, { updated_at: toISO(new Date()) });
-  res.json(script);
+  const payload = req.body || {};
+  const nowIso = toISO(new Date());
+
+  if (Object.prototype.hasOwnProperty.call(payload, 'name')) {
+    script.name = payload.name;
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'type') && payload.type) {
+    script.type = payload.type;
+  }
+  if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
+    script.description = payload.description;
+  }
+  if (Array.isArray(payload.tags)) {
+    script.tags = [...payload.tags];
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(payload, 'content') ||
+    Object.prototype.hasOwnProperty.call(payload, 'version') ||
+    Object.prototype.hasOwnProperty.call(payload, 'changelog')
+  ) {
+    const versionEntry = {
+      version_id: `ver-${Date.now()}`,
+      version: payload.version || script.current_version?.version || 'v1',
+      changelog: payload.changelog || '更新腳本內容',
+      created_at: nowIso,
+      created_by: payload.updated_by || currentUser.user_id,
+      content:
+        Object.prototype.hasOwnProperty.call(payload, 'content')
+          ? payload.content
+          : script.current_version?.content || ''
+    };
+    script.current_version = { ...versionEntry };
+    script.versions = [versionEntry, ...script.versions];
+  }
+
+  script.updated_at = nowIso;
+  script.updated_by = payload.updated_by || currentUser.user_id;
+
+  res.json(toScriptDetail(script));
 });
 
 app.delete('/automation/scripts/:script_id', (req, res) => {
-  const script = getScriptById(req.params.script_id);
-  if (!script) return notFound(res, '找不到腳本');
+  const index = automationScripts.findIndex((sc) => sc.script_id === req.params.script_id);
+  if (index === -1) return notFound(res, '找不到腳本');
+  automationScripts.splice(index, 1);
   res.status(204).end();
 });
 
 app.post('/automation/scripts/:script_id/execute', (req, res) => {
   const script = getScriptById(req.params.script_id);
   if (!script) return notFound(res, '找不到腳本');
-  res.status(202).json({ execution_id: `exe-${Date.now()}`, status: 'pending', queued_at: toISO(new Date()) });
+  res.status(202).json({
+    execution_id: `exe-${Date.now()}`,
+    status: 'pending',
+    queued_at: toISO(new Date()),
+    script_id: script.script_id,
+    script_version: script.current_version?.version || null
+  });
 });
 
 app.get('/automation/scripts/:script_id/versions', (req, res) => {
   const script = getScriptById(req.params.script_id);
   if (!script) return notFound(res, '找不到腳本');
-  res.json(paginate(script.versions || [], req));
+  const versions = Array.isArray(script.versions)
+    ? script.versions.map((version) => summarizeScriptVersion(version))
+    : [];
+  res.json(
+    paginate(versions, req, {
+      allowedSortFields: ['created_at', 'version'],
+      defaultSortKey: 'created_at',
+      defaultSortOrder: 'desc'
+    })
+  );
 });
 
 app.get('/automation/schedules', (req, res) => {
@@ -5463,11 +5569,45 @@ app.post('/settings/email/test', (req, res) => {
 app.get('/settings/auth', (req, res) => res.json(authSettings));
 
 app.put('/settings/auth', (req, res) => {
-  Object.assign(authSettings, req.body || {}, {
-    managed_by: 'keycloak',
-    read_only: true,
-    updated_at: toISO(new Date())
+  const payload = req.body || {};
+  if (authSettings.read_only && payload.managed_by !== 'custom') {
+    return res.status(400).json({
+      code: 'READ_ONLY_SETTING',
+      message: '身份驗證設定由外部系統管理，請改為 managed_by="custom" 後再修改。',
+      details: { managed_by: authSettings.managed_by }
+    });
+  }
+
+  if (typeof payload.oidc_enabled === 'boolean') {
+    authSettings.oidc_enabled = payload.oidc_enabled;
+  }
+  if (payload.provider) {
+    authSettings.provider = payload.provider;
+  }
+
+  const nextManagedBy = payload.managed_by || authSettings.managed_by;
+  authSettings.managed_by = nextManagedBy;
+  authSettings.read_only = nextManagedBy !== 'custom';
+
+  ['realm', 'client_id', 'auth_url', 'token_url', 'userinfo_url', 'redirect_uri', 'logout_url'].forEach((field) => {
+    if (Object.prototype.hasOwnProperty.call(payload, field)) {
+      authSettings[field] = payload[field] || null;
+    }
   });
+
+  if (Array.isArray(payload.scopes)) {
+    authSettings.scopes = payload.scopes;
+  }
+  if (typeof payload.user_sync === 'boolean') {
+    authSettings.user_sync = payload.user_sync;
+  }
+  if (payload.client_secret) {
+    const secret = String(payload.client_secret);
+    const maskLength = Math.max(secret.length - 2, 2);
+    authSettings.client_secret_hint = `${secret[0]}${'*'.repeat(maskLength)}${secret[secret.length - 1]}`;
+  }
+
+  authSettings.updated_at = toISO(new Date());
   res.json(authSettings);
 });
 

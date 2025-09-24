@@ -3591,6 +3591,59 @@ paths:
                 $ref: "#/components/schemas/AuthSettings"
         "401":
           $ref: "#/components/responses/Unauthorized"
+    put:
+      tags:
+        - 平台設定
+      summary: 更新身份驗證設定
+      operationId: updateAuthSettings
+      description: 更新 OIDC 身份驗證的整合參數，若設定由外部系統託管則回傳 400 錯誤。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthSettingsRequest"
+      responses:
+        "200":
+          description: 更新後的身份驗證設定。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthSettings"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /settings/auth/test:
+    post:
+      tags:
+        - 平台設定
+      summary: 測試身份驗證設定
+      operationId: testAuthSettings
+      description: 驗證目前或暫存設定是否能成功連線 OIDC 供應商並取得 Access Token。
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthTestRequest"
+      responses:
+        "200":
+          description: 測試已完成並回傳結果。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTestResult"
+        "202":
+          description: 測試已排入背景工作佇列，稍後將透過通知回報結果。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthTestResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
   /settings/widgets:
     get:
       tags:
@@ -5965,10 +6018,11 @@ components:
             $ref: "#/components/schemas/AIInsightSuggestion"
     AutomationScriptSummary:
       type: object
-      required: [script_id, name, type, version]
+      required: [script_id, name, type, current_version, last_execution_status, updated_at]
       properties:
         script_id:
           type: string
+          format: uuid
         name:
           type: string
         type:
@@ -5976,14 +6030,22 @@ components:
           enum: [shell, python, ansible, terraform]
         description:
           type: string
-        version:
-          type: string
+        tags:
+          type: array
+          items:
+            type: string
         last_execution_status:
           type: string
           enum: [success, failed, running, never]
+        last_execution_at:
+          type: string
+          format: date-time
+          nullable: true
         updated_at:
           type: string
           format: date-time
+        current_version:
+          $ref: "#/components/schemas/AutomationScriptVersion"
     AutomationScriptPayload:
       type: object
       properties:
@@ -6015,26 +6077,32 @@ components:
       properties:
         version_id:
           type: string
+          format: uuid
         version:
+          type: string
+        changelog:
           type: string
         created_at:
           type: string
           format: date-time
         created_by:
           type: string
-        changelog:
-          type: string
+          nullable: true
+    AutomationScriptVersionDetail:
+      allOf:
+        - $ref: "#/components/schemas/AutomationScriptVersion"
+        - type: object
+          required: [content]
+          properties:
+            content:
+              type: string
     AutomationScriptDetail:
       allOf:
         - $ref: "#/components/schemas/AutomationScriptSummary"
         - type: object
           properties:
-            content:
-              type: string
-            tags:
-              type: array
-              items:
-                type: string
+            current_version:
+              $ref: "#/components/schemas/AutomationScriptVersionDetail"
             versions:
               type: array
               items:
@@ -7155,55 +7223,138 @@ components:
             type: string
         preview_url:
           type: string
-      AuthSettings:
-        type: object
-        required: [provider, oidc_enabled, managed_by, read_only]
-        properties:
-          provider:
+    AuthSettings:
+      type: object
+      required: [provider, oidc_enabled, managed_by, read_only]
+      properties:
+        provider:
+          type: string
+        oidc_enabled:
+          type: boolean
+        managed_by:
+          type: string
+          enum: [keycloak, custom]
+          description: 指示設定由哪個外部系統維護。
+        read_only:
+          type: boolean
+          description: 為 true 時代表設定僅提供查詢資訊。
+        realm:
+          type: string
+          nullable: true
+        client_id:
+          type: string
+          nullable: true
+        client_secret_hint:
+          type: string
+          nullable: true
+        auth_url:
+          type: string
+          nullable: true
+        token_url:
+          type: string
+          nullable: true
+        userinfo_url:
+          type: string
+          nullable: true
+        redirect_uri:
+          type: string
+          nullable: true
+        logout_url:
+          type: string
+          nullable: true
+        scopes:
+          type: array
+          items:
             type: string
-          oidc_enabled:
-            type: boolean
-          managed_by:
+        user_sync:
+          type: boolean
+        updated_at:
+          type: string
+          format: date-time
+    AuthSettingsRequest:
+      type: object
+      required: [provider, oidc_enabled]
+      properties:
+        provider:
+          type: string
+        oidc_enabled:
+          type: boolean
+        realm:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+          description: 當提供新密鑰時會覆蓋原有設定；未提供時沿用既有值。
+        auth_url:
+          type: string
+        token_url:
+          type: string
+        userinfo_url:
+          type: string
+        redirect_uri:
+          type: string
+        logout_url:
+          type: string
+        scopes:
+          type: array
+          items:
             type: string
-            enum: [keycloak, custom]
-            description: 指示設定由哪個外部系統維護。
-          read_only:
-            type: boolean
-            description: 為 true 時代表設定僅提供查詢資訊。
-          realm:
+        user_sync:
+          type: boolean
+        managed_by:
+          type: string
+          enum: [keycloak, custom]
+          description: 僅當平臺直接維護設定時可調整為 custom。
+    AuthTestRequest:
+      type: object
+      properties:
+        provider:
+          type: string
+        auth_url:
+          type: string
+        token_url:
+          type: string
+        userinfo_url:
+          type: string
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        scopes:
+          type: array
+          items:
             type: string
-            nullable: true
-          client_id:
+        test_username:
+          type: string
+        test_password:
+          type: string
+        async:
+          type: boolean
+          description: 為 true 時僅排程背景測試工作。
+    AuthTestResult:
+      type: object
+      required: [status, executed_at, latency_ms, message, trace_id]
+      properties:
+        status:
+          type: string
+          enum: [success, failed, queued]
+        executed_at:
+          type: string
+          format: date-time
+        latency_ms:
+          type: integer
+        message:
+          type: string
+        warnings:
+          type: array
+          items:
             type: string
-            nullable: true
-          client_secret_hint:
-            type: string
-            nullable: true
-          auth_url:
-            type: string
-            nullable: true
-          token_url:
-            type: string
-            nullable: true
-          userinfo_url:
-            type: string
-            nullable: true
-          redirect_uri:
-            type: string
-            nullable: true
-          logout_url:
-            type: string
-            nullable: true
-          scopes:
-            type: array
-            items:
-              type: string
-          user_sync:
-            type: boolean
-          updated_at:
-            type: string
-            format: date-time
-            nullable: true
+        trace_id:
+          type: string
+        error:
+          type: string
+          nullable: true
     LayoutScopeType:
       type: string
       enum: [global, role, user]
