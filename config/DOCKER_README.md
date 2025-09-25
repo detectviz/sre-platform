@@ -18,20 +18,20 @@ git clone <repository-url>
 cd sre-platform
 
 # 啟動所有服務
-./docker-start.sh
+./start-docker.sh
 
 # 或手動啟動
-docker-compose up -d
+docker compose -f config/docker/docker-compose.yml up -d
 ```
 
 ### 停止環境
 
 ```bash
 # 停止所有服務
-docker-compose down
+docker compose -f config/docker/docker-compose.yml down
 
 # 停止並刪除資料卷
-docker-compose down -v
+docker compose -f config/docker/docker-compose.yml down -v
 ```
 
 ## 📋 服務總覽
@@ -89,23 +89,23 @@ KEYCLOAK_ADMIN_PASSWORD=admin
 
 ```bash
 # 查看服務狀態
-docker-compose ps
+docker compose -f config/docker/docker-compose.yml ps
 
 # 查看特定服務日誌
-docker-compose logs -f grafana
+docker compose -f config/docker/docker-compose.yml logs -f grafana
 
 # 查看所有服務健康狀態
-./docker-start.sh  # 會自動檢查服務狀態
+./start-docker.sh  # 會自動檢查服務狀態
 ```
 
 ### 手動健康檢查
 
 ```bash
 # PostgreSQL
-docker-compose exec postgres pg_isready -U postgres
+docker compose -f config/docker/docker-compose.yml exec postgres pg_isready -U postgres
 
 # Redis
-docker-compose exec redis redis-cli ping
+docker compose -f config/docker/docker-compose.yml exec redis redis-cli ping
 
 # VictoriaMetrics
 curl http://localhost:8481/health
@@ -134,14 +134,14 @@ Prometheus 會自動收集所有服務的指標：
 
 ```bash
 # 查看所有服務日誌
-docker-compose logs
+docker compose -f config/docker/docker-compose.yml logs
 
 # 查看特定服務日誌
-docker-compose logs -f postgres
-docker-compose logs -f keycloak
+docker compose -f config/docker/docker-compose.yml logs -f postgres
+docker compose -f config/docker/docker-compose.yml logs -f keycloak
 
 # 查看最近的錯誤日誌
-docker-compose logs --tail=100 | grep ERROR
+docker compose -f config/docker/docker-compose.yml logs --tail=100 | grep ERROR
 ```
 
 ## 🔒 安全注意事項
@@ -196,7 +196,7 @@ services:
 2. 查看具體服務的日誌：
 
 ```bash
-docker-compose logs <service_name>
+docker compose -f config/docker/docker-compose.yml logs <service_name>
 ```
 
 3. 確保沒有其他服務佔用相同端口
@@ -207,8 +207,8 @@ docker-compose logs <service_name>
 
 ```bash
 # 停止服務並刪除資料卷
-docker-compose down -v
+docker compose -f config/docker/docker-compose.yml down -v
 
 # 重新啟動
-docker-compose up -d
+docker compose -f config/docker/docker-compose.yml up -d
 ```

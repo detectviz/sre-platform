@@ -41,14 +41,14 @@ check_container_health() {
     printf "🔍 正在檢查 %-25s ... " "$service_name"
 
     # 檢查容器是否運行
-    if ! docker-compose -f config/docker/docker-compose.yml ps "$container_name" | grep -q "Up"; then
+    if ! $COMPOSE ps "$container_name" | grep -q "Up"; then
         printf "${RED}❌ 容器未運行${NC}\n"
         return 1
     fi
 
     # 檢查健康狀態
     local status_line
-    status_line=$(docker-compose -f config/docker/docker-compose.yml ps "$container_name" | grep "$container_name")
+    status_line=$($COMPOSE ps "$container_name" | grep "$container_name")
 
     if [[ "$status_line" == *"(healthy)"* ]]; then
         printf "${GREEN}✅ 正常${NC}"
@@ -82,6 +82,14 @@ if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/
     exit 1
 fi
 
+# 設定 Docker Compose 指令
+COMPOSE_FILE="config/docker/docker-compose.yml"
+if command -v docker-compose &> /dev/null; then
+    COMPOSE="docker-compose -f ${COMPOSE_FILE}"
+else
+    COMPOSE="docker compose -f ${COMPOSE_FILE}"
+fi
+
 # 切換到專案根目錄
 cd "$(dirname "$0")/../.." || exit 1
 
@@ -90,11 +98,7 @@ mkdir -p logs
 
 # 啟動所有服務
 echo "📦 啟動服務容器..."
-if command -v docker-compose &> /dev/null; then
-    docker-compose -f config/docker/docker-compose.yml up -d
-else
-    docker compose -f config/docker/docker-compose.yml up -d
-fi
+$COMPOSE up -d
 
 echo "⏳ 等待服務啟動..."
 sleep 30
@@ -109,8 +113,8 @@ check_container_health "redis" "Redis" "6379" "快取服務正常"
 
 # --- 監控服務 ---
 echo -e "\n--- 核心監控服務 ---"
-check_service "VictoriaMetrics (vmselect)" "curl -s --fail 'http://localhost:8481/select/0/prometheus/api/v1/label/__name__/values' | grep -q '\"status\":\"success\"'" "資料查詢 API 正常"
-check_service "Prometheus (vmagent)" "curl -s --fail http://localhost:8429/metrics | grep -q 'vmagent_remotewrite_rate_limit'"
+check_service "VictoriaMetrics (vmselect)" "curl -s --fail http://localhost:8481/health" "資料查詢 API 正常"
+check_service "Prometheus (vmagent)" "curl -s --fail http://localhost:8429/metrics"
 
 # --- 可視化服務 ---
 echo -e "\n--- 可視化服務 ---"
@@ -122,11 +126,11 @@ check_service "ChromaDB" "curl -s --fail http://localhost:8000/api/v1/heartbeat 
 
 # --- 身份認證服務 ---
 echo -e "\n--- 身份認證服務 ---"
-check_service "Keycloak" "wget --quiet --tries=1 --spider http://localhost:8080" "可訪問網址: http://localhost:8080"
+check_service "Keycloak" "curl -s --fail http://localhost:8080/health/ready" "可訪問網址: http://localhost:8080"
 
 # --- 網路監控服務 ---
 echo -e "\n--- 網路監控服務 ---"
-check_service "SNMP Exporter" "curl -s --fail http://localhost:9116/metrics | grep -q 'snmp_exporter_build_info'"
+check_service "SNMP Exporter" "curl -s --fail http://localhost:9116/metrics"
 
 echo ""
 echo "========================================="
@@ -145,30 +149,30 @@ echo "  │ Prometheus          │ localhost:8429               │ -          
 echo "  │ SNMP Exporter       │ localhost:9116               │ -                     │"
 echo "  │ ChromaDB            │ localhost:8000               │ -                     │"
 echo "  │ Keycloak            │ http://localhost:8080        │ admin/admin           │"
-echo "  │ 後端服務           │ http://localhost:8080        │ -                     │"
-echo "  │ 前端服務           │ http://localhost:3001        │ -                     │"
+echo "  │ （可選）後端服務   │ 自行啟動後可接入             │ -                     │"
+echo "  │ （可選）前端服務   │ 自行啟動後可接入             │ -                     │"
 echo "  └─────────────────────┴───────────────────────────────┴───────────────────────┘"
 echo ""
 echo "🛠️  管理命令："
-echo "  • 查看日誌:     docker-compose -f config/docker/docker-compose.yml logs -f [service_name]"
-echo "  • 停止服務:     docker-compose -f config/docker/docker-compose.yml down"
-echo "  • 重啟服務:     docker-compose -f config/docker/docker-compose.yml restart [service_name]"
-echo "  • 查看狀態:     docker-compose -f config/docker/docker-compose.yml ps"
-echo "  • 進入容器:     docker-compose -f config/docker/docker-compose.yml exec [service_name] bash"
+echo "  • 查看日誌:     $COMPOSE logs -f [service_name]"
+echo "  • 停止服務:     $COMPOSE down"
+echo "  • 重啟服務:     $COMPOSE restart [service_name]"
+echo "  • 查看狀態:     $COMPOSE ps"
+echo "  • 進入容器:     $COMPOSE exec [service_name] bash"
 echo ""
 echo "🔍 快速健康檢查："
 echo "  • curl http://localhost:8481/health                    # VictoriaMetrics"
 echo "  • curl http://localhost:3000/api/health               # Grafana"
 echo "  • curl http://localhost:8000/api/v1/heartbeat          # ChromaDB"
 echo "  • curl http://localhost:8080/health/ready              # Keycloak"
-echo "  • docker-compose -f config/docker/docker-compose.yml ps # 所有服務狀態"
+echo "  • $COMPOSE ps # 所有服務狀態"
 echo ""
 echo "⚠️  故障排除："
 echo "  • 如果服務啟動失敗，請檢查日誌："
-echo "    docker-compose -f config/docker/docker-compose.yml logs [failed_service]"
+echo "    $COMPOSE logs [failed_service]"
 echo "  • 如果端口衝突，請修改 config/docker/docker-compose.yml 中的端口映射"
 echo "  • 如果需要完全重置，請執行："
-echo "    docker-compose -f config/docker/docker-compose.yml down -v"
+echo "    $COMPOSE down -v"
 echo ""
 echo "📚 詳細文檔："
 echo "  • 配置說明: config/README.md"
