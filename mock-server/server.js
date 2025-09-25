@@ -1045,7 +1045,7 @@ const iamUsers = [
     display_name: '林佳瑜',
     email: 'sre.lead@example.com',
     status: 'active',
-    teams: ['sre-core'],
+    teams: ['team-sre'],
     roles: ['sre', 'incident-commander'],
     last_login_at: toISO(now),
     created_at: toISO(new Date(now.getTime() - 120 * 86400000)),
@@ -3729,6 +3729,45 @@ app.delete('/silence-rules/:silence_id', (req, res) => {
   if (index === -1) return notFound(res, '找不到靜音規則');
   silenceRules.splice(index, 1);
   res.status(204).end();
+});
+
+app.get('/iam/users', (req, res) => {
+  const { status, keyword } = req.query;
+  const statusFilter = createLowercaseSet(parseListParam(status));
+
+  const filtered = iamUsers.filter(user => {
+    if (!matchesEnumFilter(user.status, statusFilter)) return false;
+    if (keyword) {
+      const lowerKeyword = keyword.toLowerCase();
+      const text = `${user.username} ${user.display_name} ${user.email}`.toLowerCase();
+      if (!text.includes(lowerKeyword)) return false;
+    }
+    return true;
+  });
+
+  const items = filtered.map(user => {
+    const teams = (user.teams || []).map(teamId => {
+      const team = getTeamById(teamId);
+      return { team_id: teamId, name: team?.name || teamId };
+    });
+    const roles = (user.roles || []).map(roleId => {
+      const role = getRoleById(`role-${roleId}`) || getRoleById(roleId);
+      return { role_id: role?.role_id || roleId, name: role?.name || roleId };
+    });
+
+    return {
+      user_id: user.user_id,
+      username: user.username,
+      display_name: user.display_name,
+      email: user.email,
+      status: user.status,
+      teams: teams,
+      roles: roles,
+      last_login_at: user.last_login_at,
+    };
+  });
+
+  res.json(paginate(items, req, { defaultSortKey: 'display_name' }));
 });
 
 app.post('/grafana-proxy/silences', (req, res) => {
