@@ -5883,7 +5883,7 @@ components:
               nullable: true
     AutomationExecutionSummary:
       type: object
-      required: [execution_id, script_name, status, start_time]
+      required: [execution_id, script_name, status, started_at]
       properties:
         execution_id:
           type: string
@@ -5901,7 +5901,7 @@ components:
         triggered_by:
           type: string
           nullable: true
-        start_time:
+        started_at:
           type: string
           format: date-time
         duration_ms:
@@ -5911,7 +5911,7 @@ components:
         - $ref: "#/components/schemas/AutomationExecutionSummary"
         - type: object
           properties:
-            end_time:
+            ended_at:
               type: string
               format: date-time
               nullable: true
@@ -5954,11 +5954,11 @@ components:
         teams:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/TeamReference"
         roles:
           type: array
           items:
-            type: string
+            $ref: "#/components/schemas/RoleReference"
         last_login_at:
           type: string
           format: date-time

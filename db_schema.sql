@@ -465,16 +465,12 @@ CREATE TABLE alert_rule_extensions (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 擴充設定更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 快照建立時間
-    snapshot_created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    -- 快照更新時間
-    snapshot_updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_alert_rule_extensions_sync CHECK (sync_status IN ('fresh','stale','failed')),
     CONSTRAINT chk_alert_rule_extensions_priority CHECK (default_priority IN ('P0','P1','P2','P3')),
     CONSTRAINT chk_alert_rule_extensions_automation_params CHECK (jsonb_typeof(automation_parameters) = 'object')
 );
 CREATE INDEX idx_alert_rule_extensions_status ON alert_rule_extensions (sync_status);
-CREATE INDEX idx_alert_rule_extensions_updated ON alert_rule_extensions (snapshot_updated_at DESC);
+CREATE INDEX idx_alert_rule_extensions_updated ON alert_rule_extensions (updated_at DESC);
 CREATE INDEX idx_alert_rule_extensions_priority ON alert_rule_extensions (default_priority);
 CREATE INDEX idx_alert_rule_extensions_template ON alert_rule_extensions (template_key);
 CREATE INDEX idx_alert_rule_extensions_script ON alert_rule_extensions (automation_script_id);
@@ -990,9 +986,9 @@ CREATE TABLE automation_executions (
     -- 觸發來源
     trigger_source VARCHAR(32) NOT NULL,
     -- 開始時間
-    start_time TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 結束時間
-    end_time TIMESTAMPTZ,
+    ended_at TIMESTAMPTZ,
     -- 持續時間毫秒
     duration_ms INTEGER,
     -- 狀態
