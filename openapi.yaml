@@ -106,6 +106,8 @@ tags:
     description: 事件列表、詳情與 AI 分析。
   - name: 告警規則 (Grafana 代理)
     description: 告警偵測與自動化規則設定 (代理 Grafana API)。
+  - name: Grafana 代理
+    description: 直接代理 Grafana API 的端點，用於平台不提供增值功能的場景。
   - name: 靜音規則
     description: 事件靜音排程與條件設定。
   - name: 批次作業
@@ -247,68 +249,12 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ReadinessCheckStatus"
-  /metrics:
-    get:
-      tags:
-        - 指標服務
-      summary: 取得系統指標彙總
-      operationId: getMetricsOverview
-      parameters:
-        - name: metric_keys
-          in: query
-          description: 指定要返回的指標鍵 (以逗號分隔)。
-          schema:
-            type: array
-            items:
-              type: string
-          style: form
-          explode: false
-        - name: resource_type
-          in: query
-          description: 限制回傳的資源類型。
-          schema:
-            type: string
-        - name: group_by
-          in: query
-          description: 依特定欄位分組 (以逗號分隔，如 team 或 environment)。
-          schema:
-            type: array
-            items:
-              type: string
-          style: form
-          explode: false
-        - name: start_time
-          in: query
-          description: 查詢起始時間 (含)。
-          schema:
-            type: string
-            format: date-time
-        - name: end_time
-          in: query
-          description: 查詢結束時間 (含)。
-          schema:
-            type: string
-            format: date-time
-        - name: granularity
-          in: query
-          description: 指標時間粒度，預設 5 分鐘。
-          schema:
-            type: string
-            enum: [1m, 5m, 15m, 1h, 6h, 1d]
-      responses:
-        "200":
-          description: 指標彙總資料。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MetricsOverviewResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /metrics/definitions:
     get:
       tags:
         - 指標服務
       summary: 取得指標定義列表
+      description: 指標定義由平台統一管理，但實際的時序數據儲存與查詢由 VictoriaMetrics 負責。
       operationId: listMetricDefinitions
       parameters:
         - $ref: "#/components/parameters/PageParam"
@@ -343,29 +289,6 @@ paths:
                         type: array
                         items:
                           $ref: "#/components/schemas/MetricDefinition"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-  /metrics/query:
-    post:
-      tags:
-        - 指標服務
-      summary: 多資源指標時序查詢
-      operationId: queryMetrics
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/MetricQueryRequest"
-      responses:
-        "200":
-          description: 指標時序查詢結果。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/MetricQueryResponse"
-        "400":
-          $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /notifications/summary:
@@ -445,6 +368,39 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
+  /grafana-proxy/silences:
+    post:
+      tags:
+        - Grafana 代理
+      summary: 建立一次性 Grafana 靜音
+      operationId: createGrafanaSilence
+      description: |
+        代理 Grafana API 建立一個一次性的靜音。
+        此端點用於 UI 上的「快速靜音」功能，直接與 Grafana 互動。
+        請求 body 應符合 Grafana API 的格式。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrafanaSilencePayload"
+      responses:
+        "202":
+          description: Grafana 已接受靜音請求。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrafanaSilenceResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "409":
+          description: "與 Grafana API 互動時發生衝突。"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /events/summary:
     get:
       tags:
@@ -1142,7 +1098,7 @@ paths:
         - 靜音規則
       summary: 建立靜音規則
       operationId: createSilenceRule
-      description: 建立新的靜音規則。若 request body 中包含 event_id，則為特定事件建立快速靜音。
+      description: 建立新的靜音規則，此端點專門處理平台增值的週期性或基於條件的靜音。對於一次性的事件靜音，請使用 /grafana-proxy/silences 端點。
       requestBody:
         required: true
         content:
@@ -1378,6 +1334,7 @@ paths:
       tags:
         - 資源管理
       summary: 取得資源即時指標
+      description: 此端點應代理查詢後端時序資料庫 (如 VictoriaMetrics)，而非查詢本地資料庫。
       operationId: getResourceMetrics
       parameters:
         - name: range
@@ -1700,10 +1657,12 @@ paths:
           in: query
           schema:
             type: string
-        - name: owner_id
+        - name: created_by
           in: query
+          description: "依建立者識別碼篩選。"
           schema:
             type: string
+            format: uuid
         - name: dashboard_type
           in: query
           description: 僅篩選特定類型的儀表板。
@@ -1882,41 +1841,6 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CapacityAnalysisReport"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-  /analysis/resource-load:
-    get:
-      tags:
-        - 分析中心
-      summary: 取得資源負載分析
-      operationId: getResourceLoadAnalysis
-      parameters:
-        - $ref: "#/components/parameters/PageParam"
-        - $ref: "#/components/parameters/PageSizeParam"
-        - $ref: "#/components/parameters/IncludeDeletedParam"
-        - name: type
-          in: query
-          schema:
-            type: string
-            enum: [server, database, cache, gateway, service]
-        - name: group_id
-          in: query
-          schema:
-            type: string
-      responses:
-        "200":
-          description: 回傳來源於 `resource_metrics` 彙總檢視的資源負載統計。
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  summary:
-                    $ref: "#/components/schemas/ResourceLoadSummary"
-                  items:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ResourceLoadRow"
         "401":
           $ref: "#/components/responses/Unauthorized"
   /analysis/ai-insights:
@@ -2679,7 +2603,7 @@ paths:
                           $ref: "#/components/schemas/AuditLogEntry"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notification-config/strategies:
+  /notifications/strategies:
     get:
       tags:
         - 通知管理
@@ -2856,7 +2780,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification-config/strategies/{strategy_id}/test:
+  /notifications/strategies/{strategy_id}/test:
     post:
       tags:
         - 通知管理
@@ -2879,7 +2803,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification-config/channels:
+  /notifications/channels:
     get:
       tags:
         - 通知管理
@@ -2981,7 +2905,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification-config/channels/{channel_id}/test:
+  /notifications/channels/{channel_id}/test:
     post:
       tags:
         - 通知管理
@@ -3004,7 +2928,7 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "404":
           $ref: "#/components/responses/NotFound"
-  /notification-config/history:
+  /notifications/history:
     get:
       tags:
         - 通知管理
@@ -4931,9 +4855,6 @@ components:
         created_at:
           type: string
           format: date-time
-        event_id:
-          type: string
-          nullable: true
     SilenceRuleDetail:
       allOf:
         - $ref: "#/components/schemas/SilenceRuleSummary"
@@ -4983,12 +4904,6 @@ components:
     SilenceRuleUpsertRequest:
       allOf:
         - $ref: "#/components/schemas/SilenceRulePayload"
-        - type: object
-          properties:
-            duration_hours:
-              type: integer
-              enum: [1, 2, 4, 8, 12, 24]
-              description: 快速靜音時使用，用於替代 schedule 物件。
     ResourceSummaryMetrics:
       type: object
       required: [total_resources, healthy, warning, critical, groups]
@@ -5172,13 +5087,6 @@ components:
             created_at:
               type: string
               format: date-time
-            updated_at:
-              type: string
-              format: date-time
-            groups:
-              type: array
-              items:
-                $ref: "#/components/schemas/ResourceGroupRef"
             notes:
               type: string
             silences:
@@ -5495,8 +5403,10 @@ components:
           $ref: "#/components/schemas/DashboardType"
         description:
           type: string
-        creator_id:
+        created_by:
           type: string
+          format: uuid
+          description: "建立者的使用者識別碼。"
         tags:
           type: array
           items:
@@ -5546,8 +5456,10 @@ components:
           $ref: "#/components/schemas/DashboardType"
         description:
           type: string
-        creator_id:
+        created_by:
           type: string
+          format: uuid
+          description: "建立者的使用者識別碼。"
         tags:
           type: array
           items:
@@ -5593,8 +5505,6 @@ components:
         - type: object
           properties:
             description:
-              type: string
-            creator_id:
               type: string
             layout:
               type: array
@@ -5704,52 +5614,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/OptimizationSuggestion"
-    ResourceLoadSummary:
-      type: object
-      required: [avg_cpu, avg_memory, avg_disk, avg_network]
-      properties:
-        avg_cpu:
-          type: number
-        avg_memory:
-          type: number
-        avg_disk:
-          type: number
-        avg_network:
-          type: number
-        anomalies_detected:
-          type: integer
-        granularity:
-          type: string
-          description: 此批摘要對應的彙總粒度。
-    ResourceLoadRow:
-      type: object
-      required: [resource_id, resource_name, avg_cpu, avg_memory]
-      properties:
-        resource_id:
-          type: string
-        resource_name:
-          type: string
-        collected_at:
-          type: string
-          format: date-time
-          description: 對應 `resource_metrics` 中彙總資料的時間戳。
-        granularity:
-          type: string
-          description: 彙總粒度 (raw、1m、5m、1h、1d)。
-        avg_cpu:
-          type: number
-        avg_memory:
-          type: number
-        disk_read:
-          type: number
-        disk_write:
-          type: number
-        net_in:
-          type: number
-        net_out:
-          type: number
-        anomaly_count:
-          type: integer
     AIInsightSuggestion:
       type: object
       required: [title, priority]
@@ -7017,6 +6881,46 @@ components:
           description: 按照顯示順序排列的指標卡片列表。
           items:
             $ref: "#/components/schemas/LayoutWidgetConfig"
+    GrafanaMatcher:
+      type: object
+      required: [name, value, isRegex]
+      properties:
+        name:
+          type: string
+          description: 標籤鍵。
+        value:
+          type: string
+          description: 標籤值。
+        isRegex:
+          type: boolean
+          default: false
+    GrafanaSilencePayload:
+      type: object
+      required: [matchers, startsAt, endsAt, comment, createdBy]
+      properties:
+        id:
+          type: string
+          description: "更新時需提供，建立時由 Grafana 生成。"
+        matchers:
+          type: array
+          items:
+            $ref: "#/components/schemas/GrafanaMatcher"
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
+        comment:
+          type: string
+        createdBy:
+          type: string
+    GrafanaSilenceResponse:
+      type: object
+      required: [silenceID]
+      properties:
+        silenceID:
+          type: string
     GrafanaDashboardUrl:
       type: object
       required: [url, embed_url, expires_at]

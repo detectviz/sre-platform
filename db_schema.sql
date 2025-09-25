@@ -598,81 +598,12 @@ CREATE TABLE resource_tags (
 );
 CREATE INDEX idx_resource_tags_value ON resource_tags (tag_value_id);
 
-CREATE TABLE resource_metrics (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 資源識別碼
-    resource_id UUID NOT NULL REFERENCES resources(id) ON DELETE CASCADE,
-    -- 指標鍵值 (例如 cpu.utilization、memory.utilization)
-    metric_key VARCHAR(128) NOT NULL,
-    -- 單位
-    unit VARCHAR(16),
-    -- 收集時間
-    collected_at TIMESTAMPTZ NOT NULL,
-    -- 數據粒度 (raw、1m、5m、1h、1d)
-    granularity VARCHAR(16) NOT NULL DEFAULT 'raw',
-    -- 彙總統計 (raw、avg、max、min、p95、p99、sum、count)
-    statistic VARCHAR(16) NOT NULL DEFAULT 'raw',
-    -- 數值
-    value NUMERIC(12,4) NOT NULL,
-    -- 額外維度 (如資料中心、節點)
-    dimensions JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_resource_metrics_granularity CHECK (granularity IN ('raw','1m','5m','1h','1d')),
-    CONSTRAINT chk_resource_metrics_statistic CHECK (statistic IN ('raw','avg','max','min','p95','p99','sum','count'))
-);
-CREATE INDEX idx_resource_metrics_resource ON resource_metrics (resource_id, metric_key, granularity, collected_at DESC);
-CREATE INDEX idx_resource_metrics_metric ON resource_metrics (metric_key, statistic, granularity, collected_at DESC);
-
--- 建立資源負載分析所需的彙整檢視，提供單一來源的寬表結果
-CREATE VIEW resource_load_rollups AS
-SELECT
-    resource_id,
-    collected_at,
-    granularity,
-    COALESCE(
-        MAX(value) FILTER (WHERE metric_key = 'cpu.utilization' AND statistic IN ('avg', 'raw')),
-        0
-    )::NUMERIC(5,2) AS avg_cpu,
-    COALESCE(
-        MAX(value) FILTER (WHERE metric_key = 'memory.utilization' AND statistic IN ('avg', 'raw')),
-        0
-    )::NUMERIC(5,2) AS avg_memory,
-    COALESCE(
-        MAX(value) FILTER (WHERE metric_key = 'disk.read_mbps' AND statistic IN ('avg', 'raw')),
-        0
-    )::NUMERIC(10,2) AS disk_read,
-    COALESCE(
-        MAX(value) FILTER (WHERE metric_key = 'disk.write_mbps' AND statistic IN ('avg', 'raw')),
-        0
-    )::NUMERIC(10,2) AS disk_write,
-    COALESCE(
-        MAX(value) FILTER (WHERE metric_key = 'network.in_mbps' AND statistic IN ('avg', 'raw')),
-        0
-    )::NUMERIC(10,2) AS net_in,
-    COALESCE(
-        MAX(value) FILTER (WHERE metric_key = 'network.out_mbps' AND statistic IN ('avg', 'raw')),
-        0
-    )::NUMERIC(10,2) AS net_out,
-    COALESCE(
-        MAX(value) FILTER (WHERE metric_key = 'anomaly.count' AND statistic IN ('count', 'sum')),
-        0
-    )::INTEGER AS anomaly_count
-FROM resource_metrics
-WHERE metric_key IN (
-    'cpu.utilization',
-    'memory.utilization',
-    'disk.read_mbps',
-    'disk.write_mbps',
-    'network.in_mbps',
-    'network.out_mbps',
-    'anomaly.count'
-)
-GROUP BY resource_id, collected_at, granularity;
+-- NOTE: The 'resource_metrics' table and its related view 'resource_load_rollups' have been removed
+-- to align with the architecture principle that VictoriaMetrics is the single source of truth for time-series data.
+-- All metric queries should be proxied to VictoriaMetrics.
 
 -- =============================
--- 系統指標定義與快照
+-- 系統指標定義
 -- =============================
 CREATE TABLE metric_definitions (
     -- 主鍵識別碼
@@ -713,39 +644,9 @@ CREATE TABLE metric_definitions (
 CREATE INDEX idx_metric_definitions_category ON metric_definitions (category);
 CREATE INDEX idx_metric_definitions_scope ON metric_definitions (resource_scope);
 
-CREATE TABLE system_metric_snapshots (
-    -- 主鍵識別碼
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    -- 指標定義識別碼
-    definition_id UUID NOT NULL REFERENCES metric_definitions(id) ON DELETE CASCADE,
-    -- 收集時間
-    collected_at TIMESTAMPTZ NOT NULL,
-    -- 粒度
-    granularity VARCHAR(16) NOT NULL,
-    -- 彙總
-    aggregation VARCHAR(32) NOT NULL,
-    -- 數值
-    value NUMERIC(14,4) NOT NULL,
-    -- 狀態
-    status VARCHAR(32) NOT NULL,
-    -- 變更比率
-    change_rate NUMERIC(10,4),
-    -- 比較
-    comparison JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 趨勢
-    trend JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 熱門資源
-    top_resources JSONB NOT NULL DEFAULT '[]'::JSONB,
-    -- 中繼資料
-    metadata JSONB NOT NULL DEFAULT '{}'::JSONB,
-    -- 建立時間
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_metric_snapshots_granularity CHECK (granularity IN ('1m','5m','15m','1h','6h','1d')),
-    CONSTRAINT chk_metric_snapshots_status CHECK (status IN ('healthy','warning','critical','unknown')),
-    CONSTRAINT chk_metric_snapshots_agg CHECK (aggregation IN ('avg','max','min','sum','p95','p99'))
-);
-CREATE INDEX idx_metric_snapshots_definition_time ON system_metric_snapshots (definition_id, collected_at DESC);
-CREATE INDEX idx_metric_snapshots_status ON system_metric_snapshots (status);
+-- NOTE: The 'system_metric_snapshots' table has been removed.
+-- Metric snapshots or aggregated views should be handled by the dedicated TSDB (VictoriaMetrics),
+-- not stored in the relational database.
 
 CREATE TABLE resource_groups (
     -- 主鍵識別碼
@@ -873,8 +774,8 @@ CREATE TABLE dashboards (
     dashboard_type VARCHAR(16) NOT NULL DEFAULT 'built_in',
     -- 描述
     description TEXT,
-    -- 建立者識別碼 (修正: owner_id -> creator_id)
-    creator_id UUID REFERENCES users(id),
+    -- 建立者識別碼
+    created_by UUID REFERENCES users(id),
     -- 狀態
     status VARCHAR(32) NOT NULL DEFAULT 'draft',
     -- 是否精選

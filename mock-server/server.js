@@ -864,39 +864,6 @@ const buildCapacityAnalysisReport = ({ timeRange, model } = {}) => {
   };
 };
 
-const resourceLoadSummary = {
-  avg_cpu: 58.4,
-  avg_memory: 62.1,
-  avg_disk: 48.2,
-  avg_network: 95.4,
-  anomalies_detected: 4
-};
-
-const resourceLoadItems = [
-  {
-    resource_id: 'res-001',
-    resource_name: 'web-01',
-    avg_cpu: 72.4,
-    avg_memory: 68.1,
-    disk_read: 85.2,
-    disk_write: 40.1,
-    net_in: 125.4,
-    net_out: 118.2,
-    anomaly_count: 2
-  },
-  {
-    resource_id: 'res-002',
-    resource_name: 'rds-read-1',
-    avg_cpu: 64.8,
-    avg_memory: 71.2,
-    disk_read: 102.3,
-    disk_write: 55.5,
-    net_in: 95.1,
-    net_out: 90.4,
-    anomaly_count: 1
-  }
-];
-
 const aiInsightReports = [
   {
     report_id: 'ai-001',
@@ -3014,65 +2981,6 @@ app.get('/readyz', (req, res) => {
   });
 });
 
-app.get('/metrics', (req, res) => {
-  const requestedKeys = parseListParam(req.query.metric_keys);
-  const resourceType = typeof req.query.resource_type === 'string' ? req.query.resource_type.trim() : '';
-  const groupBy = parseListParam(req.query.group_by) || [];
-  const granularity = typeof req.query.granularity === 'string' && req.query.granularity.trim().length > 0
-    ? req.query.granularity.trim()
-    : '5m';
-  const stepMinutes = parseDurationToMinutes(granularity, 5);
-  const endTime = parseDateOrDefault(req.query.end_time, new Date());
-  let startTime = parseDateOrDefault(req.query.start_time, new Date(endTime.getTime() - stepMinutes * 60000 * 11));
-  if (startTime > endTime) {
-    startTime = new Date(endTime.getTime() - stepMinutes * 60000 * 11);
-  }
-  const totalMinutes = Math.max(stepMinutes, Math.round((endTime.getTime() - startTime.getTime()) / 60000));
-  const pointCount = Math.min(48, Math.max(6, Math.floor(totalMinutes / stepMinutes) || 12));
-
-  const filteredRecords = metricOverviewRecords.filter((record) => {
-    if (requestedKeys && requestedKeys.length > 0 && !requestedKeys.includes(record.metric_key)) {
-      return false;
-    }
-    if (resourceType) {
-      return record.top_resources.some((item) => item.resource_type === resourceType);
-    }
-    return true;
-  });
-
-  const metrics = filteredRecords.map((record) => {
-    const definition = metricDefinitions.find((def) => def.metric_key === record.metric_key);
-    const thresholds = definition
-      ? { warning: definition.warning_threshold ?? null, critical: definition.critical_threshold ?? null }
-      : { warning: null, critical: null };
-    const trend = buildTimeSeriesPoints(pointCount, stepMinutes, record.latest_value, record.variance, endTime);
-    return {
-      metric_key: record.metric_key,
-      display_name: definition?.display_name || record.metric_key,
-      unit: definition?.unit || '',
-      latest_value: Number(record.latest_value.toFixed(2)),
-      status: record.status,
-      change_rate: record.change_rate,
-      thresholds,
-      last_updated_at: toISO(endTime),
-      trend,
-      top_resources: record.top_resources.map((item) => ({ ...item })),
-      metadata: {
-        ...(definition?.metadata || {}),
-        ...(record.metadata || {}),
-        time_range: { start: toISO(startTime), end: toISO(endTime) },
-        group_by: groupBy
-      }
-    };
-  });
-
-  res.json({
-    generated_at: toISO(new Date()),
-    granularity,
-    metrics
-  });
-});
-
 app.get('/metrics/definitions', (req, res) => {
   const { category, resource_scope: resourceScope } = req.query;
   const keyword = typeof req.query.keyword === 'string' ? req.query.keyword.trim().toLowerCase() : '';
@@ -3094,107 +3002,6 @@ app.get('/metrics/definitions', (req, res) => {
     });
   }
   res.json(paginate(definitions, req));
-});
-
-app.post('/metrics/query', (req, res) => {
-  const payload = req.body || {};
-  const definition = metricDefinitions.find((def) => def.metric_key === payload.metric_key);
-  if (!definition) {
-    return res.status(400).json({ code: 'INVALID_REQUEST', message: '未知的指標鍵。' });
-  }
-
-  const requestedAggregations = Array.isArray(payload.aggregations)
-    ? payload.aggregations.filter((agg) => definition.supported_aggregations.includes(agg))
-    : [];
-  if (requestedAggregations.length === 0) {
-    requestedAggregations.push(definition.default_aggregation);
-  }
-
-  const rangePayload = payload.time_range || {};
-  const stepLabel = rangePayload.step || '5m';
-  const stepMinutes = parseDurationToMinutes(stepLabel, 5);
-  const endTime = parseDateOrDefault(rangePayload.end, new Date());
-  let startTime = parseDateOrDefault(rangePayload.start, new Date(endTime.getTime() - stepMinutes * 60000 * 23));
-  if (startTime > endTime) {
-    startTime = new Date(endTime.getTime() - stepMinutes * 60000 * 23);
-  }
-  const totalMinutes = Math.max(stepMinutes, Math.round((endTime.getTime() - startTime.getTime()) / 60000));
-  const pointCount = Math.min(96, Math.max(12, Math.floor(totalMinutes / stepMinutes) || 24));
-
-  const seeds = getMetricSeriesSeeds(definition.metric_key, payload.resource_ids);
-  const series = seeds.map((seed, index) => {
-    const datapoints = buildTimeSeriesPoints(pointCount, stepMinutes, seed.baseValue, seed.variance, endTime);
-    const summary = summarizePoints(datapoints);
-    const group = {};
-    if (seed.resource_type) group.resource_type = seed.resource_type;
-    if (seed.team_id) group.team_id = seed.team_id;
-    if (seed.environment) group.environment = seed.environment;
-    return {
-      series_id: `${definition.metric_key}-series-${index + 1}`,
-      metric_key: definition.metric_key,
-      resource_id: seed.resource_id,
-      resource_name: seed.resource_name,
-      group,
-      aggregation: requestedAggregations[0],
-      status: seed.status,
-      datapoints,
-      summary
-    };
-  });
-
-  const annotations =
-    definition.metric_key === 'http_error_rate_percent'
-      ? [
-        {
-          timestamp: toISO(new Date(endTime.getTime() - stepMinutes * 60000 * Math.min(pointCount - 1, 6))),
-          level: 'critical',
-          message: 'AI 建議：檢查 Gateway 節點錯誤率峰值',
-          source: 'ai-insight'
-        }
-      ]
-      : [
-        {
-          timestamp: toISO(new Date(endTime.getTime() - stepMinutes * 60000 * Math.min(pointCount - 1, 3))),
-          level: 'info',
-          message: '自動化調整完成：容量檢查通過',
-          source: 'automation'
-        }
-      ];
-
-  const requestedRange = {
-    start: toISO(startTime),
-    end: toISO(endTime),
-    step: stepLabel,
-    timezone: rangePayload.timezone || 'UTC'
-  };
-
-  let compareRange;
-  if (payload.compare_range) {
-    const comparePayload = payload.compare_range;
-    const compareEnd = parseDateOrDefault(comparePayload.end, new Date(startTime));
-    let compareStart = parseDateOrDefault(comparePayload.start, new Date(compareEnd.getTime() - stepMinutes * 60000 * pointCount));
-    if (compareStart > compareEnd) {
-      compareStart = new Date(compareEnd.getTime() - stepMinutes * 60000 * pointCount);
-    }
-    compareRange = {
-      start: toISO(compareStart),
-      end: toISO(compareEnd),
-      step: comparePayload.step || requestedRange.step,
-      timezone: comparePayload.timezone || requestedRange.timezone
-    };
-  }
-
-  res.json({
-    query_id: `metric-query-${Date.now()}`,
-    metric_key: definition.metric_key,
-    unit: definition.unit,
-    requested_range: requestedRange,
-    compare_range: compareRange,
-    aggregations: requestedAggregations,
-    generated_at: toISO(new Date()),
-    series,
-    annotations
-  });
 });
 
 
@@ -3664,10 +3471,152 @@ app.delete('/alert-rules/:rule_uid', (req, res) => {
   res.status(204).end();
 });
 
+app.post('/grafana-proxy/silences', (req, res) => {
+  const payload = req.body || {};
+  // 模擬 Grafana API 的行為
+  if (!payload.matchers || !payload.startsAt || !payload.endsAt || !payload.comment || !payload.createdBy) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'Grafana aPI-compatible payload is required.' });
+  }
+  const silenceID = `grafana-silence-${Date.now()}`;
+  console.log(`Mock Grafana Silence created: ${silenceID} by ${payload.createdBy}`);
+  res.status(202).json({ silenceID });
+});
+
 app.post('/alert-rules/:rule_uid/test', (req, res) => {
   const rule = getAlertRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到告警規則');
   res.json({ matches: true, preview_event: mapEventSummary(eventData[0]), messages: ['條件符合範例資料'] });
+});
+
+// --- 通知管理 ---
+
+app.get('/notifications/strategies', (req, res) => {
+  const { status, priority, channel_types, channel_id, severity, recipient_type, keyword } = req.query;
+  const statusFilter = createLowercaseSet(parseListParam(status));
+  const priorityFilter = createLowercaseSet(parseListParam(priority));
+  const channelTypeFilter = createLowercaseSet(parseListParam(channel_types));
+  const severityFilter = createLowercaseSet(parseListParam(severity));
+
+  const filtered = notificationStrategies.filter(strategy => {
+    if (statusFilter && !statusFilter.has(String(strategy.enabled))) return false;
+    if (!matchesEnumFilter(strategy.priority, priorityFilter)) return false;
+    if (channel_id && !(strategy.channels || []).some(c => c.channel_id === channel_id)) return false;
+    if (channelTypeFilter && !(strategy.channels || []).some(c => matchesEnumFilter(c.channel_type, channelTypeFilter))) return false;
+    if (severityFilter && !(strategy.severity_filters || []).some(s => severityFilter.has(s))) return false;
+    if (recipient_type && !(strategy.recipients || []).some(r => r.type === recipient_type)) return false;
+
+    if (keyword) {
+      const text = `${strategy.name} ${strategy.description || ''} ${strategy.trigger_condition || ''}`.toLowerCase();
+      if (!text.includes(keyword)) return false;
+    }
+    return true;
+  });
+
+  const items = filtered.map(s => ({
+    strategy_id: s.strategy_id,
+    name: s.name,
+    trigger_condition: s.trigger_condition,
+    channel_count: (s.channels || []).length,
+    enabled: s.enabled,
+    priority: s.priority,
+  }));
+
+  res.json(paginate(items, req, { defaultSortKey: 'name' }));
+});
+
+app.post('/notifications/strategies', (req, res) => {
+  const payload = req.body || {};
+  const newStrategy = {
+    strategy_id: `str-${Date.now()}`,
+    name: payload.name,
+    description: payload.description,
+    enabled: payload.enabled ?? true,
+    priority: payload.priority || 'medium',
+    trigger_condition: payload.trigger_condition,
+    severity_filters: payload.severity_filters || [],
+    recipients: payload.recipients || [],
+    channels: payload.channels || [],
+    resource_filters: payload.resource_filters || {},
+    retry_policy: mergeSettings(defaultRetryPolicy, payload.retry_policy),
+    delivery_settings: mergeSettings(defaultDeliverySettings, payload.delivery_settings),
+    snooze_settings: mergeSettings(defaultSnoozeSettings, payload.snooze_settings),
+    linked_silence_ids: payload.linked_silence_ids || [],
+    created_at: toISO(new Date()),
+    updated_at: toISO(new Date()),
+    deleted_at: null
+  };
+  notificationStrategies.push(newStrategy);
+  res.status(201).json(mapNotificationStrategyDetail(newStrategy));
+});
+
+app.get('/notifications/strategies/:strategy_id', (req, res) => {
+  const strategy = getNotificationStrategyById(req.params.strategy_id);
+  if (!strategy) return notFound(res, '找不到通知策略');
+  res.json(mapNotificationStrategyDetail(strategy));
+});
+
+app.patch('/notifications/strategies/:strategy_id', (req, res) => {
+  const strategy = getNotificationStrategyById(req.params.strategy_id);
+  if (!strategy) return notFound(res, '找不到通知策略');
+  Object.assign(strategy, req.body);
+  strategy.updated_at = toISO(new Date());
+  res.json(mapNotificationStrategyDetail(strategy));
+});
+
+app.delete('/notifications/strategies/:strategy_id', (req, res) => {
+  const index = notificationStrategies.findIndex(s => s.strategy_id === req.params.strategy_id);
+  if (index === -1) return notFound(res, '找不到通知策略');
+  notificationStrategies.splice(index, 1);
+  res.status(204).end();
+});
+
+app.get('/notifications/channels', (req, res) => {
+  res.json(notificationChannels.map(c => ({
+    channel_id: c.channel_id,
+    name: c.name,
+    type: c.type,
+    enabled: c.enabled,
+    status: c.status,
+    last_tested_at: c.last_tested_at,
+  })));
+});
+
+app.get('/notifications/history', (req, res) => {
+  const { status, channel_types, channel_id, strategy_id, event_id, start_time, end_time, keyword, has_error } = req.query;
+  const statusFilter = createLowercaseSet(parseListParam(status));
+  const channelTypeFilter = createLowercaseSet(parseListParam(channel_types));
+  const startTimeFilter = parseDateSafe(start_time);
+  const endTimeFilter = parseDateSafe(end_time);
+  const hasErrorFilter = parseBooleanParam(has_error);
+
+  const filtered = notificationHistory.filter(record => {
+    if (!matchesEnumFilter(record.status, statusFilter)) return false;
+    if (!matchesEnumFilter(record.channel_type, channelTypeFilter)) return false;
+    if (channel_id && record.channel_id !== channel_id) return false;
+    if (strategy_id && record.strategy_id !== strategy_id) return false;
+    if (event_id && record.related_event_id !== event_id) return false;
+    if (hasErrorFilter !== null && hasErrorFilter !== !!record.error_message) return false;
+
+    const recordTime = parseDateSafe(record.sent_at);
+    if (startTimeFilter && recordTime < startTimeFilter) return false;
+    if (endTimeFilter && recordTime > endTimeFilter) return false;
+
+    if (keyword) {
+      const lowerKeyword = keyword.toLowerCase();
+      const tokens = [
+        record.strategy_name,
+        record.channel_label,
+        record.alert_title,
+        record.message,
+        ...getRecipientSearchTokens(record.recipients)
+      ].filter(Boolean).map(s => s.toLowerCase());
+      if (!tokens.some(t => t.includes(lowerKeyword))) return false;
+    }
+    return true;
+  });
+
+  const items = filtered.map(mapNotificationHistorySummary);
+  res.json(paginate(items, req, { defaultSortKey: 'sent_at', defaultSortOrder: 'desc' }));
 });
 
 app.listen(PORT, () => {
