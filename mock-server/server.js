@@ -494,7 +494,7 @@ const silenceRules = [
       repeat: { frequency: 'weekly', days: ['sat'], until: null, occurrences: null }
     },
     matchers: [
-      { matcher_key: 'resource_id', operator: 'equals', matcher_value: 'res-001' }
+      { name: 'resource_id', value: 'res-001', isRegex: false }
     ],
     notify_on_start: true,
     notify_on_end: false,
@@ -2215,9 +2215,9 @@ const appendTimelineEntry = (event, entry) => {
 };
 
 const normalizeSilenceMatcher = (matcher = {}) => ({
-  matcher_key: matcher.matcher_key || matcher.key || 'resource_id',
-  operator: matcher.operator === 'regex' ? 'regex' : 'equals',
-  matcher_value: matcher.matcher_value || matcher.value || ''
+  name: matcher.name || 'resource_id',
+  value: matcher.value || '',
+  isRegex: matcher.isRegex === true
 });
 
 const normalizeSilenceSchedule = (schedule = {}) => {
@@ -2306,26 +2306,37 @@ const getSilencesForResource = (resourceId) =>
     .map(toSilenceRuleDetail);
 
 // 修正: 移除即時指標欄位
-const buildResourceDetail = (resource) => ({
-  resource_id: resource.resource_id,
-  name: resource.name,
-  status: resource.status,
-  type: resource.type,
-  ip_address: resource.ip_address,
-  location: resource.location,
-  environment: resource.environment,
-  team_id: resource.team_id,
-  team: resource.team,
-  os: resource.os,
-  service_impact: resource.service_impact,
-  notes: resource.notes,
-  last_event_count: resource.last_event_count,
-  tags: cloneTags(resource.tags),
-  groups: buildResourceGroupRefs(resource.groups),
-  silences: getSilencesForResource(resource.resource_id),
-  created_at: resource.created_at,
-  updated_at: resource.updated_at
-});
+const buildResourceDetail = (resource, includeMetrics = false) => {
+  const detail = {
+    resource_id: resource.resource_id,
+    name: resource.name,
+    status: resource.status,
+    type: resource.type,
+    ip_address: resource.ip_address,
+    location: resource.location,
+    environment: resource.environment,
+    team_id: resource.team_id,
+    team: resource.team,
+    os: resource.os,
+    service_impact: resource.service_impact,
+    notes: resource.notes,
+    last_event_count: resource.last_event_count,
+    tags: cloneTags(resource.tags),
+    groups: buildResourceGroupRefs(resource.groups),
+    silences: getSilencesForResource(resource.resource_id),
+    created_at: resource.created_at,
+    updated_at: resource.updated_at
+  };
+
+  if (includeMetrics) {
+    detail.cpu_usage = parseFloat((Math.random() * 20 + 60).toFixed(2));
+    detail.memory_usage = parseFloat((Math.random() * 25 + 55).toFixed(2));
+    detail.disk_usage = parseFloat((Math.random() * 30 + 40).toFixed(2));
+    detail.network_latency_ms = parseFloat((Math.random() * 50 + 10).toFixed(2));
+  }
+
+  return detail;
+};
 
 const buildTeamDetail = (team) => {
   if (!team) return null;
@@ -3609,6 +3620,80 @@ app.post('/silence-rules', (req, res) => {
   const newRule = buildSilenceRule(payload);
   silenceRules.push(newRule);
   res.status(201).json(toSilenceRuleDetail(newRule));
+});
+
+app.get('/resources/summary', (req, res) => {
+  const healthy = resourceData.filter(r => r.status === 'healthy').length;
+  const warning = resourceData.filter(r => r.status === 'warning').length;
+  const critical = resourceData.filter(r => r.status === 'critical').length;
+  res.json({
+    total_resources: resourceData.length,
+    healthy,
+    warning,
+    critical,
+    groups: resourceGroups.length
+  });
+});
+
+app.get('/resources', (req, res) => {
+  const includeMetrics = parseBooleanParam(req.query.include_metrics);
+  const items = resourceData.map(r => buildResourceDetail(r, includeMetrics));
+  res.json(paginate(items, req, { defaultSortKey: 'name' }));
+});
+
+app.get('/resources/:resource_id', (req, res) => {
+  const resource = getResourceById(req.params.resource_id);
+  if (!resource) return notFound(res, '找不到資源');
+  res.json(buildResourceDetail(resource, true));
+});
+
+app.post('/resources', (req, res) => {
+  const payload = req.body || {};
+  if (!payload.name || !payload.type || !payload.ip_address) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'name, type, ip_address 為必填欄位。' });
+  }
+  const newResource = {
+    resource_id: `res-${Date.now()}`,
+    name: payload.name,
+    status: payload.status || 'healthy',
+    type: payload.type,
+    ip_address: payload.ip_address,
+    location: payload.location,
+    environment: payload.environment,
+    team_id: payload.team_id,
+    team: payload.team || (payload.team_id ? getTeamById(payload.team_id)?.name : null),
+    os: payload.os,
+    service_impact: payload.service_impact,
+    notes: payload.notes,
+    last_event_count: 0,
+    tags: cloneTags(payload.tags),
+    groups: normalizeGroupIds(payload.group_ids),
+    created_at: toISO(new Date()),
+    updated_at: toISO(new Date()),
+    deleted_at: null
+  };
+  resourceData.push(newResource);
+  res.status(201).json(buildResourceDetail(newResource));
+});
+
+app.patch('/resources/:resource_id', (req, res) => {
+  const resource = getResourceById(req.params.resource_id);
+  if (!resource) return notFound(res, '找不到資源');
+  const payload = req.body || {};
+  Object.keys(payload).forEach(key => {
+    if (key in resource) {
+      resource[key] = payload[key];
+    }
+  });
+  resource.updated_at = toISO(new Date());
+  res.json(buildResourceDetail(resource, true));
+});
+
+app.delete('/resources/:resource_id', (req, res) => {
+  const index = resourceData.findIndex(r => r.resource_id === req.params.resource_id);
+  if (index === -1) return notFound(res, '找不到資源');
+  resourceData.splice(index, 1);
+  res.status(204).end();
 });
 
 app.get('/silence-rules/:silence_id', (req, res) => {

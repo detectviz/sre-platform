@@ -282,13 +282,12 @@ CREATE TABLE silence_rule_matchers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     -- 靜默識別碼
     silence_id UUID NOT NULL REFERENCES silence_rules(id) ON DELETE CASCADE,
-    -- 比對鍵值
-    matcher_key VARCHAR(128) NOT NULL,
-    -- 運算子
-    operator VARCHAR(32) NOT NULL,
-    -- 比對數值
-    matcher_value VARCHAR(256) NOT NULL,
-    CONSTRAINT chk_silence_matchers_operator CHECK (operator IN ('equals','regex'))
+    -- 標籤鍵
+    name VARCHAR(128) NOT NULL,
+    -- 標籤值
+    value VARCHAR(256) NOT NULL,
+    -- 是否為正規表示式
+    is_regex BOOLEAN NOT NULL DEFAULT FALSE
 );
 CREATE INDEX idx_silence_matchers_silence ON silence_rule_matchers (silence_id);
 

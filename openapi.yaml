@@ -1231,6 +1231,12 @@ paths:
           description: 名稱、IP 或標籤關鍵字。
           schema:
             type: string
+        - name: include_metrics
+          in: query
+          description: 是否在回應中包含即時指標資料。
+          schema:
+            type: boolean
+            default: false
       responses:
         "200":
           description: 回傳資源列表。
@@ -3657,12 +3663,6 @@ components:
                 type: string
               value:
                 type: object
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
     TimeSeriesPoint:
       type: object
       required: [timestamp, value]
@@ -4798,15 +4798,18 @@ components:
             type: string
     SilenceMatcher:
       type: object
-      required: [matcher_key, matcher_value]
+      required: [name, value]
       properties:
-        matcher_key:
+        name:
           type: string
-        operator:
+          description: 標籤鍵。
+        value:
           type: string
-          enum: [equals, regex]
-        matcher_value:
-          type: string
+          description: 標籤值。
+        isRegex:
+          type: boolean
+          default: false
+          description: 是否為正規表示式。
     SilenceSchedule:
       type: object
       properties:
@@ -4996,6 +4999,22 @@ components:
             $ref: "#/components/schemas/ResourceTag"
         last_event_count:
           type: integer
+        cpu_usage:
+          type: number
+          format: float
+          description: CPU 使用率百分比，僅在 include_metrics=true 時回傳。
+        memory_usage:
+          type: number
+          format: float
+          description: 記憶體使用率百分比，僅在 include_metrics=true 時回傳。
+        disk_usage:
+          type: number
+          format: float
+          description: 磁碟使用率百分比，僅在 include_metrics=true 時回傳。
+        network_latency_ms:
+          type: number
+          format: float
+          description: 網路延遲 (毫秒)，僅在 include_metrics=true 時回傳。
         updated_at:
           type: string
           format: date-time
@@ -5307,59 +5326,54 @@ components:
           items:
             $ref: "#/components/schemas/DashboardKPI"
     DashboardSummary:
-      type: object
-      required: [dashboard_id, name, category, status, updated_at, dashboard_type]
-      properties:
-        dashboard_id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        category:
-          type: string
-        dashboard_type:
-          $ref: "#/components/schemas/DashboardType"
-        grafana_dashboard_uid:
-          type: string
-          nullable: true
-          description: Grafana 儀表板的 UID，僅當 dashboard_type 為 grafana 時提供。
-        grafana_folder_uid:
-          type: string
-          nullable: true
-          description: Grafana 資料夾 UID，僅當 dashboard_type 為 grafana 時提供。
-        creator:
-          $ref: '#/components/schemas/CreatorInfo'
-        tags:
-          type: array
-          items:
-            type: string
-        data_sources:
-          type: array
-          items:
-            type: string
-        viewer_count:
-          type: integer
-        favorite_count:
-          type: integer
-        panel_count:
-          type: integer
-        status:
-          type: string
-          enum: [draft, published]
-        is_default:
-          type: boolean
-        is_featured:
-          type: boolean
-        target_page_key:
-          type: string
-        grafana_url:
-          type: string
-          nullable: true
-          description: Grafana 儀表板原始連結，僅於 dashboard_type 為 grafana 時提供。
-        updated_at:
-          type: string
-          format: date-time
+      allOf:
+        - $ref: "#/components/schemas/BaseSummary"
+        - type: object
+          required: [dashboard_id, category, status, dashboard_type]
+          properties:
+            dashboard_id:
+              type: string
+            category:
+              type: string
+            dashboard_type:
+              $ref: "#/components/schemas/DashboardType"
+            grafana_dashboard_uid:
+              type: string
+              nullable: true
+              description: Grafana 儀表板的 UID，僅當 dashboard_type 為 grafana 時提供。
+            grafana_folder_uid:
+              type: string
+              nullable: true
+              description: Grafana 資料夾 UID，僅當 dashboard_type 為 grafana 時提供。
+            creator:
+              $ref: '#/components/schemas/CreatorInfo'
+            tags:
+              type: array
+              items:
+                type: string
+            data_sources:
+              type: array
+              items:
+                type: string
+            viewer_count:
+              type: integer
+            favorite_count:
+              type: integer
+            panel_count:
+              type: integer
+            status:
+              type: string
+              enum: [draft, published]
+            is_default:
+              type: boolean
+            is_featured:
+              type: boolean
+            target_page_key:
+              type: string
+            grafana_url:
+              type: string
+              nullable: true
+              description: Grafana 儀表板原始連結，僅於 dashboard_type 為 grafana 時提供。
     DashboardKPI:
       type: object
       required: [label, value]
@@ -5832,10 +5846,6 @@ components:
           type: boolean
         notify_on_failure:
           type: boolean
-        channels:
-          type: array
-          items:
-            type: string
     CreateAutomationScheduleRequest:
       allOf:
         - $ref: "#/components/schemas/AutomationSchedulePayload"
@@ -5979,30 +5989,25 @@ components:
               type: string
               format: date-time
     TeamSummary:
-      type: object
-      required: [team_id, name]
-      properties:
-        team_id:
-          type: string
-        name:
-          type: string
-        description:
-          type: string
-        creator:
-          $ref: '#/components/schemas/CreatorInfo'
-        member_ids:
-          type: array
-          description: 成員識別碼列表。
-          items:
-            type: string
-        subscribers:
-          type: array
-          description: 訂閱對象 (可包含人員與外部管道)。
-          items:
-            $ref: "#/components/schemas/TeamSubscriber"
-        created_at:
-          type: string
-          format: date-time
+      allOf:
+        - $ref: "#/components/schemas/BaseSummary"
+        - type: object
+          required: [team_id]
+          properties:
+            team_id:
+              type: string
+            creator:
+              $ref: '#/components/schemas/CreatorInfo'
+            member_ids:
+              type: array
+              description: 成員識別碼列表。
+              items:
+                type: string
+            subscribers:
+              type: array
+              description: 訂閱對象 (可包含人員與外部管道)。
+              items:
+                $ref: "#/components/schemas/TeamSubscriber"
     CreateTeamRequest:
       type: object
       required: [name]
@@ -6358,10 +6363,6 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/NotificationRecipient"
-        channels:
-          type: array
-          items:
-            $ref: "#/components/schemas/NotificationChannelRef"
         resource_filters:
           type: object
           additionalProperties: true
