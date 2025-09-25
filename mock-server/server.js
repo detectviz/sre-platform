@@ -482,25 +482,28 @@ const silenceRules = [
     silence_id: 'slc-001',
     name: '週末維運靜音',
     description: '每週六 02:00-04:00 維運期間靜音。',
-    silence_type: 'repeat',
+    silence_type: 'recurring',
     scope: 'resource',
     enabled: true,
     created_at: toISO(new Date(now.getTime() - 86400000 * 5)),
+    updated_at: toISO(new Date(now.getTime() - 86400000 * 2)),
     schedule: {
-      silence_type: 'repeat',
       starts_at: toISO('2025-01-18T02:00:00Z'),
       ends_at: toISO('2025-01-18T04:00:00Z'),
       timezone: 'Asia/Taipei',
       repeat: { frequency: 'weekly', days: ['sat'], until: null, occurrences: null }
     },
     matchers: [
-      { key: 'resource_id', operator: 'equals', value: 'res-001' }
+      { matcher_key: 'resource_id', operator: 'equals', matcher_value: 'res-001' }
     ],
     notify_on_start: true,
     notify_on_end: false,
-    creator: { user_id: 'user-001', display_name: '林佳瑜' }
+    creator: { user_id: currentUser.user_id, display_name: currentUser.display_name }
   }
 ];
+
+const SILENCE_TYPE_OPTIONS = new Set(['recurring', 'conditional']);
+const SILENCE_SCOPE_OPTIONS = new Set(['global', 'resource', 'team', 'tag']);
 
 const resourceData = [
   {
@@ -2211,10 +2214,96 @@ const appendTimelineEntry = (event, entry) => {
   return finalEntry;
 };
 
+const normalizeSilenceMatcher = (matcher = {}) => ({
+  matcher_key: matcher.matcher_key || matcher.key || 'resource_id',
+  operator: matcher.operator === 'regex' ? 'regex' : 'equals',
+  matcher_value: matcher.matcher_value || matcher.value || ''
+});
+
+const normalizeSilenceSchedule = (schedule = {}) => {
+  const startsAt = schedule.starts_at ? new Date(schedule.starts_at) : new Date();
+  const defaultEnd = new Date(startsAt.getTime() + 2 * 60 * 60 * 1000);
+  const repeat = schedule.repeat || {};
+  const normalizedRepeat =
+    repeat && typeof repeat === 'object'
+      ? {
+          frequency: repeat.frequency || 'weekly',
+          days: Array.isArray(repeat.days) ? repeat.days : [],
+          until: repeat.until || null,
+          occurrences: repeat.occurrences ?? null
+        }
+      : null;
+  const normalized = {
+    starts_at: toISO(startsAt),
+    ends_at: schedule.ends_at ? toISO(schedule.ends_at) : toISO(defaultEnd),
+    timezone: schedule.timezone || 'UTC'
+  };
+  if (normalizedRepeat) {
+    normalized.repeat = normalizedRepeat;
+  }
+  return normalized;
+};
+
+const mapSilenceRuleSummary = (rule) => ({
+  silence_id: rule.silence_id,
+  name: rule.name,
+  description: rule.description || null,
+  silence_type: rule.silence_type || 'recurring',
+  scope: rule.scope || 'global',
+  enabled: Boolean(rule.enabled),
+  created_at: rule.created_at || toISO(new Date())
+});
+
+const toSilenceRuleDetail = (rule) => ({
+  ...mapSilenceRuleSummary(rule),
+  creator:
+    rule.creator && rule.creator.user_id
+      ? rule.creator
+      : { user_id: currentUser.user_id, display_name: currentUser.display_name },
+  schedule: normalizeSilenceSchedule(rule.schedule),
+  matchers: Array.isArray(rule.matchers) ? rule.matchers.map(normalizeSilenceMatcher) : [],
+  notify_on_start: Boolean(rule.notify_on_start),
+  notify_on_end: Boolean(rule.notify_on_end)
+});
+
+const buildSilenceRule = (payload = {}, existing = {}) => {
+  const silenceType = payload.silence_type || existing.silence_type || 'recurring';
+  const scope = payload.scope || existing.scope || 'global';
+  const normalizedMatchers = Array.isArray(payload.matchers)
+    ? payload.matchers.map(normalizeSilenceMatcher)
+    : Array.isArray(existing.matchers)
+      ? existing.matchers.map(normalizeSilenceMatcher)
+      : [];
+
+  return {
+    silence_id: existing.silence_id || `slc-${Date.now()}`,
+    name: payload.name ?? existing.name ?? '未命名靜音規則',
+    description: payload.description ?? existing.description ?? null,
+    silence_type: SILENCE_TYPE_OPTIONS.has(silenceType) ? silenceType : 'recurring',
+    scope: SILENCE_SCOPE_OPTIONS.has(scope) ? scope : 'global',
+    enabled: payload.enabled ?? existing.enabled ?? true,
+    schedule: normalizeSilenceSchedule(payload.schedule || existing.schedule || {}),
+    matchers: normalizedMatchers,
+    notify_on_start: payload.notify_on_start ?? existing.notify_on_start ?? false,
+    notify_on_end: payload.notify_on_end ?? existing.notify_on_end ?? false,
+    creator:
+      existing.creator && existing.creator.user_id
+        ? existing.creator
+        : { user_id: currentUser.user_id, display_name: currentUser.display_name },
+    created_at: existing.created_at || toISO(new Date()),
+    updated_at: toISO(new Date())
+  };
+};
+
 const getSilencesForResource = (resourceId) =>
-  silenceRules.filter((rule) =>
-    (rule.matchers || []).some((matcher) => matcher.key === 'resource_id' && matcher.value === resourceId)
-  );
+  silenceRules
+    .filter((rule) =>
+      (rule.matchers || []).some((matcher) => {
+        const normalized = normalizeSilenceMatcher(matcher);
+        return normalized.matcher_key === 'resource_id' && normalized.matcher_value === resourceId;
+      })
+    )
+    .map(toSilenceRuleDetail);
 
 // 修正: 移除即時指標欄位
 const buildResourceDetail = (resource) => ({
@@ -3468,6 +3557,92 @@ app.patch('/alert-rules/:rule_uid', (req, res) => {
 app.delete('/alert-rules/:rule_uid', (req, res) => {
   const rule = getAlertRuleByUid(req.params.rule_uid);
   if (!rule) return notFound(res, '找不到告警規則');
+  res.status(204).end();
+});
+
+app.get('/silence-rules', (req, res) => {
+  const typeFilter = createLowercaseSet(parseListParam(req.query.silence_type));
+  const enabledFilter = parseBooleanParam(req.query.enabled);
+  const format = (req.query.format || 'json').toString().toLowerCase();
+
+  const filtered = silenceRules.filter((rule) => {
+    if (!matchesEnumFilter(rule.silence_type, typeFilter)) return false;
+    if (enabledFilter !== null && Boolean(rule.enabled) !== enabledFilter) return false;
+    return true;
+  });
+
+  if (format === 'csv') {
+    const csv = toCsv(filtered.map(mapSilenceRuleSummary), [
+      { key: 'silence_id' },
+      { key: 'name' },
+      { key: 'silence_type' },
+      { key: 'scope' },
+      { key: 'enabled', value: (row) => (row.enabled ? 'true' : 'false') },
+      { key: 'created_at' }
+    ]);
+    res.type('text/csv').send(`${csv}\n`);
+    return;
+  }
+
+  const items = filtered.map(mapSilenceRuleSummary);
+  res.json(paginate(items, req, { defaultSortKey: 'name' }));
+});
+
+app.post('/silence-rules', (req, res) => {
+  const payload = req.body || {};
+  if (!payload.name || typeof payload.name !== 'string') {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'name 為必填欄位。' });
+  }
+  if (payload.silence_type && !SILENCE_TYPE_OPTIONS.has(payload.silence_type)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'silence_type 必須為 recurring 或 conditional。' });
+  }
+  if (payload.scope && !SILENCE_SCOPE_OPTIONS.has(payload.scope)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope 參數無效。' });
+  }
+  if (!payload.schedule) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'schedule 為必填欄位。' });
+  }
+  if (!Array.isArray(payload.matchers) || payload.matchers.length === 0) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'matchers 至少需要一個條件。' });
+  }
+
+  const newRule = buildSilenceRule(payload);
+  silenceRules.push(newRule);
+  res.status(201).json(toSilenceRuleDetail(newRule));
+});
+
+app.get('/silence-rules/:silence_id', (req, res) => {
+  const rule = getSilenceRuleById(req.params.silence_id);
+  if (!rule) return notFound(res, '找不到靜音規則');
+  res.json(toSilenceRuleDetail(rule));
+});
+
+app.put('/silence-rules/:silence_id', (req, res) => {
+  const rule = getSilenceRuleById(req.params.silence_id);
+  if (!rule) return notFound(res, '找不到靜音規則');
+  const payload = req.body || {};
+  if (payload.name !== undefined && typeof payload.name !== 'string') {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'name 需為字串。' });
+  }
+  if (payload.silence_type && !SILENCE_TYPE_OPTIONS.has(payload.silence_type)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'silence_type 必須為 recurring 或 conditional。' });
+  }
+  if (payload.scope && !SILENCE_SCOPE_OPTIONS.has(payload.scope)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'scope 參數無效。' });
+  }
+  if (payload.matchers && (!Array.isArray(payload.matchers) || payload.matchers.length === 0)) {
+    return res.status(400).json({ code: 'INVALID_REQUEST', message: 'matchers 至少需要一個條件。' });
+  }
+
+  const updatedRule = buildSilenceRule(payload, rule);
+  Object.assign(rule, updatedRule);
+  res.json(toSilenceRuleDetail(rule));
+});
+
+app.delete('/silence-rules/:silence_id', (req, res) => {
+  const index = silenceRules.findIndex((rule) => rule.silence_id === req.params.silence_id);
+  if (index === -1) return notFound(res, '找不到靜音規則');
+  silenceRules.splice(index, 1);
   res.status(204).end();
 });
 

@@ -1059,9 +1059,10 @@ paths:
         - $ref: "#/components/parameters/PageSizeParam"
         - name: silence_type
           in: query
+          description: 篩選靜音類型，僅支援 recurring（週期）與 conditional（條件）兩種平台管理模式。
           schema:
             type: string
-            enum: [single, repeat, condition]
+            enum: [recurring, conditional]
         - name: enabled
           in: query
           schema:
@@ -2719,67 +2720,6 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notification-config/strategies/{strategy_id}:
-    parameters:
-      - name: strategy_id
-        in: path
-        required: true
-        description: 通知策略唯一識別碼。
-        schema:
-          type: string
-    get:
-      tags:
-        - 通知管理
-      summary: 取得通知策略詳情
-      operationId: getNotificationStrategyById
-      responses:
-        "200":
-          description: 通知策略詳情。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationStrategyDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    patch:
-      tags:
-        - 通知管理
-      summary: 更新通知策略
-      operationId: updateNotificationStrategy
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateNotificationStrategyRequest"
-      responses:
-        "200":
-          description: 通知策略已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationStrategyDetail"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    delete:
-      tags:
-        - 通知管理
-      summary: 軟刪除通知策略
-      description: 執行軟刪除，將通知策略標記為已刪除但保留資料庫紀錄。
-      operationId: deleteNotificationStrategy
-      responses:
-        "204":
-          description: 通知策略已刪除。
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
   /notifications/strategies/{strategy_id}/test:
     post:
       tags:
@@ -2844,67 +2784,6 @@ paths:
           $ref: "#/components/responses/BadRequest"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notification-config/channels/{channel_id}:
-    parameters:
-      - name: channel_id
-        in: path
-        required: true
-        description: 通知管道唯一識別碼。
-        schema:
-          type: string
-    get:
-      tags:
-        - 通知管理
-      summary: 取得通知管道詳情
-      operationId: getNotificationChannelById
-      responses:
-        "200":
-          description: 通知管道詳情。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationChannelDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    patch:
-      tags:
-        - 通知管理
-      summary: 更新通知管道設定
-      operationId: updateNotificationChannel
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/UpdateNotificationChannelRequest"
-      responses:
-        "200":
-          description: 通知管道已更新。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationChannelDetail"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-    delete:
-      tags:
-        - 通知管理
-      summary: 軟刪除通知管道
-      description: 執行軟刪除，將通知管道標記為已刪除但保留資料庫紀錄。
-      operationId: deleteNotificationChannel
-      responses:
-        "204":
-          description: 通知管道已刪除。
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
   /notifications/channels/{channel_id}/test:
     post:
       tags:
@@ -3012,55 +2891,6 @@ paths:
                           $ref: "#/components/schemas/NotificationHistoryRecord"
         "401":
           $ref: "#/components/responses/Unauthorized"
-  /notification-config/history/{record_id}:
-    parameters:
-      - name: record_id
-        in: path
-        required: true
-        description: 通知歷史記錄識別碼。
-        schema:
-          type: string
-    get:
-      tags:
-        - 通知管理
-      summary: 取得單筆通知歷史詳情
-      operationId: getNotificationHistoryById
-      responses:
-        "200":
-          description: 通知歷史詳情。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationHistoryDetail"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /notification-config/history/purge:
-    post:
-      tags:
-        - 通知管理
-      summary: 清除舊的通知歷史紀錄
-      operationId: purgeNotificationHistory
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/NotificationHistoryPurgeRequest"
-      responses:
-        "200":
-          description: 已完成通知歷史清理作業。
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/NotificationHistoryPurgeResult"
-        "400":
-          $ref: "#/components/responses/BadRequest"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-        "403":
-          $ref: "#/components/responses/Forbidden"
   /settings/tags:
     get:
       tags:
@@ -3415,6 +3245,177 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/SystemSetting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /notifications/strategies/{strategy_id}:
+    parameters:
+      - name: strategy_id
+        in: path
+        required: true
+        description: 通知策略唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 通知管理
+      summary: 取得通知策略詳情
+      operationId: getNotificationStrategyById
+      responses:
+        "200":
+          description: 通知策略詳情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationStrategyDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - 通知管理
+      summary: 更新通知策略
+      operationId: updateNotificationStrategy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationStrategyRequest"
+      responses:
+        "200":
+          description: 通知策略已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationStrategyDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags:
+        - 通知管理
+      summary: 軟刪除通知策略
+      description: 執行軟刪除，將通知策略標記為已刪除但保留資料庫紀錄。
+      operationId: deleteNotificationStrategy
+      responses:
+        "204":
+          description: 通知策略已刪除。
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /notifications/channels/{channel_id}:
+    parameters:
+      - name: channel_id
+        in: path
+        required: true
+        description: 通知管道唯一識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 通知管理
+      summary: 取得通知管道詳情
+      operationId: getNotificationChannelById
+      responses:
+        "200":
+          description: 通知管道詳情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - 通知管理
+      summary: 更新通知管道設定
+      operationId: updateNotificationChannel
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateNotificationChannelRequest"
+      responses:
+        "200":
+          description: 通知管道已更新。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationChannelDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags:
+        - 通知管理
+      summary: 軟刪除通知管道
+      description: 執行軟刪除，將通知管道標記為已刪除但保留資料庫紀錄。
+      operationId: deleteNotificationChannel
+      responses:
+        "204":
+          description: 通知管道已刪除。
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /notifications/history/{record_id}:
+    parameters:
+      - name: record_id
+        in: path
+        required: true
+        description: 通知歷史記錄識別碼。
+        schema:
+          type: string
+    get:
+      tags:
+        - 通知管理
+      summary: 取得單筆通知歷史詳情
+      operationId: getNotificationHistoryById
+      responses:
+        "200":
+          description: 通知歷史詳情。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationHistoryDetail"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /notifications/history/purge:
+    post:
+      tags:
+        - 通知管理
+      summary: 清除舊的通知歷史紀錄
+      operationId: purgeNotificationHistory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NotificationHistoryPurgeRequest"
+      responses:
+        "200":
+          description: 已完成通知歷史清理作業。
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationHistoryPurgeResult"
         "400":
           $ref: "#/components/responses/BadRequest"
         "401":
@@ -4156,8 +4157,7 @@ components:
           description: 最新的通知統計摘要。
     EventSummaryMetrics:
       type: object
-      required:
-        [active_events, resolved_today, mean_time_to_resolve, automation_rate]
+      required: [active_events, resolved_today, mean_time_to_resolve, automation_rate]
       properties:
         active_events:
           type: object
@@ -4210,8 +4210,7 @@ components:
           format: date-time
     EventSummary:
       type: object
-      required:
-        [event_id, summary, event_source, severity, status, resource_name, triggered_at, priority]
+      required: [event_id, summary, event_source, severity, status, resource_name, triggered_at, priority]
       properties:
         event_id:
           type: string
@@ -4846,10 +4845,16 @@ components:
           type: string
         silence_type:
           type: string
-          enum: [single, repeat, condition]
+          enum:
+            - recurring
+            - conditional
         scope:
           type: string
-          enum: [global, resource, team, tag, event]
+          enum:
+            - global
+            - resource
+            - team
+            - tag
         enabled:
           type: boolean
         created_at:
@@ -4882,15 +4887,18 @@ components:
           type: string
         silence_type:
           type: string
-          enum: [single, repeat, condition]
+          enum:
+            - recurring
+            - conditional
         scope:
           type: string
-          enum: [global, resource, team, tag, event]
+          enum:
+            - global
+            - resource
+            - team
+            - tag
         enabled:
           type: boolean
-        event_id:
-          type: string
-          nullable: true
         schedule:
           $ref: "#/components/schemas/SilenceSchedule"
         matchers:
@@ -4951,8 +4959,7 @@ components:
           nullable: true
     ResourceSummary:
       type: object
-      required:
-        [resource_id, name, status, type, ip_address]
+      required: [resource_id, name, status, type, ip_address]
       properties:
         resource_id:
           type: string
@@ -6139,44 +6146,44 @@ components:
           type: string
           format: email
           nullable: true
-      NotificationRecipientBase:
-        type: object
-        required: [type, id]
-        properties:
-          type:
-            type: string
-          id:
-            type: string
-          display_name:
-            type: string
-            nullable: true
-      NotificationDeliveryRecipient:
-        allOf:
-          - $ref: "#/components/schemas/NotificationRecipientBase"
-          - type: object
-            properties:
-              type:
-                type: string
-                enum: [user, team, role, channel, external]
-              contact:
-                type: string
-              delivery_status:
-                type: string
-                enum: [delivered, pending, failed, unknown]
-              delivery_status_message:
-                type: string
-      NotificationRecipient:
-        allOf:
-          - $ref: "#/components/schemas/NotificationRecipientBase"
-          - type: object
-            properties:
-              type:
-                type: string
-                enum: [user, team, role]
-              display_name:
-                type: string
-                description: 對應接收者的顯示名稱，僅於回應中提供。
-                readOnly: true
+    NotificationRecipientBase:
+      type: object
+      required: [type, id]
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+        display_name:
+          type: string
+          nullable: true
+    NotificationDeliveryRecipient:
+      allOf:
+        - $ref: "#/components/schemas/NotificationRecipientBase"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [user, team, role, channel, external]
+            contact:
+              type: string
+            delivery_status:
+              type: string
+              enum: [delivered, pending, failed, unknown]
+            delivery_status_message:
+              type: string
+    NotificationRecipient:
+      allOf:
+        - $ref: "#/components/schemas/NotificationRecipientBase"
+        - type: object
+          properties:
+            type:
+              type: string
+              enum: [user, team, role]
+            display_name:
+              type: string
+              description: 對應接收者的顯示名稱，僅於回應中提供。
+              readOnly: true
     NotificationChannelRef:
       type: object
       required: [channel_id, channel_type]
@@ -6502,8 +6509,7 @@ components:
           additionalProperties: true
     NotificationHistoryRecord:
       type: object
-      required:
-        [record_id, sent_at, status, channel_type, channel_label, strategy_name, resend_available, resend_count]
+      required: [record_id, sent_at, status, channel_type, channel_label, strategy_name, resend_available, resend_count]
       properties:
         record_id:
           type: string
@@ -6955,8 +6961,7 @@ components:
           enum: [event, resource]
         action:
           type: string
-          enum:
-            [acknowledge, resolve, assign, add_comment, delete, update_status, assign_team, add_tags, remove_tags]
+          enum: [acknowledge, resolve, assign, add_comment, delete, update_status, assign_team, add_tags, remove_tags]
         event_ids:
           type: array
           minItems: 1
@@ -7059,8 +7064,7 @@ components:
           format: date-time
     BatchOperationStatus:
       type: object
-      required:
-        [operation_id, target_type, action, status, total_count, processed_count, success_count, failed_count, created_at]
+      required: [operation_id, target_type, action, status, total_count, processed_count, success_count, failed_count, created_at]
       properties:
         operation_id:
           type: string

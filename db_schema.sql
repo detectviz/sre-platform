@@ -5,6 +5,7 @@
 -- 2. 從 resources 表移除即時指標欄位，這些資料應由指標系統提供。
 -- 3. 合併 event_ai_analysis 至 ai_insight_reports，並以 report_type 區分。
 -- 4. 確保所有時間戳欄位命名以 _at 結尾。
+-- 5. 移除單次靜音 event 參照，改由 grafana-proxy/silences 代理 Grafana 快速靜音。
 
 -- 需先啟用 pgcrypto extension 以便使用 gen_random_uuid()
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
@@ -241,8 +242,6 @@ CREATE TABLE silence_rules (
     silence_type VARCHAR(32) NOT NULL,
     -- 適用範圍
     scope VARCHAR(32) NOT NULL,
-    -- 關聯事件識別碼 (快速靜音)
-    event_id UUID,
     -- 開始時間
     starts_at TIMESTAMPTZ NOT NULL,
     -- 結束時間
@@ -269,8 +268,8 @@ CREATE TABLE silence_rules (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     -- 更新時間
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CONSTRAINT chk_silence_rules_type CHECK (silence_type IN ('single','repeat','condition')),
-    CONSTRAINT chk_silence_rules_scope CHECK (scope IN ('global','resource','team','tag','event')),
+    CONSTRAINT chk_silence_rules_type CHECK (silence_type IN ('recurring','conditional')),
+    CONSTRAINT chk_silence_rules_scope CHECK (scope IN ('global','resource','team','tag')),
     CONSTRAINT chk_silence_rules_repeat_freq CHECK (
         -- 重複頻率
         repeat_frequency IS NULL OR repeat_frequency IN ('daily','weekly','monthly')
@@ -292,6 +291,8 @@ CREATE TABLE silence_rule_matchers (
     CONSTRAINT chk_silence_matchers_operator CHECK (operator IN ('equals','regex'))
 );
 CREATE INDEX idx_silence_matchers_silence ON silence_rule_matchers (silence_id);
+
+COMMENT ON TABLE silence_rules IS '平台管理的週期性或條件式靜音規則；單次快速靜音透過 grafana-proxy/silences 代理 Grafana 執行。';
 
 CREATE TABLE events (
     -- 主鍵識別碼
@@ -352,12 +353,6 @@ CREATE INDEX idx_events_priority ON events (priority);
 CREATE INDEX idx_events_rule_uid ON events (rule_uid);
 CREATE INDEX idx_events_source_status_time ON events (event_source, status, triggered_at DESC);
 COMMENT ON TABLE events IS '事件增值處理資料表，專注於 AI 分析、關聯分析與處理追蹤，不承載告警規則管理邏輯。';
-
-ALTER TABLE silence_rules
-    ADD CONSTRAINT fk_silence_rules_event
-    FOREIGN KEY (event_id)
-    REFERENCES events(id)
-    ON DELETE CASCADE;
 
 CREATE TABLE event_tags (
     -- 事件識別碼
@@ -817,7 +812,7 @@ CREATE TABLE dashboards (
     )
 );
 CREATE INDEX idx_dashboards_category ON dashboards (category);
-CREATE INDEX idx_dashboards_creator ON dashboards (creator_id);
+CREATE INDEX idx_dashboards_creator ON dashboards (created_by);
 CREATE INDEX idx_dashboards_type ON dashboards (dashboard_type);
 CREATE UNIQUE INDEX idx_dashboards_grafana_uid ON dashboards (grafana_dashboard_uid) WHERE grafana_dashboard_uid IS NOT NULL;
 
