@@ -582,22 +582,3 @@ VITE_API_BASE_URL=https://api.your-domain.com
 VITE_GRAFANA_URL=https://grafana.your-domain.com
 VITE_KEYCLOAK_URL=https://keycloak.your-domain.com
 ```
-
----
-
-## 貢獻指南
-
-### 🏃‍♂️ 本地開發設定
-
-1. Fork 此專案
-2. 建立功能分支: `git checkout -b feature/amazing-feature`
-3. 提交變更: `git commit -m 'Add amazing feature'`
-4. 推送分支: `git push origin feature/amazing-feature`
-5. 開啟 Pull Request
-
-### 📋 貢獻規範
-
-- 所有新功能都需要對應的測試
-- 確保通過所有 ESLint 和 TypeScript 檢查
-- 更新相關文檔
-- 遵循現有的代碼風格
